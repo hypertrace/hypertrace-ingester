@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.rawSpansGrouperConfig.name }}
+  labels:
+    release: {{ .Release.Name }}
+data:
+  application.conf: |-
+    flink.job {
+      {{- if hasKey .Values.rawSpansGrouperConfig.flink "job" }}
+      metrics {
+        metrics {
+          reporters = {{- toJson .Values.rawSpansGrouperConfig.flink.job.metrics.reporters | trim | nindent 12 }}
+        }
+      }
+      {{- end }}
+    }
+
+    flink.source {
+      schema.registry {
+        schema.registry.url = "{{ .Values.rawSpansGrouperConfig.flink.source.schema.registry.url }}"
+        specific.avro.reader = true
+      }
+      kafka {
+        bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.flink.source.kafka.bootstrapServers }}"
+      }
+    }
+
+    flink.sink {
+      schema.registry {
+        schema.registry.url = "{{ .Values.rawSpansGrouperConfig.flink.sink.schema.registry.url }}"
+        value.subject.name.strategy = "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy"
+      }
+      kafka {
+        bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.flink.sink.kafka.bootstrapServers }}"
+      }
+    }
+
+    span.groupby.session.window.interval = {{ .Values.rawSpansGrouperConfig.span.groupby.internal }}
+
+    {{- if hasKey .Values.rawSpansGrouperConfig "metrics" }}
+    metrics {
+      reporter {
+        names = {{- toJson .Values.rawSpansGrouperConfig.metrics.reporter.names | trim | nindent 12 }}
+      }
+    }
+    {{- end }}
