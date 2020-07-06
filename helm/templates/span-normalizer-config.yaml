@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.spanNormalizerConfig.name }}
+  labels:
+    release: {{ .Release.Name }}
+data:
+  application.conf: |-
+    flink.job {
+      {{- if hasKey .Values.spanNormalizerConfig.flink "job" }}
+      metrics {
+        metrics {
+          reporters = {{- toJson .Values.spanNormalizerConfig.flink.job.metrics.reporters | trim | nindent 12 }}
+        }
+      }
+      {{- end }}
+    }
+
+    flink.source {
+      kafka {
+        bootstrap.servers = "{{ .Values.spanNormalizerConfig.flink.source.kafka.bootstrapServers }}"
+      }
+    }
+    flink.sink {
+      schema.registry {
+        schema.registry.url = "{{ .Values.spanNormalizerConfig.flink.sink.schema.registry.url }}"
+        value.subject.name.strategy = "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy"
+      }
+      kafka {
+        bootstrap.servers = "{{ .Values.spanNormalizerConfig.flink.sink.kafka.bootstrapServers }}"
+      }
+    }
+    {{- if hasKey .Values.spanNormalizerConfig "processor" }}
+    processor {
+      {{- if hasKey .Values.spanNormalizerConfig.processor "tenantIdTagKey" }}
+      tenantIdTagKey = "{{ .Values.spanNormalizerConfig.processor.tenantIdTagKey }}"
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "defaultTenantId" }}
+      defaultTenantId = "{{ .Values.spanNormalizerConfig.processor.defaultTenantId }}"
+      {{- end }}
+    }
+    {{- end }}
+
+    {{- if hasKey .Values.spanNormalizerConfig "metrics" }}
+    metrics {
+      reporter {
+        names = {{- toJson .Values.spanNormalizerConfig.metrics.reporter.names | trim | nindent 12 }}
+      }
+    }
+    {{- end }}

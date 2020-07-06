@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    release: {{ .Release.Name }}
+  {{- with .Values.deploymentLabels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- toYaml .Values.deploymentSelectorMatchLabels | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        release: {{ .Release.Name }}
+      {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/span-normalizer-config.yaml") . | sha256sum }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.containerAdminPort }}"
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: service-config
+          configMap:
+            name: {{ .Values.spanNormalizerConfig.name }}
+        - name: log4j-config
+          configMap:
+            name: {{ .Values.logConfig.name }}
+    {{- with .Values.nodeLabels }}
+      nodeSelector:
+      {{- toYaml . | nindent 8}}
+    {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: admin-port
+              containerPort: {{ .Values.containerAdminPort }}
+              protocol: TCP
+          env:
+            - name: SERVICE_NAME
+              value: "{{ .Chart.Name }}"
+            - name: BOOTSTRAP_CONFIG_URI
+              value: "file:///app/resources/configs"
+            - name: LOG4J_CONFIGURATION_FILE
+              value: "/var/{{ .Chart.Name }}/log/log4j2.properties"
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.javaOpts | quote }}
+          volumeMounts:
+            - name: service-config
+              mountPath: /app/resources/configs/{{ .Chart.Name }}/application.conf
+              subPath: application.conf
+            - name: log4j-config
+              mountPath: /var/{{ .Chart.Name }}/log
+          livenessProbe:
+            initialDelaySeconds: {{ int .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ int .Values.livenessProbe.periodSeconds }}
+            tcpSocket:
+              port: admin-port
+          readinessProbe:
+            initialDelaySeconds: {{ int .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ int .Values.readinessProbe.periodSeconds }}
+            httpGet:
+              path: /health
+              port: {{ .Values.containerAdminPort }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
