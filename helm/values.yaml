@@ -17,7 +17,7 @@ image:
   repository: hypertrace/raw-spans-grouper
   pullPolicy: IfNotPresent
 
-imagePullSecrets: {}
+imagePullSecrets: []
 
 nodeLabels: {}
 
@@ -106,5 +106,5 @@ kafka-topic-creator:
           - retention.ms=259200000
   zookeeper:
     address: zookeeper:2181
-  imagePullSecrets: {}
+  imagePullSecrets: []
   podAnnotations: {}
