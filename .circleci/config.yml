@@ -87,7 +87,7 @@ jobs:
             - "f2:2f:7f:96:40:02:20:67:76:ea:a9:cb:ac:51:20:dc"
       - run: git push origin $(./gradlew -q :printVersion)
       - gradle:
-          args: publish dockerPushImages
+          args: publish dockerPushImages --no-parallel
   validate-charts:
     executor: helm
     steps:
