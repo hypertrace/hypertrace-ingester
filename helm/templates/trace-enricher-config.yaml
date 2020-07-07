@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.traceEnricherConfig.name }}
+  labels:
+    release: {{ .Release.Name }}
+data:
+  application.conf: |-
+    flink.source {
+      schema.registry {
+        schema.registry.url = "http://schema-registry-service:8081"
+      }
+      kafka {
+        bootstrap.servers = "bootstrap:9092"
+      }
+    }
+
+    flink.sink {
+      topic = {{ .Values.traceEnricherConfig.flink.sink.topic }}
+      schema.registry {
+        schema.registry.url = "http://schema-registry-service:8081"
+      }
+      kafka {
+        bootstrap.servers = "bootstrap:9092"
+      }
+    }
+
+    enricher {
+      DefaultServiceEntityEnricher {
+        entity.service.config = {
+          host = entity-service
+          port = 50061
+        }
+      }
+
+      BackendEntityEnricher {
+        entity.service.config = {
+          host = entity-service
+          port = 50061
+        }
+      }
+
+      EndpointEnricher {
+        entity.service.config = {
+          host = entity-service
+          port = 50061
+        }
+      }
+    }

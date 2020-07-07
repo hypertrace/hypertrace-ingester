@@ -1,0 +1,873 @@
+{
+  "customer_id": "__default",
+  "trace_id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00004L_*??????Z",
+  "entity_list": [
+  ],
+  "event_list": [
+    {
+      "customer_id": "__default",
+      "event_id": "e??X????????\u001D",
+      "event_name": {
+        "string": "index_api_01"
+      },
+      "entity_id_list": [
+      ],
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "jaeger.servicename": {
+              "value": {
+                "string": "api_01"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "span.kind": {
+              "value": {
+                "string": "server"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": 1591218751899,
+      "end_time_millis": 1591218755940,
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 4041.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "event_ref_list": [
+      ],
+      "enriched_attributes": null,
+      "jaegerFields": {
+        "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
+          "flags": 0,
+          "logs": null,
+          "warnings": null,
+          "service_name": {
+            "string": "api_01"
+          }
+        }
+      },
+      "http": {
+        "org.hypertrace.core.datamodel.eventfields.http.Http": {
+          "request": {
+            "org.hypertrace.core.datamodel.eventfields.http.Request": {
+              "url": null,
+              "scheme": null,
+              "host": null,
+              "method": null,
+              "path": null,
+              "query_string": null,
+              "body": null,
+              "session_id": null,
+              "cookies": [
+              ],
+              "user_agent": null,
+              "size": 0,
+              "headers": null,
+              "params": {
+              }
+            }
+          },
+          "response": null
+        }
+      },
+      "grpc": null,
+      "sql": null
+    },
+    {
+      "customer_id": "__default",
+      "event_id": "\u001F!??YO????o",
+      "event_name": {
+        "string": "call_api_02"
+      },
+      "entity_id_list": [
+      ],
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "jaeger.servicename": {
+              "value": {
+                "string": "api_01"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "span.kind": {
+              "value": {
+                "string": "client"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": 1591218751899,
+      "end_time_millis": 1591218753926,
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 2027.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "event_ref_list": [
+        {
+          "trace_id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00004L_*??????Z",
+          "event_id": "e??X????????\u001D",
+          "ref_type": "CHILD_OF"
+        }
+      ],
+      "enriched_attributes": null,
+      "jaegerFields": {
+        "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
+          "flags": 0,
+          "logs": null,
+          "warnings": null,
+          "service_name": {
+            "string": "api_01"
+          }
+        }
+      },
+      "http": {
+        "org.hypertrace.core.datamodel.eventfields.http.Http": {
+          "request": {
+            "org.hypertrace.core.datamodel.eventfields.http.Request": {
+              "url": null,
+              "scheme": null,
+              "host": null,
+              "method": null,
+              "path": null,
+              "query_string": null,
+              "body": null,
+              "session_id": null,
+              "cookies": [
+              ],
+              "user_agent": null,
+              "size": 0,
+              "headers": null,
+              "params": {
+              }
+            }
+          },
+          "response": null
+        }
+      },
+      "grpc": null,
+      "sql": null
+    },
+    {
+      "customer_id": "__default",
+      "event_id": "??{KC????????",
+      "event_name": {
+        "string": "call_api_03_FROM_01"
+      },
+      "entity_id_list": [
+      ],
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "jaeger.servicename": {
+              "value": {
+                "string": "api_01"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "span.kind": {
+              "value": {
+                "string": "client"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": 1591218753926,
+      "end_time_millis": 1591218755940,
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 2014.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "event_ref_list": [
+        {
+          "trace_id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00004L_*??????Z",
+          "event_id": "e??X????????\u001D",
+          "ref_type": "CHILD_OF"
+        }
+      ],
+      "enriched_attributes": null,
+      "jaegerFields": {
+        "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
+          "flags": 0,
+          "logs": null,
+          "warnings": null,
+          "service_name": {
+            "string": "api_01"
+          }
+        }
+      },
+      "http": {
+        "org.hypertrace.core.datamodel.eventfields.http.Http": {
+          "request": {
+            "org.hypertrace.core.datamodel.eventfields.http.Request": {
+              "url": null,
+              "scheme": null,
+              "host": null,
+              "method": null,
+              "path": null,
+              "query_string": null,
+              "body": null,
+              "session_id": null,
+              "cookies": [
+              ],
+              "user_agent": null,
+              "size": 0,
+              "headers": null,
+              "params": {
+              }
+            }
+          },
+          "response": null
+        }
+      },
+      "grpc": null,
+      "sql": null
+    },
+    {
+      "customer_id": "__default",
+      "event_id": "??J\u0007^??T??p",
+      "event_name": {
+        "string": "call_api_03"
+      },
+      "entity_id_list": [
+      ],
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "jaeger.servicename": {
+              "value": {
+                "string": "api_02"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "span.kind": {
+              "value": {
+                "string": "client"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": 1591218751904,
+      "end_time_millis": 1591218753920,
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 2016.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "event_ref_list": [
+        {
+          "trace_id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00004L_*??????Z",
+          "event_id": "\u001F!??YO????o",
+          "ref_type": "CHILD_OF"
+        }
+      ],
+      "enriched_attributes": null,
+      "jaegerFields": {
+        "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
+          "flags": 0,
+          "logs": null,
+          "warnings": null,
+          "service_name": {
+            "string": "api_02"
+          }
+        }
+      },
+      "http": {
+        "org.hypertrace.core.datamodel.eventfields.http.Http": {
+          "request": {
+            "org.hypertrace.core.datamodel.eventfields.http.Request": {
+              "url": null,
+              "scheme": null,
+              "host": null,
+              "method": null,
+              "path": null,
+              "query_string": null,
+              "body": null,
+              "session_id": null,
+              "cookies": [
+              ],
+              "user_agent": null,
+              "size": 0,
+              "headers": null,
+              "params": {
+              }
+            }
+          },
+          "response": null
+        }
+      },
+      "grpc": null,
+      "sql": null
+    },
+    {
+      "customer_id": "__default",
+      "event_id": "????????},????",
+      "event_name": {
+        "string": "sleep_api_03"
+      },
+      "entity_id_list": [
+      ],
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "jaeger.servicename": {
+              "value": {
+                "string": "api_03"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "span.kind": {
+              "value": {
+                "string": "client"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": 1591218753931,
+      "end_time_millis": 1591218755933,
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 2002.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "event_ref_list": [
+        {
+          "trace_id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00004L_*??????Z",
+          "event_id": "??{KC????????",
+          "ref_type": "CHILD_OF"
+        }
+      ],
+      "enriched_attributes": null,
+      "jaegerFields": {
+        "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
+          "flags": 0,
+          "logs": null,
+          "warnings": null,
+          "service_name": {
+            "string": "api_03"
+          }
+        }
+      },
+      "http": {
+        "org.hypertrace.core.datamodel.eventfields.http.Http": {
+          "request": {
+            "org.hypertrace.core.datamodel.eventfields.http.Request": {
+              "url": null,
+              "scheme": null,
+              "host": null,
+              "method": null,
+              "path": null,
+              "query_string": null,
+              "body": null,
+              "session_id": null,
+              "cookies": [
+              ],
+              "user_agent": null,
+              "size": 0,
+              "headers": null,
+              "params": {
+              }
+            }
+          },
+          "response": null
+        }
+      },
+      "grpc": null,
+      "sql": null
+    },
+    {
+      "customer_id": "__default",
+      "event_id": "v\u0010??,3;WP",
+      "event_name": {
+        "string": "sleep_api_03"
+      },
+      "entity_id_list": [
+      ],
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "jaeger.servicename": {
+              "value": {
+                "string": "api_03"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "span.kind": {
+              "value": {
+                "string": "client"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": 1591218751912,
+      "end_time_millis": 1591218753914,
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 2002.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      },
+      "event_ref_list": [
+        {
+          "trace_id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00004L_*??????Z",
+          "event_id": "??J\u0007^??T??p",
+          "ref_type": "CHILD_OF"
+        }
+      ],
+      "enriched_attributes": null,
+      "jaegerFields": {
+        "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
+          "flags": 0,
+          "logs": null,
+          "warnings": null,
+          "service_name": {
+            "string": "api_03"
+          }
+        }
+      },
+      "http": {
+        "org.hypertrace.core.datamodel.eventfields.http.Http": {
+          "request": {
+            "org.hypertrace.core.datamodel.eventfields.http.Request": {
+              "url": null,
+              "scheme": null,
+              "host": null,
+              "method": null,
+              "path": null,
+              "query_string": null,
+              "body": null,
+              "session_id": null,
+              "cookies": [
+              ],
+              "user_agent": null,
+              "size": 0,
+              "headers": null,
+              "params": {
+              }
+            }
+          },
+          "response": null
+        }
+      },
+      "grpc": null,
+      "sql": null
+    }
+  ],
+  "attributes": {
+    "org.hypertrace.core.datamodel.Attributes": {
+      "attribute_map": {
+      }
+    }
+  },
+  "start_time_millis": 1591218751899,
+  "end_time_millis": 1591218755940,
+  "metrics": {
+    "org.hypertrace.core.datamodel.Metrics": {
+      "metric_map": {
+        "Duration": {
+          "value": {
+            "double": 4041.0
+          },
+          "binary_value": null,
+          "value_list": null,
+          "value_map": null
+        },
+        "CallCount": {
+          "value": {
+            "double": 1.0
+          },
+          "binary_value": null,
+          "value_list": null,
+          "value_map": null
+        }
+      }
+    }
+  },
+  "entity_edge_list": [
+  ],
+  "event_edge_list": [
+    {
+      "edge_type": "EVENT_EVENT",
+      "src_index": 2,
+      "tgt_index": 4,
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "CallerEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            },
+            "CalleeEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": {
+        "long": 1591218753926
+      },
+      "end_time_millis": {
+        "long": 1591218755940
+      },
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 2014.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "CallCount": {
+              "value": {
+                "double": 1.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "edge_type": "EVENT_EVENT",
+      "src_index": 1,
+      "tgt_index": 3,
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "CallerEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            },
+            "CalleeEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": {
+        "long": 1591218751899
+      },
+      "end_time_millis": {
+        "long": 1591218753926
+      },
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 2027.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "CallCount": {
+              "value": {
+                "double": 1.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "edge_type": "EVENT_EVENT",
+      "src_index": 0,
+      "tgt_index": 1,
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "CallerEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            },
+            "CalleeEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": {
+        "long": 1591218751899
+      },
+      "end_time_millis": {
+        "long": 1591218755940
+      },
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 4041.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "CallCount": {
+              "value": {
+                "double": 1.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "edge_type": "EVENT_EVENT",
+      "src_index": 0,
+      "tgt_index": 2,
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "CallerEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            },
+            "CalleeEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": {
+        "long": 1591218751899
+      },
+      "end_time_millis": {
+        "long": 1591218755940
+      },
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 4041.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "CallCount": {
+              "value": {
+                "double": 1.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "edge_type": "EVENT_EVENT",
+      "src_index": 3,
+      "tgt_index": 5,
+      "attributes": {
+        "org.hypertrace.core.datamodel.Attributes": {
+          "attribute_map": {
+            "CallerEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            },
+            "CalleeEntityNames": {
+              "value": null,
+              "binary_value": null,
+              "value_list": {
+                "array": [
+                ]
+              },
+              "value_map": null
+            }
+          }
+        }
+      },
+      "start_time_millis": {
+        "long": 1591218751904
+      },
+      "end_time_millis": {
+        "long": 1591218753920
+      },
+      "metrics": {
+        "org.hypertrace.core.datamodel.Metrics": {
+          "metric_map": {
+            "Duration": {
+              "value": {
+                "double": 2016.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "CallCount": {
+              "value": {
+                "double": 1.0
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            }
+          }
+        }
+      }
+    }
+  ],
+  "entity_event_edge_list": [
+  ],
+  "entity_entity_graph": null,
+  "event_event_graph": null,
+  "entity_event_graph": null
+}

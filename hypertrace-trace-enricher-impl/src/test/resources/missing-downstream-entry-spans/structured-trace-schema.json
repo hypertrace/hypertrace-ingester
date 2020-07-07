@@ -1,0 +1,1142 @@
+{
+  "type": "record",
+  "name": "StructuredTrace",
+  "namespace": "org.hypertrace.core.datamodel",
+  "fields": [
+    {
+      "name": "customer_id",
+      "type": {
+        "type": "string",
+        "avro.java.string": "String"
+      }
+    },
+    {
+      "name": "trace_id",
+      "type": "bytes"
+    },
+    {
+      "name": "entity_list",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Entity",
+          "fields": [
+            {
+              "name": "customer_id",
+              "type": {
+                "type": "string",
+                "avro.java.string": "String"
+              }
+            },
+            {
+              "name": "entity_id",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "entity_type",
+              "type": {
+                "type": "string",
+                "avro.java.string": "String"
+              }
+            },
+            {
+              "name": "entity_name",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "attributes",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "Attributes",
+                  "fields": [
+                    {
+                      "name": "attribute_map",
+                      "type": {
+                        "type": "map",
+                        "values": {
+                          "type": "record",
+                          "name": "AttributeValue",
+                          "fields": [
+                            {
+                              "name": "value",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "binary_value",
+                              "type": [
+                                "null",
+                                "bytes"
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "value_list",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  }
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "value_map",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "map",
+                                  "values": {
+                                    "type": "string",
+                                    "avro.java.string": "String"
+                                  },
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            }
+                          ]
+                        },
+                        "avro.java.string": "String"
+                      },
+                      "default": {}
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "related_entity_ids",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "EntityIds",
+                  "fields": [
+                    {
+                      "name": "ids",
+                      "type": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      },
+                      "default": []
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "event_list",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Event",
+          "fields": [
+            {
+              "name": "customer_id",
+              "type": {
+                "type": "string",
+                "avro.java.string": "String"
+              }
+            },
+            {
+              "name": "event_id",
+              "type": "bytes"
+            },
+            {
+              "name": "event_name",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "entity_id_list",
+              "type": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "avro.java.string": "String"
+                }
+              },
+              "default": []
+            },
+            {
+              "name": "attributes",
+              "type": [
+                "null",
+                "Attributes"
+              ],
+              "default": null
+            },
+            {
+              "name": "start_time_millis",
+              "type": "long",
+              "default": -1
+            },
+            {
+              "name": "end_time_millis",
+              "type": "long",
+              "default": -1
+            },
+            {
+              "name": "metrics",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "Metrics",
+                  "fields": [
+                    {
+                      "name": "metric_map",
+                      "type": {
+                        "type": "map",
+                        "values": {
+                          "type": "record",
+                          "name": "MetricValue",
+                          "fields": [
+                            {
+                              "name": "value",
+                              "type": [
+                                "null",
+                                "double"
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "binary_value",
+                              "type": [
+                                "null",
+                                "bytes"
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "value_list",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "array",
+                                  "items": "double"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "value_map",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "map",
+                                  "values": "double",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            }
+                          ]
+                        },
+                        "avro.java.string": "String"
+                      },
+                      "default": {}
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "event_ref_list",
+              "type": {
+                "type": "array",
+                "items": {
+                  "type": "record",
+                  "name": "EventRef",
+                  "fields": [
+                    {
+                      "name": "trace_id",
+                      "type": "bytes"
+                    },
+                    {
+                      "name": "event_id",
+                      "type": "bytes"
+                    },
+                    {
+                      "name": "ref_type",
+                      "type": {
+                        "type": "enum",
+                        "name": "EventRefType",
+                        "symbols": [
+                          "CHILD_OF",
+                          "FOLLOWS_FROM"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              "default": []
+            },
+            {
+              "name": "enriched_attributes",
+              "type": [
+                "null",
+                "Attributes"
+              ],
+              "default": null
+            },
+            {
+              "name": "jaegerFields",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "JaegerFields",
+                  "namespace": "org.hypertrace.core.datamodel.eventfields.jaeger",
+                  "fields": [
+                    {
+                      "name": "flags",
+                      "type": "int",
+                      "default": 0
+                    },
+                    {
+                      "name": "logs",
+                      "type": [
+                        "null",
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "avro.java.string": "String"
+                          }
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "warnings",
+                      "type": [
+                        "null",
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "avro.java.string": "String"
+                          }
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "service_name",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "http",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "Http",
+                  "namespace": "org.hypertrace.core.datamodel.eventfields.http",
+                  "fields": [
+                    {
+                      "name": "request",
+                      "type": [
+                        "null",
+                        {
+                          "type": "record",
+                          "name": "Request",
+                          "fields": [
+                            {
+                              "name": "url",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "scheme",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "host",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "method",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "path",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "query_string",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "body",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "session_id",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "cookies",
+                              "type": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              },
+                              "default": []
+                            },
+                            {
+                              "name": "user_agent",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "size",
+                              "type": "int",
+                              "default": 0
+                            },
+                            {
+                              "name": "headers",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "record",
+                                  "name": "RequestHeaders",
+                                  "fields": [
+                                    {
+                                      "name": "host",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "authority",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "content_type",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "path",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "x_forwarded_for",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "user_agent",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "cookie",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "other_headers",
+                                      "type": {
+                                        "type": "map",
+                                        "values": {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        },
+                                        "avro.java.string": "String"
+                                      },
+                                      "default": {}
+                                    }
+                                  ]
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "params",
+                              "type": {
+                                "type": "map",
+                                "values": {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                },
+                                "avro.java.string": "String"
+                              },
+                              "default": {}
+                            }
+                          ]
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "response",
+                      "type": [
+                        "null",
+                        {
+                          "type": "record",
+                          "name": "Response",
+                          "fields": [
+                            {
+                              "name": "body",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "status_code",
+                              "type": "int",
+                              "default": 0
+                            },
+                            {
+                              "name": "status_message",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "size",
+                              "type": "int",
+                              "default": 0
+                            },
+                            {
+                              "name": "cookies",
+                              "type": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              },
+                              "default": []
+                            },
+                            {
+                              "name": "headers",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "record",
+                                  "name": "ResponseHeaders",
+                                  "fields": [
+                                    {
+                                      "name": "content_type",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "set_cookie",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "other_headers",
+                                      "type": {
+                                        "type": "map",
+                                        "values": {
+                                          "type": "string",
+                                          "avro.java.string": "String"
+                                        },
+                                        "avro.java.string": "String"
+                                      },
+                                      "default": {}
+                                    }
+                                  ]
+                                }
+                              ],
+                              "default": null
+                            }
+                          ]
+                        }
+                      ],
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "grpc",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "Grpc",
+                  "namespace": "org.hypertrace.core.datamodel.eventfields.grpc",
+                  "fields": [
+                    {
+                      "name": "request",
+                      "type": [
+                        "null",
+                        {
+                          "type": "record",
+                          "name": "Request",
+                          "fields": [
+                            {
+                              "name": "method",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "host_port",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "call_options",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "body",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "size",
+                              "type": "int",
+                              "default": 0
+                            },
+                            {
+                              "name": "metadata",
+                              "type": {
+                                "type": "map",
+                                "values": {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                },
+                                "avro.java.string": "String"
+                              },
+                              "default": {}
+                            }
+                          ]
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "response",
+                      "type": [
+                        "null",
+                        {
+                          "type": "record",
+                          "name": "Response",
+                          "fields": [
+                            {
+                              "name": "body",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "size",
+                              "type": "int",
+                              "default": 0
+                            },
+                            {
+                              "name": "status_code",
+                              "type": "int",
+                              "default": -1
+                            },
+                            {
+                              "name": "status_message",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "error_name",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "error_message",
+                              "type": [
+                                "null",
+                                {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                }
+                              ],
+                              "default": null
+                            },
+                            {
+                              "name": "metadata",
+                              "type": {
+                                "type": "map",
+                                "values": {
+                                  "type": "string",
+                                  "avro.java.string": "String"
+                                },
+                                "avro.java.string": "String"
+                              },
+                              "default": {}
+                            }
+                          ]
+                        }
+                      ],
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "sql",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "Sql",
+                  "namespace": "org.hypertrace.core.datamodel.eventfields.sql",
+                  "fields": [
+                    {
+                      "name": "query",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "db_type",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "url",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "params",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    },
+                    {
+                      "name": "sqlstate",
+                      "type": [
+                        "null",
+                        {
+                          "type": "string",
+                          "avro.java.string": "String"
+                        }
+                      ],
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "attributes",
+      "type": [
+        "null",
+        "Attributes"
+      ],
+      "default": null
+    },
+    {
+      "name": "start_time_millis",
+      "type": "long",
+      "default": -1
+    },
+    {
+      "name": "end_time_millis",
+      "type": "long",
+      "default": -1
+    },
+    {
+      "name": "metrics",
+      "type": [
+        "null",
+        "Metrics"
+      ],
+      "default": null
+    },
+    {
+      "name": "entity_edge_list",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Edge",
+          "fields": [
+            {
+              "name": "edge_type",
+              "type": {
+                "type": "enum",
+                "name": "EdgeType",
+                "symbols": [
+                  "EVENT_EVENT",
+                  "ENTITY_ENTITY",
+                  "ENTITY_EVENT"
+                ]
+              }
+            },
+            {
+              "name": "src_index",
+              "type": "int",
+              "doc": "depending on the EdgeType, this index can point to the element in the entity_nodes or the event_nodes array"
+            },
+            {
+              "name": "tgt_index",
+              "type": "int",
+              "doc": "depending on the EdgeType, this index can point to the element in the entity_nodes or the event_nodes array"
+            },
+            {
+              "name": "attributes",
+              "type": [
+                "null",
+                "Attributes"
+              ],
+              "doc": "Edge attributes that are common between the two nodes. request/response  e.g. api_name, url etc",
+              "default": null
+            },
+            {
+              "name": "start_time_millis",
+              "type": [
+                "null",
+                "long"
+              ],
+              "default": null
+            },
+            {
+              "name": "end_time_millis",
+              "type": [
+                "null",
+                "long"
+              ],
+              "default": null
+            },
+            {
+              "name": "metrics",
+              "type": [
+                "null",
+                "Metrics"
+              ],
+              "default": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "event_edge_list",
+      "type": {
+        "type": "array",
+        "items": "Edge"
+      }
+    },
+    {
+      "name": "entity_event_edge_list",
+      "type": {
+        "type": "array",
+        "items": "Edge"
+      }
+    },
+    {
+      "name": "entity_entity_graph",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "Graph",
+          "fields": [
+            {
+              "name": "root_nodes",
+              "type": {
+                "type": "array",
+                "items": "int"
+              },
+              "default": []
+            },
+            {
+              "name": "adjacency_list",
+              "type": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": "int"
+                }
+              },
+              "default": []
+            }
+          ]
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "event_event_graph",
+      "type": [
+        "null",
+        "Graph"
+      ],
+      "default": null
+    },
+    {
+      "name": "entity_event_graph",
+      "type": [
+        "null",
+        "Graph"
+      ],
+      "default": null
+    }
+  ]
+}
