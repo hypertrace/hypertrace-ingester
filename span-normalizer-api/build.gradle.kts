@@ -43,14 +43,6 @@ protobuf {
   }
 }
 
-sourceSets {
-  main {
-    java {
-      srcDirs("src/main/java", "build/generated/source/proto/main/java", "build/generated/source/proto/main/grpc_java")
-    }
-  }
-}
-
 dependencies {
   api("com.google.api.grpc:proto-google-common-protos:1.12.0")
 }

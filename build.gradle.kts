@@ -11,8 +11,8 @@ plugins {
 subprojects {
   group = "org.hypertrace.core.spannormalizer"
   pluginManager.withPlugin("org.hypertrace.publish-plugin") {
-    configure<org.hypertrace.gradle.publishing.HypertracePublishExtension> {
-      license.set(org.hypertrace.gradle.publishing.License.AGPL_V3)
+    configure<HypertracePublishExtension> {
+      license.set(License.AGPL_V3)
     }
   }
 }
