@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
@@ -52,6 +53,37 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     String locationParam = SpanAttributeUtils.getStringAttribute(e,
         Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".location");
     assertEquals("", locationParam);
+  }
+
+  @Test
+  public void testMultipleValuedQueryParam() {
+    Event e = createMockEvent();
+    when(e.getHttp())
+        .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
+            Request.newBuilder()
+                .setUrl("http://hypertrace.org/users?action=checkout&action=a&age=2&age=3&location=")
+                .build())
+            .build());
+    enricher.enrichEvent(mockTrace, e);
+
+    String httpPathEnrichedValue = SpanAttributeUtils.getStringAttribute(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_PATH));
+    assertEquals("/users", httpPathEnrichedValue);
+
+    AttributeValue actionParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".action");
+    assertEquals("checkout", actionParam.getValue());
+    assertEquals(List.of("checkout", "a"), actionParam.getValueList());
+
+    AttributeValue ageParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".age");
+    assertEquals("2", ageParam.getValue());
+    assertEquals(List.of("2", "3"), ageParam.getValueList());
+
+    AttributeValue locationParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".location");
+    assertEquals("", locationParam.getValue());
+    assertEquals(List.of(""), locationParam.getValueList());
   }
 
   @Test
