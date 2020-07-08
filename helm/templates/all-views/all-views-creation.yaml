@@ -1,0 +1,38 @@
+{{- if .Values.mergeAllViews }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.allViews.creator.jobName }}
+  labels:
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+spec:
+  # Cancel job if it has not finished after 10 minutes
+  activeDeadlineSeconds: 600
+  # Keep the job's pod around for 15 minutes. This will be better once we implement pod crashes and errors
+  # monitoring.
+  ttlSecondsAfterFinished: 900
+  template:
+    spec:
+      restartPolicy: OnFailure
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.nodeLabels }}
+      nodeSelector:
+      {{- toYaml . | nindent 8}}
+    {{- end }}
+      containers:
+        - name: {{ .Values.allViews.creator.jobName }}
+          image: "{{ .Values.images.creator.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          args: [ "/app/resources/configs/all-views/job.conf" ]
+          resources:
+            {{- toYaml .Values.allViews.creator.resources | nindent 12 }}
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.allViews.creator.javaOpts | quote }}
+  backoffLimit: 100
+{{- end }}

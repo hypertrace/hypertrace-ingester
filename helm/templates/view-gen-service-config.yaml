@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.viewGeneratorServiceConfig.name }}
+  labels:
+    release: {{ .Release.Name }}
+data:
+  application.conf: |-
+    flink.job {
+      metrics {
+        metrics {
+          reporters = {{ .Values.viewGeneratorServiceConfig.flink.job.metrics.reporters | quote}}
+        }
+      }
+    }
+
+    flink.source {
+      schema.registry {
+        schema.registry.url = "http://schema-registry-service:8081"
+      }
+      kafka {
+        bootstrap.servers = "bootstrap:9092"
+      }
+    }
+
+    flink.sink {
+      schema.registry {
+        schema.registry.url = "http://schema-registry-service:8081"
+      }
+      kafka {
+        bootstrap.servers = "bootstrap:9092"
+      }
+    }
