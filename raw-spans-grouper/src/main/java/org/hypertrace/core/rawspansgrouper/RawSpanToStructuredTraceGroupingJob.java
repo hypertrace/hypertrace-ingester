@@ -108,8 +108,11 @@ public class RawSpanToStructuredTraceGroupingJob implements PlatformBackgroundJo
     SerializationSchema<StructuredTrace> serializationSchema = new RegistryBasedAvroSerde<>(
         outputTopic, StructuredTrace.class, sinkSchemaRegistryConfig);
     outputStream.addSink(
-        FlinkUtils.getFlinkKafkaProducer(outputTopic, serializationSchema, kafkaProducerConfig,
-            logFailuresOnly));
+        FlinkUtils
+            .getFlinkKafkaProducer(outputTopic, serializationSchema,
+                null/* By specifying null this will default to kafka producer's default partitioner i.e. round-robin*/,
+                kafkaProducerConfig,
+                logFailuresOnly));
     environment.execute("raw-spans-grouper");
   }
 
