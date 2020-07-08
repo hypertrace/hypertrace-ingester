@@ -25,7 +25,7 @@ dependencies {
   implementation(project(":raw-span-constants"))
   implementation(project(":span-normalizer-api"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.0")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.1")
   implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.1")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.2")
 

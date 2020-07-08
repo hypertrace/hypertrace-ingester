@@ -234,7 +234,7 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
       attributeFieldMap.put(
           RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME),
           AttributeValueCreator.create(jaegerSpan.getProcess().getServiceName()));
-      jaegerFieldsBuilder.setServiceName(jaegerSpan.getProcess().getServiceName());
+      eventBuilder.setServiceName(jaegerSpan.getProcess().getServiceName());
     }
 
     // EVENT METRICS
