@@ -89,7 +89,9 @@ public class SpanNormalizerJob implements PlatformBackgroundJob {
         new RegistryBasedAvroSerde<>(outputTopic, RawSpan.class, sinkSchemaRegistryConfig);
     outputStream.addSink(
         FlinkUtils.getFlinkKafkaProducer(
-            outputTopic, serializationSchema, kafkaProducerConfig, logFailuresOnly));
+            outputTopic, serializationSchema,
+            null/* By specifying null this will default to kafka producer's default partitioner i.e. round-robin*/,
+            kafkaProducerConfig, logFailuresOnly));
     environment.execute(SpanNormalizerJob.class.getSimpleName());
   }
 
