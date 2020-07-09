@@ -238,6 +238,7 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
     }
 
     // EVENT METRICS
+
     Map<String, MetricValue> metricMap = new HashMap<>();
     MetricValue durationMetric =
         MetricValue.newBuilder().setValue((double) (endTimeMillis - startTimeMillis)).build();
