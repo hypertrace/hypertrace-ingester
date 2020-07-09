@@ -229,7 +229,8 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
     }
 
     // Jaeger service name
-    if (jaegerSpan.getProcess() != null && jaegerSpan.getProcess().getServiceName() != null) {
+    if (jaegerSpan.getProcess() != null && jaegerSpan.getProcess().getServiceName() != null
+        && !jaegerSpan.getProcess().getServiceName().isEmpty()) {
       // Keep the attribute for now due to backwards compatibility
       attributeFieldMap.put(
           RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME),
