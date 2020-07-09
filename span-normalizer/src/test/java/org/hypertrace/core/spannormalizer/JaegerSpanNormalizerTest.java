@@ -138,4 +138,21 @@ public class JaegerSpanNormalizerTest {
     Assertions.assertEquals("testService", rawSpan.getEvent().getAttributes().getAttributeMap().get(
         RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)).getValue());
   }
+
+  @Test
+  public void testServiceNameNotAddededToEvent() {
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "defaultTenantId", "tenant-1")));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+    Process process = Process.newBuilder().build();
+    Span span = Span.newBuilder().setProcess(process).build();
+    RawSpan rawSpan = normalizer.convert(span);
+    Assertions.assertNull(rawSpan.getEvent().getServiceName());
+    Assertions.assertNull(rawSpan.getEvent().getAttributes().getAttributeMap().get(
+        RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)));
+  }
 }

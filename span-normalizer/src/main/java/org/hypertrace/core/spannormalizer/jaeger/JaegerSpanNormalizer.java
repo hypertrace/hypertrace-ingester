@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -229,8 +230,8 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
     }
 
     // Jaeger service name
-    if (jaegerSpan.getProcess() != null && jaegerSpan.getProcess().getServiceName() != null
-        && !jaegerSpan.getProcess().getServiceName().isEmpty()) {
+    if (jaegerSpan.getProcess() != null
+        && !StringUtils.isEmpty(jaegerSpan.getProcess().getServiceName())) {
       // Keep the attribute for now due to backwards compatibility
       attributeFieldMap.put(
           RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME),
