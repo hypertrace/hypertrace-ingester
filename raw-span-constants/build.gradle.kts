@@ -43,6 +43,14 @@ protobuf {
   }
 }
 
+sourceSets {
+  main {
+    java {
+      srcDirs("src/main/java", "build/generated/source/proto/main/java", "build/generated/source/proto/main/grpc_java")
+    }
+  }
+}
+
 dependencies {
   api("com.google.protobuf:protobuf-java-util:3.7.0")
   implementation("org.slf4j:slf4j-api:1.7.30")

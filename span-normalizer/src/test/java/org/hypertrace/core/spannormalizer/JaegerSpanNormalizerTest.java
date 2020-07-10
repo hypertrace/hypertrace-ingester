@@ -2,10 +2,15 @@ package org.hypertrace.core.spannormalizer;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.jaegertracing.api_v2.JaegerSpanInternalModel.Process;
+import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,5 +120,39 @@ public class JaegerSpanNormalizerTest {
               .contains(
                   "Both processor.tenantIdTagKey and processor.defaultTenantId configs shouldn't exist at same time"));
     }
+  }
+
+  @Test
+  public void testServiceNameAddededToEvent() {
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "defaultTenantId", "tenant-1")));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+    Process process = Process.newBuilder().setServiceName("testService").build();
+    Span span = Span.newBuilder().setProcess(process).build();
+    RawSpan rawSpan = normalizer.convert(span);
+    Assertions.assertEquals("testService", rawSpan.getEvent().getServiceName());
+    Assertions.assertEquals("testService", rawSpan.getEvent().getAttributes().getAttributeMap().get(
+        RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)).getValue());
+  }
+
+  @Test
+  public void testServiceNameNotAddededToEvent() {
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "defaultTenantId", "tenant-1")));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+    Process process = Process.newBuilder().build();
+    Span span = Span.newBuilder().setProcess(process).build();
+    RawSpan rawSpan = normalizer.convert(span);
+    Assertions.assertNull(rawSpan.getEvent().getServiceName());
+    Assertions.assertNull(rawSpan.getEvent().getAttributes().getAttributeMap().get(
+        RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)));
   }
 }
