@@ -64,9 +64,9 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
   }
 
   private Map<String, List<String>> getQueryParamsFromUrl(URL url) {
-    Map<String, List<String>> queryParamPairs = new HashMap<>();
+    Map<String, List<String>> queryParamNameToValuesr = new HashMap<>();
     if(StringUtils.isEmpty(url.getQuery())) {
-      return queryParamPairs;
+      return queryParamNameToValues;
     }
     String[] keyValuePairStrings = url.getQuery().split(QUERY_PARAM_DELIMITER);
     for (String pair : keyValuePairStrings) {
@@ -75,13 +75,13 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
           URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8) : pair;
       String attributeKey =
           String.format(PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, key);
-      if (!queryParamPairs.containsKey(attributeKey)) {
-        queryParamPairs.put(attributeKey, new ArrayList<>());
+      if (!queryParamNameToValues.containsKey(attributeKey)) {
+        queryParamNameToValues.put(attributeKey, new ArrayList<>());
       }
       String value = idx > 0 && pair.length() > idx + 1 ?
           URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8) : "";
-      queryParamPairs.get(attributeKey).add(value);
+      queryParamNameToValues.get(attributeKey).add(value);
     }
-    return queryParamPairs;
+    return queryParamNameToValues;
   }
 }
