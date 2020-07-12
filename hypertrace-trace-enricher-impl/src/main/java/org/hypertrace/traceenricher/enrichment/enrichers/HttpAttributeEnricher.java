@@ -1,14 +1,19 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+
+import com.google.common.base.Splitter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -64,24 +69,22 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
   }
 
   private Map<String, List<String>> getQueryParamsFromUrl(URL url) {
-    Map<String, List<String>> queryParamNameToValues = new HashMap<>();
-    if(StringUtils.isEmpty(url.getQuery())) {
-      return queryParamNameToValues;
+    if (StringUtils.isEmpty(url.getQuery())) {
+      return Collections.emptyMap();
     }
-    String[] keyValuePairStrings = url.getQuery().split(QUERY_PARAM_DELIMITER);
-    for (String pair : keyValuePairStrings) {
-      int idx = pair.indexOf(QUERY_PARAM_KEY_VALUE_DELIMITER);
-      String key = idx > 0 ?
-          URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8) : pair;
-      String attributeKey =
-          String.format(PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, key);
-      if (!queryParamNameToValues.containsKey(attributeKey)) {
-        queryParamNameToValues.put(attributeKey, new ArrayList<>());
-      }
-      String value = idx > 0 && pair.length() > idx + 1 ?
-          URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8) : "";
-      queryParamNameToValues.get(attributeKey).add(value);
-    }
-    return queryParamNameToValues;
+    return Splitter.on(QUERY_PARAM_DELIMITER)
+        .splitToList(url.getQuery())
+        .stream()
+        //split only on first occurrence of delimiter. eg: cat=1dog=2 should be split to cat -> 1dog=2
+        .map(kv -> kv.split(QUERY_PARAM_KEY_VALUE_DELIMITER, 2))
+        .map(kv -> Pair.of(
+            String.format(PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, decode(kv[0])),
+            kv.length == 2 ? decode(kv[1]) : ""
+        ))
+        .collect(groupingBy(Pair::getKey, mapping(Pair::getValue, toList())));
+  }
+
+  private String decode(String input) {
+    return URLDecoder.decode(input, StandardCharsets.UTF_8);
   }
 }
