@@ -64,7 +64,7 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
   }
 
   private Map<String, List<String>> getQueryParamsFromUrl(URL url) {
-    Map<String, List<String>> queryParamNameToValuesr = new HashMap<>();
+    Map<String, List<String>> queryParamNameToValues = new HashMap<>();
     if(StringUtils.isEmpty(url.getQuery())) {
       return queryParamNameToValues;
     }
