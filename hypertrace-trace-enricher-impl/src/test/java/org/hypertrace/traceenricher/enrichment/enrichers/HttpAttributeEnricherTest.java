@@ -87,6 +87,44 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
+  public void testGetQueryParamsFromUrl() {
+    Event e = createMockEvent();
+    // ; in url should not be treated as an splitting character.
+    // Url in this test also contains successive & and param with no value.
+    when(e.getHttp())
+        .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
+            Request.newBuilder()
+                .setUrl("http://hypertrace.org/users?action=checkout&action=a&age=2&age=3;&location=&area&&")
+                .build())
+            .build());
+    enricher.enrichEvent(mockTrace, e);
+
+    String httpPathEnrichedValue = SpanAttributeUtils.getStringAttribute(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_PATH));
+    assertEquals("/users", httpPathEnrichedValue);
+
+    AttributeValue actionParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".action");
+    assertEquals("checkout", actionParam.getValue());
+    assertEquals(List.of("checkout", "a"), actionParam.getValueList());
+
+    AttributeValue ageParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".age");
+    assertEquals("2", ageParam.getValue());
+    assertEquals(List.of("2", "3;"), ageParam.getValueList());
+
+    AttributeValue locationParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".location");
+    assertEquals("", locationParam.getValue());
+    assertEquals(List.of(""), locationParam.getValueList());
+
+    AttributeValue areaParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".area");
+    assertEquals("", areaParam.getValue());
+    assertEquals(List.of(""), areaParam.getValueList());
+  }
+
+  @Test
   public void test_withAnInvalidUrl_shouldSkipEnrichment() {
     Event e = createMockEvent();
     Map<String, AttributeValue> avm = e.getAttributes().getAttributeMap();
