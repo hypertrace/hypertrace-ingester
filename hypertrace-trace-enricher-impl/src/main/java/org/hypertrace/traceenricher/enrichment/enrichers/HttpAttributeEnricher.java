@@ -1,16 +1,19 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+
+import com.google.common.base.Splitter;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -29,6 +32,8 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
   private final static String HTTP_REQUEST_QUERY_PARAM_ATTR =
       EnrichedSpanConstants.getValue(Http.HTTP_REQUEST_QUERY_PARAM);
   private final static String PARAM_ATTR_FORMAT = "%s.%s";
+  private final static String QUERY_PARAM_DELIMITER = "&";
+  private final static String QUERY_PARAM_KEY_VALUE_DELIMITER = "=";
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -45,7 +50,7 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
         String path = fullUrl.getPath();
         addEnrichedAttribute(event, HTTP_REQUEST_PATH_ATTR, AttributeValueCreator.create(path));
 
-        Map<String, List<String>> paramNameToValues = getQueryParamValues(url);
+        Map<String, List<String>> paramNameToValues = getQueryParamsFromUrl(fullUrl);
         for (Map.Entry<String, List<String>> queryParamEntry : paramNameToValues.entrySet()) {
           if (queryParamEntry.getValue().isEmpty()) {
             continue;
@@ -63,27 +68,23 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
     }
   }
 
-  private Map<String, List<String>> getQueryParamValues(String url) {
-    try {
-      List<NameValuePair> queryParams = URLEncodedUtils.parse(new URI(url),
-          StandardCharsets.UTF_8);
-      Map<String, List<String>> paramNameToValues = new HashMap<>();
-      for (NameValuePair queryParam : queryParams) {
-        //appending the queryParam name to http.request.query.param prefix
-        String queryParamAttr =
-            String.format(PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, queryParam.getName());
-        if (!paramNameToValues.containsKey(queryParamAttr)) {
-          paramNameToValues.put(queryParamAttr, new ArrayList<>());
-        }
-        paramNameToValues.get(queryParamAttr).add(queryParam.getValue());
-      }
-      return paramNameToValues;
-    } catch (URISyntaxException e) {
-      //this exception should never be thrown, since we already
-      //checked for the URL validity
-      //We just have to add a try/catch block, because URLEncodedUtils need URI as input
-      //instead of URL
-      return new HashMap<>();
+  private Map<String, List<String>> getQueryParamsFromUrl(URL url) {
+    if (StringUtils.isEmpty(url.getQuery())) {
+      return Collections.emptyMap();
     }
+    return Splitter.on(QUERY_PARAM_DELIMITER)
+        .splitToList(url.getQuery())
+        .stream()
+        //split only on first occurrence of delimiter. eg: cat=1dog=2 should be split to cat -> 1dog=2
+        .map(kv -> kv.split(QUERY_PARAM_KEY_VALUE_DELIMITER, 2))
+        .map(kv -> Pair.of(
+            String.format(PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, decode(kv[0])),
+            kv.length == 2 ? decode(kv[1]) : ""
+        ))
+        .collect(groupingBy(Pair::getKey, mapping(Pair::getValue, toList())));
+  }
+
+  private String decode(String input) {
+    return URLDecoder.decode(input, StandardCharsets.UTF_8);
   }
 }

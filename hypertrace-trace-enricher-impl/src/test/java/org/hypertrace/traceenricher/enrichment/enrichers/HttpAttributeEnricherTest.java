@@ -87,6 +87,115 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
+  public void testGetQueryParamsFromUrl() {
+    Event e = createMockEvent();
+    // ; in url should not be treated as an splitting character.
+    // Url in this test also contains successive & and param with no value.
+    when(e.getHttp())
+        .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
+            Request.newBuilder()
+                .setUrl("http://hypertrace.org/users?action=checkout&cat=1dog=2&action=a&age=2&age=3;&location=&area&&")
+                .build())
+            .build());
+    enricher.enrichEvent(mockTrace, e);
+
+    String httpPathEnrichedValue = SpanAttributeUtils.getStringAttribute(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_PATH));
+    assertEquals("/users", httpPathEnrichedValue);
+
+    AttributeValue actionParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".action");
+    assertEquals("checkout", actionParam.getValue());
+    assertEquals(List.of("checkout", "a"), actionParam.getValueList());
+
+    AttributeValue ageParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".age");
+    assertEquals("2", ageParam.getValue());
+    assertEquals(List.of("2", "3;"), ageParam.getValueList());
+
+    AttributeValue locationParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".location");
+    assertEquals("", locationParam.getValue());
+    assertEquals(List.of(""), locationParam.getValueList());
+
+    AttributeValue areaParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".area");
+    assertEquals("", areaParam.getValue());
+    assertEquals(List.of(""), areaParam.getValueList());
+
+    AttributeValue catParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".cat");
+    assertEquals("1dog=2", catParam.getValue());
+    assertEquals(List.of("1dog=2"), catParam.getValueList());
+  }
+
+  @Test
+  public void testSemicolonInQueryParam() {
+    Event e = createMockEvent();
+    when(e.getHttp())
+        .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
+            Request.newBuilder()
+                .setUrl("http://hypertrace.org/users?action=checkout;age=2")
+                .build())
+            .build());
+    enricher.enrichEvent(mockTrace, e);
+
+    AttributeValue actionParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".action");
+    assertEquals("checkout;age=2", actionParam.getValue());
+    assertEquals(List.of("checkout;age=2"), actionParam.getValueList());
+  }
+
+  @Test
+  public void testNoValueForQueryParam() {
+    Event e = createMockEvent();
+    when(e.getHttp())
+        .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
+            Request.newBuilder()
+                .setUrl("http://hypertrace.org/users?action=checkout&location=&area&&")
+                .build())
+            .build());
+    enricher.enrichEvent(mockTrace, e);
+
+    AttributeValue actionParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".action");
+    assertEquals("checkout", actionParam.getValue());
+    assertEquals(List.of("checkout"), actionParam.getValueList());
+
+    AttributeValue locationParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".location");
+    assertEquals("", locationParam.getValue());
+    assertEquals(List.of(""), locationParam.getValueList());
+
+    AttributeValue areaParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".area");
+    assertEquals("", areaParam.getValue());
+    assertEquals(List.of(""), areaParam.getValueList());
+  }
+
+  @Test
+  public void testDecodeQueryParams() {
+    Event e = createMockEvent();
+    when(e.getHttp())
+        .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
+            Request.newBuilder()
+                .setUrl("http://hypertrace.org/users?action=check%20out&location=hello%3Dworld")
+                .build())
+            .build());
+    enricher.enrichEvent(mockTrace, e);
+
+    AttributeValue actionParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".action");
+    assertEquals("check out", actionParam.getValue());
+    assertEquals(List.of("check out"), actionParam.getValueList());
+
+    AttributeValue locationParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".location");
+    assertEquals("hello=world", locationParam.getValue());
+    assertEquals(List.of("hello=world"), locationParam.getValueList());
+  }
+
+  @Test
   public void test_withAnInvalidUrl_shouldSkipEnrichment() {
     Event e = createMockEvent();
     Map<String, AttributeValue> avm = e.getAttributes().getAttributeMap();
