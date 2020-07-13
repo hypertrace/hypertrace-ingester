@@ -10,3 +10,4 @@ build
 helm/Chart.lock
 helm/charts/
 *.tgz
+*.log

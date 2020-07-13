@@ -17,13 +17,13 @@ tasks.test {
 
 dependencies {
   implementation(project(":hypertrace-view-generator-api"))
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.2")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.4")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.0")
 
-  implementation("org.hypertrace.traceenricher:enriched-span-constants:0.1.0")
-  implementation("org.hypertrace.traceenricher:hypertrace-trace-enricher-api:0.1.0")
-  implementation("org.hypertrace.core.spannormalizer:raw-span-constants:0.1.2")
-  implementation("org.hypertrace.entity.service:entity-service-api:0.1.0")
+  implementation("org.hypertrace.traceenricher:enriched-span-constants:0.1.3")
+  implementation("org.hypertrace.traceenricher:hypertrace-trace-enricher-api:0.1.3")
+  implementation("org.hypertrace.core.spannormalizer:raw-span-constants:0.1.5")
+  implementation("org.hypertrace.entity.service:entity-service-api:0.1.3")
 
   implementation("org.apache.avro:avro:1.9.2")
   implementation("org.apache.commons:commons-lang3:3.10")

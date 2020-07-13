@@ -9,7 +9,7 @@ pluginManagement {
 }
 
 plugins {
-  id("org.hypertrace.version-settings") version "0.1.1"
+  id("org.hypertrace.version-settings") version "0.1.2"
 }
 
 include(":hypertrace-view-generator-api")
