@@ -26,8 +26,8 @@ dependencies {
   implementation(project(":span-normalizer-api"))
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.1")
-  implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.1")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.2")
+  implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.2")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.3")
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.30.2")
