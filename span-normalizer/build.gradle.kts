@@ -21,6 +21,10 @@ tasks.run<JavaExec> {
   jvmArgs = listOf("-Dbootstrap.config.uri=file:${projectDir}/src/main/resources/configs", "-Dservice.name=span-normalizer")
 }
 
+tasks.test {
+  useJUnitPlatform()
+}
+
 dependencies {
   implementation(project(":raw-span-constants"))
   implementation(project(":span-normalizer-api"))
