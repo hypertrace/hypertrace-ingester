@@ -18,9 +18,6 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientSpanEndpointResolver.class);
 
-  private static final String JAEGER_SERVICE_NAME_ATTR_NAME =
-      RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME);
-
   public ClientSpanEndpointResolver(
       FQNResolver fqnResolver) {
     super(fqnResolver);
@@ -36,7 +33,7 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
     String jaegerService =
-        SpanAttributeUtils.getStringAttribute(event, JAEGER_SERVICE_NAME_ATTR_NAME);
+        event.getServiceName();
     if (jaegerService != null) {
       Event parentSpan = structuredTraceGraph.getParentEvent(event);
       if (parentSpan != null) {

@@ -42,8 +42,6 @@ import org.mockito.Mock;
 
 public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
   private static final String MONGO_URL = "mongo:27017";
-  private static final String JAEGER_SERVICE_NAME_ATTR_NAME =
-      RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME);
   private static final String SERVICE_NAME_ATTR =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
 
@@ -611,7 +609,6 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map
             .of(
                 "span.kind", AttributeValue.newBuilder().setValue("client").build(),
-                JAEGER_SERVICE_NAME_ATTR_NAME, AttributeValue.newBuilder().setValue("redis").build(),
                 "k8s.pod_id",
                 AttributeValue.newBuilder().setValue("55636196-c840-11e9-a417-42010a8a0064").build(),
                 "docker.container_id", AttributeValue.newBuilder()
@@ -624,6 +621,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEventName("redis::getDrivers").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
+        .setServiceName("redis")
         .setEventRefList(Arrays.asList(
             EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
@@ -634,9 +632,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEventId(ByteBuffer.wrap("random".getBytes()))
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map
             .of(
-                "span.kind", AttributeValue.newBuilder().setValue("server").build(),
-                JAEGER_SERVICE_NAME_ATTR_NAME,
-                AttributeValue.newBuilder().setValue("customer").build())).build())
+                "span.kind", AttributeValue.newBuilder().setValue("server").build())).build())
         .setEnrichedAttributes(Attributes.newBuilder().setAttributeMap(Map
             .of(
                 SERVICE_NAME_ATTR, AttributeValue.newBuilder().setValue("customer").build()

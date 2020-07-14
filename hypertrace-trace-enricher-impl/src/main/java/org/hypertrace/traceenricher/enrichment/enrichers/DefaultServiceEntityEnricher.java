@@ -34,8 +34,6 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_ID);
   private static final String SERVICE_NAME_ATTR_NAME =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
-  private static final String JAEGER_SERVICE_NAME_ATTR_NAME =
-      RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME);
   private static final String SPAN_ID_KEY = "span_id";
   private static final String TRACE_ID_KEY = "trace_id";
 
@@ -58,7 +56,7 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
     // If there is jaegerServiceName present in the span, just go ahead and create a service
     // entity with those details. This is to support BareMetal case.
     String jaegerService =
-        SpanAttributeUtils.getStringAttribute(event, JAEGER_SERVICE_NAME_ATTR_NAME);
+        event.getServiceName();
     if (jaegerService != null) {
       // Check if the exit span's jaeger_svcname is different from the parent span's jaeger_svcname
       // If it is then use the parent span's jaeger_svcname as the exit span's jaeger svc name else

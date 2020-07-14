@@ -35,9 +35,6 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
 
   private static final String ENTITY_ID = "entity1";
 
-  private static final String JAEGER_SERVICE_NAME_ATTR_NAME =
-      RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME);
-
   private static final String API_BOUNDARY_TYPE_ATTR =
       EnrichedSpanConstants.getValue(Api.API_BOUNDARY_TYPE);
 
@@ -109,11 +106,11 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
   public void test_case1_findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService() {
     // Case 1:  sampleapp (entry) -> redis (exit)
     Event parent = createEvent("parent",
-        Map.of("span.kind", "server", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
-        Map.of("SPAN_TYPE", "ENTRY", "SERVICE_NAME", "sampleapp"), null);
+        Map.of("span.kind", "server"),
+        Map.of("SPAN_TYPE", "ENTRY", "SERVICE_NAME", "sampleapp"), null, "sampleapp");
     Event current = createEvent("current",
-        Map.of("span.kind", "client", JAEGER_SERVICE_NAME_ATTR_NAME, "redis"),
-        Map.of("SPAN_TYPE", "EXIT"), ByteBuffer.wrap("parent".getBytes()));
+        Map.of("span.kind", "client"),
+        Map.of("SPAN_TYPE", "EXIT"), ByteBuffer.wrap("parent".getBytes()), "redis");
 
     StructuredTraceGraph graph = mock(StructuredTraceGraph.class);
     when(graph.getParentEvent(current)).thenReturn(parent);
@@ -128,11 +125,11 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
   public void test_case2_findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService() {
     // Case 2:  sampleapp (entry) -> sampleapp (exit)
     Event parent = createEvent("parent",
-        Map.of("span.kind", "server", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
-        Map.of("SPAN_TYPE", "ENTRY", "SERVICE_NAME", "sampleapp"), null);
+        Map.of("span.kind", "server"),
+        Map.of("SPAN_TYPE", "ENTRY", "SERVICE_NAME", "sampleapp"), null, "sampleapp");
     Event current = createEvent("current",
-        Map.of("span.kind", "client", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
-        Map.of("SPAN_TYPE", "EXIT"), ByteBuffer.wrap("parent".getBytes()));
+        Map.of("span.kind", "client"),
+        Map.of("SPAN_TYPE", "EXIT"), ByteBuffer.wrap("parent".getBytes()), "sampleapp");
 
     StructuredTraceGraph graph = mock(StructuredTraceGraph.class);
     when(graph.getParentEvent(current)).thenReturn(parent);
@@ -147,17 +144,17 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
   public void test_case3_findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService() {
     // Case 3:  sampleapp (entry) -> sampleapp (exit) -> redis (exit)
     Event parent1 = createEvent("parent1",
-        Map.of("span.kind", "server", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
-        Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"), null);
+        Map.of("span.kind", "server"),
+        Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"), null, "sampleapp");
 
     Event parent2 = createEvent("parent2",
-        Map.of("span.kind", "client", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
+        Map.of("span.kind", "client"),
         Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT", "SERVICE_NAME", "sampleapp"),
-        ByteBuffer.wrap("parent1".getBytes()));
+        ByteBuffer.wrap("parent1".getBytes()), "sampleapp");
 
     Event current = createEvent("current",
-        Map.of("span.kind", "client", JAEGER_SERVICE_NAME_ATTR_NAME, "redis"),
-        Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"), ByteBuffer.wrap("parent2".getBytes()));
+        Map.of("span.kind", "client"),
+        Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"), ByteBuffer.wrap("parent2".getBytes()), "redis");
 
     StructuredTraceGraph graph = mock(StructuredTraceGraph.class);
     when(graph.getParentEvent(current)).thenReturn(parent2);
@@ -173,15 +170,15 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
   public void test_case4_findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService() {
     // Case 4:  sampleapp (entry) -> sampleapp (exit) -> sampleapp (exit)
     Event parent1 = createEvent("parent1",
-        Map.of("span.kind", "server", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
-        Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"), null);
+        Map.of("span.kind", "server"),
+        Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"), null, "sampleapp");
     Event parent2 = createEvent("parent2",
-        Map.of("span.kind", "client", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
+        Map.of("span.kind", "client"),
         Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT", "SERVICE_NAME", "sampleapp"),
-        ByteBuffer.wrap("parent1".getBytes()));
+        ByteBuffer.wrap("parent1".getBytes()), "sampleapp");
     Event current = createEvent("current",
-        Map.of("span.kind", "client", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
-        Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"), ByteBuffer.wrap("parent2".getBytes()));
+        Map.of("span.kind", "client"),
+        Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"), ByteBuffer.wrap("parent2".getBytes()), "sampleapp");
 
     StructuredTraceGraph graph = mock(StructuredTraceGraph.class);
     when(graph.getParentEvent(current)).thenReturn(parent2);
@@ -197,8 +194,8 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
   public void test_case5_findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService() {
     // Case 4:  sampleapp (exit)
     Event current = createEvent("current",
-        Map.of("span.kind", "client", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
-        Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"), null);
+        Map.of("span.kind", "client"),
+        Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"), null, "sampleapp");
 
     StructuredTraceGraph graph = mock(StructuredTraceGraph.class);
     when(graph.getParentEvent(current)).thenReturn(null);
@@ -214,15 +211,15 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
   public void test_case6_findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService() {
     // Case 6:  sampleapp (entry) -> sampleapp (entry) -> sampleapp (exit)
     Event parent1 = createEvent("parent1",
-        Map.of("span.kind", "server", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
-        Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"), null);
+        Map.of("span.kind", "server"),
+        Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"), null, "sampleapp");
     Event parent2 = createEvent("parent2",
-        Map.of("span.kind", "client", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
+        Map.of("span.kind", "client"),
         Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"),
-        ByteBuffer.wrap("parent1".getBytes()));
+        ByteBuffer.wrap("parent1".getBytes()), "sampleapp");
     Event current = createEvent("current",
-        Map.of("span.kind", "client", JAEGER_SERVICE_NAME_ATTR_NAME, "sampleapp"),
-        Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"), ByteBuffer.wrap("parent2".getBytes()));
+        Map.of("span.kind", "client"),
+        Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"), ByteBuffer.wrap("parent2".getBytes()), "sampleapp");
 
     StructuredTraceGraph graph = mock(StructuredTraceGraph.class);
     when(graph.getParentEvent(current)).thenReturn(parent2);
@@ -236,7 +233,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
 
 
   private Event createEvent(String eventName, Map<String, String> attributes,
-                            Map<String, String> enriched, ByteBuffer parentEventId) {
+                            Map<String, String> enriched, ByteBuffer parentEventId, String serviceName) {
 
     Map<String, AttributeValue> attributeMap = new HashMap<>();
     attributes.forEach(
@@ -260,6 +257,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
             Attributes.newBuilder().setAttributeMap(enrichedAttributesMap).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build())
         .setEventName(eventName)
+        .setServiceName(serviceName)
         .setEventRefList(eventRefList).build();
   }
 

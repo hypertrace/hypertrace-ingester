@@ -179,16 +179,13 @@ public class AbstractAttributeEnricherTest {
   }
 
   Event.Builder createOpenSourceSpan(String tenantId, String eventId, String jaegerService) {
-    Map<String, AttributeValue> rawAttributeMap = Map.of(
-        Constants.getRawSpanConstant(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME),
-        AttributeValue.newBuilder().setValue(jaegerService).build()
-    );
-
+    Map<String, AttributeValue> rawAttributeMap = Map.of();
     Map<String, String> enrichedAttr = Map.of(Constants.getEnrichedSpanConstant(Api.API_BOUNDARY_TYPE), "ENTRY");
 
     return Event.newBuilder().setCustomerId(tenantId)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
         .setEnrichedAttributes(createNewAvroAttributes(enrichedAttr))
+        .setServiceName(jaegerService)
         .setAttributes(Attributes.newBuilder().setAttributeMap(rawAttributeMap).build());
   }
 

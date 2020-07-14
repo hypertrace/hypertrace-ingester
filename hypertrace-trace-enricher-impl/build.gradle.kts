@@ -12,7 +12,7 @@ dependencies {
   implementation(project(":enriched-span-constants"))
   implementation(project(":hypertrace-trace-enricher-api"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.0")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.2")
   implementation("org.hypertrace.core.spannormalizer:raw-span-constants:0.1.2")
   implementation("org.hypertrace.entity.service:entity-service-client:0.1.2")
 
