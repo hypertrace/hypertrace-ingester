@@ -567,6 +567,35 @@ public class HttpFieldsGeneratorTest {
   }
 
   @Test
+  public void testInvalidUrl() {
+    HttpFieldsGenerator httpFieldsGenerator = new HttpFieldsGenerator();
+
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap1 = new HashMap<>();
+    tagsMap1.put(RawSpanConstants.getValue(HTTP_URL), createKeyValue("/dispatch/test?a=b&k1=v1"));
+
+    Event.Builder eventBuilder1 = Event.newBuilder();
+    Http.Builder httpBuilder1 = httpFieldsGenerator.getProtocolBuilder(eventBuilder1);
+
+    tagsMap1.forEach(
+        (key, keyValue) ->
+            httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder1, tagsMap1));
+
+    Assertions.assertNull(httpBuilder1.getRequestBuilder().getUrl());
+
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap2 = new HashMap<>();
+    tagsMap2.put(RawSpanConstants.getValue(HTTP_URL), createKeyValue("http://abc.xyz/dispatch/test?a=b&k1=v1"));
+
+    Event.Builder eventBuilder2 = Event.newBuilder();
+    Http.Builder httpBuilder2 = httpFieldsGenerator.getProtocolBuilder(eventBuilder2);
+
+    tagsMap2.forEach(
+            (key, keyValue) ->
+                    httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
+
+    Assertions.assertEquals("http://abc.xyz/dispatch/test?a=b&k1=v1", httpBuilder2.getRequestBuilder().getUrl());
+  }
+
+  @Test
   public void testPopulateOtherFields() {
     HttpFieldsGenerator httpFieldsGenerator = new HttpFieldsGenerator();
 
