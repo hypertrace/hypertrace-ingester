@@ -116,7 +116,6 @@ public class StructuredTracesEnrichmentTest {
         readInStructuredTraceFromJson("missing-downstream-entry-spans/before-enrichment.json", schema);
     StructuredTrace expectedEnrichedStructuredTrace =
         readInStructuredTraceFromJson("missing-downstream-entry-spans/after-enrichment.json", schema);
-
     enrichmentProcessor.process(structuredTrace);
     Assertions.assertEquals(6, structuredTrace.getEventList().size());
     Assertions.assertEquals(expectedEnrichedStructuredTrace, structuredTrace);

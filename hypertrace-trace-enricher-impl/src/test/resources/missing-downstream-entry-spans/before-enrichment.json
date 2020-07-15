@@ -57,10 +57,7 @@
         "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
           "flags": 0,
           "logs": null,
-          "warnings": null,
-          "service_name": {
-            "string": "api_01"
-          }
+          "warnings": null
         }
       },
       "http": {
@@ -88,7 +85,10 @@
         }
       },
       "grpc": null,
-      "sql": null
+      "sql": null,
+      "service_name": {
+        "string": "api_01"
+      }
     },
     {
       "customer_id": "__default",
@@ -148,10 +148,7 @@
         "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
           "flags": 0,
           "logs": null,
-          "warnings": null,
-          "service_name": {
-            "string": "api_01"
-          }
+          "warnings": null
         }
       },
       "http": {
@@ -179,7 +176,10 @@
         }
       },
       "grpc": null,
-      "sql": null
+      "sql": null,
+      "service_name": {
+        "string": "api_01"
+      }
     },
     {
       "customer_id": "__default",
@@ -239,10 +239,7 @@
         "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
           "flags": 0,
           "logs": null,
-          "warnings": null,
-          "service_name": {
-            "string": "api_01"
-          }
+          "warnings": null
         }
       },
       "http": {
@@ -270,7 +267,10 @@
         }
       },
       "grpc": null,
-      "sql": null
+      "sql": null,
+      "service_name": {
+        "string": "api_01"
+      }
     },
     {
       "customer_id": "__default",
@@ -330,10 +330,7 @@
         "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
           "flags": 0,
           "logs": null,
-          "warnings": null,
-          "service_name": {
-            "string": "api_02"
-          }
+          "warnings": null
         }
       },
       "http": {
@@ -361,7 +358,10 @@
         }
       },
       "grpc": null,
-      "sql": null
+      "sql": null,
+      "service_name": {
+        "string": "api_02"
+      }
     },
     {
       "customer_id": "__default",
@@ -421,10 +421,7 @@
         "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
           "flags": 0,
           "logs": null,
-          "warnings": null,
-          "service_name": {
-            "string": "api_03"
-          }
+          "warnings": null
         }
       },
       "http": {
@@ -452,7 +449,10 @@
         }
       },
       "grpc": null,
-      "sql": null
+      "sql": null,
+      "service_name": {
+        "string": "api_03"
+      }
     },
     {
       "customer_id": "__default",
@@ -512,10 +512,7 @@
         "org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields": {
           "flags": 0,
           "logs": null,
-          "warnings": null,
-          "service_name": {
-            "string": "api_03"
-          }
+          "warnings": null
         }
       },
       "http": {
@@ -543,7 +540,10 @@
         }
       },
       "grpc": null,
-      "sql": null
+      "sql": null,
+      "service_name": {
+        "string": "api_03"
+      }
     }
   ],
   "attributes": {

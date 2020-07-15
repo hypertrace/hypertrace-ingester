@@ -34,8 +34,6 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_ID);
   private static final String SERVICE_NAME_ATTR_NAME =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
-  private static final String JAEGER_SERVICE_NAME_ATTR_NAME =
-      RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME);
   private static final String SPAN_ID_KEY = "span_id";
   private static final String TRACE_ID_KEY = "trace_id";
 
@@ -55,11 +53,10 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       return;
     }
 
-    // If there is jaegerServiceName present in the span, just go ahead and create a service
+    // If there is serviceName present in the span, just go ahead and create a service
     // entity with those details. This is to support BareMetal case.
-    String jaegerService =
-        SpanAttributeUtils.getStringAttribute(event, JAEGER_SERVICE_NAME_ATTR_NAME);
-    if (jaegerService != null) {
+    String serviceName = event.getServiceName();
+    if (serviceName != null) {
       // Check if the exit span's jaeger_svcname is different from the parent span's jaeger_svcname
       // If it is then use the parent span's jaeger_svcname as the exit span's jaeger svc name else
       // just use the jaeger svc name as is.
@@ -76,15 +73,15 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       if (EnrichedSpanUtils.isExitSpan(event) &&
           SpanAttributeUtils.isLeafSpan(graph, event)) {
         String parentSvcName = findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService(event,
-            jaegerService, graph).orElse(null);
-        jaegerService = parentSvcName != null ? parentSvcName : jaegerService;
+            serviceName, graph).orElse(null);
+        serviceName = parentSvcName != null ? parentSvcName : serviceName;
       }
 
       Map<String, String> attributes =
           Map.of(SPAN_ID_KEY, HexUtils.getHex(event.getEventId()), TRACE_ID_KEY,
               HexUtils.getHex(trace.getTraceId()));
       org.hypertrace.entity.data.service.v1.Entity entity =
-          factory.getService(event.getCustomerId(), jaegerService,
+          factory.getService(event.getCustomerId(), serviceName,
               ServiceType.JAEGER_SERVICE.name(), attributes);
       org.hypertrace.core.datamodel.Entity avroEntity =
           EntityAvroConverter.convertToAvroEntity(entity, false);

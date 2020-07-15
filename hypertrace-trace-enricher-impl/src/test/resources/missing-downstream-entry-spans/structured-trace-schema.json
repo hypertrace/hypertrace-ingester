@@ -367,17 +367,6 @@
                         }
                       ],
                       "default": null
-                    },
-                    {
-                      "name": "service_name",
-                      "type": [
-                        "null",
-                        {
-                          "type": "string",
-                          "avro.java.string": "String"
-                        }
-                      ],
-                      "default": null
                     }
                   ]
                 }
@@ -975,6 +964,17 @@
                       "default": null
                     }
                   ]
+                }
+              ],
+              "default": null
+            },
+            {
+              "name": "service_name",
+              "type": [
+                "null",
+                {
+                  "type": "string",
+                  "avro.java.string": "String"
                 }
               ],
               "default": null

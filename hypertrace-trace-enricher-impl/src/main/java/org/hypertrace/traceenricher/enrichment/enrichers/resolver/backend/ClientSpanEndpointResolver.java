@@ -18,9 +18,6 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientSpanEndpointResolver.class);
 
-  private static final String JAEGER_SERVICE_NAME_ATTR_NAME =
-      RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME);
-
   public ClientSpanEndpointResolver(
       FQNResolver fqnResolver) {
     super(fqnResolver);
@@ -35,17 +32,16 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
    */
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    String jaegerService =
-        SpanAttributeUtils.getStringAttribute(event, JAEGER_SERVICE_NAME_ATTR_NAME);
-    if (jaegerService != null) {
+    String serviceName = event.getServiceName();
+    if (serviceName != null) {
       Event parentSpan = structuredTraceGraph.getParentEvent(event);
       if (parentSpan != null) {
         String parentSpanServiceName = EnrichedSpanUtils.getServiceName(parentSpan);
-        if (!jaegerService.equals(parentSpanServiceName)) {
+        if (!serviceName.equals(parentSpanServiceName)) {
           LOGGER.debug(
               "Detected exit span whose service name is different from its parent span service name. Will be creating a backend based on exit span service name = [{}]",
-              jaegerService);
-          final Builder backendBuilder = getBackendEntityBuilder(BackendType.UNKNOWN, jaegerService,
+              serviceName);
+          final Builder backendBuilder = getBackendEntityBuilder(BackendType.UNKNOWN, serviceName,
               event);
           return Optional.of(backendBuilder.build());
         }
