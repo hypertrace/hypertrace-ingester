@@ -645,4 +645,50 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals("redis.hipstershop.devcluster", backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue().getString());
   }
+
+  @Test
+  public void checkFallbackBackendEntityGeneratedFromClientExitSpanServiceNameSameAsParentServiceName() {
+    Event e = Event.newBuilder().setCustomerId("__default")
+        .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+        .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824")).setEnrichedAttributes(
+            Attributes.newBuilder().setAttributeMap(
+                Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
+        .setAttributes(Attributes.newBuilder().setAttributeMap(Map
+            .of(
+                "span.kind", AttributeValue.newBuilder().setValue("client").build(),
+                "k8s.pod_id",
+                AttributeValue.newBuilder().setValue("55636196-c840-11e9-a417-42010a8a0064").build(),
+                "docker.container_id", AttributeValue.newBuilder()
+                    .setValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f").build(),
+                "FLAGS", AttributeValue.newBuilder().setValue("0").build(),
+                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
+                AttributeValue.newBuilder().setValue("devcluster").build(),
+                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
+                AttributeValue.newBuilder().setValue("hipstershop").build())).build())
+        .setEventName("redis::getDrivers").setStartTimeMillis(1566869077746L)
+        .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
+            .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
+        .setServiceName("redis")
+        .setEventRefList(Arrays.asList(
+            EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                .setRefType(EventRefType.CHILD_OF).build())).build();
+
+
+    Event parentEvent = Event.newBuilder().setCustomerId("__default")
+        .setEventId(ByteBuffer.wrap("random".getBytes()))
+        .setAttributes(Attributes.newBuilder().setAttributeMap(Map
+            .of(
+                "span.kind", AttributeValue.newBuilder().setValue("server").build())).build())
+        .setEnrichedAttributes(Attributes.newBuilder().setAttributeMap(Map
+            .of(
+                SERVICE_NAME_ATTR, AttributeValue.newBuilder().setValue("redis").build()
+            )).build())
+        .setEventName("getDrivers").setStartTimeMillis(1566869077746L)
+        .build();
+
+    //Since the event serviceName is same as parentServiceName, no new service entity should be created.
+    when(structuredTraceGraph.getParentEvent(e)).thenReturn(parentEvent);
+    Assertions.assertTrue(backendEntityResolver.resolveEntity(e, structuredTraceGraph).isEmpty());
+  }
 }

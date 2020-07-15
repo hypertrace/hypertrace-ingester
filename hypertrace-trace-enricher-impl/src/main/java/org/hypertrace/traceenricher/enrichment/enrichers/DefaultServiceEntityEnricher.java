@@ -55,8 +55,7 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
 
     // If there is serviceName present in the span, just go ahead and create a service
     // entity with those details. This is to support BareMetal case.
-    String serviceName =
-        event.getServiceName();
+    String serviceName = event.getServiceName();
     if (serviceName != null) {
       // Check if the exit span's jaeger_svcname is different from the parent span's jaeger_svcname
       // If it is then use the parent span's jaeger_svcname as the exit span's jaeger svc name else

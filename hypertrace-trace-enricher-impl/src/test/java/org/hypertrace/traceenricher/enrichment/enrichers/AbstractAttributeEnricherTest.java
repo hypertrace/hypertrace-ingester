@@ -27,7 +27,6 @@ import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.span.constants.v1.Docker;
 import org.hypertrace.core.span.constants.v1.Envoy;
-import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.span.constants.v1.TracerAttribute;
 import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
@@ -178,15 +177,16 @@ public class AbstractAttributeEnricherTest {
     return AttributeValue.newBuilder().setValue(value).build();
   }
 
-  Event.Builder createOpenSourceSpan(String tenantId, String eventId, String jaegerService) {
-    Map<String, AttributeValue> rawAttributeMap = Map.of();
-    Map<String, String> enrichedAttr = Map.of(Constants.getEnrichedSpanConstant(Api.API_BOUNDARY_TYPE), "ENTRY");
+  Event.Builder createOpenSourceSpan(String tenantId, String eventId, String jaegerService,
+      String spanKind) {
+    Map<String, String> enrichedAttr = Map.of(Constants.getEnrichedSpanConstant(Api.API_BOUNDARY_TYPE), "ENTRY",
+        Constants.getEnrichedSpanConstant(CommonAttribute.COMMON_ATTRIBUTE_SPAN_TYPE), spanKind);
 
     return Event.newBuilder().setCustomerId(tenantId)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
         .setEnrichedAttributes(createNewAvroAttributes(enrichedAttr))
         .setServiceName(jaegerService)
-        .setAttributes(Attributes.newBuilder().setAttributeMap(rawAttributeMap).build());
+        .setAttributes(Attributes.newBuilder().build());
   }
 
   protected StructuredTrace getBigTrace() {

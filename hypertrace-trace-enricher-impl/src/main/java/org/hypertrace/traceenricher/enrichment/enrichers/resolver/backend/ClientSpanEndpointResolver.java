@@ -32,8 +32,7 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
    */
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    String serviceName =
-        event.getServiceName();
+    String serviceName = event.getServiceName();
     if (serviceName != null) {
       Event parentSpan = structuredTraceGraph.getParentEvent(event);
       if (parentSpan != null) {

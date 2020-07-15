@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -18,8 +19,6 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
@@ -65,8 +64,8 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     doReturn(Collections.singletonList(service))
         .when(edsClient).getEntitiesByName(TENANT_ID, EntityType.SERVICE.name(), serviceName);
 
-    Event e1 = createOpenSourceSpan(TENANT_ID, "event1", serviceName).build();
-    Event e2 = createOpenSourceSpan(TENANT_ID, "event2", serviceName).build();
+    Event e1 = createOpenSourceSpan(TENANT_ID, "event1", serviceName, "ENTRY").build();
+    Event e2 = createOpenSourceSpan(TENANT_ID, "event2", serviceName, "ENTRY").build();
     StructuredTrace trace = createStructuredTrace(TENANT_ID, e1, e2);
     enricher.enrichEvent(trace, e1);
     enricher.enrichEvent(trace, e2);
@@ -90,7 +89,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     doReturn(Collections.singletonList(service))
         .when(edsClient).getEntitiesByName(TENANT_ID, EntityType.SERVICE.name(), serviceName);
 
-    Event e1 = createOpenSourceSpan(TENANT_ID, "event1", serviceName).build();
+    Event e1 = createOpenSourceSpan(TENANT_ID, "event1", serviceName, "ENTRY").build();
     StructuredTrace trace = createStructuredTrace(TENANT_ID, e1);
     enricher.enrichEvent(trace, e1);
 
@@ -99,6 +98,43 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     assertEquals(1, e1.getEntityIdList().size());
     assertEquals(serviceName, EnrichedSpanUtils.getServiceName(e1));
     assertEquals(ENTITY_ID, EnrichedSpanUtils.getServiceId(e1));
+  }
+
+  @Test
+  public void testEnrichTraceSpanNoContainerInfoExitSpan() {
+    String serviceName = "testService";
+    org.hypertrace.entity.data.service.v1.Entity service = org.hypertrace.entity.data.service.v1.Entity.newBuilder()
+        .setTenantId(TENANT_ID).setEntityType(EntityType.SERVICE.name())
+        .setEntityId(ENTITY_ID).setEntityName(serviceName).build();
+    doReturn(Collections.singletonList(service))
+        .when(edsClient).getEntitiesByName(TENANT_ID, EntityType.SERVICE.name(), serviceName);
+
+    Event e1 = createOpenSourceSpan(TENANT_ID, "event1", serviceName, "EXIT").build();
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e1);
+    enricher.enrichEvent(trace, e1);
+
+    // Assert that the entity is added on both the trace and event.
+    assertEquals(1, trace.getEntityList().size());
+    assertEquals(1, e1.getEntityIdList().size());
+    assertEquals(serviceName, EnrichedSpanUtils.getServiceName(e1));
+    assertEquals(ENTITY_ID, EnrichedSpanUtils.getServiceId(e1));
+  }
+
+  @Test
+  public void testEnrichTraceNoServiceName() {
+    org.hypertrace.entity.data.service.v1.Entity service = org.hypertrace.entity.data.service.v1.Entity.newBuilder()
+        .setTenantId(TENANT_ID).setEntityType(EntityType.SERVICE.name())
+        .setEntityId(ENTITY_ID).build();
+    doReturn(Collections.singletonList(service))
+        .when(edsClient).getEntitiesByName(TENANT_ID, EntityType.SERVICE.name(), null);
+
+    Event e1 = createOpenSourceSpan(TENANT_ID, "event1",  null, "ENTRY").build();
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e1);
+    enricher.enrichEvent(trace, e1);
+    // Assert that the entity is not added on both the trace and event as serviceName is null
+    assertEquals(0, trace.getEntityList().size());
+    assertEquals(0, e1.getEntityIdList().size());
+    assertNull(EnrichedSpanUtils.getServiceName(e1));
   }
 
 
