@@ -14,7 +14,7 @@ dependencies {
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.2")
   implementation("org.hypertrace.core.spannormalizer:raw-span-constants:0.1.2")
-  implementation("org.hypertrace.entity.service:entity-service-client:0.1.2")
+  implementation("org.hypertrace.entity.service:entity-service-client:0.1.4")
 
   implementation("com.typesafe:config:1.4.0")
   implementation("org.apache.httpcomponents:httpclient:4.5.12")
