@@ -196,6 +196,30 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
+  public void testDecodeQueryParamsInvalidInput() {
+    //Try putting invalid encoded string in both query param key and value.
+    Event e = createMockEvent();
+    when(e.getHttp())
+        .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
+            Request.newBuilder()
+                .setUrl("http://hypertrace.org/users?action=check%!mout&loca%.Ption=hello%3Dworld")
+                .build())
+            .build());
+    enricher.enrichEvent(mockTrace, e);
+
+    //If input is invalid(can't be decoded) the input is returned as it is.
+    AttributeValue actionParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".action");
+    assertEquals("check%!mout", actionParam.getValue());
+    assertEquals(List.of("check%!mout"), actionParam.getValueList());
+
+    AttributeValue locationParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".loca%.Ption");
+    assertEquals("hello=world", locationParam.getValue());
+    assertEquals(List.of("hello=world"), locationParam.getValueList());
+  }
+
+  @Test
   public void test_withAnInvalidUrl_shouldSkipEnrichment() {
     Event e = createMockEvent();
     Map<String, AttributeValue> avm = e.getAttributes().getAttributeMap();

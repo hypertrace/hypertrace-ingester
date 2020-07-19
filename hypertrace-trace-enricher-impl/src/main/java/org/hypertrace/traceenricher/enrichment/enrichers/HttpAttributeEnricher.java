@@ -85,6 +85,12 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
   }
 
   private String decode(String input) {
-    return URLDecoder.decode(input, StandardCharsets.UTF_8);
+    try {
+      return URLDecoder.decode(input, StandardCharsets.UTF_8);
+    } catch (IllegalArgumentException e) {
+      LOG.error("Cannot decode the input {}", input, e);
+      //Falling back to original input if it can't be decoded
+      return input;
+    }
   }
 }
