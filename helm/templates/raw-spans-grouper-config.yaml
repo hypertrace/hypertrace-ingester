@@ -8,11 +8,14 @@ data:
   application.conf: |-
     flink.job {
       {{- if hasKey .Values.rawSpansGrouperConfig.flink "job" }}
+      parallelism = {{ int .Values.rawSpansGrouperConfig.flink.job.parallelism }}
+      {{- if hasKey .Values.rawSpansGrouperConfig.flink.job "metrics" }}
       metrics {
         metrics {
           reporters = {{- toJson .Values.rawSpansGrouperConfig.flink.job.metrics.reporters | trim | nindent 12 }}
         }
       }
+      {{- end }}
       {{- end }}
     }
 
@@ -33,6 +36,9 @@ data:
       }
       kafka {
         bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.flink.sink.kafka.bootstrapServers }}"
+        linger.ms = {{ int .Values.rawSpansGrouperConfig.flink.sink.kafka.lingerMs }}
+        batch.size = {{ int .Values.rawSpansGrouperConfig.flink.sink.kafka.batchSize }}
+        compression.type = {{ .Values.rawSpansGrouperConfig.flink.sink.kafka.compressionType }}
       }
     }
 
