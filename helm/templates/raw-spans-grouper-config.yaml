@@ -8,7 +8,9 @@ data:
   application.conf: |-
     flink.job {
       {{- if hasKey .Values.rawSpansGrouperConfig.flink "job" }}
+      {{- if hasKey .Values.rawSpansGrouperConfig.flink.job "parallelism" }}
       parallelism = {{ int .Values.rawSpansGrouperConfig.flink.job.parallelism }}
+      {{- end }}
       {{- if hasKey .Values.rawSpansGrouperConfig.flink.job "metrics" }}
       metrics {
         metrics {

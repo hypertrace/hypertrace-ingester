@@ -70,8 +70,6 @@ rawSpansGrouperConfig:
     groupby:
       internal: 30
   flink:
-    job:
-      parallelism: 2
     source:
       kafka:
         bootstrapServers: "bootstrap:9092"
