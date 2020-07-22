@@ -13,7 +13,7 @@ public class RawSpanToStructuredTraceGroupingJobConfigTest {
   @Test
   public void testMinimalCompleteConfig() {
     RawSpanToStructuredTraceGroupingJob job = createRawSpansGrouperJobUsingConfig("minimal-complete-config.conf");
-    Assertions.assertEquals(Runtime.getRuntime().availableProcessors(), job.getExecutionEnvironment().getParallelism());
+    Assertions.assertTrue(job.getExecutionEnvironment().getParallelism() > 0);
   }
 
   @Test
