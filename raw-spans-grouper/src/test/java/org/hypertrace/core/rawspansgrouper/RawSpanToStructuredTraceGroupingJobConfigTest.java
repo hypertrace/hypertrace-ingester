@@ -6,12 +6,20 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class RawSpanToStructuredTraceGroupingJobConfigTest {
   @Test
   public void testMinimalCompleteConfig() {
-    createRawSpansGrouperJobUsingConfig("minimal-complete-config.conf");
+    RawSpanToStructuredTraceGroupingJob job = createRawSpansGrouperJobUsingConfig("minimal-complete-config.conf");
+    Assertions.assertEquals(Runtime.getRuntime().availableProcessors(), job.getExecutionEnvironment().getParallelism());
+  }
+
+  @Test
+  public void testConfigWithParallelism() {
+    RawSpanToStructuredTraceGroupingJob job = createRawSpansGrouperJobUsingConfig("config-with-parallelism.conf");
+    Assertions.assertEquals(4, job.getExecutionEnvironment().getParallelism());
   }
 
   @Test
