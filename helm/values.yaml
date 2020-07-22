@@ -79,6 +79,9 @@ rawSpansGrouperConfig:
     sink:
       kafka:
         bootstrapServers: "bootstrap:9092"
+        lingerMs: 0
+        batchSize: 16384
+        compressionType: none
       schema:
         registry:
           url: "http://schema-registry-service:8081"
