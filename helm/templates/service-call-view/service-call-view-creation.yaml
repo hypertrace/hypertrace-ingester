@@ -6,6 +6,7 @@ metadata:
   labels:
     release: {{ .Release.Name }}
   annotations:
+    "helm.sh/hook-weight": "10"
     "helm.sh/hook": pre-install,pre-upgrade
 spec:
   # Cancel job if it has not finished after 10 minutes
