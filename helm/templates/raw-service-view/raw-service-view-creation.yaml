@@ -6,6 +6,7 @@ metadata:
   labels:
     release: {{ .Release.Name }}
   annotations:
+    "helm.sh/hook-weight": "10"
     "helm.sh/hook": pre-install,pre-upgrade
 spec:
   # Cancel job if it has not finished after 10 minutes
@@ -20,6 +21,10 @@ spec:
       imagePullSecrets:
       {{- toYaml . | nindent 8 }}
     {{- end }}
+      volumes:
+        - name: {{ .Values.viewCreatorJobConfig.name }}
+          configMap:
+            name: {{ .Values.viewCreatorJobConfig.name }}
     {{- with .Values.nodeLabels }}
       nodeSelector:
       {{- toYaml . | nindent 8}}
@@ -28,11 +33,20 @@ spec:
         - name: {{ .Values.rawServiceView.creator.jobName }}
           image: "{{ .Values.images.creator.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.pullPolicy }}
-          args: [ "/app/resources/configs/raw-service-view/job.conf" ]
           resources:
             {{- toYaml .Values.rawServiceView.creator.resources | nindent 12 }}
           env:
+            - name: SERVICE_NAME
+              value: "raw-service-view"
+            - name: CLUSTER_NAME
+              value: "staging"
+            - name: BOOTSTRAP_CONFIG_URI
+              value: "file:///app/resources/configs"
             - name: JAVA_TOOL_OPTIONS
               value: {{ .Values.rawServiceView.creator.javaOpts | quote }}
+          volumeMounts:
+            - name: {{ .Values.viewCreatorJobConfig.name }}
+              mountPath: /app/resources/configs/common/staging/application.conf
+              subPath: application.conf
   backoffLimit: 100
 {{- end }}

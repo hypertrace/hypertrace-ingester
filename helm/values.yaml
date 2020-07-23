@@ -42,6 +42,13 @@ viewGeneratorServiceConfig:
       metrics:
         reporters: "prometheus"
 
+viewCreatorJobConfig:
+  name: view-creator-job-config
+  data:
+    application.conf: |-
+      pinot.retentionTimeValue = 5
+      pinot.retentionTimeUnit = DAYS
+
 ############################################
 # Creation Jobs and Generation Deployments #
 ############################################
