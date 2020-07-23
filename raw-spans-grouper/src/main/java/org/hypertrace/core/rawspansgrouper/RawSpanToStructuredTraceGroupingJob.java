@@ -12,6 +12,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanToStructuredTraceGroupi
 import static org.hypertrace.core.rawspansgrouper.RawSpanToStructuredTraceGroupingJob.JobConfig.SPAN_TYPE_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanToStructuredTraceGroupingJob.JobConfig.TOPIC_NAME_CONFIG;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
 import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
 import java.util.Map;
@@ -81,8 +82,10 @@ public class RawSpanToStructuredTraceGroupingJob implements PlatformBackgroundJo
     this.aggregateFunction = getTraceGroupAggregateFunction(spanType);
     environment = FlinkUtils.getExecutionEnvironment(metricsConfig);
 
-    int parallelism = jobConfig.getInt(PARALLELISM);
-    environment.setParallelism(parallelism);
+    if (jobConfig.hasPath(PARALLELISM)) {
+      int parallelism = jobConfig.getInt(PARALLELISM);
+      environment.setParallelism(parallelism);
+    }
   }
 
   @Override
@@ -119,6 +122,12 @@ public class RawSpanToStructuredTraceGroupingJob implements PlatformBackgroundJo
   @Override
   public void stop() {
   }
+
+  @VisibleForTesting
+  StreamExecutionEnvironment getExecutionEnvironment() {
+    return environment;
+  }
+
 
   private AggregateFunction getTraceGroupAggregateFunction(String spanType) {
     switch (spanType) {
