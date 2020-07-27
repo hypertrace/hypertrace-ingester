@@ -110,7 +110,7 @@ jobs:
     steps:
       - setup_build_environment
       - snyk/scan:
-          additional-arguments: --all-sub-projects
+          additional-arguments: --all-sub-projects --policy-path=.snyk
   package-charts:
     executor: helm
     steps:
