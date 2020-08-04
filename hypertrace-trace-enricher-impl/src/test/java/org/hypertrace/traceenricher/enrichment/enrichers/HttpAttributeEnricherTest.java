@@ -25,7 +25,7 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
   @Mock
   private StructuredTrace mockTrace;
 
-  private HttpAttributeEnricher enricher = new HttpAttributeEnricher();
+  private final HttpAttributeEnricher enricher = new HttpAttributeEnricher();
 
   @Test
   public void test_withAValidUrl_shouldEnrichHttpPathAndParams() {

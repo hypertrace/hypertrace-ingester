@@ -39,7 +39,7 @@ public class HttpBackendResolver extends AbstractBackendResolver {
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
     Protocol protocol = EnrichedSpanUtils.getProtocol(event);
 
-    if (protocol == Protocol.PROTOCOL_HTTP) {
+    if (protocol == Protocol.PROTOCOL_HTTP || protocol == Protocol.PROTOCOL_HTTPS) {
       String backendUriStr = null;
       String path = null;
       if (SpanAttributeUtils.containsAttributeKey(event, HTTP_URL_ATTR)) {
