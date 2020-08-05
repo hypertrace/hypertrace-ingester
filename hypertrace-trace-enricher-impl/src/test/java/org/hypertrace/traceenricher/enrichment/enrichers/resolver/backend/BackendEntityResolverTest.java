@@ -90,9 +90,9 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
-    assertEquals(
+    assertEquals(BackendType.HTTP.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
-            .getValue().getString(), "HTTP");
+            .getValue().getString());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString(), "dataservice.mypastryshop.devcluster");
@@ -143,7 +143,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
-    assertEquals("HTTP",
+    assertEquals(BackendType.HTTP.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString());
     assertEquals("dataservice.mypastryshop.devcluster",
@@ -190,9 +190,9 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
-    assertEquals(
+    assertEquals(BackendType.HTTP.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
-            .getValue().getString(), "HTTP");
+            .getValue().getString());
     assertEquals("dataservice.mypastryshop.devcluster",
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString());
@@ -242,9 +242,9 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
-    assertEquals(
+    assertEquals(BackendType.HTTPS.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
-            .getValue().getString(), "HTTP");
+            .getValue().getString());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString(), "dataservice.mypastryshop.devcluster");

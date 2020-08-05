@@ -72,7 +72,9 @@ public class HttpBackendResolver extends AbstractBackendResolver {
         LOGGER.warn("Unable to infer a http backend from event: {}", event);
         return Optional.empty();
       }
-      final Builder entityBuilder = getBackendEntityBuilder(BackendType.HTTP, backendUriStr, event);
+
+      BackendType type = (protocol == Protocol.PROTOCOL_HTTPS) ? BackendType.HTTPS : BackendType.HTTP;
+      final Builder entityBuilder = getBackendEntityBuilder(type, backendUriStr, event);
       if (StringUtils.isNotEmpty(path)) {
         entityBuilder.putAttributes(
             EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
