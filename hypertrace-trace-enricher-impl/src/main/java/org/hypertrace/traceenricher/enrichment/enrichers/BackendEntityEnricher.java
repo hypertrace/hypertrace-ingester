@@ -82,7 +82,9 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
         .getString();
 
     BackendType backendType = BackendType.valueOf(backendProtocol);
-    if (backendType != BackendType.HTTP && backendType != BackendType.GRPC) {
+    if (backendType != BackendType.HTTP && backendType != BackendType.HTTPS &&
+        backendType != BackendType.GRPC)
+    {
       return true;
     }
 
