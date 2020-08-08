@@ -52,9 +52,6 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
    */
   private static final String DEFAULT_TENANT_ID_CONFIG = "processor.defaultTenantId";
 
-  /** default to if both tag key and tenant id is not set */
-  private static final String DEFAULT_TENANT_ID = "__default";
-
   private static JaegerSpanNormalizer INSTANCE;
   private final FieldsGenerator fieldsGenerator;
   private final TenantIdProvider tenantIdProvider;
@@ -94,15 +91,14 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
             ? config.getString(DEFAULT_TENANT_ID_CONFIG)
             : null;
 
-    // If both the configs are null, we will set to __default.
+    // If both the configs are null, the processor can't work so fail.
     if (tenantIdTagKey == null && defaultTenantIdValue == null) {
-      LOG.info(
+      throw new RuntimeException(
           "Both "
               + TENANT_ID_TAG_KEY_CONFIG
               + " and "
               + DEFAULT_TENANT_ID_CONFIG
-              + " configs are note set. Defaulting to __default as tenant id.");
-      defaultTenantIdValue = DEFAULT_TENANT_ID;
+              + " configs can't be null.");
     }
 
     if (tenantIdTagKey != null) {

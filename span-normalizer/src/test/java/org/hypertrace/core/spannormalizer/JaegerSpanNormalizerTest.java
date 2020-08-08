@@ -81,13 +81,21 @@ public class JaegerSpanNormalizerTest {
   }
 
   @Test
-  public void emptyProcessorConfigFallbackToDefaultTenantId() {
+  public void emptyProcessorConfigShouldFailTheProcessor() {
     Config jobConfig = ConfigFactory.parseMap(getCommonConfig());
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(jobConfig);
-    Process process = Process.newBuilder().setServiceName("testService").build();
-    Span span = Span.newBuilder().setProcess(process).build();
-    RawSpan rawSpan = normalizer.convert(span);
-    Assertions.assertEquals("__default", rawSpan.getEvent().getCustomerId());
+    try {
+      new SpanNormalizerJob(jobConfig);
+      Assertions.fail("config parsing should fail");
+    } catch (RuntimeException e) {
+      // We expect exception while parsing the config.
+      // Trying to be specific with the error message check here so that the test doesn't
+      // pass because of some other RuntimeException that happen before we hit the check
+      // we want to test.
+      Assertions.assertTrue(
+          e.getMessage()
+              .contains(
+                  "Both processor.tenantIdTagKey and processor.defaultTenantId configs can't be null"));
+    }
   }
 
   @Test
