@@ -317,6 +317,7 @@ public class EnrichedSpanUtils {
 
     switch (protocol) {
       case PROTOCOL_HTTP:
+      case PROTOCOL_HTTPS:
         if (event.getHttp() != null && event.getHttp().getRequest() != null) {
           return Optional.of(event.getHttp().getRequest().getSize());
         }
@@ -339,6 +340,7 @@ public class EnrichedSpanUtils {
 
     switch (protocol) {
       case PROTOCOL_HTTP:
+      case PROTOCOL_HTTPS:
         if (event.getHttp() != null && event.getHttp().getResponse() != null) {
           return Optional.of(event.getHttp().getResponse().getSize());
         }

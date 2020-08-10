@@ -52,7 +52,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
-  public void setup() throws Exception {
+  public void setup() {
     backendEntityResolver = new BackendEntityResolver(new FQNResolver(edsClient));
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
@@ -90,9 +90,9 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
-    assertEquals(
+    assertEquals(BackendType.HTTP.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
-            .getValue().getString(), "HTTP");
+            .getValue().getString());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString(), "dataservice.mypastryshop.devcluster");
@@ -143,7 +143,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
-    assertEquals("HTTP",
+    assertEquals(BackendType.HTTP.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString());
     assertEquals("dataservice.mypastryshop.devcluster",
@@ -190,9 +190,9 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
-    assertEquals(
+    assertEquals(BackendType.HTTP.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
-            .getValue().getString(), "HTTP");
+            .getValue().getString());
     assertEquals("dataservice.mypastryshop.devcluster",
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString());
@@ -207,6 +207,60 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             .getString(), "62646630336466616266356337306638");
     assertEquals(
         backendEntity.getAttributesMap().get("http.request.method").getValue().getString(), "GET");
+  }
+
+  @Test
+  public void checkBackendEntityGeneratedFromHttpsEvent() {
+    Event e = Event.newBuilder().setCustomerId("__default")
+        .setEventId(ByteBuffer.wrap("bdf03dfabf5c707f".getBytes()))
+        .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8865"))
+        .setEnrichedAttributes(
+            Attributes.newBuilder().setAttributeMap(
+                Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build(),
+                    "PROTOCOL", AttributeValue.newBuilder().setValue("HTTPS").build())).build())
+        .setAttributes(Attributes.newBuilder().setAttributeMap(Map
+            .of("http.status_code", AttributeValue.newBuilder().setValue("200").build(),
+                "http.user_agent", AttributeValue.newBuilder().setValue("").build(),
+                "http.path", AttributeValue.newBuilder().setValue("/product/5d644175551847d7408760b1").build(),
+                "FLAGS", AttributeValue.newBuilder().setValue("OK").build(),
+                "status.message", AttributeValue.newBuilder().setValue("200").build(),
+                Constants.getRawSpanConstant(Http.HTTP_METHOD), AttributeValue.newBuilder().setValue("GET").build(),
+                "http.host", AttributeValue.newBuilder().setValue("dataservice:9394").build(),
+                "status.code", AttributeValue.newBuilder().setValue("0").build(),
+                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), AttributeValue.newBuilder().setValue("devcluster").build(),
+                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), AttributeValue.newBuilder().setValue("mypastryshop").build()))
+            .build())
+        .setEventName("Sent./product/5d644175551847d7408760b1").setStartTimeMillis(1566869077746L)
+        .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
+            .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build()))
+            .build())
+        .setEventRefList(Arrays.asList(
+            EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                .setRefType(EventRefType.CHILD_OF).build())).build();
+
+    final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
+    assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
+    assertEquals(3, backendEntity.getIdentifyingAttributesCount());
+    assertEquals(BackendType.HTTPS.name(),
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
+            .getValue().getString());
+    assertEquals(
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
+            .getString(), "dataservice.mypastryshop.devcluster");
+    assertEquals(
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
+            .getString(), "9394");
+    assertEquals(
+        backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT)).getValue().getString(),
+        "Sent./product/5d644175551847d7408760b1");
+    assertEquals(
+        backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID)).getValue()
+            .getString(), "62646630336466616266356337303766");
+    assertEquals(
+        backendEntity.getAttributesMap().get(Constants.getRawSpanConstant(Http.HTTP_METHOD)).getValue()
+            .getString(),
+        "GET");
   }
 
   @Test
