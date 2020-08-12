@@ -7,15 +7,12 @@ import java.io.ObjectInputStream;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import org.hypertrace.core.datamodel.RawSpan;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The Processor function to convert a protobuf based JaegerSpan to RawSpan in Avro format. Not that
  * due to the type infer issue, we have to make OUT Type as Object instead of RawSpan.
  */
 public class JaegerSpanToAvroRawSpanProcessor extends ProcessFunction<Span, Object> {
-  private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanToAvroRawSpanProcessor.class);
 
   /**
    * Keep the config in this because the entire ProcessorFunction implementation needs to be
@@ -37,7 +34,7 @@ public class JaegerSpanToAvroRawSpanProcessor extends ProcessFunction<Span, Obje
   }
 
   @Override
-  public void processElement(Span jaegerSpan, Context ctx, Collector<Object> out) {
+  public void processElement(Span jaegerSpan, Context ctx, Collector<Object> out) throws Exception {
     RawSpan rawSpan = converter.convert(jaegerSpan);
     if (rawSpan != null) {
       out.collect(rawSpan);

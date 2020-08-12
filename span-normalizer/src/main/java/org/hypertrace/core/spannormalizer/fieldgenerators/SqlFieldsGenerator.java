@@ -13,7 +13,7 @@ import org.hypertrace.core.datamodel.eventfields.sql.Sql;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 
 public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
-  private static Map<String, FieldGenerator<Sql.Builder>> fieldGeneratorMap =
+  private static final Map<String, FieldGenerator<Sql.Builder>> FIELD_GENERATOR_MAP =
       initializeFieldGenerators();
 
   private static Map<String, FieldGenerator<Sql.Builder>> initializeFieldGenerators() {
@@ -45,6 +45,6 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
 
   @Override
   protected Map<String, FieldGenerator<Sql.Builder>> getFieldGeneratorMap() {
-    return fieldGeneratorMap;
+    return FIELD_GENERATOR_MAP;
   }
 }

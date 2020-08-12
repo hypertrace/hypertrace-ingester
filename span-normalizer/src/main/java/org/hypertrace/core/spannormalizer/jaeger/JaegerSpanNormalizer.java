@@ -9,6 +9,7 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Log;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
+import io.micrometer.core.instrument.Timer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -28,8 +31,10 @@ import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.datamodel.RawSpan.Builder;
 import org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.spannormalizer.fieldgenerators.FieldsGenerator;
@@ -52,9 +57,12 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
    */
   private static final String DEFAULT_TENANT_ID_CONFIG = "processor.defaultTenantId";
 
+  private static final String SPAN_NORMALIZATION_TIME_METRIC = "span.normalization.time";
+
   private static JaegerSpanNormalizer INSTANCE;
   private final FieldsGenerator fieldsGenerator;
   private final TenantIdProvider tenantIdProvider;
+  private final ConcurrentMap<String, Timer> tenantToSpanConversionTimer = new ConcurrentHashMap<>();
 
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
@@ -110,7 +118,7 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
 
   @Override
   @Nullable
-  public RawSpan convert(Span jaegerSpan) {
+  public RawSpan convert(Span jaegerSpan) throws Exception {
     Map<String, KeyValue> tags =
         jaegerSpan.getTagsList().stream()
             .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
@@ -122,19 +130,30 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
       return null;
     }
 
-    RawSpan.Builder rawSpanBuilder = RawSpan.newBuilder();
-    rawSpanBuilder.setCustomerId(tenantId.get());
-    rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
-    // Build Event
-    Event event =
-        buildEvent(tenantId.get(), jaegerSpan, tags, tenantIdProvider.getTenantIdTagKey());
-    rawSpanBuilder.setEvent(event);
-    rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
+    // Record the time taken for converting the span, along with the tenant id tag.
+    return tenantToSpanConversionTimer
+        .computeIfAbsent(
+            tenantId.get(),
+            tenant ->
+                PlatformMetricsRegistry.registerTimer(
+                    SPAN_NORMALIZATION_TIME_METRIC, Map.of("tenantid", tenant), true))
+        .recordCallable(
+            () -> {
+              Builder rawSpanBuilder = RawSpan.newBuilder();
+              rawSpanBuilder.setCustomerId(tenantId.get());
+              rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
+              // Build Event
+              Event event =
+                  buildEvent(
+                      tenantId.get(), jaegerSpan, tags, tenantIdProvider.getTenantIdTagKey());
+              rawSpanBuilder.setEvent(event);
+              rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
 
-    // build raw span
-    RawSpan rawSpan = rawSpanBuilder.build();
-    LOG.debug("Converted Jaeger span: {} to rawSpan: {} ", jaegerSpan, rawSpan);
-    return rawSpan;
+              // build raw span
+              RawSpan rawSpan = rawSpanBuilder.build();
+              LOG.debug("Converted Jaeger span: {} to rawSpan: {} ", jaegerSpan, rawSpan);
+              return rawSpan;
+            });
   }
 
   /**
