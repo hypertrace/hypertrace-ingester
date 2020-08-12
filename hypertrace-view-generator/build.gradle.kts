@@ -17,7 +17,7 @@ tasks.test {
 
 dependencies {
   implementation(project(":hypertrace-view-generator-api"))
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.5")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.7")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.2")
 
   implementation("org.hypertrace.traceenricher:enriched-span-constants:0.1.3")
