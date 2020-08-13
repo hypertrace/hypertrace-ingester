@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -141,23 +142,26 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
             tenant ->
                 PlatformMetricsRegistry.registerTimer(
                     SPAN_NORMALIZATION_TIME_METRIC, Map.of("tenantid", tenant)))
-        .recordCallable(
-            () -> {
-              Builder rawSpanBuilder = RawSpan.newBuilder();
-              rawSpanBuilder.setCustomerId(tenantId.get());
-              rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
-              // Build Event
-              Event event =
-                  buildEvent(
-                      tenantId.get(), jaegerSpan, tags, tenantIdProvider.getTenantIdTagKey());
-              rawSpanBuilder.setEvent(event);
-              rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
+        .recordCallable(getRawSpanNormalizerCallable(jaegerSpan, tags, tenantId.get()));
+  }
 
-              // build raw span
-              RawSpan rawSpan = rawSpanBuilder.build();
-              LOG.debug("Converted Jaeger span: {} to rawSpan: {} ", jaegerSpan, rawSpan);
-              return rawSpan;
-            });
+  @Nonnull
+  private Callable<RawSpan> getRawSpanNormalizerCallable(Span jaegerSpan,
+      Map<String, KeyValue> spanTags, String tenantId) {
+    return () -> {
+      Builder rawSpanBuilder = RawSpan.newBuilder();
+      rawSpanBuilder.setCustomerId(tenantId);
+      rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
+      // Build Event
+      Event event = buildEvent(tenantId, jaegerSpan, spanTags, tenantIdProvider.getTenantIdTagKey());
+      rawSpanBuilder.setEvent(event);
+      rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
+
+      // build raw span
+      RawSpan rawSpan = rawSpanBuilder.build();
+      LOG.debug("Converted Jaeger span: {} to rawSpan: {} ", jaegerSpan, rawSpan);
+      return rawSpan;
+    };
   }
 
   /**
