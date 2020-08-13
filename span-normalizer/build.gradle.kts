@@ -31,8 +31,8 @@ dependencies {
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.1")
   implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.4")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.6")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.6")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.7")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.7")
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.30.2")
@@ -52,4 +52,5 @@ dependencies {
   runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
+  testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.7")
 }

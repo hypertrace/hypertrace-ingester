@@ -62,7 +62,7 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
   private static JaegerSpanNormalizer INSTANCE;
   private final FieldsGenerator fieldsGenerator;
   private final TenantIdProvider tenantIdProvider;
-  private final ConcurrentMap<String, Timer> tenantToSpanConversionTimer = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Timer> tenantToSpanNormalizationTimer = new ConcurrentHashMap<>();
 
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
@@ -116,6 +116,10 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
     }
   }
 
+  public Timer getSpanNormalizationTimer(String tenantId) {
+    return tenantToSpanNormalizationTimer.get(tenantId);
+  }
+
   @Override
   @Nullable
   public RawSpan convert(Span jaegerSpan) throws Exception {
@@ -131,12 +135,12 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
     }
 
     // Record the time taken for converting the span, along with the tenant id tag.
-    return tenantToSpanConversionTimer
+    return tenantToSpanNormalizationTimer
         .computeIfAbsent(
             tenantId.get(),
             tenant ->
                 PlatformMetricsRegistry.registerTimer(
-                    SPAN_NORMALIZATION_TIME_METRIC, Map.of("tenantid", tenant), true))
+                    SPAN_NORMALIZATION_TIME_METRIC, Map.of("tenantid", tenant)))
         .recordCallable(
             () -> {
               Builder rawSpanBuilder = RawSpan.newBuilder();
