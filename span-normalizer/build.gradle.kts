@@ -30,7 +30,7 @@ dependencies {
   implementation(project(":span-normalizer-api"))
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.1")
-  implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.4")
+  implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.5")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.7")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.7")
 
@@ -44,7 +44,7 @@ dependencies {
   implementation("de.javakaffee:kryo-serializers:0.45")
   implementation("org.apache.flink:flink-avro:1.7.0")
   implementation("org.apache.flink:flink-streaming-java_2.11:1.7.0")
-  implementation("io.confluent:kafka-avro-serializer:5.5.0")
+  implementation("io.confluent:kafka-avro-serializer:5.5.1")
   implementation("org.apache.commons:commons-lang3:3.10")
 
   // Logging
