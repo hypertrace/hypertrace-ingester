@@ -4,19 +4,31 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Process;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
+import io.micrometer.core.instrument.Timer;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class JaegerSpanNormalizerTest {
+  private final Random random = new Random();
+
+  @BeforeAll
+  static void initializeMetricRegistry() {
+    // Initialize the metric registry.
+    PlatformMetricsRegistry.initMetricsRegistry("JaegerSpanNormalizerTest",
+        ConfigFactory.parseMap(Map.of("reporter.names", "testing")));
+  }
 
   @BeforeEach
   public void resetSingleton()
@@ -123,13 +135,14 @@ public class JaegerSpanNormalizerTest {
   }
 
   @Test
-  public void testServiceNameAddededToEvent() {
+  public void testServiceNameAddedToEvent() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
     configs.putAll(
         Map.of(
             "processor",
             Map.of(
-                "defaultTenantId", "tenant-1")));
+                "defaultTenantId", tenantId)));
     JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span = Span.newBuilder().setProcess(process).build();
@@ -140,19 +153,22 @@ public class JaegerSpanNormalizerTest {
   }
 
   @Test
-  public void testServiceNameNotAddededToEvent() {
+  public void testServiceNameNotAddedToEvent() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(
-        Map.of(
-            "processor",
-            Map.of(
-                "defaultTenantId", "tenant-1")));
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
     JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
     Process process = Process.newBuilder().build();
     Span span = Span.newBuilder().setProcess(process).build();
+
     RawSpan rawSpan = normalizer.convert(span);
     Assertions.assertNull(rawSpan.getEvent().getServiceName());
     Assertions.assertNull(rawSpan.getEvent().getAttributes().getAttributeMap().get(
         RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)));
+    Timer timer = normalizer.getSpanNormalizationTimer(tenantId);
+    Assertions.assertNotNull(timer);
+
+    // Assert that metrics are collected.
+    Assertions.assertEquals(1, timer.count());
   }
 }
