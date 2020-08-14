@@ -8,6 +8,7 @@ import io.micrometer.core.instrument.Timer;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import org.hypertrace.core.datamodel.RawSpan;
@@ -27,7 +28,7 @@ public class JaegerSpanNormalizerTest {
   static void initializeMetricRegistry() {
     // Initialize the metric registry.
     PlatformMetricsRegistry.initMetricsRegistry("JaegerSpanNormalizerTest",
-        ConfigFactory.parseMap(Map.of("reporter.names", "testing")));
+        ConfigFactory.parseMap(Map.of("reporter.names", List.of("testing"))));
   }
 
   @BeforeEach
