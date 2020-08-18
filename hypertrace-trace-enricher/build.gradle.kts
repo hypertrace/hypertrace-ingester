@@ -15,6 +15,15 @@ application {
   mainClassName = "org.hypertrace.core.serviceframework.PlatformServiceLauncher"
 }
 
+hypertraceDocker {
+  defaultImage {
+    javaApplication {
+      serviceName.set("${project.name}")
+      adminPort.set(8099)
+    }
+  }
+}
+
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
 tasks.run<JavaExec> {
   jvmArgs = listOf("-Dbootstrap.config.uri=file:${projectDir}/src/main/resources/configs", "-Dservice.name=${project.name}")
