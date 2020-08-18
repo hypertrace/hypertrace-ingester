@@ -7,7 +7,7 @@ plugins {
 }
 
 repositories {
-  // Need this to fetch confluent's kafka-avro-serializer dependency
+  // Needed for io.confluent:kafka-avro-serializer
   maven("http://packages.confluent.io/maven")
 }
 
