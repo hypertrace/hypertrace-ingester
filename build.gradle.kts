@@ -10,4 +10,11 @@ subprojects {
 
 subprojects {
   group = "org.hypertrace.core.rawspansgrouper"
+
+  pluginManager.withPlugin("java") {
+    configure<JavaPluginExtension> {
+      sourceCompatibility = JavaVersion.VERSION_11
+      targetCompatibility = JavaVersion.VERSION_11
+    }
+  }
 }
