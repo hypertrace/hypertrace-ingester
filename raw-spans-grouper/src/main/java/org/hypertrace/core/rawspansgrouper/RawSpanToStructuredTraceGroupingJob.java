@@ -12,7 +12,6 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanToStructuredTraceGroupi
 import static org.hypertrace.core.rawspansgrouper.RawSpanToStructuredTraceGroupingJob.JobConfig.SPAN_TYPE_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanToStructuredTraceGroupingJob.JobConfig.TOPIC_NAME_CONFIG;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
 import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
 import java.util.Map;
@@ -57,8 +56,10 @@ public class RawSpanToStructuredTraceGroupingJob implements PlatformBackgroundJo
 
   private final Map<String, String> metricsConfig;
   private StreamExecutionEnvironment environment;
+  private Config configs;
 
   RawSpanToStructuredTraceGroupingJob(Config configs) {
+    this.configs = configs;
     this.spanType = configs.getString(SPAN_TYPE_CONFIG);
 
     Config jobConfig = configs.getConfig(FLINK_JOB);
@@ -123,7 +124,6 @@ public class RawSpanToStructuredTraceGroupingJob implements PlatformBackgroundJo
   public void stop() {
   }
 
-  @VisibleForTesting
   StreamExecutionEnvironment getExecutionEnvironment() {
     return environment;
   }
@@ -132,7 +132,7 @@ public class RawSpanToStructuredTraceGroupingJob implements PlatformBackgroundJo
   private AggregateFunction getTraceGroupAggregateFunction(String spanType) {
     switch (spanType) {
       case "rawSpan":
-        return new RawSpanToStructuredTraceAvroGroupAggregator();
+        return new RawSpanToStructuredTraceAvroGroupAggregator(configs);
       default:
         throw new UnsupportedOperationException("Cannot recognize span type: " + spanType);
     }
