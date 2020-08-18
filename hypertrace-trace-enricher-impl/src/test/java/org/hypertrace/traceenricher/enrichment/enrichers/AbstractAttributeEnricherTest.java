@@ -362,8 +362,7 @@ public class AbstractAttributeEnricherTest {
     return StructuredTraceBuilder.buildStructuredTraceFromRawSpans(
         List.of(rawSpan0, rawSpan1, rawSpan2, rawSpan3, rawSpan4),
         createByteBuffer("trace"),
-        TENANT_ID
-    );
+        TENANT_ID);
   }
 
   ByteBuffer createByteBuffer(String id) {
