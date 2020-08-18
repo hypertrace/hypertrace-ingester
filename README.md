@@ -1,3 +1,3 @@
 # Raw Spans Grouper
 
-Groups raw spans into structured traces keyed on tenant(aka customer) and trace ids.
+Streaming Job that converts a group of raw spans into traces.
