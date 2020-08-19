@@ -11,6 +11,15 @@ application {
   mainClassName = "org.hypertrace.core.serviceframework.PlatformServiceLauncher"
 }
 
+hypertraceDocker {
+  defaultImage {
+    javaApplication {
+      serviceName.set("all-views")
+      adminPort.set(8099)
+    }
+  }
+}
+
 tasks.test {
   useJUnitPlatform()
 }
