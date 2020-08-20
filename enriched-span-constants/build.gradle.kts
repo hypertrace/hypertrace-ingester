@@ -60,7 +60,7 @@ sourceSets {
 dependencies {
   api("com.google.protobuf:protobuf-java-util:3.12.2")
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.3")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.4")
   implementation("org.hypertrace.core.spannormalizer:raw-span-constants:0.1.2")
   implementation("org.hypertrace.entity.service:entity-service-api:0.1.4")
 

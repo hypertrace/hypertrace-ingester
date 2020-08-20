@@ -9,7 +9,7 @@ tasks.test {
 
 dependencies {
   implementation(project(":enriched-span-constants"))
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.3")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.4")
 
   implementation("org.slf4j:slf4j-api:1.7.30")
   implementation("org.apache.commons:commons-lang3:3.10")
