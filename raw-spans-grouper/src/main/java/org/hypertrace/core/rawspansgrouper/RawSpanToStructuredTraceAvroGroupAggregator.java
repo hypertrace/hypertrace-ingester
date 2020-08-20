@@ -2,22 +2,31 @@ package org.hypertrace.core.rawspansgrouper;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.typesafe.config.Config;
+import io.micrometer.core.instrument.Timer;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.TimestampRecord;
-import org.hypertrace.core.datamodel.shared.DataflowMetric;
+import org.hypertrace.core.datamodel.Timestamps;
+import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 
 public class RawSpanToStructuredTraceAvroGroupAggregator implements
     AggregateFunction<RawSpan, List<RawSpan>, StructuredTrace> {
 
   private double dataflowSamplingPercent = -1;
   private final String DATAFLOW_SAMPLING_PERCENT = "dataflow.metriccollection.sampling.percent";
+  private static final String TRACE_CREATION_TIME = "trace.creation.time";
+  private static final Timer spansGrouperArrivalLagTimer =
+      PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
 
   public RawSpanToStructuredTraceAvroGroupAggregator(Config config) {
     if (config.hasPath(DATAFLOW_SAMPLING_PERCENT)
@@ -53,15 +62,20 @@ public class RawSpanToStructuredTraceAvroGroupAggregator implements
       rawSpanList.add((RawSpan) r);
     }
 
-    TimestampRecord timestampRecord = null;
-    if (Math.random()*100 <= dataflowSamplingPercent) {
-      timestampRecord = new TimestampRecord();
-      timestampRecord.setName(DataflowMetric.CREATION_TIME.toString());
-      timestampRecord.setTimestamp(System.currentTimeMillis());
+    Timestamps timestamps = null;
+    if (!accumulator.isEmpty() && Math.random()*100 <= dataflowSamplingPercent) {
+      long currentTime = System.currentTimeMillis();
+      long firstSpanArrivalTime = accumulator.get(0).getReceivedTimeMillis();
+      spansGrouperArrivalLagTimer.record(currentTime - firstSpanArrivalTime, TimeUnit.MILLISECONDS);
+      Map<String, TimestampRecord> records = new HashMap<>();
+      records.put(DataflowMetricUtils.SPAN_ARRIVAL_TIME,
+          new TimestampRecord(DataflowMetricUtils.SPAN_ARRIVAL_TIME, firstSpanArrivalTime));
+      records.put(TRACE_CREATION_TIME, new TimestampRecord(TRACE_CREATION_TIME, currentTime));
+      timestamps = new Timestamps(records);
     }
 
     return StructuredTraceBuilder
-        .buildStructuredTraceFromRawSpans(rawSpanList, traceId, customerId, timestampRecord);
+        .buildStructuredTraceFromRawSpans(rawSpanList, traceId, customerId, timestamps);
   }
 
   @Override

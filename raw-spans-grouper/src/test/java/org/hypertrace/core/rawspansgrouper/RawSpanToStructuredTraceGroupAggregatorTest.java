@@ -10,17 +10,18 @@ import static org.mockito.Mockito.when;
 import com.typesafe.config.Config;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.junit.jupiter.api.Test;
 
 public class RawSpanToStructuredTraceGroupAggregatorTest {
 
   private final String DATAFLOW_SAMPLING_PERCENT = "dataflow.metriccollection.sampling.percent";
+  private static final String TRACE_CREATION_TIME = "trace.creation.time";
 
   @Test
   public void testRawSpanToStructuredTraceGroupAggregatorSimpleMethods() {
@@ -59,10 +60,12 @@ public class RawSpanToStructuredTraceGroupAggregatorTest {
     ByteBuffer buffer = mock(ByteBuffer.class);
     Event event = mock(Event.class);
     when(rawSpan1.getTraceId()).thenReturn(buffer);
-    when(rawSpan1.getCustomerId()).thenReturn("abc123");
+    when(rawSpan1.getCustomerId()).thenReturn("customer1");
     when(event.getEventId()).thenReturn(buffer);
     when(rawSpan1.getEvent()).thenReturn(event);
     StructuredTrace trace = aggregator.getResult(List.of(rawSpan1));
-    assertEquals("abc123", trace.getCustomerId());
+    assertEquals("customer1", trace.getCustomerId());
+    assertTrue(trace.getTimestamps().getRecords().containsKey(DataflowMetricUtils.SPAN_ARRIVAL_TIME));
+    assertTrue(trace.getTimestamps().getRecords().containsKey(TRACE_CREATION_TIME));
   }
 }
