@@ -18,7 +18,6 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.shared.DataflowMetric;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.viewgenerator.JavaCodeBasedViewGenerator;
@@ -31,9 +30,9 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 public abstract class BaseViewGenerator<OUT extends GenericRecord>
     implements JavaCodeBasedViewGenerator<StructuredTrace, OUT> {
 
-  private static final String VIEW_GENERATION_ARRIVAL_LAG = "viewgeneration.arrival.lag";
+  private static final String VIEW_GENERATION_ARRIVAL_TIME = "view.generation.arrival.time";
   private static final Timer viewGeneratorArrivalTimer = PlatformMetricsRegistry
-      .registerTimer(VIEW_GENERATION_ARRIVAL_LAG, new HashMap<>());
+      .registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
 
   static final String EMPTY_STRING = "";
 
@@ -66,7 +65,7 @@ public abstract class BaseViewGenerator<OUT extends GenericRecord>
   @Override
   public List<OUT> process(StructuredTrace trace) {
     DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(trace, viewGeneratorArrivalTimer,
-        DataflowMetric.VIEW_GENERATION_ARRIVAL_TIME);
+        VIEW_GENERATION_ARRIVAL_TIME);
     Map<String, Entity> entityMap = new HashMap<>();
     Map<ByteBuffer, Event> eventMap = new HashMap<>();
     Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds = new HashMap<>();
