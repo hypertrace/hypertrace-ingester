@@ -78,7 +78,7 @@ jobs:
     steps:
       - checkout
       - run: buf check lint
-      # - run: buf check breaking --against-input "ssh://${CIRCLE_REPOSITORY_URL/://}#branch=master"
+      # - run: buf check breaking --against-input "ssh://${CIRCLE_REPOSITORY_URL/://}#branch=main"
   publish:
     executor: gradle_docker
     steps:
@@ -145,12 +145,12 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
       - verify-protos:
           filters:
             branches:
               ignore:
-                - master
+                - main
       - package-charts:
           context: hypertrace-publishing
           requires:
@@ -158,4 +158,4 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
