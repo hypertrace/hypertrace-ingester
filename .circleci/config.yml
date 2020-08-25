@@ -73,7 +73,7 @@ jobs:
           args: :tag -Prelease
       - add_ssh_keys:
           fingerprints:
-            - 'a7:5b:21:05:dd:1f:e4:be:f5:af:e3:41:35:0c:6a:99'
+            - 'd5:c5:b7:96:7f:ad:f8:13:1d:5d:5a:a5:f0:30:71:82'
       - run: git push origin $(./gradlew -q :printVersion)
       - gradle:
           args: publish
