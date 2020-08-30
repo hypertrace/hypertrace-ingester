@@ -27,6 +27,9 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/span-normalizer-config.yaml") . | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ .Values.containerAdminPort }}"
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
