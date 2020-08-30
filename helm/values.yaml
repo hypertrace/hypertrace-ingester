@@ -52,6 +52,8 @@ deploymentLabels:
 podLabels:
   app: raw-spans-grouper
 
+podAnnotations: {}
+
 # The Deployment Selector match labels are different from the pod labels. Note that they should be a subset of the pod
 # labels. You append new labels to them but cannot remove labels. If you remove or modify the labels you will need to
 # delete the existing deployment bearing the same name and then redeploy. This is the reason why they are separated from
