@@ -63,7 +63,8 @@ jobs:
     executor: gradle_docker
     steps:
       - setup_build_environment
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.12
       - populate_and_save_cache
       - gradle:
           args: build dockerBuildImages
