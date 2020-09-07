@@ -1,6 +1,6 @@
 # Hypertrace Ingester
 
-Hypertrace ingester is comprised of 4 streaming jobs
+Hypertrace ingester is comprised of 4 streaming jobs on kafka
 - Span-normalizer
 - Raw Spans Grouper
 - Hypertrace Trace Enricher
