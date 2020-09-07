@@ -10,7 +10,7 @@ executors:
       - image: cimg/openjdk:11.0
   helm:
     docker:
-      - image: hypertrace/helm-gcs-packager:0.1.1
+      - image: hypertrace/helm-gcs-packager:0.3.0
 
 commands:
   gradle:
@@ -80,7 +80,7 @@ jobs:
           args: :tag -Prelease
       - add_ssh_keys:
           fingerprints:
-            - '89:21:66:64:b1:9e:5a:a6:7e:8c:67:f8:9a:3c:90:7b'
+            - '76:7a:c8:91:c0:cd:eb:71:96:3c:44:c6:cf:b0:26:83'
       - run: git push origin $(./gradlew -q :printVersion)
       - gradle:
           args: dockerPushImages
