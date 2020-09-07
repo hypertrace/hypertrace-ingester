@@ -1,0 +1,26 @@
+# This Chart.yaml file will act as the template for the "helm package" command. The helm package will set the chart
+# version and appVersion.
+# Command to package:
+# helm package --version <chart version> --app-version <app version> <folder containing Chart.yaml>
+apiVersion: v2
+name: hypertrace-ingester
+description: Hypertrace Ingester
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version. The "helm package" command will take care of setting this.
+# A new chart will be created for each new version of the service.
+version: 0.1.0
+
+# This is the appVersion which will correspond to build version tag. The "helm package" command will take care of setting
+# this.
+appVersion: 0.1.0
