@@ -1,0 +1,51 @@
+###########
+# Deployment and Service
+###########
+replicaCount: 1
+maxUnavailable: 0
+
+image:
+  repository: hypertrace/hypertrace-ingester
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+containerHealthProbePort: 9004
+
+nodeLabels: {}
+
+javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+
+livenessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+readinessProbe:
+  initialDelaySeconds: 2
+  periodSeconds: 5
+
+resources:
+  limits:
+    cpu: 2
+    memory: 768Mi
+  requests:
+    cpu: 100m
+    memory: 768Mi
+
+deploymentLabels:
+  app: hypertrace-ingester
+
+podLabels:
+  app: hypertrace-ingester
+
+deploymentSelectorMatchLabels:
+  app: hypertrace-ingester
+
+logConfig:
+  name: hypertrace-ingester-log-config
+  monitorInterval: 30
+  rootLogger:
+    level: INFO
+  appender:
+    rolling:
+      enabled: false
