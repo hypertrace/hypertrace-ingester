@@ -6,11 +6,13 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel.Process;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Timer;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -171,5 +173,14 @@ public class JaegerSpanNormalizerTest {
 
     // Assert that metrics are collected.
     Assertions.assertEquals(1, timer.count());
+  }
+
+  @Test
+  public void testConvertToJsonString() throws IOException {
+    AttributeValue attributeValue = AttributeValue.newBuilder().setValue("test-val").build();
+    Assertions.assertEquals(
+        "{\"value\":{\"string\":\"test-val\"},\"binary_value\":null,\"value_list\":null,\"value_map\":null}",
+        JaegerSpanNormalizer.convertToJsonString(attributeValue, AttributeValue.getClassSchema())
+        );
   }
 }

@@ -10,6 +10,8 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Log;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Timer;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +25,12 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.apache.avro.Schema;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.io.JsonEncoder;
+import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -159,7 +167,9 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
 
       // build raw span
       RawSpan rawSpan = rawSpanBuilder.build();
-      LOG.debug("Converted Jaeger span: {} to rawSpan: {} ", jaegerSpan, rawSpan);
+      if (LOG.isDebugEnabled()) {
+        logSpanConversion(jaegerSpan, rawSpan);
+      }
       return rawSpan;
     };
   }
@@ -276,5 +286,28 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
     eventBuilder.setMetrics(Metrics.newBuilder().setMetricMap(metricMap).build());
 
     return eventBuilder.build();
+  }
+
+  // Check if debug log is enabled before calling this method
+  private void logSpanConversion(Span jaegerSpan, RawSpan rawSpan) {
+    try {
+      LOG.debug("Converted Jaeger span: {} to rawSpan: {} ", jaegerSpan, convertToJsonString(rawSpan, rawSpan.getSchema()));
+    } catch (IOException e) {
+      LOG.warn("An exception occurred while converting avro to JSON string", e);
+    }
+  }
+
+  // We should have a small library for useful short methods like this one such as this.
+  public static <T extends SpecificRecordBase> String convertToJsonString(T object, Schema schema)
+      throws IOException {
+    JsonEncoder encoder;
+    try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+      DatumWriter<T> writer = new SpecificDatumWriter<>(schema);
+      encoder = EncoderFactory.get().jsonEncoder(schema, output, false);
+      writer.write(object, encoder);
+      encoder.flush();
+      output.flush();
+      return new String(output.toByteArray());
+    }
   }
 }

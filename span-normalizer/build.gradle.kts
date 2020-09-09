@@ -43,9 +43,6 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.8")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
 
-  // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.30.2")
-
   // Needed for flink metric exporter. Used for Hypertrace and debugging.
   runtimeOnly("org.apache.flink:flink-metrics-slf4j:1.10.1")
 
