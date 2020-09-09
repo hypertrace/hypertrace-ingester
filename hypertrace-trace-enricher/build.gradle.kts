@@ -49,7 +49,7 @@ dependencies {
   implementation("org.hypertrace.core.datamodel:data-model:0.1.4")
   implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.6")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
-  implementation("org.hypertrace.entity.service:entity-service-client:0.1.17")
+  implementation("org.hypertrace.entity.service:entity-service-client:0.1.20")
 
   implementation("com.typesafe:config:1.4.0")
   implementation("de.javakaffee:kryo-serializers:0.45")
