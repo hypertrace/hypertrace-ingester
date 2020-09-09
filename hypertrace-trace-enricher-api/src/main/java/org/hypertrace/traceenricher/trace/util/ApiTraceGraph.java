@@ -21,7 +21,6 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.AttributeValue;
@@ -33,7 +32,7 @@ public class ApiTraceGraph {
   private static final String UNKNOWN_SPAN_KIND_VALUE =
       EnrichedSpanConstants.getValue(AttributeValue.ATTRIBUTE_VALUE_UNKNOWN);
 
-  private List<ApiNode> nodeList;
+  private List<ApiNode<Event>> nodeList;
   private List<ApiNodeEventEdge> apiNodeEventEdgeList;
   private StructuredTrace trace;
   private Map<String, Integer> eventIdToIndexInTrace;
@@ -45,7 +44,7 @@ public class ApiTraceGraph {
     eventIdToIndexInTrace = buildEventIdToIndexInTrace(trace);
   }
 
-  public List<ApiNode> getNodeList() {
+  public List<ApiNode<Event>> getNodeList() {
     return nodeList;
   }
 
@@ -53,22 +52,22 @@ public class ApiTraceGraph {
     return apiNodeEventEdgeList;
   }
 
-  public void setNodeList(List<ApiNode> nodeList) {
+  public void setNodeList(List<ApiNode<Event>> nodeList) {
     this.nodeList = nodeList;
   }
 
   // map of api node to index in api nodes list, since we want to build edges between api nodes
-  private Map<ApiNode, Integer> apiNodeToIndex;
+  private Map<ApiNode<Event>, Integer> apiNodeToIndex;
   //map of entry boundary event to api node. each api node has one entry boundary event
-  private Map<Event, ApiNode> entryBoundaryToApiNode;
+  private Map<Event, ApiNode<Event>> entryBoundaryToApiNode;
 
   /**
-   * The idea is to filter out the events in an API boundary.
-   * Filtered events can then be used to filter all the edges and entities from structured trace
-   * The filtered event, entities and edges will determine a small structured trace within an API boundary
+   * The idea is to filter out the events in an API boundary. The ApiNode will contain a head event for the API Trace,
+   * a list of events that fall within the API boundary, the Entry event or null if the head span is not an entry span
+   * and a list of exit events from the API.
    */
-  private List<ApiNode> buildApiNodes(StructuredTraceGraph graph, ByteBuffer traceId) {
-    List<ApiNode> apiNodes = new ArrayList<>();
+  private List<ApiNode<Event>> buildApiNodes(StructuredTraceGraph graph) {
+    List<ApiNode<Event>> apiNodes = new ArrayList<>();
     Set<ByteBuffer> processedEvents = new HashSet<>();
 
     for (Event event : trace.getEventList()) {
@@ -76,14 +75,8 @@ public class ApiTraceGraph {
         // get all the events in the api boundary
         Pair<List<Event>, List<Event>> pair = getEventsInApiBoundary(graph, event);
 
-        // create a new trace from the events
-        StructuredTrace newTrace = new StructuredTraceBuilder(
-            pair.getLeft(),
-            graph.getEntityMap(),
-            event.getCustomerId(),
-            traceId).buildStructuredTrace();
-
-        apiNodes.add(new ApiNode(newTrace, event, pair.getRight()));
+        // create new ApiNode from the events in the api boundary
+        apiNodes.add(new ApiNode<>(event, pair.getLeft(), event, pair.getRight()));
 
         // Add these events to the processed events.
         processedEvents.add(event.getEventId());
@@ -118,13 +111,7 @@ public class ApiTraceGraph {
                 additionalEvents.stream().map(HexUtils::getHex).collect(Collectors.toSet()));
           }
 
-          StructuredTrace newTrace = new StructuredTraceBuilder(
-              pair.getLeft(),
-              graph.getEntityMap(),
-              event.getCustomerId(),
-              traceId).buildStructuredTrace();
-
-          apiNodes.add(new ApiNode(newTrace, null, pair.getRight()));
+          apiNodes.add(new ApiNode<>(event, pair.getLeft(), null, pair.getRight()));
           pair.getLeft().forEach(e -> remainingEventIds.remove(e.getEventId()));
           remainingEventIds.remove(event.getEventId());
         } else if (!StringUtils.equals(EnrichedSpanUtils.getSpanType(event), UNKNOWN_SPAN_KIND_VALUE)) {
@@ -189,7 +176,7 @@ public class ApiTraceGraph {
   public ApiTraceGraph build() {
     StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
 
-    List<ApiNode> apiNodes = buildApiNodes(graph, trace.getTraceId());
+    List<ApiNode<Event>> apiNodes = buildApiNodes(graph);
     this.setNodeList(apiNodes);
 
     //optimization
@@ -200,7 +187,7 @@ public class ApiTraceGraph {
     //3. find all the children of exit boundary events, which will be entry boundary nodes of different api nodes
     //4. find all the api nodes based on children of exit boundary events from `entryBoundaryToApiNode`
     //5. connect the exit boundary and entry boundary of different api node with an edge
-    for (ApiNode apiNode : apiNodes) {
+    for (ApiNode<Event> apiNode : apiNodes) {
       //exit boundary events of api node
       List<Event> exitBoundaryEvents = apiNode.getExitApiBoundaryEvents();
       for (Event exitBoundaryEvent : exitBoundaryEvents) {
@@ -210,7 +197,7 @@ public class ApiTraceGraph {
             // if the child of an exit boundary event is entry api boundary type, which should be always!
             if (EnrichedSpanUtils.isEntryApiBoundary(child)) {
               // get the api node exit boundary event is connecting to
-              ApiNode destinationApiNode = entryBoundaryToApiNode.get(child);
+              ApiNode<Event> destinationApiNode = entryBoundaryToApiNode.get(child);
 
               Optional<ApiNodeEventEdge> edgeBetweenApiNodes = createEdgeBetweenApiNodes(apiNode, destinationApiNode,
                   exitBoundaryEvent, child);
@@ -227,8 +214,8 @@ public class ApiTraceGraph {
   }
 
   private Optional<ApiNodeEventEdge> createEdgeBetweenApiNodes(
-      ApiNode srcApiNode,
-      ApiNode destinationApiNode,
+      ApiNode<Event> srcApiNode,
+      ApiNode<Event> destinationApiNode,
       Event exitBoundaryEventFromSrcApiNode,
       Event entryBoundaryEventOfDestinationApiNode) {
     if (destinationApiNode != null) {
@@ -268,11 +255,11 @@ public class ApiTraceGraph {
     return Optional.empty();
   }
 
-  private void buildApiNodeToIndexMap(List<ApiNode> apiNodes) {
+  private void buildApiNodeToIndexMap(List<ApiNode<Event>> apiNodes) {
     entryBoundaryToApiNode = new HashMap<>();
     apiNodeToIndex = new HashMap<>();
     for (int i = 0; i < apiNodes.size(); i++) {
-      ApiNode apiNode = apiNodes.get(i);
+      ApiNode<Event> apiNode = apiNodes.get(i);
       apiNode.getEntryApiBoundaryEvent().ifPresent(e -> entryBoundaryToApiNode.put(e, apiNode));
       apiNodeToIndex.put(apiNode, i);
     }
