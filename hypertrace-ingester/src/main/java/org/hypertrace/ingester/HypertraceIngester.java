@@ -2,6 +2,7 @@ package org.hypertrace.ingester;
 
 import com.typesafe.config.Config;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,12 +67,12 @@ public class HypertraceIngester extends KafkaStreamsApp {
 
   @Override
   public List<String> getInputTopics() {
-    return new ArrayList<>();
+    return Arrays.asList("jaeger-spans", "raw-spans-from-jaeger-spans");
   }
 
   @Override
   public List<String> getOutputTopics() {
-    return new ArrayList<>();
+    return Arrays.asList("raw-spans-from-jaeger-spans", "structured-traces-from-raw-spans");
   }
 
   private Config getJobConfig(String jobName) {
