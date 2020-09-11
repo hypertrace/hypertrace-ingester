@@ -1,7 +1,6 @@
 package org.hypertrace.ingester;
 
 import com.typesafe.config.Config;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Hypertrace ingestion pipeline
- * */
+ */
 public class HypertraceIngester extends KafkaStreamsApp {
 
   private static final Logger logger = LoggerFactory.getLogger(HypertraceIngester.class);
@@ -41,14 +40,18 @@ public class HypertraceIngester extends KafkaStreamsApp {
     // create span normalizer
     SpanNormalizer spanNormalizer = new SpanNormalizer(ConfigClientFactory.getClient());
     Config spanNormalizerConfig = getJobConfig("span-normalizer");
-    Map<String, Object> spanNormalizerConfigMap = spanNormalizer.getStreamsConfig(spanNormalizerConfig);
-    streamsBuilder = spanNormalizer.buildTopology(spanNormalizerConfigMap, streamsBuilder, inputStreams);
+    Map<String, Object> spanNormalizerConfigMap = spanNormalizer
+        .getStreamsConfig(spanNormalizerConfig);
+    streamsBuilder = spanNormalizer
+        .buildTopology(spanNormalizerConfigMap, streamsBuilder, inputStreams);
 
     // create raw spans grouper
     RawSpansGrouper rawSpansGrouper = new RawSpansGrouper(ConfigClientFactory.getClient());
     Config rawSpansGrouperConfig = getJobConfig("raw-spans-grouper");
-    Map<String, Object> rawSpansGrouperConfigMap = rawSpansGrouper.getStreamsConfig(rawSpansGrouperConfig);
-    streamsBuilder = rawSpansGrouper.buildTopology(rawSpansGrouperConfigMap, streamsBuilder, inputStreams);
+    Map<String, Object> rawSpansGrouperConfigMap = rawSpansGrouper
+        .getStreamsConfig(rawSpansGrouperConfig);
+    streamsBuilder = rawSpansGrouper
+        .buildTopology(rawSpansGrouperConfigMap, streamsBuilder, inputStreams);
 
     return streamsBuilder;
   }
