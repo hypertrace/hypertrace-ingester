@@ -12,4 +12,6 @@ plugins {
 
 rootProject.name = "hypertrace-ingester"
 
+includeBuild("./span-normalizer")
+includeBuild("./raw-spans-grouper")
 include(":hypertrace-ingester")
