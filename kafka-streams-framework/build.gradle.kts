@@ -15,7 +15,7 @@ dependencies {
     api("com.typesafe:config:1.4.0")
     api("io.confluent:kafka-avro-serializer:5.5.0")
     implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.13")
-    implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.5")
+    implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
     implementation("org.apache.kafka:kafka-clients:5.5.1-ccs")
     testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
     testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
