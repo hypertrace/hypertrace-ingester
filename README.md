@@ -19,7 +19,7 @@ We have different enrichers in the pipeline and all those enrichers are executed
 - `DefaultServiceEntityEnricher` 
 - `UserAgentSpanEnricher`
 
-## How do we use trace-enrichers?
+## Description
 
 | ![space-1.jpg](https://hypertrace-docs.s3.amazonaws.com/ingestion-pipeline.png) | 
 |:--:| 
@@ -35,6 +35,27 @@ For example, Let's say we got span which has http method related attribute `meth
 ```
 ./gradlew dockerBuildImages
 ```
+
+## Testing
+
+### Running unit tests
+Run `./gradlew test` to execute unit tests. 
+
+
+### Testing image
+
+You can test the image you built after modification by running docker-compose or helm setup. 
+
+#### docker-compose
+Change the tag for `hypertrace-trace-enricher ` from `:main` to `:test` in [docker-compose file](https://github.com/hypertrace/hypertrace/blob/main/docker/docker-compose.yml) like this.
+
+```yaml
+  hypertrace-trace-enricher:
+    image: hypertrace/hypertrace-trace-enricher:test
+    container_name: hypertrace-trace-enricher
+    ...
+```
+and then run `docker-compose up` to test the setup.
 
 ## Docker Image Source:
 - [DockerHub > Hypertrace trace enricher](https://hub.docker.com/r/hypertrace/hypertrace-trace-enricher)
