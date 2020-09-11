@@ -1,10 +1,25 @@
 package org.hypertrace.core.kafkastreams.framework;
 
 
+import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.MAX_POLL_RECORDS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.COMPRESSION_TYPE_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.LINGER_MS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.MAX_REQUEST_SIZE_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.METRICS_RECORDING_LEVEL_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.TOPOLOGY_OPTIMIZATION;
+import static org.apache.kafka.streams.StreamsConfig.consumerPrefix;
+import static org.apache.kafka.streams.StreamsConfig.producerPrefix;
 import static org.hypertrace.core.kafkastreams.framework.constants.KafkaStreamsAppConstants.JOB_CONFIG;
 
 import com.google.common.collect.Streams;
 import com.typesafe.config.Config;
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -12,9 +27,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.common.record.CompressionType;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
 import org.apache.kafka.streams.kstream.KStream;
@@ -124,10 +139,28 @@ public abstract class KafkaStreamsApp extends PlatformService {
    */
   public Map<String, Object> getBaseStreamsConfig() {
     Map<String, Object> baseStreamsConfig = new HashMap<>();
-    baseStreamsConfig.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG,
-        UseWallclockTimeOnInvalidTimestamp.class);
-    baseStreamsConfig.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG,
+
+    // Default streams configurations
+    baseStreamsConfig.put(TOPOLOGY_OPTIMIZATION, "all");
+    baseStreamsConfig.put(METRICS_RECORDING_LEVEL_CONFIG, "INFO");
+    baseStreamsConfig
+        .put(DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, UseWallclockTimeOnInvalidTimestamp.class);
+    baseStreamsConfig.put(DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG,
         LogAndContinueExceptionHandler.class);
+
+    // Default serde configurations
+    baseStreamsConfig.put(DEFAULT_KEY_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
+    baseStreamsConfig.put(DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
+
+    // Default producer configurations
+    baseStreamsConfig.put(producerPrefix(LINGER_MS_CONFIG), "5000");
+    baseStreamsConfig.put(producerPrefix(MAX_REQUEST_SIZE_CONFIG), "1048576");
+    baseStreamsConfig.put(producerPrefix(COMPRESSION_TYPE_CONFIG), CompressionType.GZIP.name);
+
+    // Default consumer configurations
+    baseStreamsConfig.put(consumerPrefix(MAX_POLL_RECORDS_CONFIG), "1000");
+    baseStreamsConfig.put(consumerPrefix(AUTO_OFFSET_RESET_CONFIG), "latest");
+    baseStreamsConfig.put(consumerPrefix(AUTO_COMMIT_INTERVAL_MS_CONFIG), "5000");
 
     baseStreamsConfig.put(JOB_CONFIG, getAppConfig());
     return baseStreamsConfig;
