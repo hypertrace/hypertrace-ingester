@@ -35,11 +35,19 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
       EnrichedSpanConstants.getValue(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY);
   private static final String EXIT_BOUNDARY_TYPE =
       EnrichedSpanConstants.getValue(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_EXIT);
+  private static final String X_FORWARDED_HOST_HEADER = "x-forwarded-host";
+
   private static final List<String> HOST_HEADER_ATTRIBUTES = ImmutableList.of(
+      // The order of these constants is important because that enforces the priority for
+      // different keys/headers.
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HOST_HEADER),
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_AUTHORITY_HEADER),
-      RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_HOST)
+      RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_HOST),
+      // In the cases where there are sidecar proxies, the host header might be set to localhost
+      // while the original host will be moved to x-forwarded headers. Hence, read them too.
+      X_FORWARDED_HOST_HEADER
   );
+  private static final String LOCALHOST = "localhost";
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -102,10 +110,16 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
    * enricher class itself could be renamed to be more specific.
    */
   private void enrichHostHeader(Event event) {
-    String host =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(event, HOST_HEADER_ATTRIBUTES);
-    if (host != null) {
-      addEnrichedAttribute(event, HOST_HEADER, AttributeValueCreator.create(sanitizeHostValue(host)));
+    for (String key: HOST_HEADER_ATTRIBUTES) {
+      String value = SpanAttributeUtils.getStringAttribute(event, key);
+      if (value != null && !value.isEmpty()) {
+        // Ignore if it's "localhost"
+        String host = sanitizeHostValue(value);
+        if (!LOCALHOST.equalsIgnoreCase(host)) {
+          addEnrichedAttribute(event, HOST_HEADER, AttributeValueCreator.create(host));
+          break;
+        }
+      }
     }
   }
 

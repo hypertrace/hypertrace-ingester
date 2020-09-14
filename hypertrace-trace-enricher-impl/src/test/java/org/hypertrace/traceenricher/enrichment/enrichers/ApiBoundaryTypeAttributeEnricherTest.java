@@ -10,6 +10,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
@@ -115,6 +116,61 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
     Assertions.assertEquals(EnrichedSpanUtils.getApiBoundaryType(secondEntry), Constants.getEnrichedSpanConstant(ENTRY));
     target.enrichEvent(trace, secondExit);
     Assertions.assertEquals(EnrichedSpanUtils.getApiBoundaryType(secondExit), Constants.getEnrichedSpanConstant(EXIT));
+  }
+
+  @Test
+  public void testEnrichEventWithRequestHostHeader() {
+    addEnrichedAttributeToEvent(innerEntrySpan,
+        RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HOST_HEADER),
+        AttributeValueCreator.create("testHost"));
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
+  }
+
+  @Test
+  public void testEnrichEventWithAuthorityHeader() {
+    addEnrichedAttributeToEvent(innerEntrySpan,
+        RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_AUTHORITY_HEADER),
+        AttributeValueCreator.create("testHost"));
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
+  }
+
+  @Test
+  public void testEnrichEventWithHostHeader() {
+    addEnrichedAttributeToEvent(innerEntrySpan,
+        RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_HOST),
+        AttributeValueCreator.create("testHost"));
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
+  }
+
+  @Test
+  public void testEnrichEventWithForwardedHost() {
+    addEnrichedAttributeToEvent(innerEntrySpan, "x-forwarded-host",
+        AttributeValueCreator.create("testHost"));
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
+
+    // Add port also to the host value and test again.
+    addEnrichedAttributeToEvent(innerEntrySpan, "x-forwarded-host",
+        AttributeValueCreator.create("testHost:443"));
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
+  }
+
+  @Test
+  public void testEnrichEventWithLocalHostAndForwardedHost() {
+    addEnrichedAttributeToEvent(innerEntrySpan,
+        RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_HOST),
+        AttributeValueCreator.create("localhost:443"));
+    addEnrichedAttributeToEvent(innerEntrySpan,
+        RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_AUTHORITY_HEADER),
+        AttributeValueCreator.create("localhost"));
+    addEnrichedAttributeToEvent(innerEntrySpan, "x-forwarded-host",
+        AttributeValueCreator.create("testHost"));
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
   }
 
   private void mockStructuredGraph() {

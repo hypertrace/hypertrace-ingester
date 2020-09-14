@@ -28,7 +28,6 @@ import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.span.constants.v1.Docker;
 import org.hypertrace.core.span.constants.v1.Envoy;
 import org.hypertrace.core.span.constants.v1.TracerAttribute;
-import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
@@ -98,27 +97,6 @@ public class AbstractAttributeEnricherTest {
     addEnrichedAttributeToEvent(e, Constants.getEnrichedSpanConstant(SPAN_TYPE),
         AttributeValueCreator.create(Constants.getEnrichedSpanConstant(ENTRY)));
     return e;
-  }
-
-  protected Event.Builder createEventBuilder() {
-    return Event.newBuilder().setCustomerId(TENANT_ID)
-        .setEventId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
-        .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
-        .setEnrichedAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()));
-  }
-
-  protected Event.Builder createMockEntryEvent(String cluster, String namespace) {
-    Event.Builder builder = createEventBuilder();
-    builder.getEnrichedAttributesBuilder().getAttributeMap().put(
-        Constants.getEnrichedSpanConstant(SPAN_TYPE),
-        AttributeValueCreator.create(Constants.getEnrichedSpanConstant(ENTRY)));
-    builder.getEnrichedAttributesBuilder().getAttributeMap().put(
-        Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-        AttributeValueCreator.create(cluster));
-    builder.getEnrichedAttributesBuilder().getAttributeMap().put(
-        Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-        AttributeValueCreator.create(namespace));
-    return builder;
   }
 
   StructuredTrace createStructuredTrace(String tenantId, Event... events) {
