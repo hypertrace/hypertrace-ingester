@@ -1,5 +1,6 @@
 package org.hypertrace.ingester;
 
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.KAFKA_STREAMS_CONFIG_KEY;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 
@@ -41,27 +42,21 @@ public class HypertraceIngester extends KafkaStreamsApp {
       StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> inputStreams) {
 
-    // create span normalizer and its properties
+    // build sub-topology for span-normalizer
     SpanNormalizer spanNormalizer = new SpanNormalizer(ConfigClientFactory.getClient());
     Config spanNormalizerConfig = getJobConfig("span-normalizer");
     Map<String, Object> spanNormalizerConfigMap = spanNormalizer.getStreamsConfig(spanNormalizerConfig);
-    spanNormalizerConfigMap = spanNormalizer.additionalJobConfig(spanNormalizerConfigMap, spanNormalizerConfig);
-    streamsProperties = spanNormalizer.additionalJobConfig(streamsProperties, spanNormalizerConfig);
+    spanNormalizerConfigMap.put(spanNormalizer.getJobConfigKey(), spanNormalizerConfig);
+    streamsProperties.put(spanNormalizer.getJobConfigKey(), spanNormalizerConfig);
+    streamsBuilder = spanNormalizer.buildTopology(spanNormalizerConfigMap, streamsBuilder, inputStreams);
 
-    // create raw spans grouper
+    // build sub-topology for raw-spans-grouper
     RawSpansGrouper rawSpansGrouper = new RawSpansGrouper(ConfigClientFactory.getClient());
     Config rawSpansGrouperConfig = getJobConfig("raw-spans-grouper");
     Map<String, Object> rawSpansGrouperConfigMap = rawSpansGrouper.getStreamsConfig(rawSpansGrouperConfig);
-    rawSpansGrouperConfigMap = rawSpansGrouper.additionalJobConfig(rawSpansGrouperConfigMap, rawSpansGrouperConfig);
-     rawSpansGrouper.additionalJobConfig(streamsProperties, rawSpansGrouperConfig);
-
-    // build topologies for each job
-    streamsBuilder = spanNormalizer
-        .buildTopology(spanNormalizerConfigMap, streamsBuilder, inputStreams);
-
-    streamsBuilder = rawSpansGrouper
-        .buildTopology(rawSpansGrouperConfigMap, streamsBuilder, inputStreams);
-
+    rawSpansGrouperConfigMap.put(rawSpansGrouper.getJobConfigKey(), rawSpansGrouperConfig);
+    streamsProperties.put(rawSpansGrouper.getJobConfigKey(), rawSpansGrouperConfig);
+    streamsBuilder = rawSpansGrouper.buildTopology(rawSpansGrouperConfigMap, streamsBuilder, inputStreams);
 
     return streamsBuilder;
   }
@@ -74,10 +69,9 @@ public class HypertraceIngester extends KafkaStreamsApp {
   }
 
   @Override
-  public Map<String, Object> additionalJobConfig(Map<String, Object> properties, Config jobConfig) {
-    return properties;
+  public String getJobConfigKey() {
+    return HYPERTRACE_INGESTER_JOB_CONFIG;
   }
-
   @Override
   public Logger getLogger() {
     return logger;
