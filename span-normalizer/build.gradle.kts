@@ -38,18 +38,17 @@ dependencies {
   implementation(project(":raw-span-constants"))
   implementation(project(":span-normalizer-api"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.1")
-  implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.6")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.8")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.7")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.5")
 
-  // Needed for flink metric exporter. Used for Hypertrace and debugging.
-  runtimeOnly("org.apache.flink:flink-metrics-slf4j:1.10.1")
 
+  // Required for the GRPC clients.
+  runtimeOnly("io.grpc:grpc-netty:1.31.1")
   implementation("com.typesafe:config:1.4.0")
   implementation("de.javakaffee:kryo-serializers:0.45")
-  implementation("org.apache.flink:flink-avro:1.7.0")
-  implementation("org.apache.flink:flink-streaming-java_2.11:1.7.0")
+
   implementation("io.confluent:kafka-avro-serializer:5.5.1")
   implementation("org.apache.commons:commons-lang3:3.10")
 
@@ -59,4 +58,6 @@ dependencies {
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
   testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
+  testImplementation("org.junit-pioneer:junit-pioneer:0.9.0")
+  testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
 }

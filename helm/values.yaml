@@ -70,16 +70,13 @@ deploymentSelectorMatchLabels:
 ###########
 spanNormalizerConfig:
   name: span-normalizer-config
-  flink:
-    source:
-      kafka:
+  kafka:
+    streams:
+      config:
+        metricsRecordingLevel: INFO
+        numStreamThreads: 2
         bootstrapServers: "bootstrap:9092"
-    sink:
-      kafka:
-        bootstrapServers: "bootstrap:9092"
-      schema:
-        registry:
-          url: "http://schema-registry-service:8081"
+        schemaRegistryUrl: "http://schema-registry-service:8081"
 
 logConfig:
   name: span-normalizer-log-appender-config

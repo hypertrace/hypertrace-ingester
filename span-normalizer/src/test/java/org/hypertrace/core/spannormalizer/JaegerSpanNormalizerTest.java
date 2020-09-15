@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Random;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
 public class JaegerSpanNormalizerTest {
   private final Random random = new Random();
@@ -45,15 +47,10 @@ public class JaegerSpanNormalizerTest {
   }
 
   @Test
+  @SetEnvironmentVariable(key = "SERVICE_NAME", value= "span-normalizer")
   public void defaultConfigParseTest() {
     try {
-      String configPath =
-          JaegerSpanNormalizerTest.class
-              .getClassLoader()
-              .getResource("configs/span-normalizer/test-application.conf")
-              .getPath();
-      Config jobConfig = ConfigFactory.parseFile(new File(configPath));
-      new SpanNormalizerJob(jobConfig);
+      new SpanNormalizer(ConfigClientFactory.getClient());
     } catch (Exception e) {
       // We don't expect any exceptions in parsing the configuration.
       e.printStackTrace();
@@ -65,29 +62,25 @@ public class JaegerSpanNormalizerTest {
     return Map.of(
         "span.type",
         "jaeger",
-        "flink.job.parallelism",
-        4,
-        "flink.source",
-        Map.of(
-            "type", "jaeger",
-            "topic", "jaeger-spans",
-            "kafka.bootstrap.servers", "localhost:9092"),
-        "flink.sink",
-        Map.of(
-            "type", "kafka",
-            "topic", "raw-spans-from-jaeger-spans",
-            "kafka.bootstrap.servers", "localhost:9092",
-            "schema.registry.schema.registry.url", "http://localhost:8081"),
-        "flink.job.metrics.metrics.reporters",
-        "prometheus");
+        "input.topic",
+        "jaeger-spans",
+        "output.topic",
+        "raw-spans-from-jaeger-spans",
+        "kafka.streams.config",
+        Map.of("application.id",
+            "jaeger-spans-to-raw-spans-job",
+            "bootstrap.servers",
+            "localhost:9092"),
+        "schema.registry.config",
+        Map.of("schema.registry.url", "http://localhost:8081")
+    );
   }
 
   @Test
+  @SetEnvironmentVariable(key = "SERVICE_NAME", value= "span-normalizer")
   public void testTenantIdKeyConfiguration() {
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("tenantIdTagKey", "tenant-id")));
     try {
-      new SpanNormalizerJob(ConfigFactory.parseMap(configs));
+      new SpanNormalizer(ConfigClientFactory.getClient());
     } catch (Exception e) {
       // We don't expect any exceptions in parsing the configuration.
       e.printStackTrace();
@@ -99,7 +92,7 @@ public class JaegerSpanNormalizerTest {
   public void emptyProcessorConfigShouldFailTheProcessor() {
     Config jobConfig = ConfigFactory.parseMap(getCommonConfig());
     try {
-      new SpanNormalizerJob(jobConfig);
+      JaegerSpanNormalizer.get(jobConfig);
       Assertions.fail("config parsing should fail");
     } catch (RuntimeException e) {
       // We expect exception while parsing the config.
@@ -123,7 +116,7 @@ public class JaegerSpanNormalizerTest {
                 "defaultTenantId", "tenant-1",
                 "tenantIdTagKey", "tenant-id")));
     try {
-      new SpanNormalizerJob(ConfigFactory.parseMap(configs));
+      JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
       Assertions.fail("config parsing should fail");
     } catch (RuntimeException e) {
       // We expect exception while parsing the config.
