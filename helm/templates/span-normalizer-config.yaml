@@ -10,9 +10,7 @@ data:
       application.id = jaeger-spans-to-raw-spans-job
       metrics.recording.level = "{{ .Values.spanNormalizerConfig.kafka.streams.config.metricsRecordingLevel }}"
       num.stream.threads = "{{ .Values.spanNormalizerConfig.kafka.streams.config.numStreamThreads }}"
-      producer.compression.type = gzip
       producer.max.request.size = 10485760
-      topology.optimization = all
       bootstrap.servers = "{{ .Values.spanNormalizerConfig.kafka.streams.config.bootstrapServers }}"
       auto.offset.reset = "latest"
       auto.commit.interval.ms = 5000
