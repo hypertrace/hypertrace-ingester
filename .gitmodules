@@ -6,3 +6,7 @@
 	path = raw-spans-grouper
 	url = https://github.com/hypertrace/raw-spans-grouper.git
 	branch = main
+[submodule "hypertrace-trace-enricher"]
+	path = hypertrace-trace-enricher
+	url = https://github.com/hypertrace/hypertrace-trace-enricher.git
+	branch = main
