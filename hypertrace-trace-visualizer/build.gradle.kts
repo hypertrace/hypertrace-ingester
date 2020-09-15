@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.6")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.8")
 
   implementation("org.json:json:20200518")
   implementation("org.apache.commons:commons-lang3:3.10")
