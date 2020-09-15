@@ -15,7 +15,6 @@ import static org.apache.kafka.streams.StreamsConfig.METRICS_RECORDING_LEVEL_CON
 import static org.apache.kafka.streams.StreamsConfig.TOPOLOGY_OPTIMIZATION;
 import static org.apache.kafka.streams.StreamsConfig.consumerPrefix;
 import static org.apache.kafka.streams.StreamsConfig.producerPrefix;
-import static org.hypertrace.core.kafkastreams.framework.constants.KafkaStreamsAppConstants.JOB_CONFIG;
 
 import com.google.common.collect.Streams;
 import com.typesafe.config.Config;
@@ -59,24 +58,17 @@ public abstract class KafkaStreamsApp extends PlatformService {
     try {
       Map<String, Object> baseStreamsConfig = getBaseStreamsConfig();
       Map<String, Object> streamsConfig = getStreamsConfig(getAppConfig());
-
       Map<String, Object> mergedProperties = mergeProperties(baseStreamsConfig, streamsConfig);
-
-      Properties properties = new Properties();
-      properties.putAll(mergedProperties);
-
-      getLogger().info(ConfigUtils.propertiesAsList(properties));
 
       // get the lists of all input and output topics to pre create if any
       if (getAppConfig().hasPath(PRE_CREATE_TOPICS) &&
           getAppConfig().getBoolean(PRE_CREATE_TOPICS)) {
         List<String> topics = Streams.concat(
-            getInputTopics().stream(),
-            getOutputTopics().stream()
+            getInputTopics(mergedProperties).stream(),
+            getOutputTopics(mergedProperties).stream()
         ).collect(Collectors.toList());
 
-        KafkaTopicCreator.createTopics(properties.getProperty(
-            CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, ""),
+        KafkaTopicCreator.createTopics((String) mergedProperties.getOrDefault(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, ""),
             topics);
       }
 
@@ -85,6 +77,10 @@ public abstract class KafkaStreamsApp extends PlatformService {
       streamsBuilder = buildTopology(mergedProperties, streamsBuilder, sourceStreams);
       Topology topology = streamsBuilder.build();
       getLogger().info(topology.describe().toString());
+
+      Properties properties = new Properties();
+      properties.putAll(mergedProperties);
+      getLogger().info(ConfigUtils.propertiesAsList(properties));
 
       app = new KafkaStreams(topology, properties);
 
@@ -162,7 +158,7 @@ public abstract class KafkaStreamsApp extends PlatformService {
     baseStreamsConfig.put(consumerPrefix(AUTO_OFFSET_RESET_CONFIG), "latest");
     baseStreamsConfig.put(consumerPrefix(AUTO_COMMIT_INTERVAL_MS_CONFIG), "5000");
 
-    baseStreamsConfig.put(JOB_CONFIG, getAppConfig());
+    baseStreamsConfig.put(getJobConfigKey(), getAppConfig());
     return baseStreamsConfig;
   }
 
@@ -172,11 +168,13 @@ public abstract class KafkaStreamsApp extends PlatformService {
 
   public abstract Map<String, Object> getStreamsConfig(Config jobConfig);
 
+  public abstract String getJobConfigKey();
+
   public abstract Logger getLogger();
 
-  public abstract List<String> getInputTopics();
+  public abstract List<String> getInputTopics(Map<String, Object> properties);
 
-  public abstract List<String> getOutputTopics();
+  public abstract List<String> getOutputTopics(Map<String, Object> properties);
 
   /**
    * Merge the props into baseProps

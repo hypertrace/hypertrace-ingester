@@ -10,6 +10,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
+import org.hypertrace.core.kafkastreams.framework.constants.KafkaStreamsAppConstants;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
 import org.slf4j.Logger;
 
@@ -50,17 +51,22 @@ public class SampleApp extends KafkaStreamsApp {
   }
 
   @Override
+  public String getJobConfigKey() {
+    return KafkaStreamsAppConstants.JOB_CONFIG;
+  }
+
+  @Override
   public Logger getLogger() {
     return null;
   }
 
   @Override
-  public List<String> getInputTopics() {
+  public List<String> getInputTopics(Map<String, Object> properties) {
     return Arrays.asList(INPUT_TOPIC);
   }
 
   @Override
-  public List<String> getOutputTopics() {
+  public List<String> getOutputTopics(Map<String, Object> properties) {
     return Arrays.asList(OUTPUT_TOPIC);
   }
 
