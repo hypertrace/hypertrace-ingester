@@ -29,6 +29,8 @@ dependencies {
   implementation("org.hypertrace.core.spannormalizer:span-normalizer")
   implementation("org.hypertrace.core.rawspansgrouper:raw-spans-grouper")
   implementation("org.hypertrace.traceenricher:hypertrace-trace-enricher")
+  implementation("org.hypertrace.viewgenerator:hypertrace-view-generator")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.12-SNAPSHOT")
 }
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
@@ -38,13 +40,15 @@ tasks.run<JavaExec> {
 
 tasks.processResources {
   dependsOn("copyServiceConfigs");
+  dependsOn("createCopySpecForSubJob");
 }
 
 tasks.register<Copy>("copyServiceConfigs") {
   with(
       createCopySpec("span-normalizer", "span-normalizer"),
       createCopySpec("raw-spans-grouper", "raw-spans-grouper"),
-      createCopySpec("hypertrace-trace-enricher", "hypertrace-trace-enricher")
+      createCopySpec("hypertrace-trace-enricher", "hypertrace-trace-enricher"),
+      createCopySpec("hypertrace-view-generator", "hypertrace-view-generator")
   ).into("./build/resources/main/configs/")
 }
 
@@ -53,6 +57,19 @@ fun createCopySpec(projectName: String, serviceName: String): CopySpec {
     from("../${projectName}/${serviceName}/src/main/resources/configs/common") {
       include("application.conf")
       into("${serviceName}")
+    }
+  }
+}
+
+tasks.register<Copy>("createCopySpecForSubJob") {
+  with(
+      createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator")
+  ).into("./build/resources/main/configs/")
+}
+
+fun createCopySpecForSubJob(projectName: String, serviceName: String): CopySpec {
+  return copySpec {
+    from("../${projectName}/${serviceName}/src/main/resources/configs/") {
     }
   }
 }

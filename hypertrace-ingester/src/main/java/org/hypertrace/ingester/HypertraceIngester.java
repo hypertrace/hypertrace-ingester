@@ -1,11 +1,15 @@
 package org.hypertrace.ingester;
 
+import static org.hypertrace.core.viewgenerator.service.ViewGeneratorConstants.INPUT_TOPIC_CONFIG_KEY;
+import static org.hypertrace.core.viewgenerator.service.ViewGeneratorConstants.OUTPUT_TOPIC_CONFIG_KEY;
+
 import com.typesafe.config.Config;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.KStream;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
@@ -14,6 +18,7 @@ import org.hypertrace.core.serviceframework.config.ConfigClient;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.serviceframework.config.ConfigUtils;
 import org.hypertrace.core.spannormalizer.SpanNormalizer;
+import org.hypertrace.core.viewgenerator.service.MultiViewGeneratorLauncher;
 import org.hypertrace.traceenricher.trace.enricher.TraceEnricher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,43 +36,54 @@ public class HypertraceIngester extends KafkaStreamsApp {
   private static final String KAFKA_STREAMS_CONFIG_KEY = "kafka.streams.config";
   private static final String HYPERTRACE_INGESTER_JOB_CONFIG = "hypertrace-ingester-job-config";
 
+  private Map<String, String> jobNameToKey = new HashMap<>();
+  private Map<String, KafkaStreamsApp> jobNameToSubTopology = new HashMap<>();
+
   public HypertraceIngester(ConfigClient configClient) {
     super(configClient);
   }
 
+  private KafkaStreamsApp getSubTopologyInstance(String name) {
+    KafkaStreamsApp kafkaStreamsApp;
+    switch (name) {
+      case "span-normalizer":
+        kafkaStreamsApp = new SpanNormalizer(ConfigClientFactory.getClient());
+        break;
+      case "raw-spans-grouper":
+        kafkaStreamsApp = new RawSpansGrouper(ConfigClientFactory.getClient());
+        break;
+      case "hypertrace-trace-enricher":
+        kafkaStreamsApp = new TraceEnricher(ConfigClientFactory.getClient());
+        break;
+      case "all-views":
+        kafkaStreamsApp = new MultiViewGeneratorLauncher(ConfigClientFactory.getClient());
+        break;
+      default:
+        throw new RuntimeException(String.format("Invalid configured sub-topology : [%s]", name));
+    }
+    return kafkaStreamsApp;
+  }
+
   @Override
-  public StreamsBuilder buildTopology(Map<String, Object> streamsProperties,
+  public StreamsBuilder buildTopology(Map<String, Object> properties,
       StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> inputStreams) {
 
-    // build sub-topology for span-normalizer
-    SpanNormalizer spanNormalizer = new SpanNormalizer(ConfigClientFactory.getClient());
-    Config spanNormalizerConfig = getJobConfig("span-normalizer");
-    Map<String, Object> spanNormalizerConfigMap = spanNormalizer
-        .getStreamsConfig(spanNormalizerConfig);
-    spanNormalizerConfigMap.put(spanNormalizer.getJobConfigKey(), spanNormalizerConfig);
-    addProperties(streamsProperties, spanNormalizerConfigMap);
-    streamsBuilder = spanNormalizer
-        .buildTopology(spanNormalizerConfigMap, streamsBuilder, inputStreams);
+    List<String> subTopologiesNames = getSubTopologiesNames(properties);
 
-    // build sub-topology for raw-spans-grouper
-    RawSpansGrouper rawSpansGrouper = new RawSpansGrouper(ConfigClientFactory.getClient());
-    Config rawSpansGrouperConfig = getJobConfig("raw-spans-grouper");
-    Map<String, Object> rawSpansGrouperConfigMap = rawSpansGrouper
-        .getStreamsConfig(rawSpansGrouperConfig);
-    rawSpansGrouperConfigMap.put(rawSpansGrouper.getJobConfigKey(), rawSpansGrouperConfig);
-    addProperties(streamsProperties, rawSpansGrouperConfigMap);
-    streamsBuilder = rawSpansGrouper
-        .buildTopology(rawSpansGrouperConfigMap, streamsBuilder, inputStreams);
+    for (String subTopologyName : subTopologiesNames) {
+      KafkaStreamsApp subTopology = getSubTopologyInstance(subTopologyName);
+      jobNameToSubTopology.put(subTopologyName, subTopology);
+      Config subTopologyJobConfig = getSubJobConfig(subTopologyName);
+      Map<String, Object> flattenSubTopologyConfig = subTopology
+          .getStreamsConfig(subTopologyJobConfig);
+      flattenSubTopologyConfig.put(subTopology.getJobConfigKey(), subTopologyJobConfig);
+      addProperties(properties, flattenSubTopologyConfig);
+      streamsBuilder = subTopology
+          .buildTopology(properties, streamsBuilder, inputStreams);
+      jobNameToKey.put(subTopologyName, subTopology.getJobConfigKey());
+    }
 
-    // build sub-topology for hypertrace-trace-enricher
-    TraceEnricher traceEnricher = new TraceEnricher(ConfigClientFactory.getClient());
-    Config traceEnricherConfig = getJobConfig("hypertrace-trace-enricher");
-    Map<String, Object> traceEnricherConfigMap = traceEnricher
-        .getStreamsConfig(traceEnricherConfig);
-    traceEnricherConfigMap.put(traceEnricher.getJobConfigKey(), traceEnricherConfig);
-    addProperties(streamsProperties, traceEnricherConfigMap);
-    streamsBuilder = traceEnricher.buildTopology(streamsProperties, streamsBuilder, inputStreams);
     return streamsBuilder;
   }
 
@@ -90,26 +106,40 @@ public class HypertraceIngester extends KafkaStreamsApp {
 
   @Override
   public List<String> getInputTopics(Map<String, Object> properties) {
-    return Arrays.asList(
-        "jaeger-spans",
-        "raw-spans-from-jaeger-spans",
-        "structured-traces-from-raw-spans");
+    Set<String> inputTopics = new HashSet();
+    List<String> subTopologiesNames = getSubTopologiesNames(properties);
+    for (String subTopologyName : subTopologiesNames) {
+      List<String> subTopologyInputTopics = jobNameToSubTopology.get(subTopologyName).getInputTopics(properties);
+      subTopologyInputTopics.forEach(inputTopics::add);
+    }
+    return inputTopics.stream().collect(Collectors.toList());
   }
 
   @Override
   public List<String> getOutputTopics(Map<String, Object> properties) {
-    return Arrays.asList(
-        "raw-spans-from-jaeger-spans",
-        "structured-traces-from-raw-spans",
-        "enriched-structured-traces");
+    Set<String> outputTopics = new HashSet();
+    List<String> subTopologiesNames = getSubTopologiesNames(properties);
+    for (String subTopologyName : subTopologiesNames) {
+      List<String> subTopologyInputTopics = jobNameToSubTopology.get(subTopologyName).getOutputTopics(properties);
+      subTopologyInputTopics.forEach(outputTopics::add);
+    }
+    return outputTopics.stream().collect(Collectors.toList());
   }
 
-  private Config getJobConfig(String jobName) {
+  private List<String> getSubTopologiesNames(Map<String, Object> properties) {
+    return getJobConfig(properties).getStringList("sub.topology.names");
+  }
+
+  private Config getSubJobConfig(String jobName) {
     return configClient.getConfig(jobName,
         ConfigUtils.getEnvironmentProperty(CLUSTER_NAME),
         ConfigUtils.getEnvironmentProperty(POD_NAME),
         ConfigUtils.getEnvironmentProperty(CONTAINER_NAME)
     );
+  }
+
+  private Config getJobConfig(Map<String, Object> properties) {
+    return (Config) properties.get(this.getJobConfigKey());
   }
 
   private void addProperties(Map<String, Object> baseProps, Map<String, Object> props) {

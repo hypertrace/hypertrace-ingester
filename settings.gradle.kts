@@ -15,4 +15,5 @@ rootProject.name = "hypertrace-ingester"
 includeBuild("./span-normalizer")
 includeBuild("./raw-spans-grouper")
 includeBuild("./hypertrace-trace-enricher")
+includeBuild("./hypertrace-view-generator")
 include(":hypertrace-ingester")

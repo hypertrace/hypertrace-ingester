@@ -10,3 +10,7 @@
 	path = hypertrace-trace-enricher
 	url = https://github.com/hypertrace/hypertrace-trace-enricher.git
 	branch = main
+[submodule "hypertrace-view-generator"]
+	path = hypertrace-view-generator
+	url = https://github.com/hypertrace/hypertrace-view-generator.git
+	branch = main
