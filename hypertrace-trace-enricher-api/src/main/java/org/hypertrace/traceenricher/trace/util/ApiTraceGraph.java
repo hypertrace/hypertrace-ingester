@@ -115,8 +115,12 @@ public class ApiTraceGraph {
           pair.getLeft().forEach(e -> remainingEventIds.remove(e.getEventId()));
           remainingEventIds.remove(event.getEventId());
         } else if (!StringUtils.equals(EnrichedSpanUtils.getSpanType(event), UNKNOWN_SPAN_KIND_VALUE)) {
-          LOGGER.warn("Non exit root span wasn't picked for ApiNode; traceId: {}, span: {}",
-              HexUtils.getHex(trace.getTraceId()), event);
+          LOGGER.warn("Non exit root span wasn't picked for ApiNode; traceId: {}, spanId: {}, spanName: {}, serviceName: {}",
+              HexUtils.getHex(trace.getTraceId()),
+              HexUtils.getHex(event.getEventId()),
+              event.getEventName(),
+              event.getServiceName()
+          );
         }
       }
     }
