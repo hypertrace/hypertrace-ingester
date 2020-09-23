@@ -20,6 +20,7 @@ import com.google.common.collect.Streams;
 import com.typesafe.config.Config;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,12 +42,14 @@ import org.hypertrace.core.serviceframework.PlatformService;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
 import org.hypertrace.core.serviceframework.config.ConfigUtils;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class KafkaStreamsApp extends PlatformService {
 
   public static final String CLEANUP_LOCAL_STATE = "cleanup.local.state";
   public static final String PRE_CREATE_TOPICS = "precreate.topics";
-
+  public static final String KAFKA_STREAMS_CONFIG_KEY = "kafka.streams.config";
+  private static final Logger logger = LoggerFactory.getLogger(KafkaStreamsApp.class);
   protected KafkaStreams app;
 
   public KafkaStreamsApp(ConfigClient configClient) {
@@ -56,32 +59,27 @@ public abstract class KafkaStreamsApp extends PlatformService {
   @Override
   protected void doInit() {
     try {
+      // configure properties
       Map<String, Object> baseStreamsConfig = getBaseStreamsConfig();
-      Map<String, Object> streamsConfig = getStreamsConfig(getAppConfig());
+      Map<String, Object> streamsConfig = getJobStreamsConfig(getAppConfig());
       Map<String, Object> mergedProperties = mergeProperties(baseStreamsConfig, streamsConfig);
 
-      // get the lists of all input and output topics to pre create if any
-      if (getAppConfig().hasPath(PRE_CREATE_TOPICS) &&
-          getAppConfig().getBoolean(PRE_CREATE_TOPICS)) {
-        List<String> topics = Streams.concat(
-            getInputTopics(mergedProperties).stream(),
-            getOutputTopics(mergedProperties).stream()
-        ).collect(Collectors.toList());
-
-        KafkaTopicCreator.createTopics((String) mergedProperties.getOrDefault(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, ""),
-            topics);
-      }
-
+      // build topologies
       Map<String, KStream<?, ?>> sourceStreams = new HashMap<>();
       StreamsBuilder streamsBuilder = new StreamsBuilder();
       streamsBuilder = buildTopology(mergedProperties, streamsBuilder, sourceStreams);
       Topology topology = streamsBuilder.build();
       getLogger().info(topology.describe().toString());
 
+      // finalized properties
       Properties properties = new Properties();
       properties.putAll(mergedProperties);
       getLogger().info(ConfigUtils.propertiesAsList(properties));
 
+      // pre-create input/output topics required for kstream application
+      preCreateTopics(mergedProperties);
+
+      // create kstream app
       app = new KafkaStreams(topology, properties);
 
       // useful for resetting local state - during testing or any other scenarios where
@@ -158,7 +156,6 @@ public abstract class KafkaStreamsApp extends PlatformService {
     baseStreamsConfig.put(consumerPrefix(AUTO_OFFSET_RESET_CONFIG), "latest");
     baseStreamsConfig.put(consumerPrefix(AUTO_COMMIT_INTERVAL_MS_CONFIG), "5000");
 
-    baseStreamsConfig.put(getJobConfigKey(), getAppConfig());
     return baseStreamsConfig;
   }
 
@@ -166,15 +163,39 @@ public abstract class KafkaStreamsApp extends PlatformService {
       StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> sourceStreams);
 
-  public abstract Map<String, Object> getStreamsConfig(Config jobConfig);
+  public Map<String, Object> getStreamsConfig(Config jobConfig) {
+    Map<String, Object> streamsConfig = new HashMap<>(
+        ConfigUtils.getFlatMapConfig(jobConfig, getStreamsConfigKey()));
+    return streamsConfig;
+  }
 
-  public abstract String getJobConfigKey();
+  public String getStreamsConfigKey() {
+    return KAFKA_STREAMS_CONFIG_KEY;
+  }
 
-  public abstract Logger getLogger();
+  public String getJobConfigKey() {
+    return String.format("%s-job-config", getServiceName());
+  }
 
-  public abstract List<String> getInputTopics(Map<String, Object> properties);
+  public Logger getLogger() {
+    return logger;
+  }
 
-  public abstract List<String> getOutputTopics(Map<String, Object> properties);
+  public List<String> getInputTopics(Map<String, Object> properties) {
+    return new ArrayList<>();
+  }
+
+  public List<String> getOutputTopics(Map<String, Object> properties) {
+    return new ArrayList<>();
+  }
+
+  private Map<String, Object> getJobStreamsConfig(Config jobConfig) {
+    Map<String, Object> properties = getStreamsConfig(jobConfig);
+    if (!properties.containsKey(getJobConfigKey())) {
+      properties.put(getJobConfigKey(), jobConfig);
+    }
+    return properties;
+  }
 
   /**
    * Merge the props into baseProps
@@ -183,5 +204,20 @@ public abstract class KafkaStreamsApp extends PlatformService {
       Map<String, Object> props) {
     props.forEach(baseProps::put);
     return baseProps;
+  }
+
+  private void preCreateTopics(Map<String, Object> properties) {
+    Config jobConfig = (Config) properties.get(getJobConfigKey());
+    if (jobConfig.hasPath(PRE_CREATE_TOPICS) && jobConfig.getBoolean(PRE_CREATE_TOPICS)) {
+      List<String> topics = Streams.concat(
+          getInputTopics(properties).stream(),
+          getOutputTopics(properties).stream()
+      ).collect(Collectors.toList());
+
+      KafkaTopicCreator
+          .createTopics((String) properties.get(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG),
+              topics
+          );
+    }
   }
 }
