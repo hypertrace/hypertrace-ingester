@@ -1,7 +1,7 @@
 plugins {
     `java-library`
     jacoco
-    id("com.commercehub.gradle.plugin.avro") version "0.9.1"
+    id("org.hypertrace.avro-plugin")
     id("org.hypertrace.publish-plugin")
     id("org.hypertrace.jacoco-report-plugin")
 }
