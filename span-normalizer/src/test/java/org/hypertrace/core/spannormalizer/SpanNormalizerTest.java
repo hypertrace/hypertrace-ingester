@@ -7,8 +7,6 @@ import com.google.protobuf.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValue;
-import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +22,7 @@ import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.shared.HexUtils;
+import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
@@ -50,27 +49,24 @@ class SpanNormalizerTest {
         (Function<Entry<String, ConfigValue>, Object>) Entry::getKey,
         (Function<Entry<String, ConfigValue>, Object>) Entry::getValue));
 
-    Map<String, Object> baseProps = underTest.getBaseStreamsConfig();
-    Map<String, Object> streamsProps = underTest.getStreamsConfig(config);
-    baseProps.forEach(streamsProps::put);
-    Map<String, Object> mergedProps = streamsProps;
-    streamsProps.put(SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG, config);
+    Map<String, Object> mergedProps = new HashMap<>();
+    underTest.getBaseStreamsConfig().forEach(mergedProps::put);
+    underTest.getStreamsConfig(config).forEach(mergedProps::put);
+    mergedProps.put(SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG, config);
+
     StreamsBuilder streamsBuilder = underTest
         .buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
 
     Properties props = new Properties();
-    streamsProps.forEach(props::put);
+    mergedProps.forEach(props::put);
 
     TopologyTestDriver td = new TopologyTestDriver(streamsBuilder.build(), props);
     TestInputTopic<byte[], Span> inputTopic = td
         .createInputTopic(config.getString(SpanNormalizerConstants.INPUT_TOPIC_CONFIG_KEY),
             Serdes.ByteArray().serializer(), new JaegerSpanSerde().serializer());
 
-    // make sure the schema reistry url starts with 'mock://' including the one specified in application.conf
-    Serde<RawSpan> rawSpanSerde = new SpecificAvroSerde<>();
-    rawSpanSerde.configure(
-        Map.of(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "mock://localhost:8081"),
-        false);
+    Serde<RawSpan> rawSpanSerde = new AvroSerde<>();
+    rawSpanSerde.configure(Map.of(), false);
 
     TestOutputTopic outputTopic = td
         .createOutputTopic(config.getString(SpanNormalizerConstants.OUTPUT_TOPIC_CONFIG_KEY),

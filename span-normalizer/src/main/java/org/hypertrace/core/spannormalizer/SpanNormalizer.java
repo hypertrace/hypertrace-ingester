@@ -1,7 +1,6 @@
 package org.hypertrace.core.spannormalizer;
 
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.INPUT_TOPIC_CONFIG_KEY;
-import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.KAFKA_STREAMS_CONFIG_KEY;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.OUTPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 
@@ -54,14 +53,7 @@ public class SpanNormalizer extends KafkaStreamsApp {
 
     return streamsBuilder;
   }
-
-  @Override
-  public Map<String, Object> getStreamsConfig(Config jobConfig) {
-    Map<String, Object> streamsConfig = new HashMap<>(
-        ConfigUtils.getFlatMapConfig(jobConfig, KAFKA_STREAMS_CONFIG_KEY));
-    return streamsConfig;
-  }
-
+  
   @Override
   public String getJobConfigKey() {
     return SPAN_NORMALIZER_JOB_CONFIG;
