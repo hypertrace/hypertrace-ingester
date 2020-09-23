@@ -6,23 +6,12 @@ metadata:
     release: {{ .Release.Name }}
 data:
   application.conf: |-
-    flink.source {
-      schema.registry {
-        schema.registry.url = "http://schema-registry-service:8081"
-      }
-      kafka {
-        bootstrap.servers = "bootstrap:9092"
-      }
-    }
-
-    flink.sink {
-      topic = {{ .Values.traceEnricherConfig.flink.sink.topic }}
-      schema.registry {
-        schema.registry.url = "http://schema-registry-service:8081"
-      }
-      kafka {
-        bootstrap.servers = "bootstrap:9092"
-      }
+    kafka.streams.config {
+      application.id = structured-traces-enrichment-job
+      metrics.recording.level = "{{ .Values.traceEnricherConfig.kafka.streams.config.metricsRecordingLevel }}"
+      num.stream.threads = "{{ .Values.traceEnricherConfig.kafka.streams.config.numStreamThreads }}"
+      bootstrap.servers = "{{ .Values.traceEnricherConfig.kafka.streams.config.bootstrapServers }}"
+      schema.registry.url = "{{ .Values.traceEnricherConfig.kafka.streams.config.schemaRegistryUrl }}"
     }
 
     enricher {

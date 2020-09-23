@@ -64,9 +64,13 @@ deploymentSelectorMatchLabels:
 ###########
 traceEnricherConfig:
   name: hypertrace-trace-enricher-config
-  flink:
-    sink:
-      topic: enriched-structured-traces
+  kafka:
+    streams:
+      config:
+        metricsRecordingLevel: INFO
+        numStreamThreads: 2
+        bootstrapServers: "bootstrap:9092"
+        schemaRegistryUrl: "http://schema-registry-service:8081"
 
 logConfig:
   name: hypertrace-trace-enricher-log-config

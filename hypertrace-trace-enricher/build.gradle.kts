@@ -52,17 +52,17 @@ dependencies {
   implementation("org.hypertrace.entity.service:entity-service-client:0.1.20")
 
   implementation("com.typesafe:config:1.4.0")
-  implementation("de.javakaffee:kryo-serializers:0.45")
-  implementation("org.apache.flink:flink-avro:1.7.0")
-  implementation("org.apache.flink:flink-streaming-java_2.11:1.7.0")
-  implementation("io.confluent:kafka-avro-serializer:5.5.0")
-
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.7")
+  
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty-shaded:1.31.1")
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
   runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
 
+  testImplementation(project(":hypertrace-trace-enricher"))
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
   testImplementation("org.mockito:mockito-core:3.3.3")
+  testImplementation("org.junit-pioneer:junit-pioneer:0.9.0")
+  testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
 }
