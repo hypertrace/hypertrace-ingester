@@ -17,32 +17,17 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.utils.Utils;
 
 public class AvroDeserializer<T extends SpecificRecordBase> implements Deserializer<T> {
-  private boolean isKey;
-
-  @Override
-  public void configure(Map<String, ?> configs, boolean isKey) {
-    this.isKey = isKey;
-  }
-
   @Override
   public T deserialize(String topic, byte[] data) {
-    return deserialize(topic, null, data);
-  }
-
-  @Override
-  public T deserialize(String topic, Headers headers, byte[] data) {
-    Schema writerSchema;
-    if (isKey) {
-      writerSchema = new Parser().parse(Utils.utf8(headers.lastHeader("key.schema").value()));
-    } else {
-      writerSchema = new Parser().parse(Utils.utf8(headers.lastHeader("value.schema").value()));
+    if(data == null || data.length == 0) {
+      return null;
     }
-    final Schema readerSchema = getSpecificReaderSchema(writerSchema);
-
-    ByteArrayInputStream bais = new ByteArrayInputStream(data);
-    BinaryDecoder binaryDecoder = DecoderFactory.get().directBinaryDecoder(bais, null);
-    SpecificDatumReader<T> reader = new SpecificDatumReader<>(writerSchema, readerSchema);
     try {
+      ByteArrayInputStream bais = new ByteArrayInputStream(data);
+      BinaryDecoder binaryDecoder = DecoderFactory.get().directBinaryDecoder(bais, null);
+      Schema writerSchema = new Parser().parse(binaryDecoder.readString());
+      final Schema readerSchema = getSpecificReaderSchema(writerSchema);
+      SpecificDatumReader<T> reader = new SpecificDatumReader<>(writerSchema, readerSchema);
       return reader.read(null, binaryDecoder);
     } catch (IOException e) {
       throw new RuntimeException("Deserialization error", e);
