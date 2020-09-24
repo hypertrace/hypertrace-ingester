@@ -11,7 +11,7 @@
 # Deployment
 ###########
 name: raw-spans-grouper
-replicaCount: 1
+replicaCount: 2
 maxUnavailable: 0
 
 image:
