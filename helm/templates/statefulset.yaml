@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    release: {{ .Release.Name }}
+  {{- with .Values.deploymentLabels }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  annotations:
+    # This annotation distinguishes this deployment from those done with skaffold in order to remove those ones before
+    # deploying this one.
+    deployment.traceable.ai/tool: helm3
+spec:
+  serviceName: {{ .Values.name }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- toYaml .Values.statefulSetSelectorMatchLabels | nindent 6 }}
+  podManagementPolicy: Parallel
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Values.volumeClaimTemplates.name }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: {{ .Values.volumeClaimTemplates.storageClassName }}
+        resources:
+          requests:
+            storage: {{ .Values.volumeClaimTemplates.storageRequestSize }}
+  template:
+    metadata:
+      labels:
+        release: {{ .Release.Name }}
+      {{- with .Values.podLabels }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/raw-spans-grouper-config.yaml") . | sha256sum }}
+        {{- if .Values.prometheus.jmx.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .Values.prometheus.jmx.port | quote }}
+        {{- end }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+    {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.nodeLabels }}
+      nodeSelector:
+    {{- toYaml . | nindent 8}}
+    {{- end }}
+      restartPolicy: Always
+      volumes:
+        - name: service-config
+          configMap:
+            name: {{ .Values.rawSpansGrouperConfig.name }}
+        - name: log4j-config
+          configMap:
+            name: {{ .Values.logConfig.name }}
+        {{- if .Values.prometheus.jmx.enabled }}
+        - name: jmx-config
+          configMap:
+            name: {{ .Values.name }}-jmx-config
+        {{- end }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ .Values.name }}
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: {{ .Values.name }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: admin-port
+              containerPort: {{ .Values.containerAdminPort }}
+              protocol: TCP
+            {{- if .Values.jmx.enabled }}
+            - name: jmx
+              containerPort: {{ .Values.jmx.port }}
+              protocol: TCP
+            {{- end }}
+          env:
+            - name: SERVICE_NAME
+              value: "{{ .Values.name }}"
+            - name: CLUSTER_NAME
+              value: "staging"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: BOOTSTRAP_CONFIG_URI
+              value: "file:///app/resources/configs"
+            - name: LOG4J_CONFIGURATION_FILE
+              value: "/var/{{ .Values.name }}/log/log4j2.properties"
+            {{- if .Values.javaOpts }}
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.javaOpts }} {{ if .Values.jmx.enabled }}{{ .Values.jmx.opts }}{{ end }}
+            {{- end }}
+          volumeMounts:
+            - name: service-config
+              mountPath: /app/resources/configs/{{ .Values.name }}/staging/application.conf
+              subPath: application.conf
+            - name: log4j-config
+              mountPath: /var/{{ .Values.name }}/log
+            - name: {{ .Values.volumeClaimTemplates.name }}
+              mountPath: /var/data/
+          livenessProbe:
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            tcpSocket:
+              port: admin-port
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            httpGet:
+              path: /health
+              port: {{ .Values.containerAdminPort }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        {{- if .Values.prometheus.jmx.enabled }}
+        - name: prometheus-jmx-exporter
+          image: "{{ .Values.prometheus.jmx.image.repository }}:{{ .Values.prometheus.jmx.image.tag }}"
+          imagePullPolicy: "{{ .Values.prometheus.jmx.image.pullPolicy }}"
+          command:
+            - java
+            - -XX:+UnlockExperimentalVMOptions
+            - -XX:+UseCGroupMemoryLimitForHeap
+            - -XX:MaxRAMFraction=1
+            - -XshowSettings:vm
+            - -jar
+            - jmx_prometheus_httpserver.jar
+            - {{ .Values.prometheus.jmx.port | quote }}
+            - /etc/jmx-config/prometheus-raw-spans-grouper.yaml
+          ports:
+            - name: prometheus-jmx
+              containerPort: {{ .Values.prometheus.jmx.port }}
+          resources:
+            {{- toYaml .Values.prometheus.jmx.resources | nindent 12 }}
+          volumeMounts:
+            - name: jmx-config
+              mountPath: /etc/jmx-config
+        {{- end }}

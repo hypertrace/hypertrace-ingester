@@ -6,42 +6,27 @@ metadata:
     release: {{ .Release.Name }}
 data:
   application.conf: |-
-    flink.job {
-      {{- if hasKey .Values.rawSpansGrouperConfig.flink "job" }}
-      {{- if hasKey .Values.rawSpansGrouperConfig.flink.job "parallelism" }}
-      parallelism = {{ int .Values.rawSpansGrouperConfig.flink.job.parallelism }}
-      {{- end }}
-      {{- if hasKey .Values.rawSpansGrouperConfig.flink.job "metrics" }}
-      metrics {
-        metrics {
-          reporters = {{- toJson .Values.rawSpansGrouperConfig.flink.job.metrics.reporters | trim | nindent 12 }}
-        }
-      }
-      {{- end }}
-      {{- end }}
-    }
 
-    flink.source {
-      schema.registry {
-        schema.registry.url = "{{ .Values.rawSpansGrouperConfig.flink.source.schema.registry.url }}"
-        specific.avro.reader = true
-      }
-      kafka {
-        bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.flink.source.kafka.bootstrapServers }}"
-      }
-    }
+    kafka.streams.config = {
+      application.id = raw-spans-to-structured-traces-grouping-job
+      state.dir = "/var/data/"
+      metrics.recording.level = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.metricsRecordingLevel }}"
+      num.stream.threads = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.numStreamThreads }}"
+      num.standby.replicas=1
+      replication.factor = 3
+      producer.max.request.size = 10485760
+      topic.cleanup.policy = "delete,compact"
+      bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.bootstrapServers }}"
 
-    flink.sink {
-      schema.registry {
-        schema.registry.url = "{{ .Values.rawSpansGrouperConfig.flink.sink.schema.registry.url }}"
-        value.subject.name.strategy = "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy"
-      }
-      kafka {
-        bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.flink.sink.kafka.bootstrapServers }}"
-        linger.ms = {{ int .Values.rawSpansGrouperConfig.flink.sink.kafka.lingerMs }}
-        batch.size = {{ int .Values.rawSpansGrouperConfig.flink.sink.kafka.batchSize }}
-        compression.type = {{ .Values.rawSpansGrouperConfig.flink.sink.kafka.compressionType }}
-      }
+      schema.registry.url = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.schemaRegistryUrl }}"
+      specific.avro.reader = true
+
+      rocksdb.block.cache.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbBlockCacheSize }}
+      rocksdb.write.buffer.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbWriteBufferSize }}
+      rocksdb.max.write.buffers = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbMaxWriteBuffers }}
+      rocksdb.cache.index.and.filter.blocks = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbCacheIndexAndFilterBlocks }}
+
+      value.subject.name.strategy = "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy"
     }
 
     span.groupby.session.window.interval = {{ .Values.rawSpansGrouperConfig.span.groupby.internal }}

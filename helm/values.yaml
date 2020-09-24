@@ -10,6 +10,7 @@
 ###########
 # Deployment
 ###########
+name: raw-spans-grouper
 replicaCount: 1
 maxUnavailable: 0
 
@@ -63,30 +64,56 @@ podAnnotations: {}
 deploymentSelectorMatchLabels:
   app: raw-spans-grouper
 
+statefulSetSelectorMatchLabels:
+  app: raw-spans-grouper
+
+serviceSelectorMatchLabels:
+  app: raw-spans-grouper
+
+volumeClaimTemplates:
+  name: raw-spans-grouper-rocksdb
+  storageClassName: kafka-streams-rocksdb
+  storageRequestSize: 50Gi
+
+jmx:
+  enabled: true
+  port: 7022
+  opts: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.port=7022 -Dcom.sun.management.jmxremote.rmi.port=7022 -Djava.rmi.server.hostname=127.0.0.1"
+
+prometheus:
+  jmx:
+    enabled: true
+    port: 7071
+    image:
+      repository: solsson/kafka-prometheus-jmx-exporter@sha256
+      tag: 6f82e2b0464f50da8104acd7363fb9b995001ddff77d248379f8788e78946143
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: "0.25"
+        memory: "256Mi"
+
+
+
 ###########
 # Config Maps
 ###########
 rawSpansGrouperConfig:
   name: raw-spans-grouper-config
+  kafka:
+    streams:
+      config:
+        metricsRecordingLevel: INFO
+        numStreamThreads: 4
+        bootstrapServers: "bootstrap:9092"
+        schemaRegistryUrl: "http://schema-registry-service:8081"
+        rocksdbBlockCacheSize: 33554432
+        rocksdbWriteBufferSize: 8388608
+        rocksdbMaxWriteBuffers: 2
+        rocksdbCacheIndexAndFilterBlocks: true
   span:
     groupby:
       internal: 30
-  flink:
-    source:
-      kafka:
-        bootstrapServers: "bootstrap:9092"
-      schema:
-        registry:
-          url: "http://schema-registry-service:8081"
-    sink:
-      kafka:
-        bootstrapServers: "bootstrap:9092"
-        lingerMs: 0
-        batchSize: 16384
-        compressionType: none
-      schema:
-        registry:
-          url: "http://schema-registry-service:8081"
 
 logConfig:
   name: raw-spans-grouper-log-config
