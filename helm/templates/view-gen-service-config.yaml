@@ -6,28 +6,10 @@ metadata:
     release: {{ .Release.Name }}
 data:
   application.conf: |-
-    flink.job {
-      metrics {
-        metrics {
-          reporters = {{ .Values.viewGeneratorServiceConfig.flink.job.metrics.reporters | quote}}
-        }
-      }
-    }
-
-    flink.source {
-      schema.registry {
-        schema.registry.url = "http://schema-registry-service:8081"
-      }
-      kafka {
-        bootstrap.servers = "bootstrap:9092"
-      }
-    }
-
-    flink.sink {
-      schema.registry {
-        schema.registry.url = "http://schema-registry-service:8081"
-      }
-      kafka {
-        bootstrap.servers = "bootstrap:9092"
-      }
+    kafka.streams.config {
+      application.id = all-view-generators-job
+      metrics.recording.level = "{{ .Values.viewGeneratorServiceConfig.kafka.streams.config.metricsRecordingLevel }}"
+      num.stream.threads = "{{ .Values.viewGeneratorServiceConfig.kafka.streams.config.numStreamThreads }}"
+      bootstrap.servers = "{{ .Values.viewGeneratorServiceConfig.kafka.streams.config.bootstrapServers }}"
+      schema.registry.url = "{{ .Values.viewGeneratorServiceConfig.kafka.streams.config.schemaRegistryUrl }}"
     }

@@ -37,10 +37,13 @@ logConfig:
 
 viewGeneratorServiceConfig:
   name: view-generation-service-config
-  flink:
-    job:
-      metrics:
-        reporters: "prometheus"
+  kafka:
+    streams:
+      config:
+        metricsRecordingLevel: INFO
+        numStreamThreads: 2
+        bootstrapServers: "bootstrap:9092"
+        schemaRegistryUrl: "http://schema-registry-service:8081"
 
 viewCreatorJobConfig:
   name: view-creator-job-config
