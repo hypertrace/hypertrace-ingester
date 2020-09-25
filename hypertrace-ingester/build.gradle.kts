@@ -21,7 +21,7 @@ hypertraceDocker {
 }
 
 dependencies {
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.5")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.9")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.7")
@@ -30,7 +30,7 @@ dependencies {
   implementation("org.hypertrace.core.rawspansgrouper:raw-spans-grouper")
   implementation("org.hypertrace.traceenricher:hypertrace-trace-enricher")
   implementation("org.hypertrace.viewgenerator:hypertrace-view-generator")
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.12-SNAPSHOT")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.14")
 }
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
