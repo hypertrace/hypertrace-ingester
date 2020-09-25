@@ -15,7 +15,7 @@ hypertraceDocker {
   defaultImage {
     javaApplication {
       serviceName.set("${project.name}")
-      adminPort.set(9099)
+      adminPort.set(8099)
     }
   }
 }
