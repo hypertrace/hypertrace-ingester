@@ -52,7 +52,7 @@ public class RawSpansGroupingTransformer implements
     this.groupingWindowTimeoutMs = ((Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG)))
         .getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
-    restorePunctuators();
+    //restorePunctuators();
   }
 
   @Override
