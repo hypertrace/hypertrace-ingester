@@ -1,7 +1,6 @@
 plugins {
     `java-library`
     jacoco
-    id("org.hypertrace.avro-plugin")
     id("org.hypertrace.publish-plugin")
     id("org.hypertrace.jacoco-report-plugin")
 }
