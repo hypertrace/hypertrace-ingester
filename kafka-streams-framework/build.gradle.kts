@@ -11,6 +11,7 @@ tasks.test {
 }
 
 dependencies {
+    api(project(":kafka-streams-serdes"))
     api("org.apache.kafka:kafka-streams:5.5.1-ccs")
     api("com.typesafe:config:1.4.0")
     api("io.confluent:kafka-streams-avro-serde:5.5.0")

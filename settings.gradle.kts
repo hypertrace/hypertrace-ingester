@@ -13,3 +13,4 @@ plugins {
 }
 
 include(":kafka-streams-framework")
+include(":kafka-streams-serdes")
