@@ -98,7 +98,8 @@ workflows:
           context: hypertrace-publishing
           requires:
             - build
-            - snyk-scan
+# Disabling temporarily due to snyk quota issue
+#            - snyk-scan
           filters:
             branches:
               only:
