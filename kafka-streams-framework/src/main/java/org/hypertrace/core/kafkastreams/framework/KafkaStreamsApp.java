@@ -128,7 +128,7 @@ public abstract class KafkaStreamsApp extends PlatformService {
 
   @Override
   public boolean healthCheck() {
-    return true;
+    return app.state().isRunningOrRebalancing();
   }
 
   /**
