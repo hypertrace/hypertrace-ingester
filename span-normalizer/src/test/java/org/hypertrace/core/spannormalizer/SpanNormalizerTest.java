@@ -6,16 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.google.protobuf.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
@@ -45,9 +42,6 @@ class SpanNormalizerTest {
   public void whenJaegerSpansAreProcessedExpectRawSpansToBeOutput() {
     Config config = ConfigFactory.parseURL(
         getClass().getClassLoader().getResource("configs/span-normalizer/application.conf"));
-    Map<?, ?> map = config.entrySet().stream().collect(Collectors.toMap(
-        (Function<Entry<String, ConfigValue>, Object>) Entry::getKey,
-        (Function<Entry<String, ConfigValue>, Object>) Entry::getValue));
 
     Map<String, Object> mergedProps = new HashMap<>();
     underTest.getBaseStreamsConfig().forEach(mergedProps::put);
@@ -68,14 +62,23 @@ class SpanNormalizerTest {
     Serde<RawSpan> rawSpanSerde = new AvroSerde<>();
     rawSpanSerde.configure(Map.of(), false);
 
+    Serde<TraceIdentity> spanIdentitySerde = new AvroSerde<>();
+    spanIdentitySerde.configure(Map.of(), true);
+
     TestOutputTopic outputTopic = td
         .createOutputTopic(config.getString(SpanNormalizerConstants.OUTPUT_TOPIC_CONFIG_KEY),
-            Serdes.String().deserializer(), rawSpanSerde.deserializer());
+            spanIdentitySerde.deserializer(), rawSpanSerde.deserializer());
 
-    Span span = Span.newBuilder().setSpanId(ByteString.copyFrom("1".getBytes())).build();
+    Span span = Span.newBuilder().setSpanId(ByteString.copyFrom("1".getBytes()))
+        .setTraceId(ByteString.copyFrom("trace-1".getBytes())).build();
     inputTopic.pipeInput(span);
-    Object value = outputTopic.readValue();
+
+    KeyValue<TraceIdentity, RawSpan> kv = outputTopic.readKeyValue();
+    assertEquals("__default", kv.key.getTenantId());
+    assertEquals(HexUtils.getHex(ByteString.copyFrom("trace-1".getBytes()).toByteArray()),
+        HexUtils.getHex(kv.key.getTraceId().array()));
+    RawSpan value = kv.value;
     assertEquals(HexUtils.getHex("1".getBytes()),
-        HexUtils.getHex(((RawSpan) value).getEvent().getEventId()));
+        HexUtils.getHex((value).getEvent().getEventId()));
   }
 }

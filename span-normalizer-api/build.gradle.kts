@@ -4,6 +4,7 @@ plugins {
   `java-library`
   id("com.google.protobuf") version "0.8.8"
   id("org.hypertrace.publish-plugin")
+  id("org.hypertrace.avro-plugin")
 }
 
 val generateLocalGoGrpcFiles = false
@@ -51,4 +52,5 @@ sourceSets {
 }
 dependencies {
   api("com.google.api.grpc:proto-google-common-protos:1.12.0")
+  api( "org.apache.avro:avro:1.9.2")
 }

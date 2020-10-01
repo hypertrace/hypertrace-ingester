@@ -49,7 +49,7 @@ public class SpanNormalizer extends KafkaStreamsApp {
 
     inputStream
         .transform(JaegerSpanToAvroRawSpanTransformer::new)
-        .to(outputTopic, Produced.keySerde(Serdes.String()));
+        .to(outputTopic);
 
     return streamsBuilder;
   }
