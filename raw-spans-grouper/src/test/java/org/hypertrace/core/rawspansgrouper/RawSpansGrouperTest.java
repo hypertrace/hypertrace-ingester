@@ -1,7 +1,6 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.typesafe.config.Config;
@@ -25,6 +24,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
+import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -57,30 +57,34 @@ public class RawSpansGrouperTest {
 
     Serde defaultValueSerde = new StreamsConfig(mergedProps).defaultValueSerde();
 
+    Serde<TraceIdentity> traceIdentitySerde = new StreamsConfig(mergedProps).defaultKeySerde();
+
     TopologyTestDriver td = new TopologyTestDriver(streamsBuilder.build(), props);
-    TestInputTopic<String, RawSpan> inputTopic = td
+    TestInputTopic<TraceIdentity, RawSpan> inputTopic = td
         .createInputTopic(config.getString(RawSpanGrouperConstants.INPUT_TOPIC_CONFIG_KEY),
-            Serdes.String().serializer(), defaultValueSerde.serializer());
+            traceIdentitySerde.serializer(), defaultValueSerde.serializer());
 
     TestOutputTopic outputTopic = td
         .createOutputTopic(config.getString(RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(), defaultValueSerde.deserializer());
 
-    RawSpan span1 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
-        .setCustomerId("customer1").setEvent(createEvent("event-1", "customer1")).build();
-    RawSpan span2 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
-        .setCustomerId("customer1").setEvent(createEvent("event-2", "customer1")).build();
-    RawSpan span3 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
-        .setCustomerId("customer1").setEvent(createEvent("event-3", "customer1")).build();
-    RawSpan span4 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
-        .setCustomerId("customer1").setEvent(createEvent("event-4", "customer1")).build();
-    RawSpan span5 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
-        .setCustomerId("customer1").setEvent(createEvent("event-5", "customer1")).build();
+    String tenantId = "tenant1";
 
-    inputTopic.pipeInput("trace-1", span1);
-    inputTopic.pipeInput("trace-2", span4);
+    RawSpan span1 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
+        .setCustomerId("tenant1").setEvent(createEvent("event-1", "tenant1")).build();
+    RawSpan span2 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
+        .setCustomerId("tenant1").setEvent(createEvent("event-2", "tenant1")).build();
+    RawSpan span3 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
+        .setCustomerId("tenant1").setEvent(createEvent("event-3", "tenant1")).build();
+    RawSpan span4 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
+        .setCustomerId("tenant1").setEvent(createEvent("event-4", "tenant1")).build();
+    RawSpan span5 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
+        .setCustomerId("tenant1").setEvent(createEvent("event-5", "tenant1")).build();
+
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span1);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span4);
     td.advanceWallClockTime(Duration.ofSeconds(1));
-    inputTopic.pipeInput("trace-1", span2);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span2);
 
     // select a value < 30s (groupingWindowTimeoutInMs)
     // this shouldn't trigger a punctuate call
@@ -101,9 +105,9 @@ public class RawSpansGrouperTest {
     assertEquals(1, trace.getEventList().size());
     assertEquals(ByteBuffer.wrap("event-4".getBytes()), trace.getEventList().get(0).getEventId());
 
-    inputTopic.pipeInput("trace-1", span3);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span3);
     td.advanceWallClockTime(Duration.ofSeconds(45));
-    inputTopic.pipeInput("trace-2", span5);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span5);
     // the next advance should trigger a punctuate call and emit a trace with 2 spans
     td.advanceWallClockTime(Duration.ofSeconds(35));
 
@@ -118,9 +122,14 @@ public class RawSpansGrouperTest {
     assertEquals(ByteBuffer.wrap("event-5".getBytes()), trace.getEventList().get(0).getEventId());
   }
 
-  private Event createEvent(String eventId, String customerId) {
-    return Event.newBuilder().setCustomerId(customerId)
+  private Event createEvent(String eventId, String tenantId) {
+    return Event.newBuilder().setCustomerId(tenantId)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
         .setStartTimeMillis(System.currentTimeMillis()).build();
+  }
+
+  private TraceIdentity createTraceIdentity(String tenantId, String traceId) {
+    return TraceIdentity.newBuilder().setTenantId(tenantId)
+        .setTraceId(ByteBuffer.wrap(traceId.getBytes())).build();
   }
 }

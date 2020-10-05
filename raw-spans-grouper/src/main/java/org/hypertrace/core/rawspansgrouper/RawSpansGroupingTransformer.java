@@ -1,5 +1,6 @@
 package org.hypertrace.core.rawspansgrouper;
 
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
@@ -21,42 +22,53 @@ import org.apache.kafka.streams.state.ValueAndTimestamp;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.RawSpans;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.HexUtils;
+import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Receives spans keyed by trace_id and stores them. A {@link TraceEmitPunctuator} is scheduled to
- * run after the {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs} interval to emit the trace. If
- * any spans for the trace arrive within the {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs}
- * interval then the {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs} will get reset and the
- * trace will get an additional {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs} time to accept
- * spans.
+ * run after the {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs} interval to emit the
+ * trace. If any spans for the trace arrive within the {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs}
+ * interval then the {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs} will get reset and
+ * the trace will get an additional {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs} time
+ * to accept spans.
  */
 public class RawSpansGroupingTransformer implements
-    Transformer<String, RawSpan, KeyValue<String, StructuredTrace>> {
+    Transformer<TraceIdentity, RawSpan, KeyValue<String, StructuredTrace>> {
 
   private static final Logger logger = LoggerFactory.getLogger(RawSpansGroupingTransformer.class);
   private ProcessorContext context;
-  private KeyValueStore<String, ValueAndTimestamp<RawSpans>> inflightTraceStore;
-  private KeyValueStore<String, Long> traceEmitTriggerStore;
+  private KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>> inflightTraceStore;
+  private KeyValueStore<TraceIdentity, Long> traceEmitTriggerStore;
   private long groupingWindowTimeoutMs;
   private To outputTopic;
+  private double dataflowSamplingPercent = -1;
 
   @Override
   public void init(ProcessorContext context) {
     this.context = context;
-    this.inflightTraceStore = (KeyValueStore<String, ValueAndTimestamp<RawSpans>>) context
+    this.inflightTraceStore = (KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>>) context
         .getStateStore(INFLIGHT_TRACE_STORE);
-    this.traceEmitTriggerStore = (KeyValueStore<String, Long>) context
+    this.traceEmitTriggerStore = (KeyValueStore<TraceIdentity, Long>) context
         .getStateStore(TRACE_EMIT_TRIGGER_STORE);
-    this.groupingWindowTimeoutMs = ((Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG)))
-        .getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
+    Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
+    this.groupingWindowTimeoutMs =
+        jobConfig.getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
+
+    if (jobConfig.hasPath(DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY)
+        && jobConfig.getDouble(DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY) > 0
+        && jobConfig.getDouble(DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY) <= 100) {
+      this.dataflowSamplingPercent = jobConfig.getDouble(DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY);
+    }
+
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
-    //restorePunctuators();
+    restorePunctuators();
   }
 
   @Override
-  public KeyValue<String, StructuredTrace> transform(String key, RawSpan value) {
+  public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
     ValueAndTimestamp<RawSpans> rawSpans = inflightTraceStore.get(key);
     RawSpans agg = rawSpans != null ? rawSpans.value() : RawSpans.newBuilder().build();
     // add the new span
@@ -65,7 +77,9 @@ public class RawSpansGroupingTransformer implements
     long currentTimeMs = System.currentTimeMillis();
 
     if (logger.isDebugEnabled()) {
-      logger.debug("Updating ts=[{}] for trace_id=[{}]", Instant.ofEpochMilli(currentTimeMs), key);
+      logger.debug("Updating ts=[{}] for tenant_id=[{}], trace_id=[{}]",
+          Instant.ofEpochMilli(currentTimeMs), key.getTenantId(),
+          HexUtils.getHex(key.getTraceId()));
     }
     // store the current system time as the last update timestamp
     inflightTraceStore.put(key, ValueAndTimestamp.make(agg, currentTimeMs));
@@ -84,8 +98,10 @@ public class RawSpansGroupingTransformer implements
 
     long traceEmitTs = currentTimeMs + groupingWindowTimeoutMs;
     if (logger.isDebugEnabled()) {
-      logger.debug("Updating trigger_ts=[{}] for trace_id=[{}]", Instant.ofEpochMilli(traceEmitTs),
-          key);
+      logger.debug("Updating trigger_ts=[{}] for for tenant_id=[{}], trace_id=[{}]",
+          Instant.ofEpochMilli(traceEmitTs),
+          key.getTenantId(),
+          HexUtils.getHex(key.getTraceId()));
     }
     traceEmitTriggerStore.put(key, traceEmitTs);
 
@@ -97,15 +113,15 @@ public class RawSpansGroupingTransformer implements
     return null;
   }
 
-  private void schedulePunctuator(String key) {
+  private void schedulePunctuator(TraceIdentity key) {
     TraceEmitPunctuator punctuator = new TraceEmitPunctuator(key, context, inflightTraceStore,
         traceEmitTriggerStore,
-        outputTopic, groupingWindowTimeoutMs);
+        outputTopic, groupingWindowTimeoutMs, dataflowSamplingPercent);
     Cancellable cancellable = context
         .schedule(Duration.ofMillis(groupingWindowTimeoutMs), PunctuationType.WALL_CLOCK_TIME,
             punctuator);
     punctuator.setCancellable(cancellable);
-    logger.debug("Scheduled a punctuator to emit trace for trace_id=[{}] to run after [{}] ms", key,
+    logger.debug("Scheduled a punctuator to emit trace for key=[{}] to run after [{}] ms", key,
         groupingWindowTimeoutMs);
   }
 
@@ -120,7 +136,7 @@ public class RawSpansGroupingTransformer implements
   void restorePunctuators() {
     long count = 0;
     Instant start = Instant.now();
-    try (KeyValueIterator<String, Long> it = traceEmitTriggerStore.all()) {
+    try (KeyValueIterator<TraceIdentity, Long> it = traceEmitTriggerStore.all()) {
       while (it.hasNext()) {
         schedulePunctuator(it.next().key);
         count++;

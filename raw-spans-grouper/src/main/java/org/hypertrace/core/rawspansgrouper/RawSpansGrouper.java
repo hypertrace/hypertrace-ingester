@@ -28,6 +28,7 @@ import org.hypertrace.core.datamodel.RawSpans;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
+import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,23 +47,24 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
 
-    KStream<String, RawSpan> inputStream = (KStream<String, RawSpan>) inputStreams.get(inputTopic);
+    KStream<TraceIdentity, RawSpan> inputStream = (KStream<TraceIdentity, RawSpan>) inputStreams.get(inputTopic);
     if (inputStream == null) {
       inputStream = streamsBuilder
           // read the input topic
-          .stream(inputTopic, Consumed.with(Serdes.String(), null));
+          .stream(inputTopic);
       inputStreams.put(inputTopic, inputStream);
     }
 
     // Retrieve the default value serde defined in config and use it
     Serde valueSerde = defaultValueSerde(properties);
-    StoreBuilder<KeyValueStore<String, ValueAndTimestamp<RawSpans>>> traceStoreBuilder = Stores
+    StoreBuilder<KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>>> traceStoreBuilder = Stores
         .keyValueStoreBuilder(Stores.persistentKeyValueStore(INFLIGHT_TRACE_STORE),
-            Serdes.String(),
+            (Serde<TraceIdentity>)null,
             new ValueAndTimestampSerde<>(valueSerde)).withCachingEnabled();
-    StoreBuilder<KeyValueStore<String, Long>> traceEmitTriggerStoreBuilder = Stores
+
+    StoreBuilder<KeyValueStore<TraceIdentity, Long>> traceEmitTriggerStoreBuilder = Stores
         .keyValueStoreBuilder(Stores.persistentKeyValueStore(TRACE_EMIT_TRIGGER_STORE),
-            Serdes.String(), Serdes.Long()).withCachingEnabled();
+            (Serde<TraceIdentity>)null, Serdes.Long()).withCachingEnabled();
 
     streamsBuilder.addStateStore(traceStoreBuilder);
     streamsBuilder.addStateStore(traceEmitTriggerStoreBuilder);

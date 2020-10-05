@@ -8,4 +8,7 @@ public class RawSpanGrouperConstants {
   public static final String INFLIGHT_TRACE_STORE = "inflight-trace-store";
   public static final String TRACE_EMIT_TRIGGER_STORE = "trace-emit-trigger-store";
   public static final String OUTPUT_TOPIC_PRODUCER = "output-topic-producer";
+  public static final String SPANS_PER_TRACE_METRIC = "spans_per_trace";
+  public static final String TRACE_CREATION_TIME = "trace.creation.time";
+  public static final String DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY = "dataflow.metriccollection.sampling.percent";
 }

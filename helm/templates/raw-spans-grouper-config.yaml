@@ -9,12 +9,21 @@ data:
 
     kafka.streams.config = {
       application.id = raw-spans-to-structured-traces-grouping-job
+      group.instance.id = ${?POD_NAME}
       state.dir = "/var/data/"
       metrics.recording.level = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.metricsRecordingLevel }}"
       num.stream.threads = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.numStreamThreads }}"
       num.standby.replicas=1
       replication.factor = 3
       producer.max.request.size = 10485760
+
+      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
+      session.timeout.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
+      {{- end }}
+
+      default.production.exception.handler = org.hypertrace.core.kafkastreams.framework.exceptionhandlers.IgnoreProductionExceptionHandler
+      ignore.production.exception.classes = org.apache.kafka.common.errors.RecordTooLargeException
+
       topic.cleanup.policy = "delete,compact"
       bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.bootstrapServers }}"
 

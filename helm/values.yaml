@@ -111,6 +111,7 @@ rawSpansGrouperConfig:
         rocksdbWriteBufferSize: 8388608
         rocksdbMaxWriteBuffers: 2
         rocksdbCacheIndexAndFilterBlocks: true
+        sessionTimeoutMs: 300000
   span:
     groupby:
       internal: 30
