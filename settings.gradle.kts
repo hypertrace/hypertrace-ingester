@@ -16,3 +16,4 @@ plugins {
 include(":span-normalizer-api")
 include(":span-normalizer")
 include(":raw-span-constants")
+include(":span-normalizer-constants")

@@ -1,12 +1,13 @@
 package org.hypertrace.core.spannormalizer.fieldgenerators;
 
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
-import java.util.HashMap;
-import java.util.Map;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class FieldsGenerator {
   private static Logger LOGGER = LoggerFactory.getLogger(FieldsGenerator.class);
@@ -15,12 +16,14 @@ public class FieldsGenerator {
   private final HttpFieldsGenerator httpFieldsGenerator;
   private final GrpcFieldsGenerator grpcFieldsGenerator;
   private final SqlFieldsGenerator sqlFieldsGenerator;
+  private final RpcFieldsGenerator rpcFieldsGenerator;
 
   public FieldsGenerator() {
     this.protocolFieldsGeneratorMap = new HashMap<>();
     this.httpFieldsGenerator = new HttpFieldsGenerator();
     this.grpcFieldsGenerator = new GrpcFieldsGenerator();
     this.sqlFieldsGenerator = new SqlFieldsGenerator();
+    this.rpcFieldsGenerator = new RpcFieldsGenerator(this.grpcFieldsGenerator);
     initializeProtocolFieldGeneratorsMap();
   }
 
@@ -34,6 +37,9 @@ public class FieldsGenerator {
     sqlFieldsGenerator
         .getProtocolCollectorSpanKeys()
         .forEach(k -> protocolFieldsGeneratorMap.put(k, sqlFieldsGenerator));
+    rpcFieldsGenerator
+        .getProtocolCollectorSpanKeys()
+        .forEach(k -> protocolFieldsGeneratorMap.put(k, rpcFieldsGenerator));
   }
 
   public void populateOtherFields(Event.Builder eventBuilder) {
@@ -66,7 +72,8 @@ public class FieldsGenerator {
         // If no ProtocolFieldsGenerator to handle that key, try some of the custom conversion code
         // in the various
         // converters eg. HttpFieldsGenerator to handle keys that start with a key - headers, params
-        if (!httpFieldsGenerator.handleStartsWithKeyIfNecessary(key, keyValue, eventBuilder)) {
+        if (!httpFieldsGenerator.handleStartsWithKeyIfNecessary(key, keyValue, eventBuilder) &&
+            !rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder, tagsMap)) {
           // Key cannot be converted to any of the fields, put it in event attributes. This may be a
           // repeated
           // operation for some keys since in JaegerSpanToRawSpanAvroConverter.buildEvent(), we add

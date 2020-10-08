@@ -37,8 +37,9 @@ tasks.test {
 dependencies {
   implementation(project(":raw-span-constants"))
   implementation(project(":span-normalizer-api"))
+  implementation(project(":span-normalizer-constants"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.7")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.7")

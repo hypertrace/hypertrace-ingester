@@ -17,15 +17,16 @@ enum Envoy {
   ENVOY_ERROR_REASON = 8 [(string_value) = "error.reason"];
   ENVOY_GRPC_STATUS_CODE = 9 [(string_value) ="grpc.status_code"];
   ENVOY_GRPC_MESSAGE = 10 [(string_value) = "grpc.message"];
-  ENVOY_GUID_X_CLIENT_TRACE_ID = 11 [(string_value) = "guid:x-client-trace-id"];
-  ENVOY_GUID_X_REQUEST_ID = 12 [(string_value) = "guid:x-request-id"];
-  ENVOY_HTTP_PROTOCOL = 13 [(string_value) = "http.protocol"];
-  ENVOY_NODE_ID = 14 [(string_value) = "node_id"];
-  ENVOY_RESPONSE_FLAGS = 15 [(string_value) = "response_flags"];
-  ENVOY_RETRY_COUNT = 16 [(string_value) = "retry.count"];
-  ENVOY_STATUS = 17 [(string_value) = "status"];
-  ENVOY_UPSTREAM_ADDRESS = 18 [(string_value) = "upstream_address"];
-  ENVOY_UPSTREAM_CLUSTER = 19 [(string_value) = "upstream_cluster"];
-  ENVOY_USER_AGENT = 20 [(string_value) = "user_agent"];
-  ENVOY_ZONE = 21 [(string_value) = "zone"];
+  ENVOY_GRPC_AUTHORITY = 11 [(string_value) = "grpc.authority"];
+  ENVOY_GUID_X_CLIENT_TRACE_ID = 12 [(string_value) = "guid:x-client-trace-id"];
+  ENVOY_GUID_X_REQUEST_ID = 13 [(string_value) = "guid:x-request-id"];
+  ENVOY_HTTP_PROTOCOL = 14 [(string_value) = "http.protocol"];
+  ENVOY_NODE_ID = 15 [(string_value) = "node_id"];
+  ENVOY_RESPONSE_FLAGS = 16 [(string_value) = "response_flags"];
+  ENVOY_RETRY_COUNT = 17 [(string_value) = "retry.count"];
+  ENVOY_STATUS = 18 [(string_value) = "status"];
+  ENVOY_UPSTREAM_ADDRESS = 19 [(string_value) = "upstream_address"];
+  ENVOY_UPSTREAM_CLUSTER = 20 [(string_value) = "upstream_cluster"];
+  ENVOY_USER_AGENT = 21 [(string_value) = "user_agent"];
+  ENVOY_ZONE = 22 [(string_value) = "zone"];
 }
