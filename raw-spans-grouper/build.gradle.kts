@@ -35,7 +35,7 @@ tasks.test {
 
 dependencies {
     implementation("org.hypertrace.core.spannormalizer:span-normalizer-api:0.1.23")
-    implementation("org.hypertrace.core.datamodel:data-model:0.1.8")
+    implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
     implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
     implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.9")
 
