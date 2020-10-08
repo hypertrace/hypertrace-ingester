@@ -15,14 +15,14 @@ data:
       num.stream.threads = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.numStreamThreads }}"
       num.standby.replicas=1
       replication.factor = 3
-      producer.max.request.size = 10485760
+      producer.max.request.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerMaxRequestSize }}
 
       {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
       session.timeout.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
       {{- end }}
 
-      default.production.exception.handler = org.hypertrace.core.kafkastreams.framework.exceptionhandlers.IgnoreProductionExceptionHandler
-      ignore.production.exception.classes = org.apache.kafka.common.errors.RecordTooLargeException
+      default.production.exception.handler = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.defaultProductionExceptionHandler }}
+      ignore.production.exception.classes = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.ignoreProductionExceptionClasses }}
 
       topic.cleanup.policy = "delete,compact"
       bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.bootstrapServers }}"

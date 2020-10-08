@@ -112,6 +112,9 @@ rawSpansGrouperConfig:
         rocksdbMaxWriteBuffers: 2
         rocksdbCacheIndexAndFilterBlocks: true
         sessionTimeoutMs: 300000
+        producerMaxRequestSize: 10485760
+        defaultProductionExceptionHandler: "org.hypertrace.core.kafkastreams.framework.exceptionhandlers.IgnoreProductionExceptionHandler"
+        ignoreProductionExceptionClasses: "org.apache.kafka.common.errors.RecordTooLargeException"
   span:
     groupby:
       internal: 30
