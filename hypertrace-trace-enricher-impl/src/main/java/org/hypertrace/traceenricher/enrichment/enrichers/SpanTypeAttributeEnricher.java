@@ -1,9 +1,5 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Map;
-import javax.annotation.Nonnull;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
@@ -25,6 +21,11 @@ import org.hypertrace.traceenricher.util.Constants;
 import org.hypertrace.traceenricher.util.EnricherUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
 
 /**
  * Enricher that figures out if an event is an entry event and by adding EVENT_TYPE attribute.
@@ -160,6 +161,13 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
   @Nonnull
   public static Protocol getGrpcProtocol(Event event) {
     Map<String, AttributeValue> attributeMap = event.getAttributes().getAttributeMap();
+
+    if (event.getRpc() != null && event.getRpc().getSystem() != null) {
+      String rpcSystem = event.getRpc().getSystem();
+      if (GRPC_PROTOCOL_VALUE.equalsIgnoreCase(rpcSystem)) {
+        return Protocol.PROTOCOL_GRPC;
+      }
+    }
 
     // check Open Tracing grpc component value first
     AttributeValue componentAttrValue = attributeMap.get(

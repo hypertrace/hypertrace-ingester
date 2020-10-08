@@ -2,13 +2,12 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.eventfields.grpc.Request;
+import org.hypertrace.core.datamodel.eventfields.grpc.RequestMetadata;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -18,7 +17,14 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
+import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * This is to determine if the span is the entry / exit point for a particular API.
@@ -35,7 +41,10 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
       EnrichedSpanConstants.getValue(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY);
   private static final String EXIT_BOUNDARY_TYPE =
       EnrichedSpanConstants.getValue(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_EXIT);
-  private static final String X_FORWARDED_HOST_HEADER = "x-forwarded-host";
+  private static final String HTTP_REQUEST_HEADER_PREFIX = "http.request.header.";
+  private static final String RPC_REQUEST_METADATA_PREFIX = "rpc.request.metadata.";
+  private static final String X_FORWARDED_HOST_HEADER = HTTP_REQUEST_HEADER_PREFIX + "x-forwarded-host";
+  private static final String X_FORWARDED_HOST_METADATA = RPC_REQUEST_METADATA_PREFIX + "x-forwarded-host";
 
   private static final List<String> HOST_HEADER_ATTRIBUTES = ImmutableList.of(
       // The order of these constants is important because that enforces the priority for
@@ -45,7 +54,8 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_HOST),
       // In the cases where there are sidecar proxies, the host header might be set to localhost
       // while the original host will be moved to x-forwarded headers. Hence, read them too.
-      X_FORWARDED_HOST_HEADER
+      X_FORWARDED_HOST_HEADER,
+      X_FORWARDED_HOST_METADATA
   );
   private static final String LOCALHOST = "localhost";
 
@@ -110,17 +120,43 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
    * enricher class itself could be renamed to be more specific.
    */
   private void enrichHostHeader(Event event) {
-    for (String key: HOST_HEADER_ATTRIBUTES) {
-      String value = SpanAttributeUtils.getStringAttribute(event, key);
-      if (value != null && !value.isEmpty()) {
-        // Ignore if it's "localhost"
-        String host = sanitizeHostValue(value);
-        if (!LOCALHOST.equalsIgnoreCase(host)) {
-          addEnrichedAttribute(event, HOST_HEADER, AttributeValueCreator.create(host));
-          break;
-        }
+    Protocol protocol = EnrichedSpanUtils.getProtocol(event);
+    if (protocol == Protocol.PROTOCOL_GRPC) {
+      Optional<String> host = getGrpcAuthority(event);
+      if (host.isPresent()) {
+        addEnrichedAttribute(event, HOST_HEADER, AttributeValueCreator.create(host.get()));
+        return;
       }
     }
+    for (String key : HOST_HEADER_ATTRIBUTES) {
+      String value = SpanAttributeUtils.getStringAttribute(event, key);
+      Optional<String> host = getSanitizedHostValue(value);
+      if (host.isPresent()) {
+        addEnrichedAttribute(event, HOST_HEADER, AttributeValueCreator.create(host.get()));
+        return;
+      }
+    }
+  }
+
+  private Optional<String> getGrpcAuthority(Event event) {
+    if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
+      Request request = event.getGrpc().getRequest();
+      RequestMetadata requestMetadata = request.getRequestMetadata();
+      if (requestMetadata != null) {
+        return getSanitizedHostValue(requestMetadata.getAuthority());
+      }
+    }
+    return Optional.empty();
+  }
+
+  private Optional<String> getSanitizedHostValue(String value) {
+    if (StringUtils.isNotBlank(value)) {
+      String host = sanitizeHostValue(value);
+      if (!LOCALHOST.equalsIgnoreCase(host)) {
+        return Optional.of(host);
+      }
+    }
+    return Optional.empty();
   }
 
   private String sanitizeHostValue(String host) {

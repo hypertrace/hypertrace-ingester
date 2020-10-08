@@ -1,19 +1,18 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.google.common.collect.Lists;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.eventfields.grpc.Request;
+import org.hypertrace.core.datamodel.eventfields.grpc.RequestMetadata;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
+import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,11 +22,19 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnricherTest {
   private static final BoundaryTypeValue ENTRY = BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY;
   private static final BoundaryTypeValue EXIT = BoundaryTypeValue.BOUNDARY_TYPE_VALUE_EXIT;
   private static final BoundaryTypeValue UNKNOWN = BoundaryTypeValue.BOUNDARY_TYPE_VALUE_UNSPECIFIED;
-
+  private static final String HTTP_REQUEST_HEADER_PREFIX = "http.request.header.";
+  private static final String RPC_REQUEST_METADATA_PREFIX = "rpc.request.metadata.";
+  private static final String X_FORWARDED_HOST_HEADER = HTTP_REQUEST_HEADER_PREFIX + "x-forwarded-host";
+  private static final String X_FORWARDED_HOST_METADATA = RPC_REQUEST_METADATA_PREFIX + "x-forwarded-host";
   private Event outerEntrySpan;
   private Event innerEntrySpan;
   private Event innerExitSpan;
@@ -147,13 +154,13 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
 
   @Test
   public void testEnrichEventWithForwardedHost() {
-    addEnrichedAttributeToEvent(innerEntrySpan, "x-forwarded-host",
+    addEnrichedAttributeToEvent(innerEntrySpan, X_FORWARDED_HOST_HEADER,
         AttributeValueCreator.create("testHost"));
     target.enrichEvent(trace, innerEntrySpan);
     Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
 
     // Add port also to the host value and test again.
-    addEnrichedAttributeToEvent(innerEntrySpan, "x-forwarded-host",
+    addEnrichedAttributeToEvent(innerEntrySpan, X_FORWARDED_HOST_HEADER,
         AttributeValueCreator.create("testHost:443"));
     target.enrichEvent(trace, innerEntrySpan);
     Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
@@ -167,8 +174,45 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
     addEnrichedAttributeToEvent(innerEntrySpan,
         RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_AUTHORITY_HEADER),
         AttributeValueCreator.create("localhost"));
-    addEnrichedAttributeToEvent(innerEntrySpan, "x-forwarded-host",
+    addEnrichedAttributeToEvent(innerEntrySpan, X_FORWARDED_HOST_HEADER,
         AttributeValueCreator.create("testHost"));
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
+  }
+
+  @Test
+  public void testEnrichEventWithGrpcAuthority() {
+    mockProtocol(innerEntrySpan, Protocol.PROTOCOL_GRPC);
+    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc = mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
+    when(innerEntrySpan.getGrpc()).thenReturn(grpc);
+    Request request = mock(Request.class);
+    when(grpc.getRequest()).thenReturn(request);
+    RequestMetadata metadata = mock(RequestMetadata.class);
+    when(request.getRequestMetadata()).thenReturn(metadata);
+    when(metadata.getAuthority()).thenReturn("testHost");
+
+    addEnrichedAttributeToEvent(innerEntrySpan,
+        RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_HOST),
+        AttributeValueCreator.create("localhost:443"));
+
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
+  }
+
+  @Test
+  public void testEnrichEventWithGrpcNoAuthority() {
+    mockProtocol(innerEntrySpan, Protocol.PROTOCOL_GRPC);
+    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc = mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
+    when(innerEntrySpan.getGrpc()).thenReturn(grpc);
+    Request request = mock(Request.class);
+    when(grpc.getRequest()).thenReturn(request);
+    RequestMetadata metadata = mock(RequestMetadata.class);
+    when(request.getRequestMetadata()).thenReturn(metadata);
+    when(metadata.getAuthority()).thenReturn("localhost:443");
+
+    addEnrichedAttributeToEvent(innerEntrySpan, X_FORWARDED_HOST_METADATA,
+        AttributeValueCreator.create("testHost"));
+
     target.enrichEvent(trace, innerEntrySpan);
     Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
   }
@@ -190,5 +234,12 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
     when(graph.getChildrenEvents(outerExitSpan)).thenReturn(null);
 
     doReturn(graph).when(target).buildGraph(trace);
+  }
+
+  private void mockProtocol(Event event, Protocol protocol) {
+    event.getEnrichedAttributes().getAttributeMap()
+        .put(Constants.getEnrichedSpanConstant(CommonAttribute.COMMON_ATTRIBUTE_PROTOCOL),
+            AttributeValue.newBuilder().setValue(Constants.getEnrichedSpanConstant(protocol)).build()
+        );
   }
 }

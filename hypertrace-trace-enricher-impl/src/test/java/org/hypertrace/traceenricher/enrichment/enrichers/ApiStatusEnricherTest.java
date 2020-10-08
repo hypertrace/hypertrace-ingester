@@ -1,9 +1,8 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.eventfields.grpc.Response;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
@@ -14,6 +13,10 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
 
@@ -80,6 +83,71 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
             AttributeValue.newBuilder().setValue("5").build());
     target.enrichEvent(null, e);
     assertEquals("5", getStatusCode(e));
+  }
+
+  @Test
+  public void test_enrich_statusCode_grpc_fields_default() {
+    // Try the GRPC response length parsing.
+    Event e = createMockEvent();
+    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc = mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
+    when(e.getGrpc()).thenReturn(grpc);
+    Response response = mock(Response.class);
+    when(grpc.getResponse()).thenReturn(response);
+    when(response.getStatusCode()).thenReturn(5);
+    mockProtocol(e, Protocol.PROTOCOL_GRPC);
+    target.enrichEvent(null, e);
+    assertEquals("5", getStatusCode(e));
+    assertEquals("NOT_FOUND", getStatusMessage(e));
+    assertEquals("FAIL", getStatus(e));
+  }
+
+  @Test
+  public void test_enrich_statusCode_grpc_fields_success() {
+    // Try the GRPC response length parsing.
+    Event e = createMockEvent();
+    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc = mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
+    when(e.getGrpc()).thenReturn(grpc);
+    Response response = mock(Response.class);
+    when(grpc.getResponse()).thenReturn(response);
+    when(response.getStatusCode()).thenReturn(0);
+    when(response.getStatusMessage()).thenReturn("Call was successful");
+    mockProtocol(e, Protocol.PROTOCOL_GRPC);
+    target.enrichEvent(null, e);
+    assertEquals("0", getStatusCode(e));
+    assertEquals("Call was successful", getStatusMessage(e));
+    assertEquals("SUCCESS", getStatus(e));
+  }
+
+  @Test
+  public void test_enrich_statusCode_grpc_fields_failure() {
+    // Try the GRPC response length parsing.
+    Event e = createMockEvent();
+    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc = mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
+    when(e.getGrpc()).thenReturn(grpc);
+    Response response = mock(Response.class);
+    when(grpc.getResponse()).thenReturn(response);
+    when(response.getStatusCode()).thenReturn(5);
+    when(response.getErrorMessage()).thenReturn("Call was a failure");
+    mockProtocol(e, Protocol.PROTOCOL_GRPC);
+    target.enrichEvent(null, e);
+    assertEquals("5", getStatusCode(e));
+    assertEquals("Call was a failure", getStatusMessage(e));
+    assertEquals("FAIL", getStatus(e));
+  }
+
+  @Test
+  public void test_enrich_statusCode_grpc_fields_unset() {
+    // Try the GRPC response length parsing.
+    Event e = createMockEvent();
+    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc = mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
+    when(e.getGrpc()).thenReturn(grpc);
+    Response response = mock(Response.class);
+    when(grpc.getResponse()).thenReturn(response);
+    when(response.getStatusCode()).thenReturn(-1);
+    mockProtocol(e, Protocol.PROTOCOL_GRPC);
+    target.enrichEvent(null, e);
+    assertEquals(null, e.getEnrichedAttributes().getAttributeMap()
+        .get(Constants.getEnrichedSpanConstant(Api.API_STATUS_CODE)));
   }
 
   private String getStatusCode(Event event) {
