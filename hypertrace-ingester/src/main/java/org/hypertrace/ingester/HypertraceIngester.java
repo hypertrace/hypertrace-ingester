@@ -18,11 +18,15 @@ import org.hypertrace.core.serviceframework.config.ConfigUtils;
 import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.hypertrace.core.viewgenerator.service.MultiViewGeneratorLauncher;
 import org.hypertrace.traceenricher.trace.enricher.TraceEnricher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Hypertrace ingestion pipeline
  */
 public class HypertraceIngester extends KafkaStreamsApp {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(HypertraceIngester.class);
 
   private static final String HYPERTRACE_INGESTER_JOB_CONFIG = "hypertrace-ingester-job-config";
 
@@ -61,6 +65,8 @@ public class HypertraceIngester extends KafkaStreamsApp {
     List<String> subTopologiesNames = getSubTopologiesNames(properties);
 
     for (String subTopologyName : subTopologiesNames) {
+      LOGGER.info("Building sub topology :{}", subTopologyName);
+
       // create an instance and retains is reference to be used later in other methods
       KafkaStreamsApp subTopology = getSubTopologyInstance(subTopologyName);
       jobNameToSubTopology
