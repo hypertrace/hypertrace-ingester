@@ -18,7 +18,7 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.9")
 
   implementation("com.typesafe:config:1.4.0")
-  implementation("org.apache.httpcomponents:httpclient:4.5.12")
+  implementation("org.apache.httpcomponents:httpclient:4.5.13")
   implementation("org.apache.commons:commons-lang3:3.10")
   implementation("org.slf4j:slf4j-api:1.7.30")
   implementation("net.sf.uadetector:uadetector-resources:2014.10")
