@@ -48,14 +48,14 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher-impl"))
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
   implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.6")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
-  implementation("org.hypertrace.entity.service:entity-service-client:0.1.20")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.15")
+  implementation("org.hypertrace.entity.service:entity-service-client:0.1.23")
 
   implementation("com.typesafe:config:1.4.0")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.7")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.13")
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty-shaded:1.31.1")
+  runtimeOnly("io.grpc:grpc-netty-shaded:1.32.1")
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
   runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")

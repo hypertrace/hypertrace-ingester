@@ -4,7 +4,7 @@ plugins {
   `java-library`
   jacoco
   id("org.hypertrace.jacoco-report-plugin")
-  id("com.google.protobuf") version "0.8.12"
+  id("com.google.protobuf") version "0.8.13"
   id("org.hypertrace.publish-plugin")
 }
 
@@ -12,11 +12,11 @@ val generateLocalGoGrpcFiles = false
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.12.3"
+    artifact = "com.google.protobuf:protoc:3.13.0"
   }
   plugins {
     id("grpc_java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.31.1"
+      artifact = "io.grpc:protoc-gen-grpc-java:1.32.1"
     }
 
     if (generateLocalGoGrpcFiles) {
@@ -58,11 +58,11 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.12.2")
+  api("com.google.protobuf:protobuf-java-util:3.13.0")
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
   implementation("org.hypertrace.core.spannormalizer:raw-span-constants:0.1.2")
-  implementation("org.hypertrace.entity.service:entity-service-api:0.1.17")
+  implementation("org.hypertrace.entity.service:entity-service-api:0.1.23")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
   testImplementation("org.mockito:mockito-core:3.3.3")
