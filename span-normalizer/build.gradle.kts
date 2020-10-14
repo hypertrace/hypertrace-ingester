@@ -52,6 +52,7 @@ dependencies {
 
   implementation("io.confluent:kafka-avro-serializer:5.5.1")
   implementation("org.apache.commons:commons-lang3:3.10")
+  implementation("org.apache.httpcomponents:httpclient:4.5.13")
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
