@@ -306,13 +306,13 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
   }
 
   @Test
-  public void test_getProtocolNameWithGrpcEventName_noOTandGrpcTags_shouldReturnGrpc() {
+  public void test_getProtocolNameWithGrpcEventName_noOTandGrpcTags_shouldReturnUnspecified() {
     Event e = createEvent(new HashMap<>(), new HashMap<>());
     e.setEventName("Sent./products/browse");
-    Assertions.assertEquals(Protocol.PROTOCOL_GRPC, SpanTypeAttributeEnricher.getProtocolName(e));
+    Assertions.assertEquals(Protocol.PROTOCOL_UNSPECIFIED, SpanTypeAttributeEnricher.getProtocolName(e));
 
     e.setEventName("Recv./products/browse");
-    Assertions.assertEquals(Protocol.PROTOCOL_GRPC, SpanTypeAttributeEnricher.getProtocolName(e));
+    Assertions.assertEquals(Protocol.PROTOCOL_UNSPECIFIED, SpanTypeAttributeEnricher.getProtocolName(e));
   }
 
   @Test

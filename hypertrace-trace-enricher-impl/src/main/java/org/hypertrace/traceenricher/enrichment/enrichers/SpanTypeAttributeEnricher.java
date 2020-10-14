@@ -189,10 +189,6 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
       }
     }
 
-    if (EnricherUtil.isSentGrpcEvent(event) || EnricherUtil.isReceivedGrpcEvent(event)) {
-      return Protocol.PROTOCOL_GRPC;
-    }
-
     // this means, there's no grpc prefix protocol
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Couldn't map the event to any protocol; eventId: {}", event.getEventId());
