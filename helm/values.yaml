@@ -115,6 +115,8 @@ rawSpansGrouperConfig:
         producerMaxRequestSize: 10485760
         defaultProductionExceptionHandler: "org.hypertrace.core.kafkastreams.framework.exceptionhandlers.IgnoreProductionExceptionHandler"
         ignoreProductionExceptionClasses: "org.apache.kafka.common.errors.RecordTooLargeException"
+        numStandbyReplicas: 1
+        replicationFactor: 3
   span:
     groupby:
       internal: 30

@@ -13,8 +13,8 @@ data:
       state.dir = "/var/data/"
       metrics.recording.level = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.metricsRecordingLevel }}"
       num.stream.threads = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.numStreamThreads }}"
-      num.standby.replicas=1
-      replication.factor = 3
+      num.standby.replicas = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.numStandbyReplicas }}
+      replication.factor = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.replicationFactor }}
       producer.max.request.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerMaxRequestSize }}
 
       {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
