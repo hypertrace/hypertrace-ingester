@@ -39,17 +39,22 @@ dependencies {
   implementation(project(":span-normalizer-api"))
   implementation(project(":span-normalizer-constants"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.10")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.7")
 
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.31.1")
+  runtimeOnly("io.grpc:grpc-netty:1.33.0")
+  runtime("io.netty:netty-codec-http2:4.1.53.Final") {
+    because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
+  }
+  runtime("io.netty:netty-handler-proxy:4.1.53.Final") {
+    because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
+  }
   implementation("com.typesafe:config:1.4.0")
   implementation("de.javakaffee:kryo-serializers:0.45")
-
   implementation("io.confluent:kafka-avro-serializer:5.5.1")
   implementation("org.apache.commons:commons-lang3:3.10")
   implementation("org.apache.httpcomponents:httpclient:4.5.13")
