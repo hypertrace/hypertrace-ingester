@@ -8,10 +8,16 @@ executors:
   gradle_docker:
     docker:
       - image: cimg/openjdk:11.0
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
 
   helm:
     docker:
       - image: hypertrace/helm-gcs-packager:0.1.1
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
 
 commands:
   gradle:
@@ -49,6 +55,12 @@ commands:
           paths:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "/tmp/checksum.txt" }}
+  docker_login:
+    description: "Login to dockerhub with readonly credentials"
+    steps:
+      - run:
+          name: Dockerhub login
+          command: echo $DOCKERHUB_PASSWORD | docker login --username $DOCKERHUB_USERNAME --password-stdin
 
 jobs:
   build:
@@ -57,6 +69,7 @@ jobs:
       - setup_build_environment
       - setup_remote_docker
       - populate_and_save_cache
+      - docker_login
       - gradle:
           args: build dockerBuildImages
       - gradle:
@@ -76,6 +89,7 @@ jobs:
     steps:
       - setup_build_environment
       - setup_remote_docker
+      - docker_login
       - gradle:
           args: :tag -Prelease
       - add_ssh_keys:
@@ -124,12 +138,20 @@ workflows:
   version: 2
   build-and-publish:
     jobs:
-      - build
-      - validate-charts
+      - build:
+          context:
+            - dockerhub-read
+      - validate-charts:
+          context:
+            - dockerhub-read
       - snyk-scan:
-          context: hypertrace-vulnerability-scanning
+          context:
+            - hypertrace-vulnerability-scanning
+            - dockerhub-read
       - publish:
-          context: hypertrace-publishing
+          context:
+            - hypertrace-publishing
+            - dockerhub-read
           requires:
             - build
             - validate-charts
@@ -139,7 +161,9 @@ workflows:
               only:
                 - main
       - package-charts:
-          context: hypertrace-publishing
+          context:
+            - hypertrace-publishing
+            - dockerhub-read
           requires:
             - publish
           filters:
