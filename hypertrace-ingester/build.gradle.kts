@@ -31,19 +31,6 @@ dependencies {
   implementation("org.hypertrace.traceenricher:hypertrace-trace-enricher")
   implementation("org.hypertrace.viewgenerator:hypertrace-view-generator")
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.14")
-
-  runtimeOnly("io.netty:netty-codec-http2:4.1.53.Final") {
-    because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
-  }
-  runtimeOnly("io.netty:netty-handler-proxy:4.1.53.Final") {
-    because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
-  }
-  runtimeOnly("com.google.guava:guava:30.0-android") {
-    because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415")
-  }
-  runtimeOnly("org.apache.httpcomponents:httpclient:4.5.13") {
-    because("https://snyk.io/vuln/SNYK-JAVA-ORGAPACHEHTTPCOMPONENTS-1016906")
-  }
 }
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
