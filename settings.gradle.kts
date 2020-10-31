@@ -22,7 +22,7 @@ include("hypertrace-view-generator:hypertrace-view-generator-api")
 include("hypertrace-view-generator:hypertrace-view-generator")
 include("hypertrace-view-generator:hypertrace-view-creator")
 
-include("raw-spans-grouper")
+include("raw-spans-grouper:raw-spans-grouper")
 
 include("span-normalizer:span-normalizer-api")
 include("span-normalizer:span-normalizer")

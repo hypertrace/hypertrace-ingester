@@ -96,8 +96,7 @@ jobs:
       - run:
           name: Helm Charts Lint and Template Render
           command: |
-            helm lint --strict ./helm/
-            helm template ./helm/
+            .circleci/helm.sh validate
   snyk-scan:
     executor:
       name: gradle_docker
@@ -114,13 +113,8 @@ jobs:
       - run:
           name: Package and Publish Helm Charts
           command: |
-            CHART_VERSION=$(git describe --abbrev=0)
-            CHART_NAME=$(awk '/^name:/ {print $2}' ./helm/Chart.yaml)
-            export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/helm-gcs-key.json
-            echo ${HELM_GCS_CREDENTIALS} > ${GOOGLE_APPLICATION_CREDENTIALS}
-            helm repo add helm-gcs ${HELM_GCS_REPOSITORY}
-            helm package --version ${CHART_VERSION} --app-version ${CHART_VERSION} ./helm/
-            helm gcs push ${CHART_NAME}-${CHART_VERSION}.tgz helm-gcs --public --retry
+            .circleci/helm.sh package
+            .circleci/helm.sh publish
 
 workflows:
   version: 2

@@ -1,7 +1,5 @@
 # https://help.github.com/articles/about-codeowners/
 # Each line is a file pattern followed by one or more owners.
 
-hypertrace-trace-enricher/ @buchi-busireddy @tim-mwangi @surajpuvvada @avinashkolluru @skjindal93
-hypertrace-view-generator/ @buchi-busireddy @tim-mwangi @avinashkolluru
-raw-spans-grouper/ @buchi-busireddy @tim-mwangi @surajpuvvada @avinashkolluru
-span-normalizer/ @tim-mwangi @buchi-busireddy @kotharironak @avinashkolluru
+# global
+* @hypertrace/trace-pipeline-owners
