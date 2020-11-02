@@ -37,9 +37,9 @@ services:
       kafka-zookeeper:
         condition: service_healthy
 
-  hypertrace-ingester:
+  sut:
     image: hypertrace/hypertrace-ingester:test
-    container_name: hypertrace-ingester
+    container_name: sut
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - DEFAULT_TENANT_ID=__default
