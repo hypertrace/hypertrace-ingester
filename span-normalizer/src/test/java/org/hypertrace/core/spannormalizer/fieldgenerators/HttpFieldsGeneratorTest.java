@@ -567,32 +567,54 @@ public class HttpFieldsGeneratorTest {
   }
 
   @Test
-  public void testInvalidUrl() {
+  public void testRelativeUrlNotSetsUrlField() {
     HttpFieldsGenerator httpFieldsGenerator = new HttpFieldsGenerator();
 
-    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap1 = new HashMap<>();
-    tagsMap1.put(RawSpanConstants.getValue(HTTP_URL), createKeyValue("/dispatch/test?a=b&k1=v1"));
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap = new HashMap<>();
+    tagsMap.put(RawSpanConstants.getValue(HTTP_URL), createKeyValue("/dispatch/test?a=b&k1=v1"));
 
-    Event.Builder eventBuilder1 = Event.newBuilder();
-    Http.Builder httpBuilder1 = httpFieldsGenerator.getProtocolBuilder(eventBuilder1);
+    Event.Builder eventBuilder = Event.newBuilder();
+    Http.Builder httpBuilder = httpFieldsGenerator.getProtocolBuilder(eventBuilder);
 
-    tagsMap1.forEach(
-        (key, keyValue) ->
-            httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder1, tagsMap1));
-
-    Assertions.assertNull(httpBuilder1.getRequestBuilder().getUrl());
-
-    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap2 = new HashMap<>();
-    tagsMap2.put(RawSpanConstants.getValue(HTTP_URL), createKeyValue("http://abc.xyz/dispatch/test?a=b&k1=v1"));
-
-    Event.Builder eventBuilder2 = Event.newBuilder();
-    Http.Builder httpBuilder2 = httpFieldsGenerator.getProtocolBuilder(eventBuilder2);
-
-    tagsMap2.forEach(
+    tagsMap.forEach(
             (key, keyValue) ->
-                    httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
+                    httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder, tagsMap));
+    Assertions.assertEquals("/dispatch/test?a=b&k1=v1", httpBuilder.getRequestBuilder().getUrl());
 
-    Assertions.assertEquals("http://abc.xyz/dispatch/test?a=b&k1=v1", httpBuilder2.getRequestBuilder().getUrl());
+    httpFieldsGenerator.populateOtherFields(eventBuilder);  // this should unset the url field
+    Assertions.assertNull(httpBuilder.getRequestBuilder().getUrl());
+  }
+
+  @Test
+  public void testAbsoluteUrlSetsUrlField() {
+    HttpFieldsGenerator httpFieldsGenerator = new HttpFieldsGenerator();
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap = new HashMap<>();
+    tagsMap.put(RawSpanConstants.getValue(HTTP_URL), createKeyValue("http://abc.xyz/dispatch/test?a=b&k1=v1"));
+
+    Event.Builder eventBuilder = Event.newBuilder();
+    Http.Builder httpBuilder = httpFieldsGenerator.getProtocolBuilder(eventBuilder);
+
+    tagsMap.forEach(
+            (key, keyValue) ->
+                    httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder, tagsMap));
+    httpFieldsGenerator.populateOtherFields(eventBuilder);
+
+    Assertions.assertEquals("http://abc.xyz/dispatch/test?a=b&k1=v1", httpBuilder.getRequestBuilder().getUrl());
+  }
+
+  @Test
+  public void testInvalidUrlRejectedByUrlValidator() {
+    HttpFieldsGenerator httpFieldsGenerator = new HttpFieldsGenerator();
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap = new HashMap<>();
+    tagsMap.put(RawSpanConstants.getValue(HTTP_URL), createKeyValue("xyz://abc.xyz/dispatch/test?a=b&k1=v1"));
+
+    Event.Builder eventBuilder = Event.newBuilder();
+    Http.Builder httpBuilder = httpFieldsGenerator.getProtocolBuilder(eventBuilder);
+
+    tagsMap.forEach(
+            (key, keyValue) ->
+                    httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder, tagsMap));
+    Assertions.assertNull(httpBuilder.getRequestBuilder().getUrl());
   }
 
   @Test
@@ -661,6 +683,17 @@ public class HttpFieldsGeneratorTest {
         "example.ai", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
     Assertions.assertEquals("/", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+
+    // Relative URL - should extract path and query string only
+    eventBuilder = Event.newBuilder();
+    eventBuilder.getHttpBuilder().getRequestBuilder().setUrl("/apis/5673/events?a1=v1&a2=v2");
+    httpFieldsGenerator.populateOtherFields(eventBuilder);
+
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
+    Assertions.assertEquals("/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    Assertions.assertEquals("a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
 
     // "/" home path, host with port
     eventBuilder = Event.newBuilder();

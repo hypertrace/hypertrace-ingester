@@ -36,10 +36,9 @@ import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_M
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 
+import com.google.common.util.concurrent.RateLimiter;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,7 +54,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
-  private static Logger LOGGER = LoggerFactory.getLogger(HttpFieldsGenerator.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpFieldsGenerator.class);
+  private static final RateLimiter LOG_LIMITER = RateLimiter.create(0.1);
 
   private static final char DOT = '.';
   private static final String REQUEST_HEADER_PREFIX =
@@ -69,6 +69,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
   private static final String RESPONSE_COOKIE_PREFIX =
       RawSpanConstants.getValue(HTTP_RESPONSE_COOKIE) + DOT;
   private static final String SLASH = "/";
+  private static final String RELATIVE_URL_CONTEXT = "http://hypertrace.org";
 
   private static final List<String> FULL_URL_ATTRIBUTES =
       List.of(
@@ -369,7 +370,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     }
 
     FirstMatchingKeyFinder.getStringValueByFirstMatchingKey(
-            tagsMap, FULL_URL_ATTRIBUTES, s -> !StringUtils.isBlank(s) && isValidUrl(s))
+            tagsMap, FULL_URL_ATTRIBUTES,
+            // even though relative URLs are allowed here, they are eventually unset in populateUrlParts method
+            s -> !StringUtils.isBlank(s) && isValidUrl(s))
         .ifPresent(url -> httpBuilder.getRequestBuilder().setUrl(url));
   }
 
@@ -407,7 +410,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
       return;
     }
 
-    getPathFromUriObject(pathFromAttrs.get())
+    getPathFromUrlObject(pathFromAttrs.get())
         .map(HttpFieldsGenerator::removeTrailingSlash)
         .ifPresent(path -> httpBuilder.getRequestBuilder().setPath(path));
   }
@@ -417,11 +420,14 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
   }
 
-  private static Optional<String> getPathFromUriObject(String urlPath) {
+  private static Optional<String> getPathFromUrlObject(String urlPath) {
     try {
-      URI uri = new URI(urlPath);
-      return Optional.of(uri.getPath());
-    } catch (URISyntaxException e) {
+      URL url = getNormalizedUrl(urlPath);
+      return Optional.of(url.getPath());
+    } catch (MalformedURLException e) {
+      if (LOG_LIMITER.tryAcquire()) {
+        LOGGER.warn("Received invalid URL path : {}, {}", urlPath, e.getMessage());
+      }
       return Optional.empty();
     }
   }
@@ -456,10 +462,18 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         .ifPresent(statusCode -> httpBuilder.getResponseBuilder().setStatusCode(statusCode));
   }
 
-  private static boolean isValidUrl(String s) {
+  /**
+   * accepts any absolute or relative URL. e.g.
+   * absolute URL: http://hypertrace.org/customer?customer=392
+   * relative URL: /customer?customer=392
+   */
+  private static boolean isValidUrl(String url) {
     try {
-      new URL(s);
+      getNormalizedUrl(url);
     } catch (MalformedURLException e) {
+      if (LOG_LIMITER.tryAcquire()) {
+        LOGGER.warn("Received invalid URL : {}, {}", url, e.getMessage());
+      }
       return false;
     }
     return true;
@@ -485,10 +499,13 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
     String urlStr = requestBuilder.getUrl();
     try {
-      URL url = new URL(urlStr);
-      requestBuilder.setScheme(url.getProtocol());
-      requestBuilder.setHost(
-          url.getAuthority()); // Use authority so in case the port is specified it adds it to this
+      URL url = getNormalizedUrl(urlStr);
+      if (url.toString().equals(urlStr)) {  // absolute URL
+        requestBuilder.setScheme(url.getProtocol());
+        requestBuilder.setHost(url.getAuthority()); // Use authority so in case the port is specified it adds it to this
+      } else {    // relative URL
+        requestBuilder.setUrl(null); //  unset the URL as we only allow absolute/full URLs in the url field
+      }
       setPathFromUrl(requestBuilder, url);
       if (!requestBuilder.hasQueryString()) {
         requestBuilder.setQueryString(url.getQuery());
@@ -497,5 +514,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
       // Should not happen Since the url in the request should be valid.
       LOGGER.error("Error populating url parts", e);
     }
+  }
+
+  private static URL getNormalizedUrl(String url) throws MalformedURLException {
+    return new URL(new URL(RELATIVE_URL_CONTEXT), url);
   }
 }
