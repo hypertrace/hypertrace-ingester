@@ -5,6 +5,7 @@ on:
       - main
   pull_request:
   # workflow_dispatch will let us manually trigger the workflow from GitHub actions dashboard. 
+  # See https://docs.github.com/en/free-pro-team@latest/actions/managing-workflow-runs/manually-running-a-workflow
   workflow_dispatch:
 
 jobs:
@@ -47,8 +48,6 @@ jobs:
         uses: eskatos/gradle-command-action@v1
         with:
           arguments: dockerBuildImages
-      - name: verify docker image creation
-        run: docker images -a
       - name: Verify hypertrace image
         working-directory: ./.github/workflows/hypertrace-ingester
         # Below tests a docker-compose.yml service named 'sut' with a valid HEALTHCHECK instruction:
