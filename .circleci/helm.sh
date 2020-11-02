@@ -14,7 +14,7 @@ case "$subcommand" in
     for SUB_PROJ_DIR in $SUB_PROJECTS_DIRS; do
       cd $SUB_PROJ_DIR
       echo "*******"
-      echo "validating charts for:$(pwd)"
+      echo "Validating charts for dir \"$(pwd)\""
       helm dependency update ./helm/
       helm lint --strict ./helm/
       helm template ./helm/
