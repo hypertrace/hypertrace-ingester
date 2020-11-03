@@ -13,6 +13,11 @@ dependencies {
 
   implementation("org.slf4j:slf4j-api:1.7.30")
   implementation("org.apache.commons:commons-lang3:3.10")
+  constraints {
+    implementation("com.google.guava:guava:30.0-jre") {
+      because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415")
+    }
+  }
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
 }
