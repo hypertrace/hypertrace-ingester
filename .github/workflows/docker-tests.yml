@@ -1,0 +1,64 @@
+name: e2e test
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  # workflow_dispatch will let us manually trigger the workflow from GitHub actions dashboard.
+  # See https://docs.github.com/en/free-pro-team@latest/actions/managing-workflow-runs/manually-running-a-workflow
+  # See https://docs.github.com/en/free-pro-team@latest/actions/managing-workflow-runs/manually-running-a-workflow
+  workflow_dispatch:
+
+jobs:
+  build-on-linux:
+    strategy:
+      matrix:
+        docker-version: [19.03]
+    runs-on: ubuntu-latest
+    name: Build and run Docker images
+    steps:
+      - name: Update Packages
+        run: sudo apt-get update -yqq --fix-missing
+      - name: Install Docker
+        uses: docker-practice/actions-setup-docker@master
+        with:
+          docker_version: ${{ matrix.docker-version }}
+          docker_buildx: false
+      - name: Cache docker
+        uses: actions/cache@v1
+        with:
+          path: ~/.docker
+          key: ${{ runner.os }}-docker-${{ hashFiles('**/Dockerfile') }}
+          restore-keys: ${{ runner.os }}-docker
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 10
+          submodules: recursive
+      - name: Install JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 14
+      - name: Cache Gradle
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle.kts') }}
+          restore-keys: ${{ runner.os }}-gradle
+      - name: Invoke Docker build with Gradle
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: dockerBuildImages
+      - name: Verify hypertrace image
+        working-directory: ./.github/workflows/hypertrace-ingester
+        # Below tests a docker-compose.yml service named 'sut' with a valid HEALTHCHECK instruction:
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose-zipkin-example.yml up -d || { ../scripts/inspect.sh ; exit 1 ; }
+      - name: Waits for some stability
+        working-directory: ./.github/workflows/hypertrace-ingester
+        run: |
+          sleep 60 # you can decrease it but never increase it
+          docker-compose -f docker-compose.yml ps
+      - name: Runs tests
+        working-directory: ./.github/workflows/hypertrace-ingester/scripts
+        run: ./tests.sh

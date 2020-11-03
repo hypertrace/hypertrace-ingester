@@ -1,0 +1,86 @@
+version: "2.4"
+services:
+
+  hypertrace:
+    image: hypertrace/hypertrace:main
+    container_name: hypertrace
+    environment:
+      - MONGO_HOST=mongo
+      - ZK_CONNECT_STR=zookeeper:2181/hypertrace-views
+    ports:
+      - 2020:2020
+    healthcheck:
+      start_period: 20s
+    depends_on:
+      mongo:
+        condition: service_healthy
+      kafka-zookeeper:
+        condition: service_healthy
+      pinot:
+        condition: service_started
+
+  hypertrace-collector:
+    image: hypertrace/hypertrace-oc-collector
+    container_name: hypertrace-collector
+    command: ["--config=/config/collector-config.yaml"]
+    ports:
+      - 14268:14268 # Jaeger Thrift
+      - 14267:14267 # Jaeger HTTP
+      - 9411:9411 # Zipkin HTTP
+    networks:
+      default:
+        aliases:
+          - jaeger
+          - jaeger-collector
+          - zipkin
+    depends_on:
+      kafka-zookeeper:
+        condition: service_healthy
+
+  sut:
+    image: hypertrace/hypertrace-ingester:test
+    container_name: sut
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DEFAULT_TENANT_ID=__default
+      - SPAN_GROUPBY_SESSION_WINDOW_INTERVAL=2
+      - REPLICATION_FACTOR=1
+      - ENTITY_SERVICE_HOST_CONFIG=hypertrace
+      - ENTITY_SERVICE_PORT_CONFIG=9001
+      - NUM_STREAM_THREADS=1
+      - PRE_CREATE_TOPICS=true
+      - PRODUCER_VALUE_SERDE=org.hypertrace.core.kafkastreams.framework.serdes.GenericAvroSerde
+    volumes:
+      - ../docker/configs/log4j2.properties:/app/resources/log4j2.properties:ro
+    depends_on:
+      kafka-zookeeper:
+        condition: service_healthy
+      hypertrace:
+        condition: service_started
+
+  kafka-zookeeper:
+    image: hypertrace/kafka-zookeeper:main
+    container_name: kafka-zookeeper
+    networks:
+      default:
+        aliases:
+          - kafka
+          - zookeeper
+
+  mongo:
+    image: hypertrace/mongodb:main
+    container_name: mongo
+
+  pinot:
+    image: hypertrace/pinot-servicemanager:main
+    container_name: pinot
+    environment:
+      - LOG_LEVEL=error
+    networks:
+      default:
+        aliases:
+          - pinot-controller
+    cpu_shares: 2048
+    depends_on:
+      kafka-zookeeper:
+        condition: service_healthy
