@@ -2,6 +2,7 @@ package org.hypertrace.core.spannormalizer.fieldgenerators;
 
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HOST;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
@@ -254,6 +255,11 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_PATH),
         (key, keyValue, builder, tagsMap) -> setPath(builder, tagsMap));
+
+    // Host Handler
+    fieldGeneratorMap.put(
+            RawSpanConstants.getValue(HTTP_HOST),
+            (key, keyValue, builder, tagsMap) -> builder.getRequestBuilder().setHost(keyValue.getVStr()));
 
     // User Agent handlers
     fieldGeneratorMap.put(

@@ -2,6 +2,7 @@ package org.hypertrace.core.spannormalizer.fieldgenerators;
 
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HOST;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
@@ -64,6 +65,7 @@ public class HttpFieldsGeneratorTest {
     tagsMap.put(RawSpanConstants.getValue(HTTP_URL), createKeyValue("https://example.ai/url2"));
     tagsMap.put(
         RawSpanConstants.getValue(HTTP_REQUEST_URL), createKeyValue("https://example.ai/url3"));
+    tagsMap.put(RawSpanConstants.getValue(HTTP_HOST), createKeyValue("example.ai"));
     tagsMap.put(RawSpanConstants.getValue(HTTP_REQUEST_PATH), createKeyValue("/url1"));
     tagsMap.put(RawSpanConstants.getValue(HTTP_PATH), createKeyValue("/url2"));
     tagsMap.put(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), createKeyValue("Chrome 1"));
@@ -153,6 +155,7 @@ public class HttpFieldsGeneratorTest {
     Assertions.assertEquals(requestBody, httpBuilder.getRequestBuilder().getBody());
     Assertions.assertEquals(responseBody, httpBuilder.getResponseBuilder().getBody());
     Assertions.assertEquals("https://example.ai/url1", httpBuilder.getRequestBuilder().getUrl());
+    Assertions.assertEquals("example.ai", httpBuilder.getRequestBuilder().getHost());
     Assertions.assertEquals("/url1", httpBuilder.getRequestBuilder().getPath());
     Assertions.assertEquals("Chrome 1", httpBuilder.getRequestBuilder().getUserAgent());
     Assertions.assertEquals(
