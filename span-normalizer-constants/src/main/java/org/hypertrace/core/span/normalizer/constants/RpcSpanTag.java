@@ -13,7 +13,8 @@ public enum RpcSpanTag {
   RPC_REQUEST_METADATA_CONTENT_TYPE("rpc.request.metadata.content-type"),
   RPC_REQUEST_METADATA_PATH("rpc.request.metadata.:path"),
   RPC_REQUEST_METADATA_USER_AGENT("rpc.request.metadata.user-agent"),
-  RPC_RESPONSE_METADATA_CONTENT_TYPE("rpc.response.metadata.content-type");
+  RPC_RESPONSE_METADATA_CONTENT_TYPE("rpc.response.metadata.content-type"),
+  RPC_BODY_DECODE_RAW("rpc.body.decode_raw");
 
   private final String value;
 
