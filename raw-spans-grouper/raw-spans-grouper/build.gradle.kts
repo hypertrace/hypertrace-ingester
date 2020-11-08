@@ -1,8 +1,8 @@
 plugins {
     application
     jacoco
-    id("org.hypertrace.docker-java-application-plugin") version "0.5.1"
-    id("org.hypertrace.docker-publish-plugin") version "0.5.1"
+    id("org.hypertrace.docker-java-application-plugin")
+    id("org.hypertrace.docker-publish-plugin")
     id("org.hypertrace.jacoco-report-plugin")
 }
 
@@ -34,7 +34,7 @@ tasks.test {
 }
 
 dependencies {
-    implementation("org.hypertrace.core.spannormalizer:span-normalizer-api:0.1.23")
+    implementation(project(":span-normalizer:span-normalizer-api"))
     implementation("org.hypertrace.core.datamodel:data-model:0.1.10")
     implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.16")
     implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.16")

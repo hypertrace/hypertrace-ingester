@@ -6,7 +6,7 @@ plugins {
   id("org.hypertrace.publish-plugin")
   id("org.hypertrace.avro-plugin")
 }
-//"org.hypertrace.core.spannormalizer"
+
 val generateLocalGoGrpcFiles = false
 
 protobuf {
@@ -53,11 +53,6 @@ sourceSets {
 dependencies {
   api("com.google.api.grpc:proto-google-common-protos:1.12.0")
   api( "org.apache.avro:avro:1.9.2")
-}
-
-// handle groupId change
-hypertraceAvro {
-  previousArtifact.set("org.hypertrace.core.spannormalizer:${project.name}:0.1.24")
 }
 
 hypertracePublish {
