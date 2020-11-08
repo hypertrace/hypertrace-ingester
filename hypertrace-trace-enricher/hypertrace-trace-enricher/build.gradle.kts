@@ -45,7 +45,7 @@ dependencies {
     }
   }
 
-  implementation(project(":hypertrace-trace-enricher-impl"))
+  implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-impl"))
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
   implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.6")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.15")
@@ -60,7 +60,7 @@ dependencies {
   implementation("org.slf4j:slf4j-api:1.7.30")
   runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
 
-  testImplementation(project(":hypertrace-trace-enricher"))
+  testImplementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
   testImplementation("org.mockito:mockito-core:3.3.3")
   testImplementation("org.junit-pioneer:junit-pioneer:0.9.0")

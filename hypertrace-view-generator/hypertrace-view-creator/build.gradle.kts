@@ -16,7 +16,7 @@ tasks.test {
 }
 
 dependencies {
-  implementation(project(":hypertrace-view-generator-api"))
+  implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.1.16")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")

@@ -61,7 +61,7 @@ dependencies {
   api("com.google.protobuf:protobuf-java-util:3.13.0")
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
-  implementation("org.hypertrace.core.spannormalizer:raw-span-constants:0.1.2")
+  implementation(project(":span-normalizer:raw-span-constants"))
   implementation("org.hypertrace.entity.service:entity-service-api:0.1.23")
 
   constraints {

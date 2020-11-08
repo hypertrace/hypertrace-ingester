@@ -33,20 +33,10 @@ commands:
           name: << parameters.args >>
           command: ./gradlew << parameters.args >> --info --max-workers=2 -Dorg.gradle.jvmargs=-Xmx2g -Dorg.gradle.console=plain --continue
           when: << parameters.when >>
-  update-submodule:
-    description: 'Pull Submodules'
-    steps:
-      - run:
-          name: Pull Submodules
-          command: git submodule update --init --recursive
-      - run:
-          name: Ensure submodules point to commit from main branch
-          command: git submodule foreach "git merge-base --is-ancestor HEAD origin/main"
   setup_build_environment:
     description: 'Generates cache key from a hash of all gradle files'
     steps:
       - checkout
-      - update-submodule
       - run:
           name: Generate cache key
           command: find . -type f -name "*.gradle*" -o -name "gradle-wrapper*" -exec shasum {} + | sort > /tmp/checksum.txt && cat /tmp/checksum.txt

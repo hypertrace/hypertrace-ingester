@@ -1,0 +1,11 @@
+build:
+  roots:
+    - hypertrace-trace-enricher/enriched-span-constants/src/main/proto
+    - span-normalizer/raw-span-constants/src/main/proto
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - PACKAGE
+    - WIRE_JSON

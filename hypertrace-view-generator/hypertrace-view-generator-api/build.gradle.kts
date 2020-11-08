@@ -1,6 +1,6 @@
 plugins {
   `java-library`
-  id("com.commercehub.gradle.plugin.avro") version "0.9.1"
+  id("com.commercehub.gradle.plugin.avro")
 }
 
 sourceSets {
