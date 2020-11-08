@@ -1,8 +1,8 @@
 #!/bin/sh
-set -eu -o functrace
+set -eu
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-ROOT_PROJECT_DIR=$(dirname "${SCRIPT_DIR}")
+ROOT_PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
 cd $ROOT_PROJECT_DIR
 SUB_PROJECTS_DIRS=$(find . -iname "helm" | sed 's/\(.*\)\/.*/\1/')
 
