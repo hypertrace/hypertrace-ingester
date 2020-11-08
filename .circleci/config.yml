@@ -75,18 +75,20 @@ jobs:
           args: jacocoTestReport
       - codecov/upload:
           flags: unit
-  publish:
+  merge-publish:
     executor: gradle_docker
     steps:
       - setup_build_environment
       - setup_remote_docker: *latest_remote_docker
       - docker_login
       - gradle:
-          args: :tag -Prelease
-      - add_ssh_keys:
-          fingerprints:
-            - '76:7a:c8:91:c0:cd:eb:71:96:3c:44:c6:cf:b0:26:83'
-      - run: git push origin $(./gradlew -q :printVersion)
+          args: dockerPushImages
+  release-publish:
+    executor: gradle_docker
+    steps:
+      - setup_build_environment
+      - setup_remote_docker: *latest_remote_docker
+      - docker_login
       - gradle:
           args: dockerPushImages
   validate-charts:
@@ -107,17 +109,31 @@ jobs:
       - setup_build_environment
       - snyk/scan:
           additional-arguments: --all-sub-projects --policy-path=.snyk
-  package-charts:
+  release-charts:
     executor: helm
-    working_directory: ~/repo
     steps:
       - checkout
       - run:
-          name: Package and Publish Helm Charts
+          name: Add release tag
           command: |
-            .circleci/helm.sh package
-            .circleci/helm.sh publish
-
+            git config --global user.email "${CIRCLE_USERNAME}@hypertrace.org"
+            git config --global user.name "$CIRCLE_USERNAME"
+            git tag -am "Released by $CIRCLE_USERNAME" $(git describe --abbrev=0 --tags | sed 's/^release-//')
+      - run:
+          name: Remove trigger tag
+          command: git tag -d release-$(git describe --abbrev=0)
+      - run:
+          name: Package and Publish Helm Charts
+          # Read the "name:" from Chart.yaml. The chart version is <chart-name>-<semver git tag>
+          .circleci/helm.sh package
+          .circleci/helm.sh publish
+      - add_ssh_keys:
+          fingerprints:
+            # This ssh key gives write permission needed for the following step.
+            - '76:7a:c8:91:c0:cd:eb:71:96:3c:44:c6:cf:b0:26:83'
+      - run:
+          name: Update remote tags
+          command: git push origin refs/tags/$(git describe --abbrev=0) :refs/tags/release-$(git describe --abbrev=0)
 workflows:
   version: 2
   build-and-publish:
@@ -132,7 +148,7 @@ workflows:
           context:
             - hypertrace-vulnerability-scanning
             - dockerhub-read
-      - publish:
+      - merge-publish:
           context:
             - hypertrace-publishing
             - dockerhub-read
@@ -144,13 +160,23 @@ workflows:
             branches:
               only:
                 - main
-      - package-charts:
+      - release-publish:
+          context:
+            - hypertrace-publishing
+            - dockerhub-read
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^release-.*/
+      - release-charts:
           context:
             - hypertrace-publishing
             - dockerhub-read
           requires:
-            - publish
+            - release-publish
           filters:
             branches:
-              only:
-                - main
+              ignore: /.*/
+            tags:
+              only: /^release-.*/
