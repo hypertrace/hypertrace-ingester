@@ -96,7 +96,7 @@ jobs:
       - run:
           name: Helm Charts Lint and Template Render
           command: |
-            $CIRCLE_WORKING_DIRECTORY/hypertrace-ingester/.circleci/helm.sh validate
+            $CIRCLE_WORKING_DIRECTORY/.circleci/helm.sh validate
   snyk-scan:
     executor:
       name: gradle_docker
@@ -113,8 +113,8 @@ jobs:
       - run:
           name: Package and Publish Helm Charts
           command: |
-            $CIRCLE_WORKING_DIRECTORY/hypertrace-ingester/.circleci/helm.sh package
-            $CIRCLE_WORKING_DIRECTORY/hypertrace-ingester/.circleci/helm.sh publish
+            $CIRCLE_WORKING_DIRECTORY/.circleci/helm.sh package
+            $CIRCLE_WORKING_DIRECTORY/.circleci/helm.sh publish
 
 workflows:
   version: 2
