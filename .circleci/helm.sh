@@ -1,14 +1,14 @@
 #!/bin/sh
 set -eu
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+script=$0
+
+SCRIPT_DIR="$( cd "$( dirname "$script" )" >/dev/null 2>&1 && pwd )"
 ROOT_PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
 cd $ROOT_PROJECT_DIR
 SUB_PROJECTS_DIRS=$(find . -iname "helm" | sed 's/\(.*\)\/.*/\1/')
 
-script=$0
 subcommand=$1; shift
-
 case "$subcommand" in
   validate)
     for SUB_PROJ_DIR in $SUB_PROJECTS_DIRS; do
