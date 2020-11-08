@@ -111,6 +111,7 @@ jobs:
           additional-arguments: --all-sub-projects --policy-path=.snyk
   release-charts:
     executor: helm
+    working_directory: ~/repo
     steps:
       - checkout
       - run:
@@ -125,8 +126,9 @@ jobs:
       - run:
           name: Package and Publish Helm Charts
           # Read the "name:" from Chart.yaml. The chart version is <chart-name>-<semver git tag>
-          .circleci/helm.sh package
-          .circleci/helm.sh publish
+          command: |
+            .circleci/helm.sh package
+            .circleci/helm.sh publish
       - add_ssh_keys:
           fingerprints:
             # This ssh key gives write permission needed for the following step.
