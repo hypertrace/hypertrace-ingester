@@ -91,12 +91,13 @@ jobs:
           args: dockerPushImages
   validate-charts:
     executor: helm
+    working_directory: ~/repo
     steps:
       - checkout
       - run:
           name: Helm Charts Lint and Template Render
           command: |
-            $CIRCLE_WORKING_DIRECTORY/.circleci/helm.sh validate
+            .circleci/helm.sh validate
   snyk-scan:
     executor:
       name: gradle_docker
@@ -108,13 +109,14 @@ jobs:
           additional-arguments: --all-sub-projects --policy-path=.snyk
   package-charts:
     executor: helm
+    working_directory: ~/repo
     steps:
       - checkout
       - run:
           name: Package and Publish Helm Charts
           command: |
-            $CIRCLE_WORKING_DIRECTORY/.circleci/helm.sh package
-            $CIRCLE_WORKING_DIRECTORY/.circleci/helm.sh publish
+            .circleci/helm.sh package
+            .circleci/helm.sh publish
 
 workflows:
   version: 2
