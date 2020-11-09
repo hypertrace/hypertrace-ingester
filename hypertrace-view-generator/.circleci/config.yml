@@ -1,0 +1,171 @@
+version: 2.1
+
+orbs:
+  codecov: codecov/codecov@1
+  snyk: snyk/snyk@0.0.10
+
+executors:
+  gradle_docker:
+    docker:
+      - image: cimg/openjdk:11.0
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+  helm:
+    docker:
+      - image: hypertrace/helm-gcs-packager:0.1.1
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
+
+commands:
+  gradle:
+    description: 'Run the provided gradle command'
+    parameters:
+      args:
+        type: string
+      when:
+        default: "on_success"
+        type: enum
+        enum: ["on_fail", "on_success", "always"]
+    steps:
+      - run:
+          name: << parameters.args >>
+          command: ./gradlew << parameters.args >> --info --max-workers=2 -Dorg.gradle.jvmargs=-Xmx2g -Dorg.gradle.console=plain --continue
+          when: << parameters.when >>
+  setup_build_environment:
+    description: 'Generates cache key from a hash of all gradle files'
+    steps:
+      - checkout
+      - run:
+          name: Generate cache key
+          command: find . -type f -name "*.gradle*" -o -name "gradle-wrapper*" -exec shasum {} + | sort > /tmp/checksum.txt && cat /tmp/checksum.txt
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "/tmp/checksum.txt" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+  populate_and_save_cache:
+    description: 'Downloads all gradle dependencies and uploads cache for later use'
+    steps:
+      - gradle:
+          args: downloadDependencies
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: v1-dependencies-{{ checksum "/tmp/checksum.txt" }}
+  docker_login:
+    description: "Login to dockerhub with readonly credentials"
+    steps:
+      - run:
+          name: Dockerhub login
+          command: echo $DOCKERHUB_PASSWORD | docker login --username $DOCKERHUB_USERNAME --password-stdin
+
+jobs:
+  build:
+    executor: gradle_docker
+    steps:
+      - setup_build_environment
+      - setup_remote_docker
+      - populate_and_save_cache
+      - docker_login
+      - gradle:
+          args: build dockerBuildImages
+      - gradle:
+          args: jacocoTestReport
+      - gradle:
+          args: copyAllReports --output-dir=/tmp/test-reports
+          when: always
+      - codecov/upload
+      - store_test_results:
+          path: /tmp/test-reports
+      - store_artifacts:
+          path: /tmp/test-reports
+          destination: reports
+  publish:
+    executor: gradle_docker
+    steps:
+      - setup_build_environment
+      - setup_remote_docker
+      - docker_login
+      - gradle:
+          args: :tag -Prelease
+      - add_ssh_keys:
+          fingerprints:
+            - '0c:dc:bc:1e:be:48:06:c0:2f:11:f9:37:cc:5a:27:87'
+      - run: git push origin $(./gradlew -q :printVersion)
+      - gradle:
+          args: dockerPushImages
+  validate-charts:
+    executor: helm
+    steps:
+      - checkout
+      - run:
+          name: Helm Charts Lint and Template Render
+          command: |
+            helm dependency update ./helm/
+            helm lint --strict ./helm/
+            helm template ./helm/
+  package-charts:
+    executor: helm
+    steps:
+      - checkout
+      - run:
+          name: Package and Publish Helm Charts
+          # Read the "name:" from Chart.yaml. The chart version is <chart-name>-<semver git tag>
+          command: |
+            helm dependency update ./helm/
+            CHART_VERSION=$(git describe --abbrev=0)
+            CHART_NAME=$(awk '/^name:/ {print $2}' ./helm/Chart.yaml)
+            export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/helm-gcs-key.json
+            echo ${HELM_GCS_CREDENTIALS} > ${GOOGLE_APPLICATION_CREDENTIALS}
+            helm repo add helm-gcs ${HELM_GCS_REPOSITORY}
+            helm package --version ${CHART_VERSION} --app-version ${CHART_VERSION} ./helm/
+            helm gcs push ${CHART_NAME}-${CHART_VERSION}.tgz helm-gcs --public --retry
+
+  snyk-scan:
+    executor:
+      name: gradle_docker
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.workers.max=1 # Snyk doesn't handle parallelism well
+    steps:
+      - setup_build_environment
+      - snyk/scan:
+          additional-arguments: --all-sub-projects --policy-path=.snyk
+
+workflows:
+  version: 2
+  build-and-publish:
+    jobs:
+      - build:
+          context:
+            - dockerhub-read
+      - validate-charts:
+          context:
+            - dockerhub-read
+      - snyk-scan:
+          context:
+            - hypertrace-vulnerability-scanning
+            - dockerhub-read
+      - publish:
+          context:
+            - hypertrace-publishing
+            - dockerhub-read
+          requires:
+            - build
+            - validate-charts
+            - snyk-scan
+          filters:
+            branches:
+              only:
+                - main
+      - package-charts:
+          context:
+            - hypertrace-publishing
+            - dockerhub-read
+          requires:
+            - publish
+          filters:
+            branches:
+              only:
+                - main

@@ -1,0 +1,28 @@
+@namespace("org.hypertrace.viewgenerator.api")
+protocol TraceViewProtocol {
+  //One record for each trace
+  record RawTraceView {
+    string tenant_id;
+
+    bytes trace_id;
+
+    union { null, string } transaction_name = null;
+
+    //services that were invoked as part of this trace
+    array<string> services = [];
+
+    // start time of the trace, got from the start time of the first span
+    long start_time_millis = -1;
+
+    // end time of the trace, got from the end time of the first span
+    long end_time_millis = -1;
+
+    //total time for the trace
+    long duration_millis = 0;
+
+    //How deep was the call.
+    int num_services = 0;
+
+    int num_spans = 0;
+  }
+}

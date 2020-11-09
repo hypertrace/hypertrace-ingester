@@ -1,0 +1,61 @@
+@namespace("org.hypertrace.viewgenerator.api")
+protocol BackendEntityViewProtocol {
+  //Each record corresponds to one span
+  record BackendEntityView {
+    string tenant_id;
+
+    bytes trace_id;
+
+    bytes span_id;
+
+    string backend_id;
+
+    string backend_host = "";
+
+    union { null, string } backend_port = null;
+
+    union { null, string }  backend_protocol = null;
+
+    union { null, string }  backend_path = null;
+
+    long start_time_millis = 0;
+
+    long end_time_millis = 0;
+
+    long duration_millis = 0;
+
+    union { null, string } span_kind = null;
+
+    int error_count = 0;
+
+    int exception_count = 0;
+
+    int num_calls = 0;
+
+    string backend_name = "";
+
+    string backend_trace_id = "";
+
+    string display_name = "";
+
+    // backend status code
+    union { null, string } status_code = null;
+
+    // Status message for the status code
+    // backend trace
+    union { null, string } status_message = null;
+
+    // success / fail based on the status code and protocol
+    // backend trace
+    union { null, string } status = null;
+
+    // key:value pairs of all the associated tags to this span
+    map<string> tags = {};
+
+    // this span is associated to service if any
+    union { null, string } caller_service_id = null;
+
+    // api ID that calls this backend
+    union { null, string } caller_api_id = null;
+  }
+}

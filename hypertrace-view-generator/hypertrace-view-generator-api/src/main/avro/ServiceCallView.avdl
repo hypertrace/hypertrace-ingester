@@ -1,0 +1,63 @@
+@namespace("org.hypertrace.viewgenerator.api")
+protocol ServiceCallViewProtocol {
+  // Each record in this view represents a client-server interaction on an API
+  // This view is almost like a self-join on span event data where we create
+  // an entry in this view for two successive spans constituting a client and
+  // server span.
+  record ServiceCallView {
+    string tenant_id;
+
+    // This should never be null since there should always be a trace.
+    bytes trace_id;
+
+    // The transaction name could be null since we may or may not be able to associate each
+    // API call with a transaction.
+    union { null, string } transaction_name = null;
+
+    // Ids of the both sides of the edge. Any one of them could be null in the cases
+    // we only have one side instrumented so default should be supported.
+    union { null, bytes } client_event_id = null;
+    union { null, bytes } server_event_id = null;
+
+    // Service and API names. These fields should have default as null because
+    // there could be edges where caller/callee span doens't exist and hence we can't
+    // conclusively get the caller/callee service and API always.
+    union { null, string } caller_service = null;
+    union { null, string } caller_api = null;
+    union { null, string } callee_service = null;
+    union { null, string } callee_api = null;
+
+    // Request related fields.
+    union { null, string } request_url = null;
+    union { null, string } request_method = null;
+
+    // http/grpc/thrift, etc
+    union { null, string } protocol_name = null;
+
+    int response_status_code = 0;
+
+    // Time metrics
+    long start_time_millis = 0;
+    long end_time_millis = 0;
+    long duration_millis = 0;
+
+    // Error count, which will be either a 0 or 1 where one indicates that this
+    // api/service call has erred out.
+    int error_count = 0;
+
+    // Metric to show the no. of exceptions that have been reported in the spans.
+    // The exceptions needn't have caused the API/service call to error out though.
+    int exception_count = 0;
+
+    // can only append the new fields for backward compatibility
+    union { null, string } caller_service_id_str = null;
+    union { null, string } caller_api_id_str = null;
+    union { null, string } callee_service_id_str = null;
+    union { null, string } callee_api_id_str = null;
+    // how many calls for the service
+    int num_calls = 1;
+
+    union { null, string } callee_backend_id = null;
+    union { null, string } callee_backend_name = null;
+  }
+}
