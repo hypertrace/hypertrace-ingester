@@ -1,0 +1,178 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package org.hypertrace.core.span.constants.v1;
+
+import "org/hypertrace/core/span/constants/v1/enum_extension.proto";
+
+// This file contains constants that are created by agents / app instrumentations.
+
+// SQL related attributes
+enum Sql {
+    SQL_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    SQL_QUERY = 1 [(string_value) = "sql.query"];
+    SQL_DB_TYPE = 2 [(string_value) = "sql.db_type"];
+    SQL_SQL_URL = 3 [(string_value) = "sql.url"];
+    SQL_PARAMS = 4 [(string_value) = "sql.params"]; // when client uses PreparedStatement, agent knows what the params are
+    SQL_STATE = 5 [(string_value) = "sql.sqlstate"]; // sqlstate is sql standard error code
+}
+
+// TCP related attributes
+enum Tcp {
+    TCP_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    TCP_HOST = 1 [(string_value) = "tcp.host"];
+    TCP_PORT = 2 [(string_value) = "tcp.port"];
+}
+
+// HTTP related attributes
+enum Http {
+    HTTP_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    HTTP_REQUEST_URL = 1 [(string_value) = "http.request.url"];
+    HTTP_REQUEST_SESSION_ID = 2 [(string_value) = "http.request.session_id"];
+    HTTP_REQUEST_METHOD = 3 [(string_value) = "http.request.method"];
+    HTTP_RESPONSE_STATUS_CODE = 4 [(string_value) = "http.response.status_code"];
+    HTTP_RESPONSE_STATUS_MESSAGE = 5 [(string_value) = "http.response.status_message"];
+    HTTP_REQUEST_PARAM = 7 [(string_value) = "http.request.param"];
+    HTTP_HTTP_REQUEST_BODY = 8 [(string_value) = "http.request.body"];
+    HTTP_HTTP_RESPONSE_BODY = 9 [(string_value) = "http.response.body"];
+    HTTP_REQUEST_QUERY_STRING = 10 [(string_value) = "http.request.query_string"];
+    HTTP_REQUEST_PATH = 11 [(string_value) = "http.request.path"];
+    // Prefixes for the headers
+    HTTP_REQUEST_HEADER = 12 [(string_value) = "http.request.header"];
+    HTTP_RESPONSE_HEADER = 13 [(string_value) = "http.response.header"];
+    // Prefixes for the cookies
+    HTTP_REQUEST_COOKIE = 14 [(string_value) = "http.request.cookie"];
+    HTTP_RESPONSE_COOKIE = 15 [(string_value) = "http.response.cookie"];
+    HTTP_REQUEST_SIZE = 16 [(string_value) = "http.request.size"];
+    HTTP_RESPONSE_SIZE = 17 [(string_value) = "http.response.size"];
+    // Generic URL. This can also be used to match on the suffix of attribute key. i.e key ends with "url"
+    HTTP_URL = 18 [(string_value) = "url"];
+    HTTP_PATH = 19 [(string_value) = "http.path"];
+    HTTP_URL_WITH_HTTP = 20 [(string_value) = "http.url"];
+    HTTP_HOST = 21 [(string_value) = "http.host"];
+    HTTP_METHOD = 22 [(string_value) = "http.method"];
+
+    HTTP_REQUEST_HOST_HEADER = 23 [(string_value) = "http.request.header.host"];
+    HTTP_REQUEST_X_FORWARDED_FOR_HEADER =  24 [(string_value) = "http.request.header.x-forwarded-for"];
+    HTTP_REQUEST_AUTHORITY_HEADER =  25 [(string_value) = "http.request.header.:authority"];
+    HTTP_USER_DOT_AGENT = 26 [(string_value) = "user.agent"];
+    HTTP_USER_AGENT_WITH_UNDERSCORE = 27 [(string_value) = "user_agent"];
+    HTTP_USER_AGENT_WITH_DASH = 28 [(string_value) = "user-agent"];
+    HTTP_USER_AGENT_REQUEST_HEADER = 29 [(string_value) = "http.request.header.user-agent"];
+    HTTP_USER_AGENT = 34 [(string_value) = "http.user_agent"];
+    HTTP_REQUEST_HEADER_COOKIE = 30 [(string_value) = "http.request.header.cookie"];
+    HTTP_REQUEST_HEADER_SET_COOKIE = 31 [(string_value) = "http.request.header.set-cookie"];
+    HTTP_REQUEST_CONTENT_TYPE = 32 [(string_value) = "http.request.header.content-type"];
+    HTTP_RESPONSE_CONTENT_TYPE = 33 [(string_value) = "http.response.header.content-type"];
+    HTTP_RESPONSE_HEADER_SET_COOKIE = 35 [(string_value) = "http.response.header.set-cookie"];
+    HTTP_REQUEST_HEADER_PATH = 36 [(string_value) = "http.request.header.:path"];
+    HTTP_REQUEST_BODY = 37 [(string_value) = "request.body"];
+    HTTP_RESPONSE_BODY = 38 [(string_value) = "response.body"];
+}
+
+// Model View Controller framework related attributes
+enum Mvc {
+    // Collected attributes
+    MVC_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    MVC_VIEW_NAME = 1 [(string_value) = "mvc.view_name"];
+    MVC_VIEW_TYPE = 2 [(string_value) = "mvc.view_type"];
+}
+
+// Grpc related attributes
+enum Grpc {
+    GRPC_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    GRPC_STATUS_CODE = 1 [(string_value) = "grpc.status_code"];
+    GRPC_REQUEST_METADATA = 2 [(string_value) = "grpc.request.metadata"];
+    GRPC_REQUEST_CALL_OPTIONS = 3 [(string_value) = "grpc.request.call_options"]; // TODO maybe agent should merge this with metadata
+    GRPC_RESPONSE_METADATA = 4 [(string_value) = "grpc.response.metadata"];
+    GRPC_REQUEST_BODY = 5 [(string_value) = "grpc.request.body"];
+    GRPC_RESPONSE_BODY = 6 [(string_value) = "grpc.response.body"];
+    GRPC_ERROR_NAME = 7 [(string_value) = "grpc.error_name"];
+    GRPC_ERROR_MESSAGE = 8 [(string_value) = "grpc.error_message"];
+    GRPC_HOST_PORT = 9 [(string_value) = "grpc.host_port"];
+    GRPC_METHOD = 10 [(string_value) = "grpc.method"];
+}
+
+// Error related attributes
+enum Error {
+    ERROR_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    ERROR_MESSAGE = 1 [(string_value) = "error_message"];
+    ERROR_STACK_TRACE = 2 [(string_value) = "error_stacktrace"];
+    ERROR_ERROR = 3 [(string_value) = "error"];
+}
+
+// Async related attributes
+enum Async {
+    ASYNC_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    ASYNC_THREAD_NAME = 1 [(string_value) = "async_thread_name"];
+    ASYNC_THREAD_ID = 2 [(string_value) = "async_thread_id"];
+    ASYNC_TASK_NAME = 3 [(string_value) = "async_task_name"];
+}
+
+// Command/shell execution related attributes
+enum CommandExec {
+    COMMAND_EXEC_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    COMMAND_EXEC_STRING = 1 [(string_value) = "command_string"];
+}
+
+// File IO attributes
+enum File {
+    FILE_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    FILE_PATH = 1 [(string_value) = "file.path"];
+    FILE_CWD = 2 [(string_value) = "file.current_working_dir"];
+}
+
+// Redis related attributes
+enum Redis {
+    REDIS_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    REDIS_CONNECTION = 1 [(string_value) = "redis.connection"];
+    REDIS_COMMAND = 2 [(string_value) = "redis.command"];
+    REDIS_ARGS = 3 [(string_value) = "redis.args"];
+}
+
+// Mongo related attributes
+enum Mongo {
+    MONGO_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    MONGO_URL = 1 [(string_value) = "mongo.url"];
+    MONGO_NAMESPACE = 2 [(string_value) = "mongo.namespace"];
+    MONGO_OPERATION = 3 [(string_value) = "mongo.operation"];
+    MONGO_COMMAND = 4 [(string_value) = "mongo.command"]; // full mongo json string
+    MONGO_ADDRESS = 5 [(string_value) = "address"];
+}
+
+// Rabbit MQ related attributes
+enum RabbitMq {
+    RABBIT_MQ_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    RABBIT_MQ_ROUTING_KEY = 1 [(string_value) = "rabbitmq.routing_key"];
+    RABBIT_MQ_MESSAGE = 2 [(string_value) = "rabbitmq.message"];
+    RABBIT_MQ_CONSUMER_TAG = 3 [(string_value) = "rabbitmq.comsumer_tag"];
+}
+
+enum Docker {
+    DOCKER_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    DOCKER_CONTAINER_ID = 1 [(string_value) = "docker.container_id"];
+}
+
+enum Kubernetes {
+    KUBERNETES_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    KUBERNETES_POD_ID = 1 [(string_value) = "k8s.pod_id"];
+    KUBERNETES_POD_NAME = 2 [(string_value) = "k8s.pod_name"];
+    KUBERNETES_NAMESPACE_NAME = 3 [(string_value) = "k8s.namespace_name"];
+}
+
+// Span Protocol
+enum SpanAttribute {
+    SPAN_ATTRIBUTE_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    SPAN_ATTRIBUTE_PROTOCOL = 1 [(string_value) = "span.protocol"];
+    SPAN_ATTRIBUTE_SPAN_KIND = 2 [(string_value) = "span.kind"];
+}
+
+// Tracer attributes
+enum TracerAttribute {
+    TRACER_ATTRIBUTE_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    TRACER_ATTRIBUTE_TRACER_TYPE = 1 [(string_value) = "tracer.type"];
+}
+
+enum JaegerAttribute {
+    JAEGER_ATTRIBUTE_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    JAEGER_ATTRIBUTE_SERVICE_NAME = 1 [(string_value) = "jaeger.servicename"];
+}

@@ -1,0 +1,125 @@
+# Default values for the helm chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+#
+# Note about Namespace
+# --------------------
+# It is deliberately left out here and using the helm -n or --namespace flag you can deploy your resources to the same
+# namespace as the release. If you leave it out, your resources will be deployed to the default namespace.
+# Also, not that the namespace you are deploying to should already exist otherwise the helm command will fail.
+# You can always specify a different namespace for a resource by setting it directly in it's yaml file or
+# making it configurable by defining it in this file.
+
+###########
+# Deployment
+###########
+replicaCount: 1
+maxUnavailable: 0
+
+image:
+  repository: hypertrace/span-normalizer
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+nodeLabels: {}
+
+# This is defined in resources/configs/span-normalizer/application.conf as service.admin.port
+containerAdminPort: 8099
+
+javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+
+livenessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+readinessProbe:
+  initialDelaySeconds: 2
+  periodSeconds: 5
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  requests:
+    cpu: 0.2
+    memory: 1536Mi
+  limits:
+    cpu: 1.0
+    memory: 1536Mi
+deploymentLabels:
+  app: span-normalizer
+
+podLabels:
+  app: span-normalizer
+
+podAnnotations: {}
+
+# The Deployment Selector match labels are different from the pod labels. Note that they should be a subset of the pod
+# labels. You append new labels to them but cannot remove labels. If you remove or modify the labels you will need to
+# delete the existing deployment bearing the same name and then redeploy. This is the reason why they are separated from
+# the pod labels. You can add and remove pod labels without having an effect on the deployment.
+# Also, please use "apiVersion: apps/v1" instead of the deprecated "apiVersion: extensions/v1beta1" for the deployment
+# apiVersion in the yaml file.
+deploymentSelectorMatchLabels:
+  app: span-normalizer
+
+serviceSelectorLabels:
+  app: span-normalizer
+
+###########
+# Config Maps
+###########
+spanNormalizerConfig:
+  name: span-normalizer-config
+  kafka:
+    streams:
+      config:
+        metricsRecordingLevel: INFO
+        numStreamThreads: 2
+        bootstrapServers: "bootstrap:9092"
+        schemaRegistryUrl: "http://schema-registry-service:8081"
+
+logConfig:
+  name: span-normalizer-log-appender-config
+  monitorInterval: 30
+  rootLogger:
+    level: INFO
+  appender:
+    rolling:
+      enabled: false
+
+jmx:
+  enabled: true
+  port: 7022
+  opts: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.port=7022 -Dcom.sun.management.jmxremote.rmi.port=7022 -Djava.rmi.server.hostname=127.0.0.1"
+prometheus:
+  jmx:
+    enabled: true
+    port: 7071
+    image:
+      repository: solsson/kafka-prometheus-jmx-exporter@sha256
+      tag: 6f82e2b0464f50da8104acd7363fb9b995001ddff77d248379f8788e78946143
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: "0.25"
+        memory: "256Mi"
+
+kafka-topic-creator:
+  enabled: true
+  jobName: raw-spans-topic-creator
+  helmHook: pre-install,pre-upgrade
+  kafka:
+    topics:
+      - name: raw-spans-from-jaeger-spans
+        replicationFactor: 2
+        partitions: 8
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+  zookeeper:
+    address: zookeeper:2181
+  imagePullSecrets: []
+  podAnnotations: {}

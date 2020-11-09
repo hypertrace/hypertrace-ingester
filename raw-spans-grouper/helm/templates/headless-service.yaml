@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.containerAdminPort | quote }}
+  labels:
+    release: {{ .Release.Name }}
+  {{- with .Values.deploymentLabels }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  clusterIP: None
+  ports:
+    - name: admin-port
+      port: {{ .Values.containerAdminPort }}
+  selector:
+    {{- toYaml .Values.serviceSelectorMatchLabels | nindent 4 }}

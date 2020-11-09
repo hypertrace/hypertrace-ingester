@@ -1,0 +1,95 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package org.hypertrace.traceenricher.enrichedspan.constants.v1;
+
+import "org/hypertrace/traceenricher/enrichedspan/constants/v1/enum_extension.proto";
+
+enum CommonAttribute {
+    COMMON_ATTRIBUTE_UNSPECIFIED = 0 [(string_value) = "UNSPECIFIED"]; // string value of SpanTypeValues enum, enriched by EventTypeAttributeEnricher
+    COMMON_ATTRIBUTE_SPAN_TYPE = 1 [(string_value) = "SPAN_TYPE"]; // string value of SpanTypeValues enum, enriched by EventTypeAttributeEnricher
+    COMMON_ATTRIBUTE_TRANSACTION_NAME = 2 [(string_value) = "TRANSACTION_NAME"];
+    COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR = 3 [(string_value) = "TRANSACTION_HAS_ERROR"]; // boolean, to indicate if a transaction has errored out.
+    COMMON_ATTRIBUTE_PROTOCOL = 4 [(string_value) = "PROTOCOL"]; // The protocol used by the Span. HTTP, GRPC, etc.
+    COMMON_ATTRIBUTE_TRACE_ID = 5 [(string_value) = "TRACE_ID"]; // The trace_id in string form
+}
+
+enum Http {
+    HTTP_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    HTTP_REQUEST_PATH = 1 [(string_value) = "http.request.path"];
+    HTTP_REQUEST_QUERY_PARAM = 2 [(string_value) = "http.request.query.param"];
+    HTTP_HOST = 3 [(string_value) = "HTTP_HOST"]; // We should probably stick to a standard of keeping all enriched attributes in capital letters.
+    HTTP_REQUEST_PATH_PARAM = 4 [(string_value) = "http.request.path.param"];
+}
+
+enum Api {
+    API_UNSPECIFIED = 0 [(string_value) = "UNSPECIFIED"];
+    API_BOUNDARY_TYPE = 1 [(string_value) = "API_BOUNDARY_TYPE"];
+    API_URL_PATH = 2 [(string_value) = "URL_PATH"];
+    API_STATUS = 3 [(string_value) = "API_STATUS"];
+    API_STATUS_MESSAGE = 4 [(string_value) = "API_STATUS_MESSAGE"];
+    API_STATUS_CODE = 5 [(string_value) = "API_STATUS_CODE"];
+}
+
+enum ApiStatus {
+    API_STATUS_UNSPECIFIED = 0 [(string_value) = "UNSPECIFIED"];
+    API_STATUS_SUCCESS = 1 [(string_value) = "SUCCESS"];
+    API_STATUS_FAIL = 2 [(string_value) = "FAIL"];
+}
+
+enum AttributeValue {
+    ATTRIBUTE_VALUE_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    ATTRIBUTE_VALUE_UNKNOWN = 1 [(string_value) = "unknown"];
+}
+
+// Names used as values for EVENT_TYPE key
+enum BoundaryTypeValue {
+    BOUNDARY_TYPE_VALUE_UNSPECIFIED = 0 [(string_value) = "UNKNOWN"];
+    BOUNDARY_TYPE_VALUE_ENTRY = 1 [(string_value) = "ENTRY"];
+    BOUNDARY_TYPE_VALUE_EXIT = 2 [(string_value) = "EXIT"];
+}
+
+// To track the protocol fo the request
+enum Protocol {
+    PROTOCOL_UNSPECIFIED = 0 [(string_value) = "UNKNOWN"];
+    PROTOCOL_HTTP = 1 [(string_value) = "HTTP"];
+    PROTOCOL_HTTPS = 2 [(string_value) = "HTTPS"];
+    PROTOCOL_GRPC = 3 [(string_value) = "GRPC"];
+    PROTOCOL_REDIS = 4 [(string_value) = "REDIS"];
+    PROTOCOL_MONGO = 5 [(string_value) = "MONGO"];
+    PROTOCOL_JDBC = 6 [(string_value) = "JDBC"];
+    PROTOCOL_RABBIT_MQ = 7 [(string_value) = "RABBIT_MQ"];
+}
+
+enum MongoEventName {
+    MONGO_EVENT_NAME_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    MONGO_EVENT_NAME_ASYNC_EXIT = 1 [(string_value) = "mongo.async.exit"];
+}
+
+enum Backend {
+    BACKEND_UNSPECIFIED = 0 [(string_value) = "UNSPECIFIED"];
+    BACKEND_PROTOCOL = 1 [(string_value) = "BACKEND_PROTOCOL"];
+    BACKEND_HOST = 2 [(string_value) = "BACKEND_HOST"];
+    BACKEND_PORT = 3 [(string_value) = "BACKEND_PORT"];
+    BACKEND_PATH = 4 [(string_value) = "BACKEND_PATH"];
+    BACKEND_FROM_EVENT = 5 [(string_value) = "FROM_EVENT"];
+    BACKEND_FROM_EVENT_ID = 6 [(string_value) = "FROM_EVENT_ID"];
+    BACKEND_NAME = 7 [(string_value) = "BACKEND_NAME"];
+}
+
+enum UserAgent {
+    USER_AGENT_UNSPECIFIED = 0 [(string_value) = "UNSPECIFIED"];
+    USER_AGENT_NAME = 1 [(string_value) = "UA_NAME"];
+    USER_AGENT_TYPE = 2 [(string_value) = "UA_TYPE"];
+    USER_AGENT_DEVICE_CATEGORY = 3 [(string_value) = "DEVICE_CATEGORY"];
+    USER_AGENT_OS_NAME = 4 [(string_value) = "OS_NAME"];
+    USER_AGENT_OS_VERSION = 5 [(string_value) = "OS_VERSION"];
+    USER_AGENT_BROWSER_VERSION = 6 [(string_value) = "BROWSER_VER"];
+}
+
+enum ErrorMetrics {
+    ERROR_METRICS_UNSPECIFIED = 0 [(string_value) = "error_count"]; // integer, count of the errors that have happened
+    ERROR_METRICS_ERROR_COUNT = 1 [(string_value) = "error_count"]; // integer, count of the errors that have happened
+    ERROR_METRICS_EXCEPTION_COUNT = 2 [(string_value) = "exception_count"];
+    ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS = 3 [(string_value) = "span_count_with_errors"];
+    ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS = 4 [(string_value) = "span_count_with_exceptions"];
+}

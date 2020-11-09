@@ -1,0 +1,42 @@
+@namespace("org.hypertrace.viewgenerator.api")
+protocol RawServiceViewProtocol {
+  //Each record corresponds to one span
+  record RawServiceView {
+    string tenant_id;
+
+    bytes trace_id;
+
+    bytes span_id;
+
+    union { null, string } service_name = null;
+
+    union { null, string } api_name = null;
+
+    long start_time_millis;
+
+    long end_time_millis;
+
+    long duration_millis;
+
+    union { null, string } span_kind = null;
+
+    int error_count = 0;
+
+    int exception_count = 0;
+
+    // protocol is a reserved word in avro, hence protocol_name
+    union { null, string } protocol_name = null;
+    union { null, string } status_code = null;
+    union { null, string } service_id = null;
+    union { null, string } api_id = null;
+    union { null, bytes } parent_span_id = null;
+
+    int num_calls = 0;
+
+    // The transaction name could be null since we may or may not be able to associate each
+    // API call with a transaction.
+    union { null, string } transaction_name = null;
+
+    union { null, string } api_discovery_state = null;
+  }
+}

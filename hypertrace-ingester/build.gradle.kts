@@ -7,6 +7,10 @@ plugins {
   id("org.hypertrace.jacoco-report-plugin")
 }
 
+subprojects {
+  group = "org.hypertrace.ingester"
+}
+
 application {
   mainClassName = "org.hypertrace.core.serviceframework.PlatformServiceLauncher"
 }
@@ -25,12 +29,12 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
-
-  implementation("org.hypertrace.core.spannormalizer:span-normalizer")
-  implementation("org.hypertrace.core.rawspansgrouper:raw-spans-grouper")
-  implementation("org.hypertrace.traceenricher:hypertrace-trace-enricher")
-  implementation("org.hypertrace.viewgenerator:hypertrace-view-generator")
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.14")
+
+  implementation(project(":span-normalizer:span-normalizer"))
+  implementation(project(":raw-spans-grouper:raw-spans-grouper"))
+  implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
+  implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
 }
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.

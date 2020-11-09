@@ -1,0 +1,98 @@
+@namespace("org.hypertrace.viewgenerator.api")
+protocol SpanEventViewProtocol {
+  // One record for each span
+  record SpanEventView {
+    string tenant_id;
+
+    // unique identifier for this span
+    bytes span_id;
+
+    // type of span (ENTRY, EXIT)
+    union { null, string } span_kind = null;
+
+    // if there is any relation to parent span
+    union { null, bytes } parent_span_id = null;
+
+    // this span part of a trace
+    bytes trace_id;
+
+    // this span is associated to service if any
+    union { null, string } service_id = null;
+
+    // api identifier of this span
+    union { null, string } api_id = null;
+
+    // name of the api - something like /api/v1/login
+    union { null, string } api_name = null;
+
+    // parent api identifier if any
+    union { null, string } entry_api_id = null;
+
+    // if it is a api span, request protocol like http, https, etc
+    union { null, string } protocol_name = null;
+
+    // key:value pairs of all the associated tags to this span
+    map<string> tags = {};
+
+    // if this was an api span, result of the request 200, 500, etc
+    // Api Trace attribute
+    union { null, string } status_code = null;
+
+    // start time of the span
+    long start_time_millis = 0;
+
+    // end time of the span
+    long end_time_millis = 0;
+
+    // duration
+    long duration_millis = 0;
+
+    // span id of an entry api span.
+    union { null, bytes } api_trace_id = null;
+
+    // name of the service
+    union { null, string } service_name = null;
+
+    // not using null because Pinot would translate it to "null".
+    union { null, string } api_boundary_type = null;
+
+    // event_name that's used to display the span in the UI.
+    union { null, string } event_name = null;
+
+    // Status message for the status code
+    // Api Trace attribute
+    union { null, string } status_message = null;
+
+    // success / fail based on the status code and protocol
+    // Api Trace attribute
+    union { null, string } status = null;
+
+    // count of api_trace
+    int api_trace_count = 0;
+
+    // display name for the entity name on api execution details page
+    // for an entry span it will be the same as the span's service_name
+    // for an exit span:
+    // - if the span has an entry span child it will be the callee's service name
+    // - otherwise it will be the backend name
+    union { null, string } display_entity_name = null;
+
+    // display name for the span name on api execution details page
+    // for an entry span it will be the same as the span's api_name
+    // for an exit span:
+    // - if the span has an entry span child it will be the callee's api name
+    // - otherwise it will be a property of the backend that reflects the operation executed on the backend
+    //   eg. path for HTTP backends, db name for SQL, command for Redis
+    union { null, string } display_span_name = null;
+
+    // request url
+    // TODO: Remove this or leave it?
+    union { null, string } request_url = null;
+
+    int error_count = 0;
+
+    union { null, string } api_discovery_state = null;
+
+    int exception_count = 0;
+  }
+}

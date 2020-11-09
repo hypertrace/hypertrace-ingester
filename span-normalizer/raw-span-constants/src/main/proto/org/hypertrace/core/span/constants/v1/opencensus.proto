@@ -1,0 +1,35 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package org.hypertrace.core.span.constants.v1;
+
+import "org/hypertrace/core/span/constants/v1/enum_extension.proto";
+
+// This file contains constants related to span names.
+enum SpanNamePrefix {
+  SPAN_NAME_PREFIX_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+
+  // Exit / backend call span
+  SPAN_NAME_PREFIX_SENT = 1 [(string_value) = "Sent."];
+
+  // Entry / server span
+  SPAN_NAME_PREFIX_RECV = 2 [(string_value) = "Recv."];
+}
+
+enum CensusResponse {
+  CENSUS_RESPONSE_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+  CENSUS_RESPONSE_CENSUS_STATUS_CODE = 1 [(string_value) = "census.status_code"];
+  CENSUS_RESPONSE_STATUS_CODE = 2 [(string_value) = "status.code"];
+  CENSUS_RESPONSE_STATUS_MESSAGE = 3 [(string_value) = "status.message"];
+}
+
+enum OCSpanKind {
+  OC_SPAN_KIND_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+  OC_SPAN_KIND_SERVER = 1 [(string_value) = "server"];
+  OC_SPAN_KIND_CLIENT = 2 [(string_value) = "client"];
+}
+
+enum OCAttribute {
+  OC_ATTRIBUTE_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+  OC_ATTRIBUTE_SPAN_KIND = 1 [(string_value) = "span.kind"];
+  OC_ATTRIBUTE_CLIENT_KEY = 2 [(string_value) = "Client"];
+}

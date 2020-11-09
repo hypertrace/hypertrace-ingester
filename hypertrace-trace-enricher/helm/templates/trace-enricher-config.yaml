@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.traceEnricherConfig.name }}
+  labels:
+    release: {{ .Release.Name }}
+data:
+  application.conf: |-
+    kafka.streams.config {
+      application.id = structured-traces-enrichment-job
+      metrics.recording.level = "{{ .Values.traceEnricherConfig.kafka.streams.config.metricsRecordingLevel }}"
+      num.stream.threads = "{{ .Values.traceEnricherConfig.kafka.streams.config.numStreamThreads }}"
+      bootstrap.servers = "{{ .Values.traceEnricherConfig.kafka.streams.config.bootstrapServers }}"
+      schema.registry.url = "{{ .Values.traceEnricherConfig.kafka.streams.config.schemaRegistryUrl }}"
+    }
+
+    enricher {
+      DefaultServiceEntityEnricher {
+        entity.service.config = {
+          host = entity-service
+          port = 50061
+        }
+      }
+
+      BackendEntityEnricher {
+        entity.service.config = {
+          host = entity-service
+          port = 50061
+        }
+      }
+
+      EndpointEnricher {
+        entity.service.config = {
+          host = entity-service
+          port = 50061
+        }
+      }
+    }
