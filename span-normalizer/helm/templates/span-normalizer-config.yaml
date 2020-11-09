@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.spanNormalizerConfig.name }}
+  labels:
+    release: {{ .Release.Name }}
+data:
+  application.conf: |-
+    kafka.streams.config {
+      application.id = jaeger-spans-to-raw-spans-job
+      metrics.recording.level = "{{ .Values.spanNormalizerConfig.kafka.streams.config.metricsRecordingLevel }}"
+      num.stream.threads = "{{ .Values.spanNormalizerConfig.kafka.streams.config.numStreamThreads }}"
+      producer.max.request.size = 10485760
+      bootstrap.servers = "{{ .Values.spanNormalizerConfig.kafka.streams.config.bootstrapServers }}"
+      auto.offset.reset = "latest"
+      auto.commit.interval.ms = 5000
+      schema.registry.url = "{{ .Values.spanNormalizerConfig.kafka.streams.config.schemaRegistryUrl }}"
+    }
+    {{- if hasKey .Values.spanNormalizerConfig "processor" }}
+    processor {
+      {{- if hasKey .Values.spanNormalizerConfig.processor "tenantIdTagKey" }}
+      tenantIdTagKey = "{{ .Values.spanNormalizerConfig.processor.tenantIdTagKey }}"
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "defaultTenantId" }}
+      defaultTenantId = "{{ .Values.spanNormalizerConfig.processor.defaultTenantId }}"
+      {{- end }}
+    }
+    {{- end }}
+
+    {{- if hasKey .Values.spanNormalizerConfig "metrics" }}
+    metrics {
+      reporter {
+        names = {{- toJson .Values.spanNormalizerConfig.metrics.reporter.names | trim | nindent 12 }}
+      }
+    }
+    {{- end }}
