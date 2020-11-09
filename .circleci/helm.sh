@@ -27,7 +27,6 @@ case "$subcommand" in
       cd $SUB_PROJ_DIR
       echo "*******"
       echo "building charts for:$(pwd)"
-      CHART_NAME=$(awk '/^name:/ {print $2}' ./helm/Chart.yaml)
       helm dependency update ./helm/
       helm package --version ${CHART_VERSION} --app-version ${CHART_VERSION} ./helm/
       cd $ROOT_PROJECT_DIR
@@ -42,6 +41,7 @@ case "$subcommand" in
       cd $SUB_PROJ_DIR
       echo "*******"
       echo "publishing charts for:$(pwd)"
+      CHART_NAME=$(awk '/^name:/ {print $2}' ./helm/Chart.yaml)
       helm gcs push ${CHART_NAME}-${CHART_VERSION}.tgz helm-gcs --public --retry
       cd $ROOT_PROJECT_DIR
     done
