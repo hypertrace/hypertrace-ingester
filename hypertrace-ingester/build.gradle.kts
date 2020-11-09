@@ -87,6 +87,9 @@ fun createCopySpecForSubJob(projectName: String, serviceName: String, srcFolder:
 
 tasks.test {
   useJUnitPlatform()
+  /**
+   * Copy config for respective kafka streams topology under resource
+   */
   dependsOn("copyServiceConfigsTest");
   dependsOn("createCopySpecForSubJobTest");
 }
