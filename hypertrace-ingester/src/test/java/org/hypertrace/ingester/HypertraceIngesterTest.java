@@ -22,7 +22,7 @@ import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
 import org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -32,20 +32,34 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
  */
 public class HypertraceIngesterTest {
 
+  private static final String CONFIG_PATH = "configs/%s/application.conf";
+  private HypertraceIngester underTest;
+  private Config underTestConfig;
+  private Config spanNormalizerConfig;
+  private Config rawSpansGrouperConfig;
+  private Config traceEnricherConfig;
+  private Config spanEventViewGeneratorConfig;
+
+  @BeforeEach
+  public void setUp() {
+    underTest = new HypertraceIngester(ConfigClientFactory.getClient());
+    underTestConfig = getConfig("hypertrace-ingester");
+    spanNormalizerConfig = getConfig("span-normalizer");
+    rawSpansGrouperConfig = getConfig("raw-spans-grouper");
+    traceEnricherConfig = getConfig("hypertrace-trace-enricher");
+    spanEventViewGeneratorConfig = getConfig("view-gen-span-event");
+  }
+
   @Test
   @SetEnvironmentVariable(key = "SERVICE_NAME", value = "hypertrace-ingester")
-  public void testPacketFlowForEachHop(@TempDir Path tempDir) {
+  public void testIngestionPacketFlow(@TempDir Path tempDir) {
     File file = tempDir.resolve("state").toFile();
 
-    HypertraceIngester underTest = new HypertraceIngester(ConfigClientFactory.getClient());
-    Config config = ConfigFactory.parseURL(
-        getClass().getClassLoader().getResource("configs/hypertrace-ingester/application.conf"));
-
     Map<String, Object> baseProps = underTest.getBaseStreamsConfig();
-    Map<String, Object> streamsProps = underTest.getStreamsConfig(config);
+    Map<String, Object> streamsProps = underTest.getStreamsConfig(underTestConfig);
     streamsProps.forEach(baseProps::put);
     Map<String, Object> mergedProps = baseProps;
-    mergedProps.put(underTest.getJobConfigKey(), config);
+    mergedProps.put(underTest.getJobConfigKey(), underTestConfig);
 
     StreamsBuilder streamsBuilder = underTest.buildTopology(
         mergedProps, new StreamsBuilder(), new HashMap<>());
@@ -58,10 +72,6 @@ public class HypertraceIngesterTest {
 
     Span span = Span.newBuilder().setSpanId(ByteString.copyFrom("1".getBytes()))
         .setTraceId(ByteString.copyFrom("trace-1".getBytes())).build();
-
-    // create input topic for span-normalizer
-    Config spanNormalizerConfig = ConfigFactory.parseURL(
-        getClass().getClassLoader().getResource("configs/span-normalizer/application.conf"));
 
     TestInputTopic<byte[], Span> spanNormalizerInputTopic = topologyTestDriver
         .createInputTopic(spanNormalizerConfig.getString(
@@ -79,19 +89,14 @@ public class HypertraceIngesterTest {
     assertNotNull(spanNormalizerOutputTopic.readKeyValue());
 
     topologyTestDriver.advanceWallClockTime(Duration.ofSeconds(32));
-    Config spanGrouperConfig = ConfigFactory.parseURL(
-        getClass().getClassLoader().getResource("configs/raw-spans-grouper/application.conf"));
 
     // create output topic for span-grouper topology
     TestOutputTopic spanGrouperOutputTopic = topologyTestDriver
         .createOutputTopic(
-            spanGrouperConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
+            rawSpansGrouperConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
     assertNotNull(spanGrouperOutputTopic.readKeyValue());
-
-    Config traceEnricherConfig = ConfigFactory.parseURL(
-        getClass().getClassLoader().getResource("configs/hypertrace-trace-enricher/application.conf"));
 
     // create output topic for trace-enricher topology
     TestOutputTopic traceEnricherOutputTopic = topologyTestDriver
@@ -101,15 +106,18 @@ public class HypertraceIngesterTest {
             new AvroSerde<>().deserializer());
     assertNotNull(traceEnricherOutputTopic.readKeyValue());
 
-    Config spanEventConfig = ConfigFactory.parseURL(
-        getClass().getClassLoader().getResource("configs/view-gen-span-event/application.conf"));
-
     // create output topic for  topology
     TestOutputTopic spanEventViewOutputTopic = topologyTestDriver
         .createOutputTopic(
-            spanEventConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
+            spanEventViewGeneratorConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
     assertNotNull(spanEventViewOutputTopic.readKeyValue());
+  }
+
+  private Config getConfig(String serviceName) {
+    return ConfigFactory.parseURL(
+        getClass().getClassLoader().getResource(
+            String.format(CONFIG_PATH, serviceName)));
   }
 }
