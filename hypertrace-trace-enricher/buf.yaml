@@ -1,0 +1,10 @@
+build:
+  roots:
+    - enriched-span-constants/src/main/proto
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - PACKAGE
+    - WIRE_JSON
