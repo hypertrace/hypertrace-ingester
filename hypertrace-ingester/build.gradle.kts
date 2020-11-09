@@ -30,11 +30,18 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.14")
+  implementation("com.typesafe:config:1.4.0")
 
   implementation(project(":span-normalizer:span-normalizer"))
+  implementation(project(":span-normalizer:span-normalizer-api"))
   implementation(project(":raw-spans-grouper:raw-spans-grouper"))
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
+
+  testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
+  testImplementation("org.mockito:mockito-core:3.3.3")
+  testImplementation("org.junit-pioneer:junit-pioneer:0.9.0")
+  testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
 }
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
@@ -49,16 +56,16 @@ tasks.processResources {
 
 tasks.register<Copy>("copyServiceConfigs") {
   with(
-      createCopySpec("span-normalizer", "span-normalizer"),
-      createCopySpec("raw-spans-grouper", "raw-spans-grouper"),
-      createCopySpec("hypertrace-trace-enricher", "hypertrace-trace-enricher"),
-      createCopySpec("hypertrace-view-generator", "hypertrace-view-generator")
+      createCopySpec("span-normalizer", "span-normalizer", "main", "common"),
+      createCopySpec("raw-spans-grouper", "raw-spans-grouper", "main", "common"),
+      createCopySpec("hypertrace-trace-enricher", "hypertrace-trace-enricher", "main", "common"),
+      createCopySpec("hypertrace-view-generator", "hypertrace-view-generator", "main", "common")
   ).into("./build/resources/main/configs/")
 }
 
-fun createCopySpec(projectName: String, serviceName: String): CopySpec {
+fun createCopySpec(projectName: String, serviceName: String, srcFolder: String, configFolder: String): CopySpec {
   return copySpec {
-    from("../${projectName}/${serviceName}/src/main/resources/configs/common") {
+    from("../${projectName}/${serviceName}/src/${srcFolder}/resources/configs/${configFolder}") {
       include("application.conf")
       into("${serviceName}")
     }
@@ -67,13 +74,34 @@ fun createCopySpec(projectName: String, serviceName: String): CopySpec {
 
 tasks.register<Copy>("createCopySpecForSubJob") {
   with(
-      createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator")
+      createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator", "main")
   ).into("./build/resources/main/configs/")
 }
 
-fun createCopySpecForSubJob(projectName: String, serviceName: String): CopySpec {
+fun createCopySpecForSubJob(projectName: String, serviceName: String, srcFolder: String): CopySpec {
   return copySpec {
-    from("../${projectName}/${serviceName}/src/main/resources/configs/") {
+    from("../${projectName}/${serviceName}/src/${srcFolder}/resources/configs/") {
     }
   }
+}
+
+tasks.test {
+  useJUnitPlatform()
+  dependsOn("copyServiceConfigsTest");
+  dependsOn("createCopySpecForSubJobTest");
+}
+
+tasks.register<Copy>("copyServiceConfigsTest") {
+  with(
+          createCopySpec("span-normalizer", "span-normalizer", "test", "span-normalizer"),
+          createCopySpec("raw-spans-grouper", "raw-spans-grouper", "test", "raw-spans-grouper"),
+          createCopySpec("hypertrace-trace-enricher", "hypertrace-trace-enricher", "test", "hypertrace-trace-enricher"),
+          createCopySpec("hypertrace-view-generator", "hypertrace-view-generator", "test", "hypertrace-view-generator")
+  ).into("./build/resources/test/configs/")
+}
+
+tasks.register<Copy>("createCopySpecForSubJobTest") {
+  with(
+          createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator", "test")
+  ).into("./build/resources/test/configs/")
 }
