@@ -1,7 +1,3 @@
-[submodule "span-normalizer"]
-	path = span-normalizer
-	url = https://github.com/hypertrace/span-normalizer.git
-	branch = main
 [submodule "raw-spans-grouper"]
 	path = raw-spans-grouper
 	url = https://github.com/hypertrace/raw-spans-grouper.git
