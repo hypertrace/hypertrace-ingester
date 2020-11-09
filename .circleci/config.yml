@@ -90,7 +90,7 @@ jobs:
       - setup_remote_docker: *latest_remote_docker
       - docker_login
       - gradle:
-          args: dockerPushImages
+          args: publish dockerPushImages
   validate-charts:
     executor: helm
     working_directory: ~/repo
