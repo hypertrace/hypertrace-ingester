@@ -220,6 +220,54 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
+  public void testDecodeQueryParamsWithSquareBrackets() {
+    //Url contains
+    Event e = createMockEvent();
+    when(e.getHttp())
+        .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
+            Request.newBuilder()
+                .setUrl("http://hypertrace.org/users?action[]=checkout&age=2&[]=test")
+                .build())
+            .build());
+    enricher.enrichEvent(mockTrace, e);
+
+    AttributeValue actionParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".action");
+    assertEquals("checkout", actionParam.getValue());
+    assertEquals(List.of("checkout"), actionParam.getValueList());
+
+    AttributeValue ageParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".age");
+    assertEquals("2", ageParam.getValue());
+    assertEquals(List.of("2"), ageParam.getValueList());
+
+    //If seen only bracket, treat the square braces as param key
+    AttributeValue onlySquareBracketParam = SpanAttributeUtils.getAttributeValue(e,
+        Constants.getEnrichedSpanConstant(HTTP_REQUEST_QUERY_PARAM) + ".[]");
+    assertEquals("test", onlySquareBracketParam.getValue());
+    assertEquals(List.of("test"), onlySquareBracketParam.getValueList());
+
+    //Create event with URL encoded query params
+    //Url contains
+    e = createMockEvent();
+    when(e.getHttp())
+        .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
+            Request.newBuilder()
+                .setUrl("http://hypertrace.org/users?action[]=checkout&age=2&[]=test")
+                .build())
+            .build());
+    enricher.enrichEvent(mockTrace, e);
+    assertEquals("checkout", actionParam.getValue());
+    assertEquals(List.of("checkout"), actionParam.getValueList());
+
+    assertEquals("2", ageParam.getValue());
+    assertEquals(List.of("2"), ageParam.getValueList());
+
+    assertEquals("test", onlySquareBracketParam.getValue());
+    assertEquals(List.of("test"), onlySquareBracketParam.getValueList());
+  }
+
+  @Test
   public void test_withAnInvalidUrl_shouldSkipEnrichment() {
     Event e = createMockEvent();
     Map<String, AttributeValue> avm = e.getAttributes().getAttributeMap();
