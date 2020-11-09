@@ -1,4 +1,0 @@
-[submodule "hypertrace-view-generator"]
-	path = hypertrace-view-generator
-	url = https://github.com/hypertrace/hypertrace-view-generator.git
-	branch = main
