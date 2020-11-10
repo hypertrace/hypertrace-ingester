@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.viewGeneratorServiceConfig.name }}
+  labels:
+    release: {{ .Release.Name }}
+data:
+  application.conf: |-
+    kafka.streams.config {
+      application.id = all-view-generators-job
+      metrics.recording.level = "{{ .Values.viewGeneratorServiceConfig.kafka.streams.config.metricsRecordingLevel }}"
+      num.stream.threads = "{{ .Values.viewGeneratorServiceConfig.kafka.streams.config.numStreamThreads }}"
+      bootstrap.servers = "{{ .Values.viewGeneratorServiceConfig.kafka.streams.config.bootstrapServers }}"
+      schema.registry.url = "{{ .Values.viewGeneratorServiceConfig.kafka.streams.config.schemaRegistryUrl }}"
+    }

@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.rawSpansGrouperConfig.name }}
+  labels:
+    release: {{ .Release.Name }}
+data:
+  application.conf: |-
+
+    kafka.streams.config = {
+      application.id = raw-spans-to-structured-traces-grouping-job
+      group.instance.id = ${?POD_NAME}
+      state.dir = "/var/data/"
+      metrics.recording.level = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.metricsRecordingLevel }}"
+      num.stream.threads = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.numStreamThreads }}"
+      num.standby.replicas = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.numStandbyReplicas }}
+      replication.factor = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.replicationFactor }}
+      producer.max.request.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerMaxRequestSize }}
+
+      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
+      session.timeout.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
+      {{- end }}
+
+      default.production.exception.handler = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.defaultProductionExceptionHandler }}
+      ignore.production.exception.classes = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.ignoreProductionExceptionClasses }}
+
+      topic.cleanup.policy = "delete,compact"
+      bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.bootstrapServers }}"
+
+      schema.registry.url = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.schemaRegistryUrl }}"
+      specific.avro.reader = true
+
+      rocksdb.block.cache.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbBlockCacheSize }}
+      rocksdb.write.buffer.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbWriteBufferSize }}
+      rocksdb.max.write.buffers = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbMaxWriteBuffers }}
+      rocksdb.cache.index.and.filter.blocks = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbCacheIndexAndFilterBlocks }}
+
+      value.subject.name.strategy = "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy"
+    }
+
+    span.groupby.session.window.interval = {{ .Values.rawSpansGrouperConfig.span.groupby.internal }}
+
+    {{- if hasKey .Values.rawSpansGrouperConfig "metrics" }}
+    metrics {
+      reporter {
+        names = {{- toJson .Values.rawSpansGrouperConfig.metrics.reporter.names | trim | nindent 12 }}
+      }
+    }
+    {{- end }}

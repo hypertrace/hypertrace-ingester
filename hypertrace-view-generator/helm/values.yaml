@@ -1,0 +1,300 @@
+#
+# Note about Namespace
+# --------------------
+# It is deliberately left out here and using the helm -n or --namespace flag you can deploy your resources to the same
+# namespace as the release. If you leave it out, your resources will be deployed to the default namespace.
+# Also, not that the namespace you are deploying to should already exist otherwise the helm command will fail.
+# You can always specify a different namespace for a resource by setting it directly in it's yaml file or
+# making it configurable by defining it in this file.
+
+######################################
+# Common across deployments and jobs #
+######################################
+replicaCount: 1
+maxUnavailable: 0
+
+images:
+  pullPolicy: IfNotPresent
+  creator:
+    repository: hypertrace/hypertrace-view-creator
+  generator:
+    repository: hypertrace/hypertrace-view-generator
+
+imagePullSecrets: []
+
+containerAdminPort: 8099
+
+nodeLabels: {}
+
+logConfig:
+  name: view-generator-log-config
+  monitorInterval: 30
+  rootLogger:
+    level: INFO
+  appender:
+    rolling:
+      enabled: false
+
+viewGeneratorServiceConfig:
+  name: view-generation-service-config
+  kafka:
+    streams:
+      config:
+        metricsRecordingLevel: INFO
+        numStreamThreads: 2
+        bootstrapServers: "bootstrap:9092"
+        schemaRegistryUrl: "http://schema-registry-service:8081"
+
+viewCreatorJobConfig:
+  name: view-creator-job-config
+  data:
+    application.conf: |-
+      pinot.retentionTimeValue = 5
+      pinot.retentionTimeUnit = DAYS
+
+############################################
+# Creation Jobs and Generation Deployments #
+############################################
+backendEntityView:
+  creator:
+    jobName: backend-entity-view-creation-job
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    resources:
+      limits:
+        cpu: 1.0
+        memory: 384Mi
+      requests:
+        cpu: 0.1
+        memory: 384Mi
+  generator:
+    deploymentName: backend-entity-view-generator
+    podLabels:
+      app: backend-entity-view-generator
+    # Careful with deployment selector match labels. You can append labels but not remove them once deployed.
+    # Use the pod labels above for custom pod labels
+    deploymentSelectorMatchLabels:
+      app: backend-entity-view-generator
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 320Mi
+      limits:
+        cpu: 0.2
+        memory: 512Mi
+
+rawServiceView:
+  creator:
+    jobName: raw-service-view-creation-job
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    resources:
+      limits:
+        cpu: 1.0
+        memory: 384Mi
+      requests:
+        cpu: 0.1
+        memory: 384Mi
+  generator:
+    deploymentName: raw-service-view-generator
+    podLabels:
+      app: raw-service-view-generator
+    # Careful with deployment selector match labels. You can append labels but not remove them once deployed.
+    # Use the pod labels above for custom pod labels
+    deploymentSelectorMatchLabels:
+      app: raw-service-view-generator
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 320Mi
+      limits:
+        cpu: 0.2
+        memory: 512Mi
+
+rawTraceView:
+  creator:
+    jobName: raw-trace-view-creation-job
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    resources:
+      limits:
+        cpu: 1.0
+        memory: 384Mi
+      requests:
+        cpu: 0.1
+        memory: 384Mi
+  generator:
+    deploymentName: raw-trace-view-generator
+    podLabels:
+      app: raw-trace-view-generator
+    # Careful with deployment selector match labels. You can append labels but not remove them once deployed.
+    # Use the pod labels above for custom pod labels
+    deploymentSelectorMatchLabels:
+      app: raw-trace-view-generator
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 320Mi
+      limits:
+        cpu: 0.2
+        memory: 512Mi
+
+serviceCallView:
+  creator:
+    jobName: service-call-view-creation-job
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    resources:
+      limits:
+        cpu: 1.0
+        memory: 384Mi
+      requests:
+        cpu: 0.1
+        memory: 384Mi
+  generator:
+    deploymentName: service-call-view-generator
+    podLabels:
+      app: service-call-view-generator
+    # Careful with deployment selector match labels. You can append labels but not remove them once deployed.
+    # Use the pod labels above for custom pod labels
+    deploymentSelectorMatchLabels:
+      app: service-call-view-generator
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 320Mi
+      limits:
+        cpu: 0.2
+        memory: 512Mi
+
+spanEventView:
+  creator:
+    jobName: span-event-view-creation-job
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    resources:
+      limits:
+        cpu: 1.0
+        memory: 384Mi
+      requests:
+        cpu: 0.1
+        memory: 384Mi
+  generator:
+    deploymentName: span-event-view-generator
+    podLabels:
+      app: span-event-view-generator
+    # Careful with deployment selector match labels. You can append labels but not remove them once deployed.
+    # Use the pod labels above for custom pod labels
+    deploymentSelectorMatchLabels:
+      app: span-event-view-generator
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 320Mi
+      limits:
+        cpu: 0.2
+        memory: 512Mi
+
+mergeAllViews: false
+
+allViews:
+  creator:
+    jobName: all-views-creation-job
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    resources:
+      limits:
+        cpu: 1.0
+        memory: 384Mi
+      requests:
+        cpu: 0.1
+        memory: 384Mi
+  generator:
+    deploymentName: all-views-generator
+    podLabels:
+      app: all-views-generator
+    deploymentSelectorMatchLabels:
+      app: all-views-generator
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    resources:
+      limits:
+        cpu: 1.0
+        memory: 512Mi
+      requests:
+        cpu: 0.2
+        memory: 320Mi
+
+kafka-topic-creator:
+  jobName: view-generation-kafka-topics-creator
+  helmHook: pre-install,pre-upgrade
+  kafka:
+    topics:
+      - name: backend-entity-view-events
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+      - name: raw-trace-view-events
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+      - name: raw-service-view-events
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+      - name: service-call-view-events
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+      - name: span-event-view
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+  zookeeper:
+    address: zookeeper:2181
+  imagePullSecrets: []
+  podAnnotations: {}

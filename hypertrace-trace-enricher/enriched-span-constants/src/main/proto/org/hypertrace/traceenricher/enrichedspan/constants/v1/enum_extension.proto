@@ -1,0 +1,14 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package org.hypertrace.traceenricher.enrichedspan.constants.v1;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.EnumValueOptions {
+
+    // will contain constant name for the enum value
+    string string_value = 50021;
+
+    // 50021 should be safe, EnumValueOptions message specification
+    // says that extension fields are to be defined as 10000+
+}
