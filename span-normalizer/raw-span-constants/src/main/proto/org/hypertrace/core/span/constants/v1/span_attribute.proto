@@ -174,5 +174,5 @@ enum TracerAttribute {
 
 enum JaegerAttribute {
     JAEGER_ATTRIBUTE_UNSPECIFIED = 0 [(string_value) = "unspecified"];
-    JAEGER_ATTRIBUTE_SERVICE_NAME = 1 [(string_value) = "jaeger.servicename"];
+    JAEGER_ATTRIBUTE_SERVICE_NAME = 1 [(string_value) = "servicename"];
 }

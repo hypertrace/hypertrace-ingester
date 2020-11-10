@@ -15,7 +15,7 @@
       "attributes": {
         "org.hypertrace.core.datamodel.Attributes": {
           "attribute_map": {
-            "jaeger.servicename": {
+            "servicename": {
               "value": {
                 "string": "api_01"
               },
@@ -101,7 +101,7 @@
       "attributes": {
         "org.hypertrace.core.datamodel.Attributes": {
           "attribute_map": {
-            "jaeger.servicename": {
+            "servicename": {
               "value": {
                 "string": "api_01"
               },
@@ -192,7 +192,7 @@
       "attributes": {
         "org.hypertrace.core.datamodel.Attributes": {
           "attribute_map": {
-            "jaeger.servicename": {
+            "servicename": {
               "value": {
                 "string": "api_01"
               },
@@ -283,7 +283,7 @@
       "attributes": {
         "org.hypertrace.core.datamodel.Attributes": {
           "attribute_map": {
-            "jaeger.servicename": {
+            "servicename": {
               "value": {
                 "string": "api_02"
               },
@@ -374,7 +374,7 @@
       "attributes": {
         "org.hypertrace.core.datamodel.Attributes": {
           "attribute_map": {
-            "jaeger.servicename": {
+            "servicename": {
               "value": {
                 "string": "api_03"
               },
@@ -465,7 +465,7 @@
       "attributes": {
         "org.hypertrace.core.datamodel.Attributes": {
           "attribute_map": {
-            "jaeger.servicename": {
+            "servicename": {
               "value": {
                 "string": "api_03"
               },
