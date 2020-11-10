@@ -77,14 +77,25 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
         .stream()
         //split only on first occurrence of delimiter. eg: cat=1dog=2 should be split to cat -> 1dog=2
         .map(kv -> kv.split(QUERY_PARAM_KEY_VALUE_DELIMITER, 2))
+        .filter(kv -> kv.length == 2 && !StringUtils.isEmpty(kv[0]) && !StringUtils.isEmpty(kv[1]))
         .map(kv -> Pair.of(
-            String.format(PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, decode(kv[0])),
-            kv.length == 2 ? decode(kv[1]) : ""
+            String.format(PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, decodeParamKey(kv[0])),
+            decode(kv[1])
         ))
         .collect(groupingBy(Pair::getKey, mapping(Pair::getValue, toList())));
   }
 
-  private String decode(String input) {
+  private static String decodeParamKey(String input) {
+    String urlDecodedKey = decode(input);
+    /* '[]' can occur at the end of param name which denotes param can have multiple values,
+    we strip '[]' to get original param name */
+    if (urlDecodedKey.endsWith("[]") && urlDecodedKey.length() > 2) {
+      return urlDecodedKey.substring(0, urlDecodedKey.length() - 2);
+    }
+    return input;
+  }
+
+  private static String decode(String input) {
     try {
       return URLDecoder.decode(input, StandardCharsets.UTF_8);
     } catch (IllegalArgumentException e) {
