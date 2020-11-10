@@ -22,8 +22,6 @@ dependencies {
     implementation("com.google.guava:guava:30.0-jre") {
       because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415")
     }
-  }
-  constraints {
     implementation("org.apache.calcite:calcite-core@1.26.0") {
       because("https://snyk.io/vuln/SNYK-JAVA-ORGAPACHECALCITE-1038296")
     }
