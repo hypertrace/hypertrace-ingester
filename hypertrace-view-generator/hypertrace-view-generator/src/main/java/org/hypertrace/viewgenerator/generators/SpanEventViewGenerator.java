@@ -290,7 +290,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        return EnrichedSpanUtils.getFullHttpUrl(event).orElse(null);
+        return EnrichedSpanUtils.getFullHttpUrl(event).orElse(event.getHttp().getRequest().getPath());
       case PROTOCOL_GRPC:
         return event.getEventName();
     }
