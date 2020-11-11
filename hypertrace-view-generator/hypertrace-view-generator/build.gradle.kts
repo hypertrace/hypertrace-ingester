@@ -25,16 +25,16 @@ tasks.test {
 }
 
 dependencies {
-  implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
-
-  // TODO: migrate in core
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.16")
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.15")
-
   implementation(project(":hypertrace-trace-enricher:enriched-span-constants"))
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-api"))
   implementation(project(":span-normalizer:raw-span-constants"))
+  implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
+
+  // TODO: migrate in core
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.17")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.10")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.16")
+  
   implementation("org.hypertrace.entity.service:entity-service-api:0.1.21")
 
   implementation("org.apache.avro:avro:1.9.2")
