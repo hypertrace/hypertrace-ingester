@@ -1,5 +1,6 @@
 package org.hypertrace.ingester;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.google.protobuf.ByteString;
@@ -18,10 +19,12 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
 import org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants;
+import org.hypertrace.viewgenerator.api.SpanEventView;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -112,7 +115,9 @@ public class HypertraceIngesterTest {
             spanEventViewGeneratorConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
-    assertNotNull(spanEventViewOutputTopic.readKeyValue());
+    SpanEventView spanEventView = (SpanEventView) spanEventViewOutputTopic.readValue();
+    assertEquals(HexUtils.getHex(spanEventView.getSpanId()), HexUtils.getHex(span.getSpanId().toByteArray()));
+    assertEquals(HexUtils.getHex(spanEventView.getTraceId()), HexUtils.getHex(span.getTraceId().toByteArray()));
   }
 
   private Config getConfig(String serviceName) {

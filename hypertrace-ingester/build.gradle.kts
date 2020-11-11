@@ -33,7 +33,6 @@ dependencies {
   implementation("com.typesafe:config:1.4.0")
 
   implementation(project(":span-normalizer:span-normalizer"))
-  implementation(project(":span-normalizer:span-normalizer-api"))
   implementation(project(":raw-spans-grouper:raw-spans-grouper"))
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
@@ -42,6 +41,8 @@ dependencies {
   testImplementation("org.mockito:mockito-core:3.3.3")
   testImplementation("org.junit-pioneer:junit-pioneer:0.9.0")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
+  testImplementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
+  testImplementation(project(":span-normalizer:span-normalizer-api"))
 }
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
