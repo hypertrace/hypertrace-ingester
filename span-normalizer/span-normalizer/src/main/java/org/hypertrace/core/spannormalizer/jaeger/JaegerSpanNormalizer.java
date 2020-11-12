@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
 public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanNormalizer.class);
 
-  /** */
+  /** Service name can be sent against this key as well */
   public static final String OLD_JAEGER_SERVICENAME_KEY = "jaeger.servicename";
 
   /** Config for providing the tag key in which the tenant id will be given in the span. */
