@@ -57,6 +57,9 @@ import org.slf4j.LoggerFactory;
 public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanNormalizer.class);
 
+  /** */
+  public static final String OLD_JAEGER_SERVICENAME_KEY = "jaeger.servicename";
+
   /** Config for providing the tag key in which the tenant id will be given in the span. */
   private static final String TENANT_ID_TAG_KEY_CONFIG = "processor.tenantIdTagKey";
 
@@ -266,18 +269,24 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
       jaegerFieldsBuilder.setLogs(eventLogsList);
     }
 
-    // Jaeger service name
-    if (jaegerSpan.getProcess() != null
-        && !StringUtils.isEmpty(jaegerSpan.getProcess().getServiceName())) {
-      // Keep the attribute for now due to backwards compatibility
+    // Jaeger service name can come from either first class field in Span or the tag `jaeger.servicename`
+    String serviceName =
+        (jaegerSpan.getProcess() != null && !StringUtils.isEmpty(jaegerSpan.getProcess().getServiceName()))
+        ? jaegerSpan.getProcess().getServiceName()
+        : (attributeFieldMap.containsKey(OLD_JAEGER_SERVICENAME_KEY)
+            ? attributeFieldMap.get(OLD_JAEGER_SERVICENAME_KEY).getValue()
+            : StringUtils.EMPTY);
+
+    if (!StringUtils.isEmpty(serviceName)) {
+      eventBuilder.setServiceName(serviceName);
+      // in case `jaeger.servicename` is present in the map, remove it
+      attributeFieldMap.remove(OLD_JAEGER_SERVICENAME_KEY);
       attributeFieldMap.put(
           RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME),
-          AttributeValueCreator.create(jaegerSpan.getProcess().getServiceName()));
-      eventBuilder.setServiceName(jaegerSpan.getProcess().getServiceName());
+          AttributeValueCreator.create(serviceName));
     }
 
     // EVENT METRICS
-
     Map<String, MetricValue> metricMap = new HashMap<>();
     MetricValue durationMetric =
         MetricValue.newBuilder().setValue((double) (endTimeMillis - startTimeMillis)).build();
