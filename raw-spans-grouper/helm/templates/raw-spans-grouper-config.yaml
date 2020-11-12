@@ -16,7 +16,7 @@ data:
       num.standby.replicas = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.numStandbyReplicas }}
       replication.factor = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.replicationFactor }}
       producer.max.request.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerMaxRequestSize }}
-
+      cache.max.bytes.buffering = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.cacheMaxBytesBuffering }}
       {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
       session.timeout.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
       {{- end }}
@@ -33,7 +33,7 @@ data:
       rocksdb.block.cache.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbBlockCacheSize }}
       rocksdb.write.buffer.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbWriteBufferSize }}
       rocksdb.max.write.buffers = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbMaxWriteBuffers }}
-      rocksdb.cache.index.and.filter.blocks = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbCacheIndexAndFilterBlocks }}
+      rocksdb.cache.index.and.filter.blocks = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbCacheIndexAndFilterBlocks }}
 
       value.subject.name.strategy = "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy"
     }
