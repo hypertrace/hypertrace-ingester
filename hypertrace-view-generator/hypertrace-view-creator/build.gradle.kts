@@ -22,6 +22,7 @@ dependencies {
     implementation("com.google.guava:guava:30.0-jre") {
       because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415")
     }
+    // to have calcite libs on the same version
     implementation("org.apache.calcite:calcite-babel:1.26.0") {
       because("https://snyk.io/vuln/SNYK-JAVA-ORGAPACHECALCITE-1038296")
     }
