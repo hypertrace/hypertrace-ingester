@@ -1,11 +1,11 @@
-package org.hypertrace.trace.reader;
+package org.hypertrace.trace.reader.attributes;
 
-import static org.hypertrace.trace.reader.AvroUtil.buildAttributesWithKeyValue;
-import static org.hypertrace.trace.reader.AvroUtil.buildMetricsWithKeyValue;
-import static org.hypertrace.trace.reader.AvroUtil.defaultedEventBuilder;
-import static org.hypertrace.trace.reader.LiteralValueUtil.doubleLiteral;
-import static org.hypertrace.trace.reader.LiteralValueUtil.longLiteral;
-import static org.hypertrace.trace.reader.LiteralValueUtil.stringLiteral;
+import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributesWithKeyValue;
+import static org.hypertrace.trace.reader.attributes.AvroUtil.buildMetricsWithKeyValue;
+import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedEventBuilder;
+import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.doubleLiteral;
+import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.longLiteral;
+import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 

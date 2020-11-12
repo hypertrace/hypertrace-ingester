@@ -1,6 +1,6 @@
-package org.hypertrace.trace.reader;
+package org.hypertrace.trace.reader.attributes;
 
-import static org.hypertrace.trace.reader.ValueSource.TRACE_SCOPE;
+import static org.hypertrace.trace.reader.attributes.ValueSource.TRACE_SCOPE;
 
 import io.reactivex.rxjava3.core.Single;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
@@ -10,13 +10,13 @@ import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 
-class DefaultTraceReader implements TraceReader {
+class DefaultTraceAttributeReader implements TraceAttributeReader {
 
   private final CachingAttributeClient attributeClient;
   private final ValueResolver valueResolver;
   private final AttributeProjectionRegistry projectionRegistry;
 
-  DefaultTraceReader(CachingAttributeClient attributeClient) {
+  DefaultTraceAttributeReader(CachingAttributeClient attributeClient) {
     this.attributeClient = attributeClient;
     this.projectionRegistry = new AttributeProjectionRegistry();
     this.valueResolver = ValueResolver.build(this.attributeClient, this.projectionRegistry);

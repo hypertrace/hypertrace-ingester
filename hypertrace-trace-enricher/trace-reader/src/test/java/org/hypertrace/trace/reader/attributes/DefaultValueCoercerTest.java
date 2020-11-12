@@ -1,9 +1,9 @@
-package org.hypertrace.trace.reader;
+package org.hypertrace.trace.reader.attributes;
 
-import static org.hypertrace.trace.reader.LiteralValueUtil.booleanLiteral;
-import static org.hypertrace.trace.reader.LiteralValueUtil.doubleLiteral;
-import static org.hypertrace.trace.reader.LiteralValueUtil.longLiteral;
-import static org.hypertrace.trace.reader.LiteralValueUtil.stringLiteral;
+import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.booleanLiteral;
+import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.doubleLiteral;
+import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.longLiteral;
+import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
 
 import java.util.Optional;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
