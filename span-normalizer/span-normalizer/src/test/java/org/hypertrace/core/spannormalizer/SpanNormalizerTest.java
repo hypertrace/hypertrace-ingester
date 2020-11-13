@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.google.protobuf.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,7 @@ import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
 class SpanNormalizerTest {
 
+  private static final String SERVICE_NAME = "servicename";
   private SpanNormalizer underTest;
 
   @BeforeEach
@@ -70,7 +72,9 @@ class SpanNormalizerTest {
             spanIdentitySerde.deserializer(), rawSpanSerde.deserializer());
 
     Span span = Span.newBuilder().setSpanId(ByteString.copyFrom("1".getBytes()))
-        .setTraceId(ByteString.copyFrom("trace-1".getBytes())).build();
+        .setTraceId(ByteString.copyFrom("trace-1".getBytes()))
+        .addTags(JaegerSpanInternalModel.KeyValue.newBuilder().setKey("jaeger.servicename").setVStr(SERVICE_NAME).build())
+        .build();
     inputTopic.pipeInput(span);
 
     KeyValue<TraceIdentity, RawSpan> kv = outputTopic.readKeyValue();
@@ -80,5 +84,6 @@ class SpanNormalizerTest {
     RawSpan value = kv.value;
     assertEquals(HexUtils.getHex("1".getBytes()),
         HexUtils.getHex((value).getEvent().getEventId()));
+    assertEquals(SERVICE_NAME, value.getEvent().getServiceName());
   }
 }
