@@ -33,7 +33,9 @@ class DefaultTraceEntityReaderTest {
   private static final String TENANT_ID = "tenant-id";
   private static final String TEST_ENTITY_TYPE_NAME = "ENTITY_TYPE_1";
   private static final String TEST_ENTITY_ID_ATTRIBUTE_KEY = "id";
+  private static final String TEST_ENTITY_ID_ATTRIBUTE_VALUE = "id-value";
   private static final String TEST_ENTITY_NAME_ATTRIBUTE_KEY = "name";
+  private static final String TEST_ENTITY_NAME_ATTRIBUTE_VALUE = "name-value";
   private static final AttributeMetadata TEST_ENTITY_ID_ATTRIBUTE =
       AttributeMetadata.newBuilder()
           .setScopeString(TEST_ENTITY_TYPE_NAME)
@@ -56,12 +58,17 @@ class DefaultTraceEntityReaderTest {
 
   private static final StructuredTrace TEST_TRACE = defaultedStructuredTraceBuilder().build();
   private static final Event TEST_SPAN = defaultedEventBuilder().setCustomerId(TENANT_ID).build();
-  private static final Entity BASIC_AVRO_ENTITY =
+  private static final Entity EXPECTED_AVRO_ENTITY =
       Entity.newBuilder()
           .setEntityType(TEST_ENTITY_TYPE_NAME)
-          .setEntityId("id-value")
-          .setEntityName("name-value")
+          .setEntityId(TEST_ENTITY_ID_ATTRIBUTE_VALUE)
+          .setEntityName(TEST_ENTITY_NAME_ATTRIBUTE_VALUE)
           .setCustomerId(TENANT_ID)
+          .setAttributes(
+              buildAttributesWithKeyValues(
+                  Map.of(
+                      TEST_ENTITY_ID_ATTRIBUTE_KEY, TEST_ENTITY_ID_ATTRIBUTE_VALUE,
+                      TEST_ENTITY_NAME_ATTRIBUTE_KEY, TEST_ENTITY_NAME_ATTRIBUTE_VALUE)))
           .build();
 
   @Mock EntityTypeClient mockTypeClient;
@@ -78,35 +85,18 @@ class DefaultTraceEntityReaderTest {
             this.mockTypeClient,
             this.mockDataClient,
             this.mockAttributeClient,
-            this.mockAttributeReader,
-            new AvroEntityConverter(),
-            new AttributeValueConverter());
+            this.mockAttributeReader);
   }
 
   @Test
   void canReadAnEntity() {
-    when(this.mockTypeClient.get(TEST_ENTITY_TYPE_NAME)).thenReturn(Single.just(TEST_ENTITY_TYPE));
-    when(this.mockAttributeClient.getAllInScope(TEST_ENTITY_TYPE_NAME))
-        .thenReturn(Single.just(List.of(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE)));
-    when(this.mockAttributeReader.getSpanValue(
-            TEST_TRACE, TEST_SPAN, TEST_ENTITY_TYPE_NAME, TEST_ENTITY_ID_ATTRIBUTE_KEY))
-        .thenReturn(Single.just(stringLiteral("id-value")));
-    when(this.mockAttributeReader.getSpanValue(
-            TEST_TRACE, TEST_SPAN, TEST_ENTITY_TYPE_NAME, TEST_ENTITY_NAME_ATTRIBUTE_KEY))
-        .thenReturn(Single.just(stringLiteral("name-value")));
-    when(this.mockDataClient.getOrCreateEntity(
-            any(org.hypertrace.entity.data.service.v1.Entity.class)))
-        .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-    Entity expectedEntity =
-        Entity.newBuilder(BASIC_AVRO_ENTITY)
-            .setAttributes(
-                buildAttributesWithKeyValues(
-                    Map.of(
-                        TEST_ENTITY_ID_ATTRIBUTE_KEY, "id-value",
-                        TEST_ENTITY_NAME_ATTRIBUTE_KEY, "name-value")))
-            .build();
+    mockSingleEntityType();
+    mockAvailableAttributes();
+    mockSpanAttributeReads();
+    mockEntityUpsert();
+
     assertEquals(
-        expectedEntity,
+        EXPECTED_AVRO_ENTITY,
         this.entityReader
             .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
             .blockingGet());
@@ -114,28 +104,41 @@ class DefaultTraceEntityReaderTest {
 
   @Test
   void canReadAllEntities() {
-    when(this.mockTypeClient.getAll()).thenReturn(Observable.just(TEST_ENTITY_TYPE));
-    when(this.mockAttributeClient.getAllInScope(TEST_ENTITY_TYPE_NAME))
-        .thenReturn(Single.just(List.of(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE)));
+    mockAllEntityTypes();
+    mockAvailableAttributes();
+    mockSpanAttributeReads();
+    mockEntityUpsert();
+
+    assertEquals(
+        Map.of(TEST_ENTITY_TYPE_NAME, EXPECTED_AVRO_ENTITY),
+        this.entityReader.getAssociatedEntitiesForSpan(TEST_TRACE, TEST_SPAN).blockingGet());
+  }
+
+  private void mockSpanAttributeReads() {
     when(this.mockAttributeReader.getSpanValue(
             TEST_TRACE, TEST_SPAN, TEST_ENTITY_TYPE_NAME, TEST_ENTITY_ID_ATTRIBUTE_KEY))
-        .thenReturn(Single.just(stringLiteral("id-value")));
+        .thenReturn(Single.just(stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE)));
     when(this.mockAttributeReader.getSpanValue(
             TEST_TRACE, TEST_SPAN, TEST_ENTITY_TYPE_NAME, TEST_ENTITY_NAME_ATTRIBUTE_KEY))
-        .thenReturn(Single.just(stringLiteral("name-value")));
+        .thenReturn(Single.just(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE)));
+  }
+
+  private void mockEntityUpsert() {
     when(this.mockDataClient.getOrCreateEntity(
             any(org.hypertrace.entity.data.service.v1.Entity.class)))
         .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-    Entity expectedEntity =
-        Entity.newBuilder(BASIC_AVRO_ENTITY)
-            .setAttributes(
-                buildAttributesWithKeyValues(
-                    Map.of(
-                        TEST_ENTITY_ID_ATTRIBUTE_KEY, "id-value",
-                        TEST_ENTITY_NAME_ATTRIBUTE_KEY, "name-value")))
-            .build();
-    assertEquals(
-        Map.of(TEST_ENTITY_TYPE_NAME, expectedEntity),
-        this.entityReader.getAssociatedEntitiesForSpan(TEST_TRACE, TEST_SPAN).blockingGet());
+  }
+
+  private void mockAvailableAttributes() {
+    when(this.mockAttributeClient.getAllInScope(TEST_ENTITY_TYPE_NAME))
+        .thenReturn(Single.just(List.of(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE)));
+  }
+
+  private void mockSingleEntityType() {
+    when(this.mockTypeClient.get(TEST_ENTITY_TYPE_NAME)).thenReturn(Single.just(TEST_ENTITY_TYPE));
+  }
+
+  private void mockAllEntityTypes() {
+    when(this.mockTypeClient.getAll()).thenReturn(Observable.just(TEST_ENTITY_TYPE));
   }
 }

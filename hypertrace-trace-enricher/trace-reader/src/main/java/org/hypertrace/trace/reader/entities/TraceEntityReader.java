@@ -25,8 +25,6 @@ public interface TraceEntityReader {
         entityTypeClient,
         entityDataClient,
         attributeClient,
-        TraceAttributeReader.build(attributeClient),
-        new AvroEntityConverter(),
-        new AttributeValueConverter());
+        TraceAttributeReader.build(attributeClient));
   }
 }

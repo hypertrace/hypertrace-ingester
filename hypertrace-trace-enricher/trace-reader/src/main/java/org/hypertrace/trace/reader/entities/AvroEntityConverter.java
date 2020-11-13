@@ -17,12 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class AvroEntityConverter {
-
   private static final Logger LOG = LoggerFactory.getLogger(AvroEntityConverter.class);
 
-  public Single<Entity> convertToAvroEntity(
+  static Single<Entity> convertToAvroEntity(
       @Nonnull String tenantId, @Nonnull org.hypertrace.entity.data.service.v1.Entity entity) {
-    return this.convertAttributes(entity.getAttributesMap())
+    return convertAttributes(entity.getAttributesMap())
         .map(
             attributes ->
                 Entity.newBuilder()
@@ -34,13 +33,13 @@ class AvroEntityConverter {
                     .build());
   }
 
-  private Single<Attributes> convertAttributes(
+  private static Single<Attributes> convertAttributes(
       Map<String, org.hypertrace.entity.data.service.v1.AttributeValue> attributeMap) {
 
     return Observable.fromIterable(attributeMap.entrySet())
         .flatMapMaybe(
             entry ->
-                this.convertAttributeValue(entry.getValue())
+                convertAttributeValue(entry.getValue())
                     .doOnError(error -> LOG.error("Dropping attribute on conversion", error))
                     .onErrorComplete()
                     .map(value -> Map.entry(entry.getKey(), value)))
@@ -48,15 +47,15 @@ class AvroEntityConverter {
         .map(convertedMap -> Attributes.newBuilder().setAttributeMap(convertedMap).build());
   }
 
-  private Single<AttributeValue> convertAttributeValue(
+  private static Single<AttributeValue> convertAttributeValue(
       org.hypertrace.entity.data.service.v1.AttributeValue value) {
     switch (value.getTypeCase()) {
       case VALUE:
-        return this.convertValue(value.getValue());
+        return convertValue(value.getValue());
       case VALUE_LIST:
-        return this.convertValueList(value.getValueList());
+        return convertValueList(value.getValueList());
       case VALUE_MAP:
-        return this.convertValueMap(value.getValueMap());
+        return convertValueMap(value.getValueMap());
       case TYPE_NOT_SET:
       default:
         return Single.error(
@@ -65,9 +64,9 @@ class AvroEntityConverter {
     }
   }
 
-  private Single<AttributeValue> convertValueList(AttributeValueList valueList) {
+  private static Single<AttributeValue> convertValueList(AttributeValueList valueList) {
     return Observable.fromIterable(valueList.getValuesList())
-        .concatMapSingle(this::convertAttributeValue)
+        .concatMapSingle(AvroEntityConverter::convertAttributeValue)
         .switchMapSingle(
             value ->
                 nonNull(value.getValue())
@@ -80,11 +79,11 @@ class AvroEntityConverter {
         .map(list -> AttributeValue.newBuilder().setValueList(list).build());
   }
 
-  private Single<AttributeValue> convertValueMap(AttributeValueMap valueMap) {
+  private static Single<AttributeValue> convertValueMap(AttributeValueMap valueMap) {
     return Observable.fromIterable(valueMap.getValuesMap().entrySet())
         .concatMapSingle(
             entry ->
-                this.convertAttributeValue(entry.getValue())
+                convertAttributeValue(entry.getValue())
                     .flatMap(
                         value ->
                             nonNull(value.getValue())
@@ -98,22 +97,22 @@ class AvroEntityConverter {
         .map(map -> AttributeValue.newBuilder().setValueMap(map).build());
   }
 
-  private Single<AttributeValue> convertValue(Value value) {
+  private static Single<AttributeValue> convertValue(Value value) {
     switch (value.getTypeCase()) {
       case STRING:
-        return this.buildAttributeStringValueSingle(value.getString());
+        return buildAttributeStringValueSingle(value.getString());
       case INT:
-        return this.buildAttributeStringValueSingle(String.valueOf(value.getInt()));
+        return buildAttributeStringValueSingle(String.valueOf(value.getInt()));
       case LONG:
-        return this.buildAttributeStringValueSingle(String.valueOf(value.getLong()));
+        return buildAttributeStringValueSingle(String.valueOf(value.getLong()));
       case DOUBLE:
-        return this.buildAttributeStringValueSingle(String.valueOf(value.getDouble()));
+        return buildAttributeStringValueSingle(String.valueOf(value.getDouble()));
       case FLOAT:
-        return this.buildAttributeStringValueSingle(String.valueOf(value.getFloat()));
+        return buildAttributeStringValueSingle(String.valueOf(value.getFloat()));
       case TIMESTAMP:
-        return this.buildAttributeStringValueSingle(String.valueOf(value.getTimestamp()));
+        return buildAttributeStringValueSingle(String.valueOf(value.getTimestamp()));
       case BOOLEAN:
-        return this.buildAttributeStringValueSingle(String.valueOf(value.getBoolean()));
+        return buildAttributeStringValueSingle(String.valueOf(value.getBoolean()));
       case BYTES:
         return Single.just(
             AttributeValue.newBuilder()
@@ -128,7 +127,7 @@ class AvroEntityConverter {
     }
   }
 
-  private Single<AttributeValue> buildAttributeStringValueSingle(String value) {
+  private static Single<AttributeValue> buildAttributeStringValueSingle(String value) {
     return Single.just(AttributeValue.newBuilder().setValue(value).build());
   }
 }

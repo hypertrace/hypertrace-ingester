@@ -1,6 +1,7 @@
 package org.hypertrace.trace.reader.entities;
 
 import static io.reactivex.rxjava3.core.Maybe.zip;
+import static org.hypertrace.trace.reader.entities.AvroEntityConverter.convertToAvroEntity;
 
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -29,22 +30,16 @@ class DefaultTraceEntityReader implements TraceEntityReader {
   private final EntityDataClient entityDataClient;
   private final CachingAttributeClient attributeClient;
   private final TraceAttributeReader traceAttributeReader;
-  private final AvroEntityConverter avroEntityConverter;
-  private final AttributeValueConverter attributeValueConverter;
 
   DefaultTraceEntityReader(
       EntityTypeClient entityTypeClient,
       EntityDataClient entityDataClient,
       CachingAttributeClient attributeClient,
-      TraceAttributeReader traceAttributeReader,
-      AvroEntityConverter avroEntityConverter,
-      AttributeValueConverter attributeValueConverter) {
+      TraceAttributeReader traceAttributeReader) {
     this.entityTypeClient = entityTypeClient;
     this.entityDataClient = entityDataClient;
     this.attributeClient = attributeClient;
     this.traceAttributeReader = traceAttributeReader;
-    this.avroEntityConverter = avroEntityConverter;
-    this.attributeValueConverter = attributeValueConverter;
   }
 
   @Override
@@ -71,7 +66,7 @@ class DefaultTraceEntityReader implements TraceEntityReader {
     return this.buildEntity(entityType, trace, span)
         .flatMapSingle(this.entityDataClient::getOrCreateEntity)
         .flatMapSingle(
-            entity -> this.avroEntityConverter.convertToAvroEntity(span.getCustomerId(), entity));
+            entity -> convertToAvroEntity(span.getCustomerId(), entity));
   }
 
   private Maybe<org.hypertrace.entity.data.service.v1.Entity> buildEntity(
@@ -115,7 +110,7 @@ class DefaultTraceEntityReader implements TraceEntityReader {
     return this.traceAttributeReader
         .getSpanValue(trace, span, attributeMetadata.getScopeString(), attributeMetadata.getKey())
         .onErrorComplete()
-        .flatMapSingle(this.attributeValueConverter::convert)
+        .flatMapSingle(AttributeValueConverter::convertToAttributeValue)
         .map(value -> Map.entry(attributeMetadata.getKey(), value));
   }
 

@@ -6,8 +6,7 @@ import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.Value;
 
 class AttributeValueConverter {
-
-  public Single<AttributeValue> convert(LiteralValue literalValue) {
+  static Single<AttributeValue> convertToAttributeValue(LiteralValue literalValue) {
     switch (literalValue.getValueCase()) {
       case STRING_VALUE:
         return attributeValueSingle(Value.newBuilder().setString(literalValue.getStringValue()));
@@ -25,7 +24,7 @@ class AttributeValueConverter {
     }
   }
 
-  private Single<AttributeValue> attributeValueSingle(Value.Builder value) {
+  private static Single<AttributeValue> attributeValueSingle(Value.Builder value) {
     return Single.just(AttributeValue.newBuilder().setValue(value).build());
   }
 }

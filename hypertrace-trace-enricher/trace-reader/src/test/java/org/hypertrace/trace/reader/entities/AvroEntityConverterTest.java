@@ -12,6 +12,7 @@ import static org.hypertrace.trace.reader.entities.AttributeValueUtil.longListAt
 import static org.hypertrace.trace.reader.entities.AttributeValueUtil.stringAttributeValue;
 import static org.hypertrace.trace.reader.entities.AttributeValueUtil.stringListAttributeValue;
 import static org.hypertrace.trace.reader.entities.AttributeValueUtil.stringMapAttributeValue;
+import static org.hypertrace.trace.reader.entities.AvroEntityConverter.convertToAvroEntity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
@@ -21,7 +22,6 @@ import org.hypertrace.core.datamodel.Entity;
 import org.junit.jupiter.api.Test;
 
 class AvroEntityConverterTest {
-  private static final AvroEntityConverter CONVERTER = new AvroEntityConverter();
   private static final String TENANT_ID = "tenant-id";
   private static final org.hypertrace.entity.data.service.v1.Entity BASIC_ENTITY =
       org.hypertrace.entity.data.service.v1.Entity.newBuilder()
@@ -64,8 +64,7 @@ class AvroEntityConverterTest {
                             buildAttributeValue("true"))))
             .build();
 
-    assertEquals(
-        expectedAvroEntity, CONVERTER.convertToAvroEntity(TENANT_ID, inputEntity).blockingGet());
+    assertEquals(expectedAvroEntity, convertToAvroEntity(TENANT_ID, inputEntity).blockingGet());
   }
 
   @Test
@@ -94,8 +93,7 @@ class AvroEntityConverterTest {
                             buildAttributeValueList(List.of("true", "false")))))
             .build();
 
-    assertEquals(
-        expectedAvroEntity, CONVERTER.convertToAvroEntity(TENANT_ID, inputEntity).blockingGet());
+    assertEquals(expectedAvroEntity, convertToAvroEntity(TENANT_ID, inputEntity).blockingGet());
   }
 
   @Test
@@ -113,7 +111,6 @@ class AvroEntityConverterTest {
                         Map.of("map", buildAttributeValueMap(Map.of("map-key-1", "map-value-1")))))
             .build();
 
-    assertEquals(
-        expectedAvroEntity, CONVERTER.convertToAvroEntity(TENANT_ID, inputEntity).blockingGet());
+    assertEquals(expectedAvroEntity, convertToAvroEntity(TENANT_ID, inputEntity).blockingGet());
   }
 }
