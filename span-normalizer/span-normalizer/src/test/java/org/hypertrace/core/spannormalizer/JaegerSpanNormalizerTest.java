@@ -2,6 +2,8 @@ package org.hypertrace.core.spannormalizer;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.jaegertracing.api_v2.JaegerSpanInternalModel;
+import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Process;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Timer;
@@ -146,6 +148,28 @@ public class JaegerSpanNormalizerTest {
     Assertions.assertEquals("testService", rawSpan.getEvent().getServiceName());
     Assertions.assertEquals("testService", rawSpan.getEvent().getAttributes().getAttributeMap().get(
         RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)).getValue());
+
+    /**
+     * the case when `jaegerSpan.getProcess().getServiceName()` is not populated but serviceName is sent for key `jaeger.serviceName`
+     */
+    span = Span.newBuilder()
+        .addTags(KeyValue.newBuilder()
+            .setKey(JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY)
+            .setVStr("testService")).build();
+    rawSpan = normalizer.convert(span);
+    Assertions.assertEquals("testService", rawSpan.getEvent().getServiceName());
+    Assertions.assertEquals("testService", rawSpan.getEvent().getAttributes().getAttributeMap().get(
+        RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)).getValue());
+
+    /**
+     * the case when neither `jaegerSpan.getProcess().getServiceName()` nor `jaeger.serviceName` is present in tag map
+     */
+    span = Span.newBuilder().addTags(KeyValue.newBuilder().setKey("someKey").setVStr("someValue")).build();
+    rawSpan = normalizer.convert(span);
+    Assertions.assertNull(rawSpan.getEvent().getServiceName());
+    Assertions.assertNotNull(rawSpan.getEvent().getAttributes().getAttributeMap());
+    Assertions.assertNull(rawSpan.getEvent().getAttributes().getAttributeMap().get(
+        RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)));
   }
 
   @Test
