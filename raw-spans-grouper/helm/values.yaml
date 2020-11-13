@@ -22,6 +22,10 @@ imagePullSecrets: []
 
 nodeLabels: {}
 
+tolerations: []
+
+securityContext: {}
+
 # This is defined in resources/configs/common/application.conf as service.admin.port
 containerAdminPort: 8099
 

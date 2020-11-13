@@ -46,11 +46,19 @@ spec:
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-    {{- toYaml . | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
     {{- end }}
     {{- with .Values.nodeLabels }}
       nodeSelector:
-    {{- toYaml . | nindent 8}}
+        {{- toYaml . | nindent 8}}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
     {{- end }}
       restartPolicy: Always
       volumes:
