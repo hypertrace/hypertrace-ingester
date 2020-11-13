@@ -1,8 +1,11 @@
-package org.hypertrace.trace.reader;
+package org.hypertrace.trace.reader.attributes;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -34,11 +37,28 @@ public class AvroUtil {
   }
 
   public static Attributes buildAttributesWithKeyValue(String key, String value) {
-    return Attributes.newBuilder().setAttributeMap(Map.of(key, buildAttributeValue(value))).build();
+    return buildAttributesWithKeyValues(Map.of(key, value));
+  }
+
+  public static Attributes buildAttributesWithKeyValues(Map<String, String> valueMap) {
+    Map<String, AttributeValue> convertedValueMap =
+        valueMap.entrySet().stream()
+            .map(entry -> Map.entry(entry.getKey(), buildAttributeValue(entry.getValue())))
+            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+    return Attributes.newBuilder().setAttributeMap(convertedValueMap).build();
   }
 
   public static AttributeValue buildAttributeValue(String value) {
     return AttributeValue.newBuilder().setValue(value).build();
+  }
+
+  public static AttributeValue buildAttributeValueList(List<String> valueList) {
+    return AttributeValue.newBuilder().setValueList(valueList).build();
+  }
+
+  public static AttributeValue buildAttributeValueMap(Map<String, String> valueMap) {
+    return AttributeValue.newBuilder().setValueMap(valueMap).build();
   }
 
   public static MetricValue buildMetricValue(double value) {

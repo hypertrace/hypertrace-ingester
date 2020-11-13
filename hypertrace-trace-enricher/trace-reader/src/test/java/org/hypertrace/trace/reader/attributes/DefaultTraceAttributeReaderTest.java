@@ -1,9 +1,9 @@
-package org.hypertrace.trace.reader;
+package org.hypertrace.trace.reader.attributes;
 
-import static org.hypertrace.trace.reader.AvroUtil.buildAttributesWithKeyValue;
-import static org.hypertrace.trace.reader.AvroUtil.defaultedEventBuilder;
-import static org.hypertrace.trace.reader.AvroUtil.defaultedStructuredTraceBuilder;
-import static org.hypertrace.trace.reader.LiteralValueUtil.stringLiteral;
+import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributesWithKeyValue;
+import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedEventBuilder;
+import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedStructuredTraceBuilder;
+import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -23,14 +23,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DefaultTraceReaderTest {
+class DefaultTraceAttributeReaderTest {
 
   @Mock CachingAttributeClient mockAttributeClient;
-  private TraceReader traceReader;
+  private TraceAttributeReader traceAttributeReader;
 
   @BeforeEach
   void beforeEach() {
-    this.traceReader = TraceReader.build(this.mockAttributeClient);
+    this.traceAttributeReader = TraceAttributeReader.build(this.mockAttributeClient);
   }
 
   @Test
@@ -51,7 +51,7 @@ class DefaultTraceReaderTest {
 
     assertEquals(
         stringLiteral("attrValue"),
-        this.traceReader
+        this.traceAttributeReader
             .getSpanValue(mock(StructuredTrace.class), span, "TEST_SCOPE", "key")
             .blockingGet());
   }
@@ -73,6 +73,6 @@ class DefaultTraceReaderTest {
             .build();
 
     assertEquals(
-        stringLiteral("attrValue"), this.traceReader.getTraceValue(trace, "key").blockingGet());
+        stringLiteral("attrValue"), this.traceAttributeReader.getTraceValue(trace, "key").blockingGet());
   }
 }

@@ -1,4 +1,4 @@
-package org.hypertrace.trace.reader;
+package org.hypertrace.trace.reader.attributes;
 
 import java.util.Objects;
 import java.util.Optional;

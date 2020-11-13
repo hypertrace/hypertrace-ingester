@@ -10,6 +10,10 @@ dependencies {
   implementation("org.hypertrace.core.attribute.service:attribute-service-api:0.6.1")
   implementation("org.hypertrace.core.attribute.service:caching-attribute-service-client:0.6.1")
   implementation("org.hypertrace.core.attribute.service:attribute-projection-registry:0.6.1")
+  implementation("org.hypertrace.entity.service:entity-type-service-rx-client:0.2.5")
+  implementation("org.hypertrace.entity.service:entity-data-service-rx-client:0.2.5")
+  implementation("org.hypertrace.core.grpcutils:grpc-client-rx-utils:0.3.0")
+  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.3.0")
   implementation("io.reactivex.rxjava3:rxjava:3.0.6")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")

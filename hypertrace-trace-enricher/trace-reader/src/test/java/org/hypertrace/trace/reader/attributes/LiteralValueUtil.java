@@ -1,4 +1,4 @@
-package org.hypertrace.trace.reader;
+package org.hypertrace.trace.reader.attributes;
 
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 

@@ -1,4 +1,4 @@
-package org.hypertrace.trace.reader;
+package org.hypertrace.trace.reader.attributes;
 
 import io.reactivex.rxjava3.core.Single;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;

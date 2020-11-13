@@ -1,4 +1,4 @@
-package org.hypertrace.trace.reader;
+package org.hypertrace.trace.reader.attributes;
 
 import static io.reactivex.rxjava3.core.Single.zip;
 
