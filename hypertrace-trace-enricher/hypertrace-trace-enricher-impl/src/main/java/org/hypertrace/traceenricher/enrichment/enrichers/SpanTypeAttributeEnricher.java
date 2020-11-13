@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.eventfields.http.Http;
+import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Envoy;
@@ -12,20 +14,17 @@ import org.hypertrace.core.span.constants.v1.OCSpanKind;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.core.span.constants.v1.SpanNamePrefix;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
-import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.util.Constants;
-import org.hypertrace.traceenricher.util.EnricherUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Enricher that figures out if an event is an entry event and by adding EVENT_TYPE attribute.
@@ -199,19 +198,11 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
 
   @Nonnull
   public static Protocol getHttpProtocol(Event event) {
-    Map<String, AttributeValue> attributeMap = event.getAttributes().getAttributeMap();
-
-    // Try to check whether HTTP or HTTPS based on full URL.
-    String fullUrl = EnrichedSpanUtils.getFullHttpUrl(event).orElse(null);
-    if (fullUrl != null) {
-      try {
-        URI uri = new URI(fullUrl);
-        Protocol protocol = NAME_TO_PROTOCOL_MAP.get(uri.getScheme().toUpperCase());
-        if (protocol != null) {
-          return protocol;
-        }
-      } catch (URISyntaxException ignore) {
-        // Ignore these exceptions.
+    Optional<String> scheme = Optional.ofNullable(event.getHttp()).map(Http::getRequest).map(Request::getScheme);
+    if (scheme.isPresent()) {
+      Protocol protocol = NAME_TO_PROTOCOL_MAP.get(scheme.get().toUpperCase());
+      if (protocol != null) {
+        return protocol;
       }
     }
 
@@ -223,7 +214,7 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
     boolean hasHttpPrefix = false;
     // Go through all attributes check if there's GRPC attribute. If there are any grpc attribute,
     // then it's not a HTTP protocol
-    for (String attrKey : attributeMap.keySet()) {
+    for (String attrKey : event.getAttributes().getAttributeMap().keySet()) {
       String upperCaseKey = attrKey.toUpperCase();
       if (upperCaseKey.startsWith(HTTP_PROTOCOL_VALUE.toUpperCase())) {
         // just marking if http exists but do not decide on the protocol.

