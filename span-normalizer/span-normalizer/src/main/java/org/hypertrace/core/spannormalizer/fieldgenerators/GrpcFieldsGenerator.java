@@ -38,23 +38,31 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPO
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_STATUS_CODE;
 
 public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
+
   private static final String METADATA_STR_VAL_PREFIX = "Metadata(";
+
+  private static final String OTEL_GRPC_STATUS_CODE = "rpc.grpc.status_code";
+
   private static final List<String> STATUS_CODE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE),
           RawSpanConstants.getValue(GRPC_STATUS_CODE),
           RPC_STATUS_CODE.getValue(),
-          RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE));
+          RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE),
+          OTEL_GRPC_STATUS_CODE);
+
   private static final List<String> STATUS_MESSAGE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
           RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE));
+
   private static final Map<String, String> EMPTY_METADATA_MAP = Map.of();
   private static final String METADATA_DELIMITER = ",";
   private static final String METADATA_KEY_VALUE_DELIMITER = "=";
-  private static Map<String, FieldGenerator<Grpc.Builder>> fieldGeneratorMap =
+
+  private static final Map<String, FieldGenerator<Grpc.Builder>> fieldGeneratorMap =
       initializeFieldGenerators();
-  private static Map<String, FieldGenerator<Grpc.Builder>> rpcFieldGeneratorMap =
+  private static final Map<String, FieldGenerator<Grpc.Builder>> rpcFieldGeneratorMap =
       initializeRpcFieldGenerators();
 
   private static Map<String, FieldGenerator<Grpc.Builder>> initializeFieldGenerators() {
@@ -175,8 +183,7 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
     );
 
     fieldGeneratorMap.put(
-        RPC_REQUEST_METADATA_CONTENT_TYPE.getValue()
-        ,
+        RPC_REQUEST_METADATA_CONTENT_TYPE.getValue(),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().getRequestMetadataBuilder().setContentType(ValueConverter.getString(keyValue))
     );

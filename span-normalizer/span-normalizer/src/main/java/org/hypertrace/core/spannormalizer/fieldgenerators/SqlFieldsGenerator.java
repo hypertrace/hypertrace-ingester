@@ -16,6 +16,9 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
   private static final Map<String, FieldGenerator<Sql.Builder>> FIELD_GENERATOR_MAP =
       initializeFieldGenerators();
 
+  private static final String OTEL_DB_SYSTEM = "db.system";
+  private static final String OTEL_DB_STATEMENT = "db.statement";
+
   private static Map<String, FieldGenerator<Sql.Builder>> initializeFieldGenerators() {
     Map<String, FieldGenerator<Sql.Builder>> fieldGeneratorMap = new HashMap<>();
 
@@ -23,8 +26,18 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
         RawSpanConstants.getValue(SQL_QUERY),
         (key, keyValue, builder, tagsMap) -> builder.setQuery(keyValue.getVStr()));
     fieldGeneratorMap.put(
+        OTEL_DB_STATEMENT,
+        (key, keyValue, builder, tagsMap) -> builder.setQuery(keyValue.getVStr()));
+
+    // set db type
+    fieldGeneratorMap.put(
         RawSpanConstants.getValue(SQL_DB_TYPE),
         (key, keyValue, builder, tagsMap) -> builder.setDbType(keyValue.getVStr()));
+    fieldGeneratorMap.put(
+        OTEL_DB_SYSTEM,
+        (key, keyValue, builder, tagsMap) -> builder.setDbType(keyValue.getVStr()));
+
+    // todo: host & port comes separately in otel format
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(SQL_SQL_URL),
         (key, keyValue, builder, tagsMap) -> builder.setUrl(keyValue.getVStr()));

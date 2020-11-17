@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.fieldgenerators;
 
+import static org.hypertrace.core.span.constants.RawSpanConstants.getValue;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HOST;
@@ -50,66 +51,84 @@ import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
-import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpFieldsGenerator.class);
+
   private static final RateLimiter LOG_LIMITER = RateLimiter.create(0.1);
 
   private static final char DOT = '.';
   private static final String REQUEST_HEADER_PREFIX =
-      RawSpanConstants.getValue(HTTP_REQUEST_HEADER) + DOT;
+      getValue(HTTP_REQUEST_HEADER) + DOT;
   private static final String RESPONSE_HEADER_PREFIX =
-      RawSpanConstants.getValue(HTTP_RESPONSE_HEADER) + DOT;
+      getValue(HTTP_RESPONSE_HEADER) + DOT;
   private static final String REQUEST_PARAM_PREFIX =
-      RawSpanConstants.getValue(HTTP_REQUEST_PARAM) + DOT;
+      getValue(HTTP_REQUEST_PARAM) + DOT;
   private static final String REQUEST_COOKIE_PREFIX =
-      RawSpanConstants.getValue(HTTP_REQUEST_COOKIE) + DOT;
+      getValue(HTTP_REQUEST_COOKIE) + DOT;
   private static final String RESPONSE_COOKIE_PREFIX =
-      RawSpanConstants.getValue(HTTP_RESPONSE_COOKIE) + DOT;
+      getValue(HTTP_RESPONSE_COOKIE) + DOT;
   private static final String SLASH = "/";
   private static final String RELATIVE_URL_CONTEXT = "http://hypertrace.org";
 
+  // OTEL attributes (todo: this is temporary, eventually the entire first classing logic will go away)
+  private static final String OTEL_HTTP_METHOD = "http.method";
+  private static final String OTEL_HTTP_URL = "http.url";
+  private static final String OTEL_HTTP_TARGET = "http.target";
+  private static final String OTEL_HTTP_USER_AGENT = "http.user_agent";
+  private static final String OTEL_HTTP_REQUEST_SIZE = "http.request_content_length";
+  private static final String OTEL_HTTP_RESPONSE_SIZE = "http.response_content_length";
+  private static final String OTEL_HTTP_STATUS_CODE = "http.status_code";
+
   private static final List<String> FULL_URL_ATTRIBUTES =
       List.of(
-          RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL),
-          RawSpanConstants.getValue(HTTP_REQUEST_URL),
-          RawSpanConstants.getValue(HTTP_URL));
+          getValue(OT_SPAN_TAG_HTTP_URL),
+          getValue(HTTP_REQUEST_URL),
+          getValue(HTTP_URL));
 
   private static final List<String> USER_AGENT_ATTRIBUTES =
       List.of(
-          RawSpanConstants.getValue(HTTP_USER_DOT_AGENT),
-          RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE),
-          RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH),
-          RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER),
-          RawSpanConstants.getValue(HTTP_USER_AGENT));
+          getValue(HTTP_USER_DOT_AGENT),
+          getValue(HTTP_USER_AGENT_WITH_UNDERSCORE),
+          getValue(HTTP_USER_AGENT_WITH_DASH),
+          getValue(HTTP_USER_AGENT_REQUEST_HEADER),
+          getValue(HTTP_USER_AGENT),
+          OTEL_HTTP_USER_AGENT);
 
   private static final List<String> URL_PATH_ATTRIBUTES =
-      List.of(RawSpanConstants.getValue(HTTP_REQUEST_PATH), RawSpanConstants.getValue(HTTP_PATH));
+      List.of(
+          getValue(HTTP_REQUEST_PATH),
+          getValue(HTTP_PATH),
+          OTEL_HTTP_TARGET
+      );
 
   private static final List<String> REQUEST_SIZE_ATTRIBUTES =
       List.of(
-          RawSpanConstants.getValue(ENVOY_REQUEST_SIZE),
-          RawSpanConstants.getValue(HTTP_REQUEST_SIZE));
+          getValue(ENVOY_REQUEST_SIZE),
+          getValue(HTTP_REQUEST_SIZE),
+          OTEL_HTTP_REQUEST_SIZE);
 
   private static final List<String> RESPONSE_SIZE_ATTRIBUTES =
       List.of(
-          RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
-          RawSpanConstants.getValue(HTTP_RESPONSE_SIZE));
+          getValue(ENVOY_RESPONSE_SIZE),
+          getValue(HTTP_RESPONSE_SIZE),
+          OTEL_HTTP_RESPONSE_SIZE);
 
   private static final List<String> STATUS_CODE_ATTRIBUTES =
       List.of(
-          RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_STATUS_CODE),
-          RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE));
+          getValue(OT_SPAN_TAG_HTTP_STATUS_CODE),
+          getValue(HTTP_RESPONSE_STATUS_CODE),
+          OTEL_HTTP_STATUS_CODE);
 
   private static final List<String> METHOD_ATTRIBUTES =
       List.of(
-          RawSpanConstants.getValue(HTTP_REQUEST_METHOD),
-          RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD));
+          getValue(HTTP_REQUEST_METHOD),
+          getValue(OT_SPAN_TAG_HTTP_METHOD),
+          OTEL_HTTP_METHOD);
 
-  private static Map<String, FieldGenerator<Http.Builder>> fieldGeneratorMap =
+  private static final Map<String, FieldGenerator<Http.Builder>> fieldGeneratorMap =
       initializeFieldGenerators();
 
   public boolean handleStartsWithKeyIfNecessary(
@@ -229,138 +248,161 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
     // Method Handlers
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_METHOD),
+        getValue(HTTP_REQUEST_METHOD),
         (key, keyValue, builder, tagsMap) -> setMethod(builder, tagsMap));
     // OT_SPAN_TAG_HTTP_METHOD == HTTP_METHOD. No need to have both
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD),
+        getValue(OT_SPAN_TAG_HTTP_METHOD),
+        (key, keyValue, builder, tagsMap) -> setMethod(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTEL_HTTP_METHOD,
         (key, keyValue, builder, tagsMap) -> setMethod(builder, tagsMap));
 
     // URL Handlers
     // OT_SPAN_TAG_HTTP_URL == HTTP_URL_WITH_HTTP. No need to have both
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL),
+        getValue(OT_SPAN_TAG_HTTP_URL),
         (key, keyValue, builder, tagsMap) -> setUrl(builder, tagsMap));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_URL),
+        getValue(HTTP_URL),
         (key, keyValue, builder, tagsMap) -> setUrl(builder, tagsMap));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_URL),
+        getValue(HTTP_REQUEST_URL),
+        (key, keyValue, builder, tagsMap) -> setUrl(builder, tagsMap));
+    // todo: if url is given set host & path for otel?
+    fieldGeneratorMap.put(
+        OTEL_HTTP_URL,
         (key, keyValue, builder, tagsMap) -> setUrl(builder, tagsMap));
 
     // URL Path
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_PATH),
+        getValue(HTTP_REQUEST_PATH),
         (key, keyValue, builder, tagsMap) -> setPath(builder, tagsMap));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_PATH),
+        getValue(HTTP_PATH),
+        (key, keyValue, builder, tagsMap) -> setPath(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTEL_HTTP_TARGET,
         (key, keyValue, builder, tagsMap) -> setPath(builder, tagsMap));
 
     // Host Handler
+    // todo: extract host from url for otel?
     fieldGeneratorMap.put(
-            RawSpanConstants.getValue(HTTP_HOST),
+            getValue(HTTP_HOST),
             (key, keyValue, builder, tagsMap) -> builder.getRequestBuilder().setHost(keyValue.getVStr()));
 
     // User Agent handlers
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_USER_DOT_AGENT),
+        getValue(HTTP_USER_DOT_AGENT),
         (key, keyValue, builder, tagsMap) -> setUserAgent(builder, tagsMap));
     // HTTP_USER_AGENT_WITH_UNDERSCORE == ENVOY_USER_AGENT. No need to have both
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE),
+        getValue(HTTP_USER_AGENT_WITH_UNDERSCORE),
         (key, keyValue, builder, tagsMap) -> setUserAgent(builder, tagsMap));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH),
+        getValue(HTTP_USER_AGENT_WITH_DASH),
         (key, keyValue, builder, tagsMap) -> setUserAgent(builder, tagsMap));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER),
+        getValue(HTTP_USER_AGENT_REQUEST_HEADER),
         (key, keyValue, builder, tagsMap) -> {
           setUserAgent(builder, tagsMap);
           builder.getRequestBuilder().getHeadersBuilder().setUserAgent(keyValue.getVStr());
         });
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_USER_AGENT),
+        getValue(HTTP_USER_AGENT),
+        (key, keyValue, builder, tagsMap) -> setUserAgent(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTEL_HTTP_USER_AGENT,
         (key, keyValue, builder, tagsMap) -> setUserAgent(builder, tagsMap));
 
     // Declared Request Headers
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_HOST_HEADER),
+        getValue(HTTP_REQUEST_HOST_HEADER),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().getHeadersBuilder().setHost(keyValue.getVStr()));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_AUTHORITY_HEADER),
+        getValue(HTTP_REQUEST_AUTHORITY_HEADER),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().getHeadersBuilder().setAuthority(keyValue.getVStr()));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_TYPE),
+        getValue(HTTP_REQUEST_CONTENT_TYPE),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().getHeadersBuilder().setContentType(keyValue.getVStr()));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH),
+        getValue(HTTP_REQUEST_HEADER_PATH),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().getHeadersBuilder().setPath(keyValue.getVStr()));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_X_FORWARDED_FOR_HEADER),
+        getValue(HTTP_REQUEST_X_FORWARDED_FOR_HEADER),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().getHeadersBuilder().setXForwardedFor(keyValue.getVStr()));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_HEADER_COOKIE),
+        getValue(HTTP_REQUEST_HEADER_COOKIE),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().getHeadersBuilder().setCookie(keyValue.getVStr()));
 
     // Declared Response Headers
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_RESPONSE_CONTENT_TYPE),
+        getValue(HTTP_RESPONSE_CONTENT_TYPE),
         (key, keyValue, builder, tagsMap) ->
             builder.getResponseBuilder().getHeadersBuilder().setContentType(keyValue.getVStr()));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_RESPONSE_HEADER_SET_COOKIE),
+        getValue(HTTP_RESPONSE_HEADER_SET_COOKIE),
         (key, keyValue, builder, tagsMap) ->
             builder.getResponseBuilder().getHeadersBuilder().setSetCookie(keyValue.getVStr()));
 
     // Request Body
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY),
+        getValue(HTTP_HTTP_REQUEST_BODY),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().setBody(keyValue.getVStr()));
 
     // Response Body
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY),
+        getValue(HTTP_HTTP_RESPONSE_BODY),
         (key, keyValue, builder, tagsMap) ->
             builder.getResponseBuilder().setBody(keyValue.getVStr()));
 
     // Request Size
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(ENVOY_REQUEST_SIZE),
+        getValue(ENVOY_REQUEST_SIZE),
         (key, keyValue, builder, tagsMap) -> setRequestSize(builder, tagsMap));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_SIZE),
+        getValue(HTTP_REQUEST_SIZE),
+        (key, keyValue, builder, tagsMap) -> setRequestSize(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTEL_HTTP_REQUEST_SIZE,
         (key, keyValue, builder, tagsMap) -> setRequestSize(builder, tagsMap));
 
     // Response Size
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
+        getValue(ENVOY_RESPONSE_SIZE),
         (key, keyValue, builder, tagsMap) -> setResponseSize(builder, tagsMap));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
+        getValue(HTTP_RESPONSE_SIZE),
+        (key, keyValue, builder, tagsMap) -> setResponseSize(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTEL_HTTP_RESPONSE_SIZE,
         (key, keyValue, builder, tagsMap) -> setResponseSize(builder, tagsMap));
 
     // Response status and status code
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_STATUS_CODE),
+        getValue(OT_SPAN_TAG_HTTP_STATUS_CODE),
         (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE),
+        getValue(HTTP_RESPONSE_STATUS_CODE),
         (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap));
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_MESSAGE),
+        getValue(HTTP_RESPONSE_STATUS_MESSAGE),
         (key, keyValue, builder, tagsMap) ->
             builder.getResponseBuilder().setStatusMessage(ValueConverter.getString(keyValue)));
+    fieldGeneratorMap.put(
+        OTEL_HTTP_STATUS_CODE,
+        (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap));
 
     // Other declared Request fields
     fieldGeneratorMap.put(
-        RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING),
+        getValue(HTTP_REQUEST_QUERY_STRING),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().setQueryString(ValueConverter.getString(keyValue)));
 

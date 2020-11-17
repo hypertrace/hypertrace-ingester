@@ -21,13 +21,16 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUE
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA;
 
 public class RpcFieldsGenerator extends ProtocolFieldsGenerator<Rpc.Builder> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(RpcFieldsGenerator.class);
+
   private static final String OTEL_SPAN_TAG_RPC_SYSTEM_ATTR = OTEL_SPAN_TAG_RPC_SYSTEM.getValue();
   private static final String OTEL_RPC_SYSTEM_GRPC_VAL = OTEL_RPC_SYSTEM_GRPC.getValue();
   private static final char DOT = '.';
   private static final String REQUEST_METADATA_PREFIX = RPC_REQUEST_METADATA.getValue() + DOT;
   private static final String RESPONSE_METADATA_PREFIX = RPC_RESPONSE_METADATA.getValue() + DOT;
-  private static Logger LOGGER = LoggerFactory.getLogger(RpcFieldsGenerator.class);
-  private static Map<String, FieldGenerator<Rpc.Builder>> fieldGeneratorMap = initializeFieldGenerators();
+
+  private static final Map<String, FieldGenerator<Rpc.Builder>> fieldGeneratorMap = initializeFieldGenerators();
 
   GrpcFieldsGenerator grpcFieldsGenerator;
 
@@ -69,9 +72,10 @@ public class RpcFieldsGenerator extends ProtocolFieldsGenerator<Rpc.Builder> {
     return fieldGeneratorMap;
   }
 
-  public boolean handleKeyIfNecessary(String key, JaegerSpanInternalModel.KeyValue keyValue,
-                                      Event.Builder eventBuilder,
-                                      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
+  public boolean handleKeyIfNecessary(
+      String key, JaegerSpanInternalModel.KeyValue keyValue,
+      Event.Builder eventBuilder,
+      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
     String rpcSystem = getRpcSystem(tagsMap);
     if (!isRpcSystemGrpc(rpcSystem)) {
       return false;
@@ -100,8 +104,7 @@ public class RpcFieldsGenerator extends ProtocolFieldsGenerator<Rpc.Builder> {
   private String getRpcSystem(Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
     JaegerSpanInternalModel.KeyValue keyValue = tagsMap.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR);
     if (keyValue != null) {
-      String val = ValueConverter.getString(keyValue);
-      return val;
+      return ValueConverter.getString(keyValue);
     }
     return null;
   }

@@ -7,20 +7,17 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.grpc.Response;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.CensusResponse;
-import org.hypertrace.core.span.constants.v1.Envoy;
-import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
-import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.tagresolver.GrpcTagResolver;
+import org.hypertrace.traceenricher.tagresolver.HttpTagResolver;
 import org.hypertrace.traceenricher.util.GrpcCodeMapper;
 import org.hypertrace.traceenricher.util.HttpCodeMapper;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,10 +28,8 @@ import java.util.List;
  */
 public class ApiStatusEnricher extends AbstractTraceEnricher {
 
-  private static final List<String> grpcStatusCodeKeys = initializeGrpcStatusCodeKeys();
-  private static final List<String> httpStatusCodeKeys = initializeHttpStatusCodeKeys();
-  private static final List<String> grpcStatusMessageKeys = initializeGrpcStatusMessageKeys();
-  private static final String HTTP_RESPONSE_STATUS_MESSAGE_ATTR = RawSpanConstants.getValue(Http.HTTP_RESPONSE_STATUS_MESSAGE);
+  private static final List<String> grpcStatusCodeKeys = GrpcTagResolver.getGrpcStatusCodeKeys();
+  private static final List<String> httpStatusCodeKeys = HttpTagResolver.getHttpStatusCodeKeys();
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -45,11 +40,11 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
     String status = null;
     if (Protocol.PROTOCOL_GRPC == protocol) {
       status = GrpcCodeMapper.getState(statusCode);
-      statusMessage = getGrpcStatusMessage(event, statusCode);
+      statusMessage = GrpcTagResolver.getGrpcStatusMessage(event, statusCode);
     } else if (Protocol.PROTOCOL_HTTP == protocol || Protocol.PROTOCOL_HTTPS == protocol) {
       status = HttpCodeMapper.getState(statusCode);
 
-      statusMessage = getHttpStatusMessage(event, statusCode);
+      statusMessage = HttpTagResolver.getHttpStatusMessage(event, statusCode);
     }
     addEnrichedAttributeIfNotNull(event, EnrichedSpanConstants.getValue(Api.API_STATUS_CODE), statusCode);
     addEnrichedAttributeIfNotNull(event, EnrichedSpanConstants.getValue(Api.API_STATUS_MESSAGE), statusMessage);
@@ -72,58 +67,5 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
     }
 
     return SpanAttributeUtils.getFirstAvailableStringAttribute(event, statusCodeKeys);
-  }
-
-  private static String getGrpcStatusMessage(Event event, String statusCode) {
-    String statusMessage = null;
-    if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-      Response response = event.getGrpc().getResponse();
-      if (StringUtils.isNotBlank(response.getStatusMessage())) {
-        statusMessage = response.getStatusMessage();
-      } else if (StringUtils.isNotBlank(response.getErrorMessage())) {
-        statusMessage = response.getErrorMessage();
-      }
-    } else {
-      statusMessage = SpanAttributeUtils.getFirstAvailableStringAttribute(event, grpcStatusMessageKeys);
-    }
-
-    // if application tracer doesn't send the status message, then, we'll use
-    // our default mapping
-    if (statusMessage == null) {
-      statusMessage = GrpcCodeMapper.getMessage(statusCode);
-    }
-    return statusMessage;
-  }
-
-  private static String getHttpStatusMessage(Event event, String statusCode) {
-    String statusMessage = SpanAttributeUtils.getStringAttribute(
-        event,
-        HTTP_RESPONSE_STATUS_MESSAGE_ATTR);
-    if (statusMessage == null) {
-      statusMessage = HttpCodeMapper.getMessage(statusCode);
-    }
-    return statusMessage;
-  }
-
-  private static List<String> initializeGrpcStatusCodeKeys() {
-    List<String> grpcStatusCodeKeys = new ArrayList<>();
-    grpcStatusCodeKeys.add(RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_CODE));
-    grpcStatusCodeKeys.add(RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE));
-    grpcStatusCodeKeys.add(RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE));
-    return grpcStatusCodeKeys;
-  }
-
-  private static List<String> initializeHttpStatusCodeKeys() {
-    List<String> httpStatusCodeKeys = new ArrayList<>();
-    httpStatusCodeKeys.add(RawSpanConstants.getValue(OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE));
-    httpStatusCodeKeys.add(RawSpanConstants.getValue(Http.HTTP_RESPONSE_STATUS_CODE));
-    return httpStatusCodeKeys;
-  }
-
-  private static List<String> initializeGrpcStatusMessageKeys() {
-    List<String> grpcStatusMessageKeys = new ArrayList<>();
-    grpcStatusMessageKeys.add(RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE));
-    grpcStatusMessageKeys.add(RawSpanConstants.getValue(Envoy.ENVOY_GRPC_STATUS_MESSAGE));
-    return grpcStatusMessageKeys;
   }
 }
