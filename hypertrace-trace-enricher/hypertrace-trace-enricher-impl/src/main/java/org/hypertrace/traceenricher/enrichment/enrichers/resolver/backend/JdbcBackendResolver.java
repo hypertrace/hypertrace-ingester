@@ -19,15 +19,23 @@ import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
+import org.hypertrace.traceenricher.tagresolver.DbTagResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * todo: should this be renamed to SQLBackendResolver?
+ */
 public class JdbcBackendResolver extends AbstractBackendResolver {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBackendResolver.class);
+
+  private static final RateLimiter INVALID_BACKEND_URL_LIMITER = RateLimiter.create(1 / 60d);
+
+  private static final Splitter COLON_SPLITTER = Splitter.on(":");
+
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final String SQL_URL_ATTR = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
-  private static final RateLimiter INVALID_BACKEND_URL_LIMITER = RateLimiter.create(1 / 60d);
-  private static final Splitter COLON_SPLITTER = Splitter.on(":");
 
   public JdbcBackendResolver(FQNResolver fqnResolver) {
     super(fqnResolver);
@@ -35,15 +43,16 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (event.getEventName() != null && event.getEventName().startsWith(JDBC_EVENT_PREFIX) &&
-        SpanAttributeUtils.containsAttributeKey(event, SQL_URL_ATTR)) {
-      String backendUriStr = SpanAttributeUtils.getStringAttribute(event, SQL_URL_ATTR);
+    if (DbTagResolver.isSqlBackend(event)) {
+      Optional<String> optionalBackendUriStr = DbTagResolver.getSqlURI(event);
 
       // backendUriStr Sample value: "jdbc:mysql://mysql:3306/shop"
-      if (StringUtils.isEmpty(backendUriStr)) {
+      if (optionalBackendUriStr.isEmpty() || StringUtils.isEmpty(optionalBackendUriStr.get())) {
         LOGGER.warn("Unable to infer a jdbc backend from event: {}", event);
         return Optional.empty();
       }
+
+      String backendUriStr = optionalBackendUriStr.get();
 
       // Split the URL based on two slashes to extract the host and port values.
       String[] parts = backendUriStr.split("//");

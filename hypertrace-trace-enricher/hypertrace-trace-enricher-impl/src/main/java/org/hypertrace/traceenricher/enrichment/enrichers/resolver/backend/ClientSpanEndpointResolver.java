@@ -39,7 +39,8 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
         String parentSpanServiceName = EnrichedSpanUtils.getServiceName(parentSpan);
         if (!serviceName.equals(parentSpanServiceName)) {
           LOGGER.debug(
-              "Detected exit span whose service name is different from its parent span service name. Will be creating a backend based on exit span service name = [{}]",
+              "Detected exit span whose service name is different from its parent span service name. "
+                  + "Will be creating a backend based on exit span service name = [{}]",
               serviceName);
           final Builder backendBuilder = getBackendEntityBuilder(BackendType.UNKNOWN, serviceName,
               event);

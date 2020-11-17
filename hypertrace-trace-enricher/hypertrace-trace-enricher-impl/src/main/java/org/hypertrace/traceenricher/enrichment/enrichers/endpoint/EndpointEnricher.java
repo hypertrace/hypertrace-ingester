@@ -48,13 +48,9 @@ public class EndpointEnricher extends AbstractTraceEnricher {
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
-    // This Enricher depends on SpanType so if that's missing, we can't do anything with the span.
-    if (event.getEnrichedAttributes() == null) {
-      return;
-    }
-
-    Map<String, AttributeValue> attributeMap = event.getEnrichedAttributes().getAttributeMap();
-    if (attributeMap == null || attributeMap.isEmpty()) {
+    // This enricher depends on SpanType so if that's missing, we can't do anything with the span.
+    if (null == event.getEnrichedAttributes() || null == event.getEnrichedAttributes()
+        .getAttributeMap()) {
       return;
     }
 
@@ -78,14 +74,13 @@ public class EndpointEnricher extends AbstractTraceEnricher {
       apiEntity = getOperationNameBasedEndpointDiscoverer(customerId, serviceId)
           .getApiEntity(event);
     } catch (Exception e) {
-      LOGGER
-          .error("Unable to get apiEntity for tenantId {}, serviceId {} and event {}", customerId,
-              serviceId, event, e);
+      LOGGER.error("Unable to get apiEntity for tenantId {}, serviceId {} and event {}",
+          customerId, serviceId, event, e);
     }
 
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("tenantId: {}, serviceId: {}, span: {}, apiEntity: {}", customerId, serviceId,
-          event, apiEntity);
+      LOGGER.debug("tenantId: {}, serviceId: {}, span: {}, apiEntity: {}",
+          customerId, serviceId, event, apiEntity);
     }
 
     if (apiEntity != null) {
@@ -98,7 +93,8 @@ public class EndpointEnricher extends AbstractTraceEnricher {
           AttributeValueCreator.create(apiEntity.getEntityName()));
 
       //API name
-      org.hypertrace.entity.data.service.v1.AttributeValue apiNameValue = apiEntity.getAttributesMap()
+      org.hypertrace.entity.data.service.v1.AttributeValue apiNameValue = apiEntity
+          .getAttributesMap()
           .get(API_NAME_ATTR_NAME);
       if (apiNameValue != null) {
         addEnrichedAttribute(event, API_NAME_ATTR_NAME,
@@ -106,7 +102,8 @@ public class EndpointEnricher extends AbstractTraceEnricher {
       }
 
       //API Discovery
-      org.hypertrace.entity.data.service.v1.AttributeValue apiDiscoveryState = apiEntity.getAttributesMap()
+      org.hypertrace.entity.data.service.v1.AttributeValue apiDiscoveryState = apiEntity
+          .getAttributesMap()
           .get(API_DISCOVERY_STATE_ATTR);
       if (apiDiscoveryState != null) {
         addEnrichedAttribute(event, API_DISCOVERY_STATE_ATTR,

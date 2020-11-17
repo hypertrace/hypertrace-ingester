@@ -27,9 +27,10 @@ import java.util.List;
  * Enriches Api Status and Status Message
  * Api Status based on status code
  * Api Status Message based on the raw data first, and it's not in span as raw data,
- * fina it based on code status
+ * find it based on code status
  */
 public class ApiStatusEnricher extends AbstractTraceEnricher {
+
   private static final List<String> grpcStatusCodeKeys = initializeGrpcStatusCodeKeys();
   private static final List<String> httpStatusCodeKeys = initializeHttpStatusCodeKeys();
   private static final List<String> grpcStatusMessageKeys = initializeGrpcStatusMessageKeys();

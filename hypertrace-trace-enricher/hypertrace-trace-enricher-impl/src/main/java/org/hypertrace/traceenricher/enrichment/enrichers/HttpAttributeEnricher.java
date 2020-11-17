@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.getValue;
 
 import com.google.common.base.Splitter;
 import java.net.MalformedURLException;
@@ -26,11 +27,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HttpAttributeEnricher extends AbstractTraceEnricher {
-  private static Logger LOG = LoggerFactory.getLogger(HttpAttributeEnricher.class);
-  private final static String HTTP_REQUEST_PATH_ATTR =
-      EnrichedSpanConstants.getValue(Http.HTTP_REQUEST_PATH);
-  private final static String HTTP_REQUEST_QUERY_PARAM_ATTR =
-      EnrichedSpanConstants.getValue(Http.HTTP_REQUEST_QUERY_PARAM);
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpAttributeEnricher.class);
+
+  private final static String HTTP_REQUEST_PATH_ATTR = getValue(Http.HTTP_REQUEST_PATH);
+  private final static String HTTP_REQUEST_QUERY_PARAM_ATTR = getValue(Http.HTTP_REQUEST_QUERY_PARAM);
   private final static String PARAM_ATTR_FORMAT = "%s.%s";
   private final static String QUERY_PARAM_DELIMITER = "&";
   private final static String QUERY_PARAM_KEY_VALUE_DELIMITER = "=";
@@ -43,7 +44,7 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
       try {
         fullUrl = new URL(url);
       } catch (MalformedURLException e) {
-        LOG.warn("The url {} is not a valid format url", url);
+        LOGGER.warn("The url {} is not a valid format url", url);
       }
 
       if (fullUrl != null) {
@@ -99,7 +100,7 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
     try {
       return URLDecoder.decode(input, StandardCharsets.UTF_8);
     } catch (IllegalArgumentException e) {
-      LOG.error("Cannot decode the input {}", input, e);
+      LOGGER.error("Cannot decode the input {}", input, e);
       //Falling back to original input if it can't be decoded
       return input;
     }

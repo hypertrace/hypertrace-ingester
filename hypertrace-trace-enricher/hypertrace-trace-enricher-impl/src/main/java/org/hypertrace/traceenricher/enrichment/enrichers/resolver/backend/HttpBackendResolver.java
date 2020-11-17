@@ -18,6 +18,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
+import org.hypertrace.traceenricher.tagresolver.HttpTagResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +52,8 @@ public class HttpBackendResolver extends AbstractBackendResolver {
             EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
             createAttributeValue(path));
       }
-      setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Http.HTTP_METHOD));
-      setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Http.HTTP_REQUEST_METHOD));
+      setAttributeIfExist(event, entityBuilder, HttpTagResolver.getTagsForHttpMethod());
+      setAttributeIfExist(event, entityBuilder, HttpTagResolver.getTagsForHttpRequestMethod());
       return Optional.of(entityBuilder.build());
     }
     return Optional.empty();

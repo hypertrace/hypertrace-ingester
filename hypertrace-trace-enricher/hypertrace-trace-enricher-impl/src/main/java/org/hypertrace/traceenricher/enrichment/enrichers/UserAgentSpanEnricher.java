@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static net.sf.uadetector.service.UADetectorServiceFactory.getResourceModuleParser;
+
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
@@ -20,17 +22,11 @@ import java.util.Optional;
 
 public class UserAgentSpanEnricher extends AbstractTraceEnricher {
 
-  private UserAgentStringParser userAgentStringParser =
-      UADetectorServiceFactory.getResourceModuleParser();
+  private final UserAgentStringParser userAgentStringParser = getResourceModuleParser();
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
-    if (event.getAttributes() == null) {
-      return;
-    }
-
-    Map<String, AttributeValue> attributeMap = event.getAttributes().getAttributeMap();
-    if (attributeMap == null) {
+    if (null == event.getAttributes() || null == event.getAttributes().getAttributeMap()) {
       return;
     }
 

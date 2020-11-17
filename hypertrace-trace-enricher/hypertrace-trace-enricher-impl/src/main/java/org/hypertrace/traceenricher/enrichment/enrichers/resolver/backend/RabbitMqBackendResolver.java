@@ -11,13 +11,13 @@ import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
+import org.hypertrace.traceenricher.tagresolver.MessagingSystemTagResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RabbitMqBackendResolver extends AbstractBackendResolver {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMqBackendResolver.class);
-  private static final String RABBITMQ_ROUTING_KEY_ATTR =
-      RawSpanConstants.getValue(RabbitMq.RABBIT_MQ_ROUTING_KEY);
 
   public RabbitMqBackendResolver(FQNResolver fqnResolver) {
     super(fqnResolver);
@@ -25,17 +25,15 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (SpanAttributeUtils.containsAttributeKey(event, RABBITMQ_ROUTING_KEY_ATTR)) {
-      String routingKey =
-          SpanAttributeUtils.getStringAttribute(event, RABBITMQ_ROUTING_KEY_ATTR);
-      if (StringUtils.isEmpty(routingKey)) {
-        LOGGER.warn("Unable to infer a rabbitmq backend from event: {}", event);
-        return Optional.empty();
-      }
-      final Builder entityBuilder = getBackendEntityBuilder(BackendType.RABBIT_MQ, routingKey,
-          event);
-      return Optional.of(entityBuilder.build());
+    Optional<String> routingKey = MessagingSystemTagResolver.getRabbitMQRoutingKey(event);
+    if (routingKey.isEmpty() || StringUtils.isEmpty(routingKey.get())) {
+      LOGGER.warn("Unable to infer a rabbitmq backend from event: {}", event);
+      return Optional.empty();
     }
-    return Optional.empty();
+
+    final Builder entityBuilder = getBackendEntityBuilder(
+        BackendType.RABBIT_MQ,
+        routingKey.get(), event);
+    return Optional.of(entityBuilder.build());
   }
 }

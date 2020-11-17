@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ApiEntityDao {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(
+  private static final Logger LOGGER = LoggerFactory.getLogger(
       ApiEntityDao.class);
 
   private static final String DISCOVERED_FROM = "OPERATION_NAME";
@@ -69,12 +69,14 @@ public class ApiEntityDao {
         .putAttributes(API_NAME_ATTR, createAttributeValue(apiName));
 
     Entity entity = entityBuilder.build();
+    // todo: make this debug?
     LOGGER.info("Upserting Api entity: [{}]", TextFormat.shortDebugString(entity));
     return edsClient.upsert(entity);
   }
 
   private AttributeValue createAttributeValue(String value) {
-    return AttributeValue.newBuilder().setValue(Value.newBuilder().setString(value).build())
+    return AttributeValue.newBuilder()
+        .setValue(Value.newBuilder().setString(value).build())
         .build();
   }
 }

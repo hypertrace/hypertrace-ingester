@@ -14,6 +14,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
+import org.hypertrace.traceenricher.tagresolver.GrpcTagResolver;
 import org.hypertrace.traceenricher.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +30,8 @@ public class GrpcBackendResolver extends AbstractBackendResolver {
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
     Protocol protocol = EnrichedSpanUtils.getProtocol(event);
 
-    if (protocol == Protocol.PROTOCOL_GRPC) {
-      String backendURI = SpanAttributeUtils.getStringAttribute(event,
-          Constants.getRawSpanConstant(Grpc.GRPC_HOST_PORT));
+    if (protocol == Protocol.PROTOCOL_GRPC && null != event.getGrpc()) {
+      String backendURI = event.getGrpc().getRequest().getHostPort();
 
       if (StringUtils.isEmpty(backendURI)) {
         LOGGER.debug(
@@ -42,7 +42,7 @@ public class GrpcBackendResolver extends AbstractBackendResolver {
         return Optional.empty();
       }
       final Builder entityBuilder = getBackendEntityBuilder(BackendType.GRPC, backendURI, event);
-      setAttributeIfExist(event, entityBuilder, Constants.getRawSpanConstant(Grpc.GRPC_METHOD));
+      setAttributeIfExist(event, entityBuilder, GrpcTagResolver.getTagsForGrpcMethod());
       return Optional.of(entityBuilder.build());
     }
     return Optional.empty();

@@ -30,8 +30,9 @@ public class OperationNameBasedEndpointDiscoverer {
         }
       });
 
-  public OperationNameBasedEndpointDiscoverer(String customerId, String serviceId,
-                                              ApiEntityDao apiEntityDao) {
+  public OperationNameBasedEndpointDiscoverer(
+      String customerId, String serviceId,
+      ApiEntityDao apiEntityDao) {
     this.customerId = customerId;
     this.serviceId = serviceId;
     this.apiEntityDao = apiEntityDao;

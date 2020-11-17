@@ -31,7 +31,7 @@ public abstract class AbstractBackendResolver {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT);
   private final static String DEFAULT_PORT = "-1";
 
-  private FQNResolver fqnResolver;
+  private final FQNResolver fqnResolver;
 
   public AbstractBackendResolver(FQNResolver fqnResolver) {
     this.fqnResolver = fqnResolver;

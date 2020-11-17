@@ -13,6 +13,7 @@ import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
+import org.hypertrace.traceenricher.tagresolver.DbTagResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,17 +26,20 @@ public class RedisBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (!SpanAttributeUtils.containsAttributeKey(event,
-        RawSpanConstants.getValue(Redis.REDIS_CONNECTION))) {
+    Optional<String> backendURI = DbTagResolver.getRedisURI(event);
+    if (backendURI.isEmpty()) {
       return Optional.empty();
     }
-    String backendURI =
-        SpanAttributeUtils.getStringAttribute(event, RawSpanConstants.getValue(Redis.REDIS_CONNECTION));
-    if (StringUtils.isEmpty(backendURI)) {
+
+    if (StringUtils.isEmpty(backendURI.get())) {
       LOGGER.warn("Unable to infer a redis backend from event: {}", event);
       return Optional.empty();
     }
-    final Builder entityBuilder = getBackendEntityBuilder(BackendType.REDIS, backendURI, event);
+
+    final Builder entityBuilder = getBackendEntityBuilder(
+        BackendType.REDIS, backendURI.get(), event);
+
+    // todo: can't figure out otel equivalent, should we set db.connection_string for otel?
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_COMMAND));
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_ARGS));
     return Optional.of(entityBuilder.build());

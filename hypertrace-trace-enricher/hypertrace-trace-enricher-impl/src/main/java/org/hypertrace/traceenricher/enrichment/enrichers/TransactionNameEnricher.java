@@ -20,7 +20,8 @@ import org.slf4j.LoggerFactory;
  * then it will be categorized as "unknown" transaction
  */
 public class TransactionNameEnricher extends AbstractTraceEnricher {
-  private static Logger LOGGER = LoggerFactory.getLogger(TransactionNameEnricher.class);
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(TransactionNameEnricher.class);
 
   @Override
   public void enrichTrace(StructuredTrace trace) {
