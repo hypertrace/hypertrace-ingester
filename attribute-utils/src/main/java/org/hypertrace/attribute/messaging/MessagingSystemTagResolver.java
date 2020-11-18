@@ -1,4 +1,4 @@
-package org.hypertrace.attribute;
+package org.hypertrace.attribute.messaging;
 
 import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;

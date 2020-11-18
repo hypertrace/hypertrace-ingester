@@ -5,7 +5,7 @@ import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist
 
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.attribute.HttpTagResolver;
+import org.hypertrace.attribute.http.HttpTagResolver;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;

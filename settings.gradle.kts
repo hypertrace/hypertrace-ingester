@@ -38,4 +38,3 @@ include("span-normalizer:span-normalizer-constants")
 include("hypertrace-ingester")
 
 include("attribute-utils")
-include("attribute-utils")

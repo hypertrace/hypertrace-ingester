@@ -1,4 +1,4 @@
-package org.hypertrace.attribute;
+package org.hypertrace.attribute.http;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;

@@ -1,8 +1,8 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import com.google.common.collect.Lists;
-import org.hypertrace.attribute.GrpcTagResolver;
-import org.hypertrace.attribute.HttpTagResolver;
+import org.hypertrace.attribute.rpc.GrpcTagResolver;
+import org.hypertrace.attribute.http.HttpTagResolver;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
@@ -11,8 +11,8 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.attribute.GrpcCodeMapper;
-import org.hypertrace.attribute.HttpCodeMapper;
+import org.hypertrace.attribute.rpc.GrpcCodeMapper;
+import org.hypertrace.attribute.http.HttpCodeMapper;
 
 import java.util.List;
 

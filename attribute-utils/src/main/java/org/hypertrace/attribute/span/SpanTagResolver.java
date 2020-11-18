@@ -1,7 +1,8 @@
-package org.hypertrace.attribute;
+package org.hypertrace.attribute.span;
 
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.attribute.Constants;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;

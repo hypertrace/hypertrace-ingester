@@ -8,7 +8,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.attribute.DbTagResolver;
+import org.hypertrace.attribute.db.DbTagResolver;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.span.constants.RawSpanConstants;

@@ -1,11 +1,10 @@
-package org.hypertrace.attribute;
-
-import static org.hypertrace.core.span.constants.RawSpanConstants.getValue;
+package org.hypertrace.attribute.db;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
@@ -60,7 +59,7 @@ public class DbTagResolver {
           OTEL_DB_SYSYEM).getValue())) {
         return Optional.empty();
       }
-      return getURIforOtelFormat(event);
+      return getSqlURIOtelFormat(event);
     }
 
     return Optional.empty();
@@ -83,7 +82,7 @@ public class DbTagResolver {
           event.getAttributes().getAttributeMap().get(OTEL_DB_SYSYEM).getValue())) {
         return Optional.empty();
       }
-      return getURIforOtelFormat(event);
+      return getSqlURIOtelFormat(event);
     }
     return Optional.empty();
   }
@@ -94,6 +93,10 @@ public class DbTagResolver {
         && SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
       return true;
     }
+    return isSqlBackendOtelFormat(event);
+  }
+
+  public static boolean isSqlBackendOtelFormat(Event event) {
     if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_SYSYEM)) {
       return Arrays
           .stream(OTEL_SQL_DB_SYSTEM_VALUES)
@@ -104,25 +107,39 @@ public class DbTagResolver {
     return false;
   }
 
+  public static boolean isSqlBackendOtelFormat(Map<String, AttributeValue> attributeMap) {
+    if (attributeMap.containsKey(OTEL_DB_SYSYEM)) {
+      return Arrays
+          .stream(OTEL_SQL_DB_SYSTEM_VALUES)
+          .anyMatch(
+              v -> v.equals(
+                  attributeMap.get(OTEL_DB_SYSYEM).getValue()));
+    }
+    return false;
+  }
+
   public static Optional<String> getSqlURI(Event event) {
     if (SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, SQL_URL));
     }
-    return getURIforOtelFormat(event);
+    return getSqlURIOtelFormat(event);
   }
 
-  private static Optional<String> getURIforOtelFormat(Event event) {
-    if ((SpanAttributeUtils.containsAttributeKey(event, OTEL_NET_PEER_NAME)
-        || SpanAttributeUtils.containsAttributeKey(event, OTEL_NET_PEER_IP))
-        && SpanAttributeUtils.containsAttributeKey(event, OTEL_NET_PEER_PORT)) {
-      String host = event.getAttributes().getAttributeMap().getOrDefault(
+  public static Optional<String> getSqlURIOtelFormat(Event event) {
+    return getSqlURIOtelFormat(event.getAttributes().getAttributeMap());
+  }
+
+  public static Optional<String> getSqlURIOtelFormat(
+      Map<String, AttributeValue> attributeMap) {
+    if ((attributeMap.containsKey(OTEL_NET_PEER_NAME)
+        || attributeMap.containsKey(OTEL_NET_PEER_IP))
+        && attributeMap.containsKey(OTEL_NET_PEER_PORT)) {
+      String host = attributeMap.getOrDefault(
           OTEL_NET_PEER_NAME,
-          event.getAttributes().getAttributeMap().get(OTEL_NET_PEER_IP)).getValue();
-      String port = event.getAttributes().getAttributeMap().get(OTEL_NET_PEER_PORT).getValue();
+          attributeMap.get(OTEL_NET_PEER_IP)).getValue();
+      String port = attributeMap.get(OTEL_NET_PEER_PORT).getValue();
       return Optional.of(String.format("%s:%s", host, port));
     }
     return Optional.empty();
   }
-
-
 }

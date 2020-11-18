@@ -1,6 +1,6 @@
 package org.hypertrace.traceenricher.util;
 
-import org.hypertrace.attribute.HttpCodeMapper;
+import org.hypertrace.attribute.http.HttpCodeMapper;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
 import org.junit.jupiter.api.Assertions;

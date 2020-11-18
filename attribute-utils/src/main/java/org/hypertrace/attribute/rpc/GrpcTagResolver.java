@@ -1,4 +1,4 @@
-package org.hypertrace.attribute;
+package org.hypertrace.attribute.rpc;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;

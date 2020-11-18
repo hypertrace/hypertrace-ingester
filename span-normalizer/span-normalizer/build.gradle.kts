@@ -38,6 +38,7 @@ dependencies {
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":span-normalizer:span-normalizer-api"))
   implementation(project(":span-normalizer:span-normalizer-constants"))
+  implementation(project(":attribute-utils"))
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.10")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")

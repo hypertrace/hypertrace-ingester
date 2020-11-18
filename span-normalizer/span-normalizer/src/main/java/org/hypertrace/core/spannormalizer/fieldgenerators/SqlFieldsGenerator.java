@@ -8,6 +8,9 @@ import static org.hypertrace.core.span.constants.v1.Sql.SQL_STATE;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import org.hypertrace.attribute.db.DbTagResolver;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.sql.Sql;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -37,7 +40,6 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
         OTEL_DB_SYSTEM,
         (key, keyValue, builder, tagsMap) -> builder.setDbType(keyValue.getVStr()));
 
-    // todo: host & port comes separately in otel format
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(SQL_SQL_URL),
         (key, keyValue, builder, tagsMap) -> builder.setUrl(keyValue.getVStr()));
@@ -59,5 +61,12 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
   @Override
   protected Map<String, FieldGenerator<Sql.Builder>> getFieldGeneratorMap() {
     return FIELD_GENERATOR_MAP;
+  }
+
+  protected void maybePopulateUrlForOtelSpan(Event.Builder eventBuilder, Map<String, AttributeValue> attributeFieldMap) {
+    if (DbTagResolver.isSqlBackendOtelFormat(attributeFieldMap)) {
+      Optional<String> sqlUrl = DbTagResolver.getSqlURIOtelFormat(attributeFieldMap);
+      sqlUrl.ifPresent(s -> eventBuilder.getSqlBuilder().setUrl(s));
+    }
   }
 }

@@ -81,6 +81,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
   private static final String OTEL_HTTP_REQUEST_SIZE = "http.request_content_length";
   private static final String OTEL_HTTP_RESPONSE_SIZE = "http.response_content_length";
   private static final String OTEL_HTTP_STATUS_CODE = "http.status_code";
+  private static final String OTEL_HTTP_HOST = "http.host";
 
   private static final List<String> FULL_URL_ATTRIBUTES =
       List.of(
@@ -269,7 +270,6 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     fieldGeneratorMap.put(
         getValue(HTTP_REQUEST_URL),
         (key, keyValue, builder, tagsMap) -> setUrl(builder, tagsMap));
-    // todo: if url is given set host & path for otel?
     fieldGeneratorMap.put(
         OTEL_HTTP_URL,
         (key, keyValue, builder, tagsMap) -> setUrl(builder, tagsMap));
@@ -286,7 +286,6 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         (key, keyValue, builder, tagsMap) -> setPath(builder, tagsMap));
 
     // Host Handler
-    // todo: extract host from url for otel?
     fieldGeneratorMap.put(
             getValue(HTTP_HOST),
             (key, keyValue, builder, tagsMap) -> builder.getRequestBuilder().setHost(keyValue.getVStr()));
@@ -555,6 +554,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         requestBuilder.setUrl(null); //  unset the URL as we only allow absolute/full URLs in the url field
       }
       setPathFromUrl(requestBuilder, url);
+      setHostFromUrl(requestBuilder, url);
       if (!requestBuilder.hasQueryString()) {
         requestBuilder.setQueryString(url.getQuery());
       }
@@ -566,5 +566,11 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
   private static URL getNormalizedUrl(String url) throws MalformedURLException {
     return new URL(new URL(RELATIVE_URL_CONTEXT), url);
+  }
+
+  private static void setHostFromUrl(Request.Builder requestBuilder, URL url) {
+    if (!requestBuilder.hasHost() && !StringUtils.isBlank(url.getHost())) {
+      requestBuilder.setHost(url.getHost());
+    }
   }
 }

@@ -1,6 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import org.hypertrace.attribute.SpanTagResolver;
+import org.hypertrace.attribute.span.SpanTagResolver;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
