@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.tagresolver;
+package org.hypertrace.attribute;
 
 import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;

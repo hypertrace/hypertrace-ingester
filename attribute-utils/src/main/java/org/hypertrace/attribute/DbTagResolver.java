@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.tagresolver;
+package org.hypertrace.attribute;
 
 import static org.hypertrace.core.span.constants.RawSpanConstants.getValue;
 
@@ -14,7 +14,6 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.core.span.constants.v1.Sql;
-import org.hypertrace.traceenricher.util.EnricherUtil;
 
 public class DbTagResolver {
 
@@ -29,15 +28,15 @@ public class DbTagResolver {
 
   // mongo specific attributes
   private static final String OTEL_MONGO_DB_SYSTEM_VALUE = "mongodb";
-  private static final String OTHER_MONGO_ADDRESS = getValue(Mongo.MONGO_ADDRESS);
-  private static final String OTHER_MONGO_URL = getValue(Mongo.MONGO_URL);
-  private static final String OTHER_MONGO_OPERATION = getValue(Mongo.MONGO_OPERATION);
-  private static final String OTHER_MONGO_NAMESPACE = getValue(Mongo.MONGO_NAMESPACE);
+  private static final String OTHER_MONGO_ADDRESS = RawSpanConstants.getValue(Mongo.MONGO_ADDRESS);
+  private static final String OTHER_MONGO_URL = RawSpanConstants.getValue(Mongo.MONGO_URL);
+  private static final String OTHER_MONGO_OPERATION = RawSpanConstants.getValue(Mongo.MONGO_OPERATION);
+  private static final String OTHER_MONGO_NAMESPACE = RawSpanConstants.getValue(Mongo.MONGO_NAMESPACE);
   private static final String OTEL_MONGO_COLLECTION = "db.mongodb.collection";
   //private static final AttributeValue MONGO_DEFAULT_PORT = EnricherUtil.createAttributeValue(EnricherUtil.createAttributeValue("27017"));
 
   // redis specific attributes
-  private static final String OTHER_REDIS_CONNECTION = getValue(Redis.REDIS_CONNECTION);
+  private static final String OTHER_REDIS_CONNECTION = RawSpanConstants.getValue(Redis.REDIS_CONNECTION);
   private static final String OTEL_REDIS_DB_SYSTEM_VALUE = "redis";
   //private static final AttributeValue REDIS_DEFAULT_PORT = EnricherUtil.createAttributeValue(EnricherUtil.createAttributeValue("6379"));
 
@@ -49,7 +48,7 @@ public class DbTagResolver {
           "redshift", "hive", "cloudscape", "hsqldb"
       };
   private static final String JDBC_EVENT_PREFIX = "jdbc";
-  private static final String SQL_URL = getValue(Sql.SQL_SQL_URL);
+  private static final String SQL_URL = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
 
   public static Optional<String> getMongoURI(Event event) {
     if (SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_ADDRESS)) {

@@ -1,22 +1,18 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.attribute.GrpcTagResolver;
+import org.hypertrace.attribute.HttpTagResolver;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.eventfields.grpc.Response;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
-import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.traceenricher.tagresolver.GrpcTagResolver;
-import org.hypertrace.traceenricher.tagresolver.HttpTagResolver;
-import org.hypertrace.traceenricher.util.GrpcCodeMapper;
-import org.hypertrace.traceenricher.util.HttpCodeMapper;
+import org.hypertrace.attribute.GrpcCodeMapper;
+import org.hypertrace.attribute.HttpCodeMapper;
 
 import java.util.List;
 

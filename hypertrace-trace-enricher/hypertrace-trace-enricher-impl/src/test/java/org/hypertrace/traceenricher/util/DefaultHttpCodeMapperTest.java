@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import org.hypertrace.attribute.HttpCodeMapper;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
 import org.junit.jupiter.api.Test;
 

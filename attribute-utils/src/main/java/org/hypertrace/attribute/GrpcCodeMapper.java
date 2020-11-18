@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.util;
+package org.hypertrace.attribute;
 
 import io.grpc.Status;
 import io.grpc.Status.Code;

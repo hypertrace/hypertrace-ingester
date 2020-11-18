@@ -4,15 +4,13 @@ import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist
 
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.attribute.DbTagResolver;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
-import org.hypertrace.traceenricher.tagresolver.DbTagResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

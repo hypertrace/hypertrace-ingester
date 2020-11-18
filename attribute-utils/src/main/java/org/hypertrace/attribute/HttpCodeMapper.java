@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.util;
+package org.hypertrace.attribute;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;

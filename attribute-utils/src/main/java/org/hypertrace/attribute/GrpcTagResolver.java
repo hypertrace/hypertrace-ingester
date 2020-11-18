@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.tagresolver;
+package org.hypertrace.attribute;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -13,7 +13,6 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.CensusResponse;
 import org.hypertrace.core.span.constants.v1.Envoy;
 import org.hypertrace.core.span.constants.v1.Grpc;
-import org.hypertrace.traceenricher.util.GrpcCodeMapper;
 
 public class GrpcTagResolver {
 

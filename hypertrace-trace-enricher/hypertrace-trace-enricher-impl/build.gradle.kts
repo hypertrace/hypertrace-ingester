@@ -23,6 +23,8 @@ dependencies {
   implementation("org.slf4j:slf4j-api:1.7.30")
   implementation("net.sf.uadetector:uadetector-resources:2014.10")
 
+  implementation(project(":attribute-utils"))
+
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
   testImplementation("org.mockito:mockito-core:3.3.3")
 }

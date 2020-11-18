@@ -1,6 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.attribute.SpanTagResolver;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -8,17 +8,12 @@ import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.Envoy;
-import org.hypertrace.core.span.constants.v1.OCAttribute;
-import org.hypertrace.core.span.constants.v1.OCSpanKind;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
-import org.hypertrace.core.span.constants.v1.SpanNamePrefix;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.traceenricher.tagresolver.SpanTagResolver;
 import org.hypertrace.traceenricher.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
