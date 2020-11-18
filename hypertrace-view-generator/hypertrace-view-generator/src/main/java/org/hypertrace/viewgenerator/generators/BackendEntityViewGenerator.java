@@ -20,6 +20,9 @@ import org.hypertrace.viewgenerator.api.BackendEntityView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * View Generator for backend entities
+ * */
 public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityView> {
 
   private static final Logger LOG = LoggerFactory.getLogger(BackendEntityViewGenerator.class);
