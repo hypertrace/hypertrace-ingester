@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import com.typesafe.config.Config;
 import java.util.HashMap;
 import java.util.Map;
+import org.hypertrace.attribute.exceptions.ExceptionTagResolver;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.MetricValue;
@@ -72,10 +73,7 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
   private void enrichErrorDetails(Event event, Map<String, AttributeValue> attributeMap) {
     // Figure out if there are any errors in the event.
-    boolean hasError = attributeMap.containsKey(
-        RawSpanConstants.getValue(Error.ERROR_ERROR)) ||
-        // Check for OT error
-        attributeMap.containsKey(RawSpanConstants.getValue(OTSpanTag.OT_SPAN_TAG_ERROR)) ||
+    boolean hasError = ExceptionTagResolver.checkForError(attributeMap) ||
         Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL).equals(EnrichedSpanUtils.getStatus(event));
 
     if (hasError) {
