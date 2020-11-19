@@ -4,8 +4,9 @@ import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist
 
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.attribute.db.DbAttributeUtils;
+import org.hypertrace.attribute.db.OTelDbAttributes;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Redis;
@@ -25,19 +26,21 @@ public class RedisBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (!SpanAttributeUtils.containsAttributeKey(event,
-        RawSpanConstants.getValue(Redis.REDIS_CONNECTION))) {
+    Optional<String> backendURI = DbAttributeUtils.getRedisURI(event);
+
+    if (backendURI.isEmpty()) {
       return Optional.empty();
     }
-    String backendURI =
-        SpanAttributeUtils.getStringAttribute(event, RawSpanConstants.getValue(Redis.REDIS_CONNECTION));
-    if (StringUtils.isEmpty(backendURI)) {
+
+    if (StringUtils.isEmpty(backendURI.get())) {
       LOGGER.warn("Unable to infer a redis backend from event: {}", event);
       return Optional.empty();
     }
-    final Builder entityBuilder = getBackendEntityBuilder(BackendType.REDIS, backendURI, event);
+
+    final Builder entityBuilder = getBackendEntityBuilder(BackendType.REDIS, backendURI.get(), event);
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_COMMAND));
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_ARGS));
+    setAttributeIfExist(event, entityBuilder, OTelDbAttributes.DB_CONNECTION_STRING.getValue());
     return Optional.of(entityBuilder.build());
   }
 }

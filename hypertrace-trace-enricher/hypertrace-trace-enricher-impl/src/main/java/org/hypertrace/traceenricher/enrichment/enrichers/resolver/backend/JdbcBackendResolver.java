@@ -8,6 +8,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.attribute.db.DbAttributeUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
@@ -25,7 +26,6 @@ import org.slf4j.LoggerFactory;
 public class JdbcBackendResolver extends AbstractBackendResolver {
   private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBackendResolver.class);
   private static final String JDBC_EVENT_PREFIX = "jdbc";
-  private static final String SQL_URL_ATTR = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
   private static final RateLimiter INVALID_BACKEND_URL_LIMITER = RateLimiter.create(1 / 60d);
   private static final Splitter COLON_SPLITTER = Splitter.on(":");
 
@@ -35,16 +35,16 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (event.getEventName() != null && event.getEventName().startsWith(JDBC_EVENT_PREFIX) &&
-        SpanAttributeUtils.containsAttributeKey(event, SQL_URL_ATTR)) {
-      String backendUriStr = SpanAttributeUtils.getStringAttribute(event, SQL_URL_ATTR);
+    if (DbAttributeUtils.isSqlBackend(event)) {
+      Optional<String> optionalBackendUriStr = DbAttributeUtils.getSqlURI(event);
 
       // backendUriStr Sample value: "jdbc:mysql://mysql:3306/shop"
-      if (StringUtils.isEmpty(backendUriStr)) {
+      if (optionalBackendUriStr.isEmpty() || StringUtils.isEmpty(optionalBackendUriStr.get())) {
         LOGGER.warn("Unable to infer a jdbc backend from event: {}", event);
         return Optional.empty();
       }
 
+      String backendUriStr = optionalBackendUriStr.get();
       // Split the URL based on two slashes to extract the host and port values.
       String[] parts = backendUriStr.split("//");
       String dbType;
@@ -53,6 +53,11 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
         dbType = getDbType(parts[0]);
       } else {
         dbType = JDBC_EVENT_PREFIX;
+      }
+
+      Optional<String> optionalDbType = DbAttributeUtils.getDbTypeForOtelFormat(event);
+      if (optionalDbType.isPresent()) {
+        dbType = optionalDbType.get();
       }
 
       String path = null;
