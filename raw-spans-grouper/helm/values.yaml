@@ -111,6 +111,7 @@ rawSpansGrouperConfig:
         numStreamThreads: 4
         bootstrapServers: "bootstrap:9092"
         schemaRegistryUrl: "http://schema-registry-service:8081"
+        cacheMaxBytesBuffering: 16777216 # 16MB
         rocksdbBlockCacheSize: 33554432
         rocksdbWriteBufferSize: 8388608
         rocksdbMaxWriteBuffers: 2
@@ -119,7 +120,8 @@ rawSpansGrouperConfig:
         producerMaxRequestSize: 10485760
         defaultProductionExceptionHandler: "org.hypertrace.core.kafkastreams.framework.exceptionhandlers.IgnoreProductionExceptionHandler"
         ignoreProductionExceptionClasses: "org.apache.kafka.common.errors.RecordTooLargeException"
-        numStandbyReplicas: 1
+        numStandbyReplicas: 0 # Standby replicas are costly and needed only for applications which are high latency sensitive.
+                              # They will help incase task failovers. Required only on need basis.
         replicationFactor: 3
   span:
     groupby:
