@@ -35,4 +35,15 @@ data:
           port = 50061
         }
       }
+
+      EntitySpanEnricher {
+        entity.service.config = {
+          host = entity-service
+          port = 50061
+        }
+        attribute.service.config = {
+          host = attribute-service
+          port = 9012
+        }
+      }
     }

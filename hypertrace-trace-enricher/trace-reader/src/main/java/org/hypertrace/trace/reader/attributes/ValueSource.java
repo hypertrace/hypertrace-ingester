@@ -5,6 +5,7 @@ import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 
 interface ValueSource {
   Optional<LiteralValue> getAttribute(String key, AttributeKind attributeKind);
@@ -12,6 +13,8 @@ interface ValueSource {
   Optional<LiteralValue> getMetric(String key, AttributeKind attributeKind);
 
   Optional<ValueSource> sourceForScope(String scope);
+
+  GrpcRxExecutionContext executionContext();
 
   static ValueSource forSpan(StructuredTrace trace, Event span) {
     return new SpanValueSource(trace, span, DefaultValueCoercer.INSTANCE);

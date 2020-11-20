@@ -11,6 +11,7 @@ tasks.test {
 dependencies {
   implementation(project(":hypertrace-trace-enricher:enriched-span-constants"))
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-api"))
+  implementation(project(":hypertrace-trace-enricher:trace-reader"))
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
   implementation(project(":span-normalizer:raw-span-constants"))
@@ -22,6 +23,7 @@ dependencies {
   implementation("org.apache.commons:commons-lang3:3.10")
   implementation("org.slf4j:slf4j-api:1.7.30")
   implementation("net.sf.uadetector:uadetector-resources:2014.10")
+  implementation("io.reactivex.rxjava3:rxjava:3.0.6")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
   testImplementation("org.mockito:mockito-core:3.3.3")
