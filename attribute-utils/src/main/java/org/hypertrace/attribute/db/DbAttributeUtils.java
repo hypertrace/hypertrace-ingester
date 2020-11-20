@@ -59,7 +59,7 @@ public class DbAttributeUtils {
           OTEL_DB_SYSTEM).getValue())) {
         return Optional.empty();
       }
-      return getSqlURIForOtelFormat(event);
+      return getBackendURIForOtelFormat(event);
     }
 
     return Optional.empty();
@@ -82,7 +82,7 @@ public class DbAttributeUtils {
           event.getAttributes().getAttributeMap().get(OTEL_DB_SYSTEM).getValue())) {
         return Optional.empty();
       }
-      return getSqlURIForOtelFormat(event);
+      return getBackendURIForOtelFormat(event);
     }
     return Optional.empty();
   }
@@ -122,17 +122,18 @@ public class DbAttributeUtils {
     if (SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, SQL_URL));
     }
-    return getSqlURIForOtelFormat(event);
+    return getBackendURIForOtelFormat(event);
   }
 
-  public static Optional<String> getSqlURIForOtelFormat(Event event) {
-    return getSqlURIForOtelFormat(event.getAttributes().getAttributeMap());
+  public static Optional<String> getBackendURIForOtelFormat(Event event) {
+    return getBackendURIForOtelFormat(event.getAttributes().getAttributeMap());
   }
 
-  public static Optional<String> getSqlURIForOtelFormat(
+  public static Optional<String> getBackendURIForOtelFormat(
       Map<String, AttributeValue> attributeMap) {
-    if ((attributeMap.containsKey(OTEL_NET_PEER_NAME)
-        || attributeMap.containsKey(OTEL_NET_PEER_IP))
+    if (attributeMap.containsKey(OTEL_DB_CONNECTION_STRING)) {
+      return Optional.of(attributeMap.get(OTEL_DB_CONNECTION_STRING).getValue());
+    } else if (attributeMap.containsKey(OTEL_NET_PEER_NAME)
         && attributeMap.containsKey(OTEL_NET_PEER_PORT)) {
       String host = attributeMap.getOrDefault(
           OTEL_NET_PEER_NAME,
