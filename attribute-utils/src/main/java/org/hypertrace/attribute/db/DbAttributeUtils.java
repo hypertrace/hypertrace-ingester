@@ -32,19 +32,19 @@ public class DbAttributeUtils {
   private static final String OTHER_MONGO_OPERATION = RawSpanConstants.getValue(Mongo.MONGO_OPERATION);
   private static final String OTHER_MONGO_NAMESPACE = RawSpanConstants.getValue(Mongo.MONGO_NAMESPACE);
   private static final String OTEL_MONGO_COLLECTION = OTelDbAttributes.MONGODB_COLLECTION.getValue();
-  //private static final AttributeValue MONGO_DEFAULT_PORT = EnricherUtil.createAttributeValue(EnricherUtil.createAttributeValue("27017"));
 
   // redis specific attributes
   private static final String OTHER_REDIS_CONNECTION = RawSpanConstants.getValue(Redis.REDIS_CONNECTION);
-  private static final String OTEL_REDIS_DB_SYSTEM_VALUE = "redis";
-  //private static final AttributeValue REDIS_DEFAULT_PORT = EnricherUtil.createAttributeValue(EnricherUtil.createAttributeValue("6379"));
+  private static final String OTEL_REDIS_DB_SYSTEM_VALUE = OTelDbAttributes.REDIS_DB_SYSTEM_VALUE.getValue();
 
   // sql specific attributes
   private static final String[] OTEL_SQL_DB_SYSTEM_VALUES =
       {
-          "mysql", "oracle", "mssql",
-          "other_sql", "db2", "postgresql",
-          "redshift", "hive", "cloudscape", "hsqldb"
+          OTelDbAttributes.MYSQL_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.ORACLE_DB_SYSTEM_VALUE.getValue(),
+          OTelDbAttributes.MSSQL_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.DB2_DB_SYSTEM_VALUE.getValue(),
+          OTelDbAttributes.POSTGRESQL_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.REDSHIFT_DB_SYSTEM_VALUE.getValue(),
+          OTelDbAttributes.HIVE_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.CLOUDSCAPE_DB_SYSTEM_VALUE.getValue(),
+          OTelDbAttributes.HSQLDB_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.OTHER_SQL_DB_SYSTEM_VALUE.getValue()
       };
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final String SQL_URL = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
@@ -55,8 +55,7 @@ public class DbAttributeUtils {
     } else if (SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_URL)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_MONGO_URL));
     } else if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_SYSTEM)) {
-      if (!OTEL_MONGO_DB_SYSTEM_VALUE.equals(event.getAttributes().getAttributeMap().get(
-          OTEL_DB_SYSTEM).getValue())) {
+      if (!OTEL_MONGO_DB_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_SYSTEM))) {
         return Optional.empty();
       }
       return getBackendURIForOtelFormat(event);
@@ -65,11 +64,11 @@ public class DbAttributeUtils {
     return Optional.empty();
   }
 
-  public static List<String> getTagsForMongoOperation() {
+  public static List<String> getAttributeKeysForMongoOperation() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_OPERATION, OTEL_DB_OPERATION));
   }
 
-  public static List<String> getTagsForMongoNamespace() {
+  public static List<String> getAttributeKeysForMongoNamespace() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_MONGO_COLLECTION, OTHER_MONGO_NAMESPACE));
   }
 
@@ -78,8 +77,7 @@ public class DbAttributeUtils {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_REDIS_CONNECTION));
     }
     if (event.getAttributes().getAttributeMap().containsKey(OTEL_DB_SYSTEM)) {
-      if (!OTEL_REDIS_DB_SYSTEM_VALUE.equals(
-          event.getAttributes().getAttributeMap().get(OTEL_DB_SYSTEM).getValue())) {
+      if (!OTEL_REDIS_DB_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_SYSTEM))) {
         return Optional.empty();
       }
       return getBackendURIForOtelFormat(event);
@@ -100,9 +98,8 @@ public class DbAttributeUtils {
     if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_SYSTEM)) {
       return Arrays
           .stream(OTEL_SQL_DB_SYSTEM_VALUES)
-          .anyMatch(
-              v -> v.equals(
-                  event.getAttributes().getAttributeMap().get(OTEL_DB_SYSTEM).getValue()));
+          .anyMatch(v -> v.equals(
+              SpanAttributeUtils.getStringAttribute(event, OTEL_DB_SYSTEM)));
     }
     return false;
   }

@@ -8,8 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.attribute.db.DbAttributeUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -35,14 +33,14 @@ public class MongoBackendResolver extends AbstractBackendResolver {
     }
 
     if (StringUtils.isEmpty(backendURI.get())) {
-      LOGGER.warn("Unable to infer a redis backend from event: {}", event);
+      LOGGER.warn("Unable to infer a mongo backend from event: {}", event);
       return Optional.empty();
     }
 
     final Builder entityBuilder = getBackendEntityBuilder(BackendType.MONGO, backendURI.get(), event);
     setAttributeIfExist(event, entityBuilder, RAW_MONGO_NAMESPACE);
-    setAttributeForFirstExistingKey(event, entityBuilder, DbAttributeUtils.getTagsForMongoNamespace());
-    setAttributeForFirstExistingKey(event, entityBuilder, DbAttributeUtils.getTagsForMongoOperation());
+    setAttributeForFirstExistingKey(event, entityBuilder, DbAttributeUtils.getAttributeKeysForMongoNamespace());
+    setAttributeForFirstExistingKey(event, entityBuilder, DbAttributeUtils.getAttributeKeysForMongoOperation());
     return Optional.of(entityBuilder.build());
   }
 }
