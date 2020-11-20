@@ -26,7 +26,7 @@ public class DbAttributeUtils {
   private static final String OTEL_NET_TRANSPORT = OTelDbAttributes.NET_TRANSPORT.getValue();
 
   // mongo specific attributes
-  private static final String OTEL_MONGO_DB_SYSTEM_VALUE = OTelDbAttributes.MONGODB_SYSTEM_VALUE.getValue();
+  private static final String OTEL_MONGO_DB_SYSTEM_VALUE = OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue();
   private static final String OTHER_MONGO_ADDRESS = RawSpanConstants.getValue(Mongo.MONGO_ADDRESS);
   private static final String OTHER_MONGO_URL = RawSpanConstants.getValue(Mongo.MONGO_URL);
   private static final String OTHER_MONGO_OPERATION = RawSpanConstants.getValue(Mongo.MONGO_OPERATION);

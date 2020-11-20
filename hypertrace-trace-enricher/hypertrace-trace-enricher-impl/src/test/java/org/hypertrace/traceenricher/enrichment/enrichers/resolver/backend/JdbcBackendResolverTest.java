@@ -1,11 +1,14 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
+import static org.hypertrace.traceenricher.TestUtil.buildAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
+import org.hypertrace.attribute.db.OTelDbAttributes;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -20,6 +23,7 @@ import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.traceenricher.TestUtil;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
@@ -94,5 +98,55 @@ public class JdbcBackendResolverTest {
             .getString());
     assertEquals("/webgoat",
         backendEntity.getAttributesMap().get(EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH)).getValue().getString());
+  }
+
+  @Test
+  public void testWithOtelFormatUrl() {
+    Event e = Event.newBuilder().setCustomerId("__default")
+        .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+        .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824")).setEnrichedAttributes(
+            Attributes.newBuilder().setAttributeMap(
+                Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
+        .setAttributes(Attributes.newBuilder().setAttributeMap(Map.of(
+            OTelDbAttributes.DB_CONNECTION_STRING.getValue(), buildAttributeValue("mysql://127.0.0.1:3306"),
+            OTelDbAttributes.DB_SYSTEM.getValue(), buildAttributeValue("mysql"),
+            "span.kind", buildAttributeValue("client"),
+            OTelDbAttributes.DB_STATEMENT.getValue(), buildAttributeValue("SELECT * from example.user"),
+            "k8s.pod_id", buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
+            "docker.container_id", buildAttributeValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
+            Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
+            buildAttributeValue("devcluster"),
+            Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
+            buildAttributeValue("hipstershop")
+        )).build())
+        .setEventName("jdbc.connection.prepare").setStartTimeMillis(1566869077746L)
+        .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
+            .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
+        .setEventRefList(
+            Collections.singletonList(
+                EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                    .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                    .setRefType(EventRefType.CHILD_OF).build())).build();
+
+    Entity backendEntity = jdbcBackendResolver.resolveEntity(e, structuredTraceGraph).get();
+
+    assertEquals("127.0.0.1:3306", backendEntity.getEntityName());
+    assertEquals(BackendType.JDBC.name(),
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(
+            BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
+            .getValue().getString());
+    assertEquals("127.0.0.1",
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
+            .getString());
+    assertEquals("3306",
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
+            .getString());
+    assertEquals("mysql",
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getRawSpanConstant(Sql.SQL_DB_TYPE)).getValue().getString());
+    assertEquals("jdbc.connection.prepare",
+        backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT)).getValue().getString());
+    assertEquals("62646630336466616266356337306638",
+        backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID)).getValue()
+            .getString());
   }
 }
