@@ -1,7 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.attributeutils.span.OTelSpanAttributes;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -14,6 +13,7 @@ import org.hypertrace.core.span.constants.v1.OCAttribute;
 import org.hypertrace.core.span.constants.v1.OCSpanKind;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.core.span.constants.v1.SpanNamePrefix;
+import org.hypertrace.telemetry.attribute.utils.span.OTelSpanAttributes;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;

@@ -5,11 +5,11 @@ import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist
 
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.attributeutils.db.DbAttributeUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
+import org.hypertrace.telemetry.attribute.utils.db.DbTelemetryAttributeUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.slf4j.Logger;
@@ -26,11 +26,11 @@ public class MongoBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (!DbAttributeUtils.isMongoBackend(event)) {
+    if (!DbTelemetryAttributeUtils.isMongoBackend(event)) {
       return Optional.empty();
     }
 
-    Optional<String> backendURI = DbAttributeUtils.getMongoURI(event);
+    Optional<String> backendURI = DbTelemetryAttributeUtils.getMongoURI(event);
 
     if (backendURI.isEmpty()) {
       return Optional.empty();
@@ -43,8 +43,8 @@ public class MongoBackendResolver extends AbstractBackendResolver {
 
     final Builder entityBuilder = getBackendEntityBuilder(BackendType.MONGO, backendURI.get(), event);
     setAttributeIfExist(event, entityBuilder, RAW_MONGO_NAMESPACE);
-    setAttributeForFirstExistingKey(event, entityBuilder, DbAttributeUtils.getAttributeKeysForMongoNamespace());
-    setAttributeForFirstExistingKey(event, entityBuilder, DbAttributeUtils.getAttributeKeysForMongoOperation());
+    setAttributeForFirstExistingKey(event, entityBuilder, DbTelemetryAttributeUtils.getAttributeKeysForMongoNamespace());
+    setAttributeForFirstExistingKey(event, entityBuilder, DbTelemetryAttributeUtils.getAttributeKeysForMongoOperation());
     return Optional.of(entityBuilder.build());
   }
 }

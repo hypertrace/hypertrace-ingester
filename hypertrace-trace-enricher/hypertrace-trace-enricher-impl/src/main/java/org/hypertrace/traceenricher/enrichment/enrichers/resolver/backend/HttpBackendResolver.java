@@ -2,20 +2,17 @@ package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValue;
 import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
-import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist;
 
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.attributeutils.http.HttpAttributeUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.telemetry.attribute.utils.http.HttpAttributeUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;

@@ -8,7 +8,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.attributeutils.db.DbAttributeUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -17,6 +16,7 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.telemetry.attribute.utils.db.DbTelemetryAttributeUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.slf4j.Logger;
@@ -34,8 +34,8 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (DbAttributeUtils.isSqlBackend(event)) {
-      Optional<String> optionalBackendUriStr = DbAttributeUtils.getSqlURI(event);
+    if (DbTelemetryAttributeUtils.isSqlBackend(event)) {
+      Optional<String> optionalBackendUriStr = DbTelemetryAttributeUtils.getSqlURI(event);
 
       // backendUriStr Sample value: "jdbc:mysql://mysql:3306/shop"
       if (optionalBackendUriStr.isEmpty() || StringUtils.isEmpty(optionalBackendUriStr.get())) {
@@ -54,7 +54,7 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
         dbType = JDBC_EVENT_PREFIX;
       }
 
-      Optional<String> optionalDbType = DbAttributeUtils.getDbTypeForOtelFormat(event);
+      Optional<String> optionalDbType = DbTelemetryAttributeUtils.getDbTypeForOtelFormat(event);
       if (optionalDbType.isPresent() && !StringUtils.isEmpty(optionalDbType.get())) {
         dbType = optionalDbType.get();
       }
