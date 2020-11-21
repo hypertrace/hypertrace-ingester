@@ -32,11 +32,7 @@ public class MongoBackendResolver extends AbstractBackendResolver {
 
     Optional<String> backendURI = DbTelemetryAttributeUtils.getMongoURI(event);
 
-    if (backendURI.isEmpty()) {
-      return Optional.empty();
-    }
-
-    if (StringUtils.isEmpty(backendURI.get())) {
+    if (backendURI.isEmpty() || StringUtils.isEmpty(backendURI.get())) {
       LOGGER.warn("Unable to infer a mongo backend from event: {}", event);
       return Optional.empty();
     }
