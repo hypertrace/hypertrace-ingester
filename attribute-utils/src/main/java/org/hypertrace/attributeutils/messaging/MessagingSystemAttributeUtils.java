@@ -1,4 +1,4 @@
-package org.hypertrace.attribute.messaging;
+package org.hypertrace.attributeutils.messaging;
 
 import java.util.ArrayList;
 import java.util.Arrays;

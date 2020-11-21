@@ -1,4 +1,4 @@
-package org.hypertrace.attribute.messaging;
+package org.hypertrace.attributeutils.messaging;
 
 /**
  * OTEL specific attributes for Messaging system

@@ -2,7 +2,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.attribute.messaging.MessagingSystemAttributeUtils;
+import org.hypertrace.attributeutils.messaging.MessagingSystemAttributeUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.Entity;

@@ -1,4 +1,4 @@
-package org.hypertrace.attribute.db;
+package org.hypertrace.attributeutils.db;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;

@@ -1,4 +1,4 @@
-package org.hypertrace.attribute.db;
+package org.hypertrace.attributeutils.db;
 
 /**
  * OTEL specific attributes for database

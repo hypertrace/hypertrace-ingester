@@ -1,6 +1,6 @@
-package org.hypertrace.attribute.db;
+package org.hypertrace.attributeutils.db;
 
-import static org.hypertrace.attribute.AttributeTestUtil.buildAttributeValue;
+import static org.hypertrace.attributeutils.AttributeTestUtil.buildAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.Optional;
-import org.hypertrace.attribute.AttributeTestUtil;
+import org.hypertrace.attributeutils.AttributeTestUtil;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;

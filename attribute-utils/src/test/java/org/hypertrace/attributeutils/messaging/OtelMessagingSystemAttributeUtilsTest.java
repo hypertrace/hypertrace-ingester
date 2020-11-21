@@ -1,8 +1,8 @@
-package org.hypertrace.attribute.messaging;
+package org.hypertrace.attributeutils.messaging;
 
 import java.util.Map;
 import java.util.Optional;
-import org.hypertrace.attribute.AttributeTestUtil;
+import org.hypertrace.attributeutils.AttributeTestUtil;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;

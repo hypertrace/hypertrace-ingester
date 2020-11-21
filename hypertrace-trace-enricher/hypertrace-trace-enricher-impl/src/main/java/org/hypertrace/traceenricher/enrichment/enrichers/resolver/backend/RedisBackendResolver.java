@@ -4,8 +4,8 @@ import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist
 
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.attribute.db.DbAttributeUtils;
-import org.hypertrace.attribute.db.OTelDbAttributes;
+import org.hypertrace.attributeutils.db.DbAttributeUtils;
+import org.hypertrace.attributeutils.db.OTelDbAttributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.span.constants.RawSpanConstants;
