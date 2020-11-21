@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import org.hypertrace.attributeutils.db.OTelDbAttributes;
+import org.hypertrace.attributeutils.span.OTelSpanAttributes;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -624,11 +625,11 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map
             .of( OTelDbAttributes.DB_SYSTEM.getValue(), buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
-                OTelDbAttributes.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
+                OTelSpanAttributes.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
                 OTelDbAttributes.MONGODB_COLLECTION.getValue(), buildAttributeValue("sampleshop.userReview"),
                 "span.kind", buildAttributeValue("client"),
                 OTelDbAttributes.DB_OPERATION.getValue(), buildAttributeValue("FindOperation"),
-                OTelDbAttributes.NET_PEER_PORT.getValue(), buildAttributeValue("27017"),
+                OTelSpanAttributes.NET_PEER_PORT.getValue(), buildAttributeValue("27017"),
                 Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), buildAttributeValue("devcluster"),
                 Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), buildAttributeValue("sampleshop")))
             .build())

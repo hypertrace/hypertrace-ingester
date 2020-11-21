@@ -1,10 +1,12 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValue;
+import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
 import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist;
 
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.attributeutils.http.HttpAttributeUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
@@ -51,8 +53,8 @@ public class HttpBackendResolver extends AbstractBackendResolver {
             EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
             createAttributeValue(path));
       }
-      setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Http.HTTP_METHOD));
-      setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Http.HTTP_REQUEST_METHOD));
+      setAttributeForFirstExistingKey(event, entityBuilder, HttpAttributeUtils.getAttributeKeysForHttpMethod());
+      setAttributeForFirstExistingKey(event, entityBuilder, HttpAttributeUtils.getAttributeKeysForHttpRequestMethod());
       return Optional.of(entityBuilder.build());
     }
     return Optional.empty();

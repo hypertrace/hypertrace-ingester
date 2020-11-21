@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.util;
+package org.hypertrace.attributeutils.rpc;
 
 import io.grpc.Status;
 import io.grpc.Status.Code;
@@ -7,7 +7,11 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Maps grpc code to status
+ */
 public class GrpcCodeMapper {
+
   private static final Logger LOG = LoggerFactory.getLogger(GrpcCodeMapper.class);
 
   public static String getMessage(String code) {

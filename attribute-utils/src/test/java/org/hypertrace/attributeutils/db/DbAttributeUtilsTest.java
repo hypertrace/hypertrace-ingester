@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.attributeutils.AttributeTestUtil;
+import org.hypertrace.attributeutils.span.OTelSpanAttributes;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -247,7 +248,7 @@ public class DbAttributeUtilsTest {
     // only ip is present
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.NET_PEER_IP.getValue(),
+            OTelSpanAttributes.NET_PEER_IP.getValue(),
             buildAttributeValue("127.0.0.1")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbAttributeUtils.getBackendURIForOtelFormat(e);
@@ -256,9 +257,9 @@ public class DbAttributeUtilsTest {
     // ip & host present
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.NET_PEER_IP.getValue(),
+            OTelSpanAttributes.NET_PEER_IP.getValue(),
             buildAttributeValue("127.0.0.1"),
-            OTelDbAttributes.NET_PEER_NAME.getValue(),
+            OTelSpanAttributes.NET_PEER_NAME.getValue(),
             buildAttributeValue("mysql.example.com")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbAttributeUtils.getBackendURIForOtelFormat(e);
@@ -267,11 +268,11 @@ public class DbAttributeUtilsTest {
     // host & port present
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.NET_PEER_IP.getValue(),
+            OTelSpanAttributes.NET_PEER_IP.getValue(),
             buildAttributeValue("127.0.0.1"),
-            OTelDbAttributes.NET_PEER_NAME.getValue(),
+            OTelSpanAttributes.NET_PEER_NAME.getValue(),
             buildAttributeValue("mysql.example.com"),
-            OTelDbAttributes.NET_PEER_PORT.getValue(),
+            OTelSpanAttributes.NET_PEER_PORT.getValue(),
             buildAttributeValue("3306")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbAttributeUtils.getBackendURIForOtelFormat(e);

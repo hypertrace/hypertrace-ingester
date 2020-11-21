@@ -1,13 +1,18 @@
-package org.hypertrace.traceenricher.util;
+package org.hypertrace.attributeutils.http;
 
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Unit test for {@link HttpCodeMapper}
+ */
 public class HttpCodeMapperTest {
+
   @Test
   public void testHttpCodeMapper() {
+
     // Verify Status Message.
     Assertions.assertEquals("OK", HttpCodeMapper.getMessage("200"));
     Assertions.assertEquals("Not Modified", HttpCodeMapper.getMessage("304"));

@@ -1,10 +1,14 @@
-package org.hypertrace.traceenricher.util;
+package org.hypertrace.attributeutils.rpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import org.hypertrace.attributeutils.rpc.GrpcCodeMapper;
+import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.engine.Constants;
 
 public class DefaultGrpcCodeMapperTest {
 
@@ -30,13 +34,13 @@ public class DefaultGrpcCodeMapperTest {
 
   @Test
   public void test_getState_successCode_shouldGetSuccess() {
-    assertEquals(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_SUCCESS),
+    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS),
         GrpcCodeMapper.getState("0"));
   }
 
   @Test
   public void test_getState_failCode_shouldGetFail() {
-    assertEquals(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL),
+    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL),
         GrpcCodeMapper.getState("5"));
   }
 }

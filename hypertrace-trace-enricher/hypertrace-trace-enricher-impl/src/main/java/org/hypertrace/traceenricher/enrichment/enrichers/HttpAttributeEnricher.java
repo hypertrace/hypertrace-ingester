@@ -26,7 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HttpAttributeEnricher extends AbstractTraceEnricher {
-  private static Logger LOG = LoggerFactory.getLogger(HttpAttributeEnricher.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpAttributeEnricher.class);
+
   private final static String HTTP_REQUEST_PATH_ATTR =
       EnrichedSpanConstants.getValue(Http.HTTP_REQUEST_PATH);
   private final static String HTTP_REQUEST_QUERY_PARAM_ATTR =
@@ -43,7 +44,7 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
       try {
         fullUrl = new URL(url);
       } catch (MalformedURLException e) {
-        LOG.warn("The url {} is not a valid format url", url);
+        LOGGER.warn("The url {} is not a valid format url", url);
       }
 
       if (fullUrl != null) {
@@ -99,7 +100,7 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
     try {
       return URLDecoder.decode(input, StandardCharsets.UTF_8);
     } catch (IllegalArgumentException e) {
-      LOG.error("Cannot decode the input {}", input, e);
+      LOGGER.error("Cannot decode the input {}", input, e);
       //Falling back to original input if it can't be decoded
       return input;
     }

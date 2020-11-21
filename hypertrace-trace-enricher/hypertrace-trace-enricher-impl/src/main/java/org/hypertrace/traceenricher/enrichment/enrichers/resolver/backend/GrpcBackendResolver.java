@@ -1,9 +1,11 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
+import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
 import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist;
 
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.attributeutils.rpc.RpcAttributeUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
@@ -42,7 +44,7 @@ public class GrpcBackendResolver extends AbstractBackendResolver {
         return Optional.empty();
       }
       final Builder entityBuilder = getBackendEntityBuilder(BackendType.GRPC, backendURI, event);
-      setAttributeIfExist(event, entityBuilder, Constants.getRawSpanConstant(Grpc.GRPC_METHOD));
+      setAttributeForFirstExistingKey(event, entityBuilder, RpcAttributeUtils.getAttributeKeysForGrpcMethod());
       return Optional.of(entityBuilder.build());
     }
     return Optional.empty();

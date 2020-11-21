@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.attributeutils.span.SpanTelemetryAttributeUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -22,10 +23,6 @@ public class DbAttributeUtils {
   private static final String OTEL_DB_SYSTEM = OTelDbAttributes.DB_SYSTEM.getValue();
   private static final String OTEL_DB_CONNECTION_STRING = OTelDbAttributes.DB_CONNECTION_STRING.getValue();
   private static final String OTEL_DB_OPERATION = OTelDbAttributes.DB_OPERATION.getValue();
-  private static final String OTEL_NET_PEER_IP = OTelDbAttributes.NET_PEER_IP.getValue();
-  private static final String OTEL_NET_PEER_PORT = OTelDbAttributes.NET_PEER_PORT.getValue();
-  private static final String OTEL_NET_PEER_NAME = OTelDbAttributes.NET_PEER_NAME.getValue();
-  private static final String OTEL_NET_TRANSPORT = OTelDbAttributes.NET_TRANSPORT.getValue();
 
   // mongo specific attributes
   private static final String OTEL_MONGO_DB_SYSTEM_VALUE = OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue();
@@ -156,17 +153,7 @@ public class DbAttributeUtils {
     if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_CONNECTION_STRING)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_CONNECTION_STRING));
     } else {
-      String host = SpanAttributeUtils.getStringAttributeWithDefault(
-          event, OTEL_NET_PEER_NAME,
-          SpanAttributeUtils.getStringAttribute(event, OTEL_NET_PEER_IP));
-      if (StringUtils.isBlank(host)) {
-        return Optional.empty();
-      }
-      if (SpanAttributeUtils.containsAttributeKey(event, OTEL_NET_PEER_PORT)) {
-        return Optional.of(String.format(
-            "%s:%s", host, SpanAttributeUtils.getStringAttribute(event, OTEL_NET_PEER_PORT)));
-      }
-      return Optional.of(host);
+      return SpanTelemetryAttributeUtils.getURIForOtelFormat(event);
     }
   }
 

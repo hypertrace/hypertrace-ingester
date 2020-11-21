@@ -17,8 +17,8 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.traceenricher.util.GrpcCodeMapper;
-import org.hypertrace.traceenricher.util.HttpCodeMapper;
+import org.hypertrace.attributeutils.rpc.GrpcCodeMapper;
+import org.hypertrace.attributeutils.http.HttpCodeMapper;
 
 import java.util.ArrayList;
 import java.util.List;
