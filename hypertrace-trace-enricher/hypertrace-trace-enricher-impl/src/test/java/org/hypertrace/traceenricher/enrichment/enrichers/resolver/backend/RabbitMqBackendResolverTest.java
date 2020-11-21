@@ -6,7 +6,6 @@ import com.google.common.base.Joiner;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
-import javax.print.attribute.standard.MediaSize.NA;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;

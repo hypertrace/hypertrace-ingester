@@ -56,7 +56,7 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
       }
 
       Optional<String> optionalDbType = DbAttributeUtils.getDbTypeForOtelFormat(event);
-      if (optionalDbType.isPresent()) {
+      if (optionalDbType.isPresent() && !StringUtils.isEmpty(optionalDbType.get())) {
         dbType = optionalDbType.get();
       }
 

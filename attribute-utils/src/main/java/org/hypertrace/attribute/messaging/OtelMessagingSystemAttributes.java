@@ -1,5 +1,8 @@
 package org.hypertrace.attribute.messaging;
 
+/**
+ * OTEL specific attributes for Messaging system
+ */
 public enum OtelMessagingSystemAttributes {
   MESSAGING_SYSTEM("messaging.system"),
   MESSAGING_URL("messaging.url"),

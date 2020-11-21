@@ -1,5 +1,8 @@
 package org.hypertrace.attribute.db;
 
+/**
+ * OTEL specific attributes for database
+ */
 public enum OTelDbAttributes {
   DB_SYSTEM("db.system"),
   DB_CONNECTION_STRING("db.connection_string"),

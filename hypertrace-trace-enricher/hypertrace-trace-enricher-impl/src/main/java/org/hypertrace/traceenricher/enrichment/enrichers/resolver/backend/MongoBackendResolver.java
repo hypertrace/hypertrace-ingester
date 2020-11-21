@@ -26,6 +26,10 @@ public class MongoBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
+    if (!DbAttributeUtils.isMongoBackend(event)) {
+      return Optional.empty();
+    }
+
     Optional<String> backendURI = DbAttributeUtils.getMongoURI(event);
 
     if (backendURI.isEmpty()) {

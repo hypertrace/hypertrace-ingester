@@ -26,6 +26,10 @@ public class RedisBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
+    if (!DbAttributeUtils.isRedisBackend(event)) {
+      return Optional.empty();
+    }
+
     Optional<String> backendURI = DbAttributeUtils.getRedisURI(event);
 
     if (backendURI.isEmpty()) {

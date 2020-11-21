@@ -9,14 +9,21 @@ import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.RabbitMq;
 
+/**
+ * Utility class to fetch messaging system span attributes
+ */
 public class MessagingSystemAttributeUtils {
 
   private static final List<String> RABBITMQ_ROUTING_KEYS =
       new ArrayList<>(Arrays.asList(
-          OtelMessagingSystemAttributes.RABBITMQ_ROUTING_KEY.getValue(),
-          RawSpanConstants.getValue(RabbitMq.RABBIT_MQ_ROUTING_KEY)
+          RawSpanConstants.getValue(RabbitMq.RABBIT_MQ_ROUTING_KEY),
+          OtelMessagingSystemAttributes.RABBITMQ_ROUTING_KEY.getValue()
   ));
 
+  /**
+   * @param event Object encapsulating span data
+   * @return Routing key for Rabbit mq messaging system
+   */
   public static Optional<String> getRabbitMqRoutingKey(Event event) {
     return Optional.ofNullable(SpanAttributeUtils.getFirstAvailableStringAttribute(
         event, RABBITMQ_ROUTING_KEYS));
