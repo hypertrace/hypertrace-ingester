@@ -1,4 +1,4 @@
-package org.hypertrace.attributeutils;
+package org.hypertrace.telemetry.attribute.utils;
 
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;

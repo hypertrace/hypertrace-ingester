@@ -1,4 +1,4 @@
-package org.hypertrace.attributeutils.messaging;
+package org.hypertrace.telemetry.attribute.utils.messaging;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,12 +12,12 @@ import org.hypertrace.core.span.constants.v1.RabbitMq;
 /**
  * Utility class to fetch messaging system span attributes
  */
-public class MessagingSystemAttributeUtils {
+public class MessagingTelemetryAttributeUtils {
 
   private static final List<String> RABBITMQ_ROUTING_KEYS =
       new ArrayList<>(Arrays.asList(
           RawSpanConstants.getValue(RabbitMq.RABBIT_MQ_ROUTING_KEY),
-          OtelMessagingSystemAttributes.RABBITMQ_ROUTING_KEY.getValue()
+          OtelMessagingAttributes.RABBITMQ_ROUTING_KEY.getValue()
   ));
 
   /**

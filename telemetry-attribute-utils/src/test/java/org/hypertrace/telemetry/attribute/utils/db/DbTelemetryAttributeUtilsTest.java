@@ -1,6 +1,5 @@
-package org.hypertrace.attributeutils.db;
+package org.hypertrace.telemetry.attribute.utils.db;
 
-import static org.hypertrace.attributeutils.AttributeTestUtil.buildAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.Optional;
-import org.hypertrace.attributeutils.AttributeTestUtil;
+import org.hypertrace.telemetry.attribute.utils.AttributeTestUtil;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -19,9 +18,9 @@ import org.hypertrace.core.span.constants.v1.Sql;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit test for {@link DbAttributeUtils}
+ * Unit test for {@link DbTelemetryAttributeUtils}
  */
-public class DbAttributeUtilsTest {
+public class DbTelemetryAttributeUtilsTest {
 
   @Test
   public void isMongoBackend() {
@@ -30,46 +29,46 @@ public class DbAttributeUtilsTest {
     Attributes attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_SYSTEM.getValue(),
-            buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
+            AttributeTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    boolean v = DbAttributeUtils.isMongoBackend(e);
+    boolean v = DbTelemetryAttributeUtils.isMongoBackend(e);
     assertTrue(v);
 
     // otel format, dbsystem is not mongo
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_SYSTEM.getValue(),
-            buildAttributeValue(OTelDbAttributes.MYSQL_DB_SYSTEM_VALUE.getValue()),
+            AttributeTestUtil.buildAttributeValue(OTelDbAttributes.MYSQL_DB_SYSTEM_VALUE.getValue()),
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.isMongoBackend(e);
+    v = DbTelemetryAttributeUtils.isMongoBackend(e);
     assertFalse(v);
 
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Mongo.MONGO_ADDRESS),
-            buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.isMongoBackend(e);
+    v = DbTelemetryAttributeUtils.isMongoBackend(e);
     assertTrue(v);
 
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Mongo.MONGO_URL),
-            buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.isMongoBackend(e);
+    v = DbTelemetryAttributeUtils.isMongoBackend(e);
     assertTrue(v);
 
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             "span.kind",
-            buildAttributeValue("client")));
+            AttributeTestUtil.buildAttributeValue("client")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.isMongoBackend(e);
+    v = DbTelemetryAttributeUtils.isMongoBackend(e);
     assertFalse(v);
   }
 
@@ -81,29 +80,29 @@ public class DbAttributeUtilsTest {
     Attributes attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_SYSTEM.getValue(),
-            buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
+            AttributeTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbAttributeUtils.getMongoURI(e);
+    Optional<String> v = DbTelemetryAttributeUtils.getMongoURI(e);
     assertEquals("mongo:27017", v.get());
 
     // mongo url key is present
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Mongo.MONGO_URL),
-            buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.getMongoURI(e);
+    v = DbTelemetryAttributeUtils.getMongoURI(e);
     assertEquals("mongo:27017", v.get());
 
     // mongo address is present
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Mongo.MONGO_ADDRESS),
-            buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.getMongoURI(e);
+    v = DbTelemetryAttributeUtils.getMongoURI(e);
     assertEquals("mongo:27017", v.get());
   }
 
@@ -114,29 +113,29 @@ public class DbAttributeUtilsTest {
     Attributes attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Redis.REDIS_CONNECTION),
-            buildAttributeValue("127.0.0.1:4562")));
+            AttributeTestUtil.buildAttributeValue("127.0.0.1:4562")));
     when(e.getAttributes()).thenReturn(attributes);
-    boolean v = DbAttributeUtils.isRedisBackend(e);
+    boolean v = DbTelemetryAttributeUtils.isRedisBackend(e);
     assertTrue(v);
 
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_SYSTEM.getValue(),
-            buildAttributeValue(OTelDbAttributes.REDIS_DB_SYSTEM_VALUE.getValue()),
+            AttributeTestUtil.buildAttributeValue(OTelDbAttributes.REDIS_DB_SYSTEM_VALUE.getValue()),
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.isRedisBackend(e);
+    v = DbTelemetryAttributeUtils.isRedisBackend(e);
     assertTrue(v);
 
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_SYSTEM.getValue(),
-            buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
+            AttributeTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.isRedisBackend(e);
+    v = DbTelemetryAttributeUtils.isRedisBackend(e);
     assertFalse(v);
   }
 
@@ -147,18 +146,18 @@ public class DbAttributeUtilsTest {
     Attributes attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Redis.REDIS_CONNECTION),
-            buildAttributeValue("127.0.0.1:4562")));
+            AttributeTestUtil.buildAttributeValue("127.0.0.1:4562")));
     when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbAttributeUtils.getRedisURI(e);
+    Optional<String> v = DbTelemetryAttributeUtils.getRedisURI(e);
     assertEquals("127.0.0.1:4562", v.get());
 
     // sql url not present, use db connection string
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            buildAttributeValue("mysql://127.0.0.1:4562")));
+            AttributeTestUtil.buildAttributeValue("mysql://127.0.0.1:4562")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.getRedisURI(e);
+    v = DbTelemetryAttributeUtils.getRedisURI(e);
     assertEquals("mysql://127.0.0.1:4562", v.get());
   }
 
@@ -169,14 +168,14 @@ public class DbAttributeUtilsTest {
     Attributes attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Sql.SQL_SQL_URL),
-            buildAttributeValue("127.0.0.1:3306")));
+            AttributeTestUtil.buildAttributeValue("127.0.0.1:3306")));
     when(e.getAttributes()).thenReturn(attributes);
     when(e.getEventName()).thenReturn("jdbc:mysql");
-    boolean v = DbAttributeUtils.isSqlBackend(e);
+    boolean v = DbTelemetryAttributeUtils.isSqlBackend(e);
     assertTrue(v);
 
     when(e.getEventName()).thenReturn("hsql:mysql");
-    v = DbAttributeUtils.isSqlBackend(e);
+    v = DbTelemetryAttributeUtils.isSqlBackend(e);
     assertFalse(v);
   }
 
@@ -187,17 +186,17 @@ public class DbAttributeUtilsTest {
     Attributes attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_SYSTEM.getValue(),
-            buildAttributeValue(OTelDbAttributes.DB2_DB_SYSTEM_VALUE.getValue())));
+            AttributeTestUtil.buildAttributeValue(OTelDbAttributes.DB2_DB_SYSTEM_VALUE.getValue())));
     when(e.getAttributes()).thenReturn(attributes);
-    boolean v = DbAttributeUtils.isSqlTypeBackendForOtelFormat(e);
+    boolean v = DbTelemetryAttributeUtils.isSqlTypeBackendForOtelFormat(e);
     assertTrue(v);
 
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_SYSTEM.getValue(),
-            buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue())));
+            AttributeTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue())));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.isSqlTypeBackendForOtelFormat(e);
+    v = DbTelemetryAttributeUtils.isSqlTypeBackendForOtelFormat(e);
     assertFalse(v);
   }
 
@@ -208,27 +207,27 @@ public class DbAttributeUtilsTest {
     Attributes attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Sql.SQL_SQL_URL),
-            buildAttributeValue("127.0.0.1:3306")));
+            AttributeTestUtil.buildAttributeValue("127.0.0.1:3306")));
     when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbAttributeUtils.getSqlURI(e);
+    Optional<String> v = DbTelemetryAttributeUtils.getSqlURI(e);
     assertEquals("127.0.0.1:3306", v.get());
 
     // sql url not present, use db connection string
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            buildAttributeValue("mysql://127.0.0.1:3306")));
+            AttributeTestUtil.buildAttributeValue("mysql://127.0.0.1:3306")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.getSqlURI(e);
+    v = DbTelemetryAttributeUtils.getSqlURI(e);
     assertEquals("mysql://127.0.0.1:3306", v.get());
 
     // no sql related attributes present
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             "span.kind",
-            buildAttributeValue("clinet")));
+            AttributeTestUtil.buildAttributeValue("clinet")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.getSqlURI(e);
+    v = DbTelemetryAttributeUtils.getSqlURI(e);
     assertTrue(v.isEmpty());
   }
 
@@ -239,42 +238,42 @@ public class DbAttributeUtilsTest {
     Attributes attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            buildAttributeValue("mysql://127.0.0.1:3306")));
+            AttributeTestUtil.buildAttributeValue("mysql://127.0.0.1:3306")));
     when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbAttributeUtils.getBackendURIForOtelFormat(e);
+    Optional<String> v = DbTelemetryAttributeUtils.getBackendURIForOtelFormat(e);
     assertEquals("mysql://127.0.0.1:3306", v.get());
 
     // only ip is present
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.NET_PEER_IP.getValue(),
-            buildAttributeValue("127.0.0.1")));
+            AttributeTestUtil.buildAttributeValue("127.0.0.1")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.getBackendURIForOtelFormat(e);
+    v = DbTelemetryAttributeUtils.getBackendURIForOtelFormat(e);
     assertEquals("127.0.0.1", v.get());
 
     // ip & host present
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.NET_PEER_IP.getValue(),
-            buildAttributeValue("127.0.0.1"),
+            AttributeTestUtil.buildAttributeValue("127.0.0.1"),
             OTelDbAttributes.NET_PEER_NAME.getValue(),
-            buildAttributeValue("mysql.example.com")));
+            AttributeTestUtil.buildAttributeValue("mysql.example.com")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.getBackendURIForOtelFormat(e);
+    v = DbTelemetryAttributeUtils.getBackendURIForOtelFormat(e);
     assertEquals("mysql.example.com", v.get());
 
     // host & port present
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.NET_PEER_IP.getValue(),
-            buildAttributeValue("127.0.0.1"),
+            AttributeTestUtil.buildAttributeValue("127.0.0.1"),
             OTelDbAttributes.NET_PEER_NAME.getValue(),
-            buildAttributeValue("mysql.example.com"),
+            AttributeTestUtil.buildAttributeValue("mysql.example.com"),
             OTelDbAttributes.NET_PEER_PORT.getValue(),
-            buildAttributeValue("3306")));
+            AttributeTestUtil.buildAttributeValue("3306")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.getBackendURIForOtelFormat(e);
+    v = DbTelemetryAttributeUtils.getBackendURIForOtelFormat(e);
     assertEquals("mysql.example.com:3306", v.get());
   }
 
@@ -284,23 +283,23 @@ public class DbAttributeUtilsTest {
     Attributes attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_SYSTEM.getValue(),
-            buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue())));
+            AttributeTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue())));
     when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbAttributeUtils.getDbTypeForOtelFormat(e);
+    Optional<String> v = DbTelemetryAttributeUtils.getDbTypeForOtelFormat(e);
     assertEquals(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue(), v.get());
 
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_SYSTEM.getValue(),
-            buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue())));
+            AttributeTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue())));
     when(e.getAttributes()).thenReturn(null);
     when(e.getEnrichedAttributes()).thenReturn(attributes);
-    v = DbAttributeUtils.getDbTypeForOtelFormat(e);
+    v = DbTelemetryAttributeUtils.getDbTypeForOtelFormat(e);
     assertEquals(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue(), v.get());
 
     when(e.getAttributes()).thenReturn(null);
     when(e.getEnrichedAttributes()).thenReturn(null);
-    v = DbAttributeUtils.getDbTypeForOtelFormat(e);
+    v = DbTelemetryAttributeUtils.getDbTypeForOtelFormat(e);
     assertTrue(v.isEmpty());
   }
 }

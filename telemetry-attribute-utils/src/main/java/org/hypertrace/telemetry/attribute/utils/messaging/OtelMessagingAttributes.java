@@ -1,9 +1,9 @@
-package org.hypertrace.attributeutils.messaging;
+package org.hypertrace.telemetry.attribute.utils.messaging;
 
 /**
  * OTEL specific attributes for Messaging system
  */
-public enum OtelMessagingSystemAttributes {
+public enum OtelMessagingAttributes {
   MESSAGING_SYSTEM("messaging.system"),
   MESSAGING_URL("messaging.url"),
   RABBITMQ_MESSAGING_SYSTEM_VALUE("rabbitmq"),
@@ -11,7 +11,7 @@ public enum OtelMessagingSystemAttributes {
 
   private final String value;
 
-  OtelMessagingSystemAttributes(String value) {
+  OtelMessagingAttributes(String value) {
     this.value = value;
   }
 

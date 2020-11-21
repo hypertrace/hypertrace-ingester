@@ -1,8 +1,8 @@
-package org.hypertrace.attributeutils.messaging;
+package org.hypertrace.telemetry.attribute.utils.messaging;
 
 import java.util.Map;
 import java.util.Optional;
-import org.hypertrace.attributeutils.AttributeTestUtil;
+import org.hypertrace.telemetry.attribute.utils.AttributeTestUtil;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -15,9 +15,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit test for {@link OtelMessagingSystemAttributes}
+ * Unit test for {@link OtelMessagingAttributes}
  */
-public class OtelMessagingSystemAttributeUtilsTest {
+public class OtelMessagingTelemetryAttributeUtilsTest {
 
   @Test
   public void testGetRabbitMqRoutingKey() {
@@ -25,9 +25,9 @@ public class OtelMessagingSystemAttributeUtilsTest {
     // otel format
     String routingKey = "otelRoutingKey";
     Attributes attributes = AttributeTestUtil.buildAttributes(
-        Map.of(OtelMessagingSystemAttributes.RABBITMQ_ROUTING_KEY.getValue(), AttributeTestUtil.buildAttributeValue(routingKey)));
+        Map.of(OtelMessagingAttributes.RABBITMQ_ROUTING_KEY.getValue(), AttributeTestUtil.buildAttributeValue(routingKey)));
     when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = MessagingSystemAttributeUtils.getRabbitMqRoutingKey(e);
+    Optional<String> v = MessagingTelemetryAttributeUtils.getRabbitMqRoutingKey(e);
     assertEquals(routingKey, v.get());
 
     // other format
@@ -35,14 +35,14 @@ public class OtelMessagingSystemAttributeUtilsTest {
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(RawSpanConstants.getValue(RabbitMq.RABBIT_MQ_ROUTING_KEY), AttributeTestUtil.buildAttributeValue(routingKey)));
     when(e.getAttributes()).thenReturn(attributes);
-    v = MessagingSystemAttributeUtils.getRabbitMqRoutingKey(e);
+    v = MessagingTelemetryAttributeUtils.getRabbitMqRoutingKey(e);
     assertEquals(routingKey, v.get());
 
     // routing key absent
     attributes = AttributeTestUtil.buildAttributes(
         Map.of("span.kind", AttributeTestUtil.buildAttributeValue("client")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = MessagingSystemAttributeUtils.getRabbitMqRoutingKey(e);
+    v = MessagingTelemetryAttributeUtils.getRabbitMqRoutingKey(e);
     assertTrue(v.isEmpty());
   }
 }
