@@ -43,13 +43,4 @@ public class HttpTelemetryAttributeUtils {
   public static List<String> getAttributeKeysForHttpRequestMethod() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_HTTP_REQUEST_METHOD));
   }
-
-  /**
-   * @return attribute keys for http status code
-   */
-  public static List<String> getAttributeKeysForHttpStatusCode() {
-    List<String> httpStatusCodeKeys = new ArrayList<>(Arrays.asList(OTHER_HTTP_STATUS_CODES));
-    httpStatusCodeKeys.add(OTEL_HTTP_STATUS_CODE);
-    return httpStatusCodeKeys;
-  }
 }

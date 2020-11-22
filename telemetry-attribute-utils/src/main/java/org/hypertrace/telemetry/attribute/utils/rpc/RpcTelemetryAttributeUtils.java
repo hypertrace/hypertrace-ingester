@@ -31,7 +31,7 @@ public class RpcTelemetryAttributeUtils {
   private static final String OTEL_RPC_SYSTEM_GRPC = OTelRpcAttributes.RPC_SYSTEM_VALUE_GRPC.getValue();
 
   private static final String OTHER_GRPC_HOST_PORT = RawSpanConstants.getValue(Grpc.GRPC_HOST_PORT);
-  private static final String OTHER_GRPC_METHOD = "grpc.method";
+  private static final String OTHER_GRPC_METHOD = RawSpanConstants.getValue(Grpc.GRPC_METHOD);
   private static final String[] OTHER_GRPC_STATUS_CODES =
       {
           RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_CODE),

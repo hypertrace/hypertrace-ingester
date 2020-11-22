@@ -10,6 +10,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.v1.Error;
+import org.hypertrace.telemetry.attribute.utils.error.OTelErrorAttributes;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
@@ -101,23 +102,41 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
         1.0d,
         e4.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)).getValue());
 
+    Event e5 = createMockEvent();
+    attributeValueMap = e5.getAttributes().getAttributeMap();
+    attributeValueMap.put(OTelErrorAttributes.EXCEPTION_TYPE.getValue().toLowerCase(), AttributeValueCreator.create(true));
+    enricher.enrichEvent(null, e5);
+    Assertions.assertEquals(
+        1.0d,
+        e5.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)).getValue());
+
+    Event e6 = createMockEvent();
+    attributeValueMap = e6.getAttributes().getAttributeMap();
+    attributeValueMap.put(OTelErrorAttributes.EXCEPTION_STACKTRACE.getValue().toLowerCase(), AttributeValueCreator.create(true));
+    enricher.enrichEvent(null, e6);
+    Assertions.assertEquals(
+        1.0d,
+        e6.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT)).getValue());
+
     StructuredTrace trace = createMockStructuredTrace();
-    when(trace.getEventList()).thenReturn(Lists.newArrayList(e1, e2, e3, e4));
+    when(trace.getEventList()).thenReturn(Lists.newArrayList(e1, e2, e3, e4, e5, e6));
     enricher.enrichEvent(trace, e1);
     enricher.enrichEvent(trace, e2);
     enricher.enrichEvent(trace, e3);
     enricher.enrichEvent(trace, e4);
+    enricher.enrichEvent(trace, e5);
+    enricher.enrichEvent(trace, e6);
     Assertions.assertEquals(
         1.0d,
         e4.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)).getValue()
     );
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
-        3.0d,
+        4.0d,
         trace.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS)).getValue()
     );
     Assertions.assertEquals(
-        1.0d,
+        2.0d,
         trace.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS)).getValue()
     );
 
@@ -130,11 +149,11 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
         AttributeValueCreator.create(Constants.getEnrichedSpanConstant(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY)));
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
-        3.0d,
+        4.0d,
         trace.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS)).getValue()
     );
     Assertions.assertEquals(
-        1.0d,
+        2.0d,
         trace.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS)).getValue()
     );
     Assertions.assertEquals("true",

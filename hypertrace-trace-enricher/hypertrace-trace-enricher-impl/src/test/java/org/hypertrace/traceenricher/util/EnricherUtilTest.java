@@ -5,10 +5,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
+import java.util.Map;
+import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.entity.data.service.v1.Entity;
+import org.hypertrace.entity.data.service.v1.Entity.Builder;
+import org.hypertrace.telemetry.attribute.utils.span.OTelSpanAttributes;
+import org.hypertrace.traceenricher.TestUtil;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class EnricherUtilTest {
+
   @Test
   public void testGrpcEventNames() {
     Event e1 = mock(Event.class);
@@ -23,5 +32,21 @@ public class EnricherUtilTest {
     when(e3.getEventName()).thenReturn("GET /products/browse");
     assertFalse(EnricherUtil.isSentGrpcEvent(e3));
     assertFalse(EnricherUtil.isReceivedGrpcEvent(e3));
+  }
+
+  @Test
+  public void testSetAttributeForFirstExistingKey() {
+    Event e = mock(Event.class);
+    Attributes attributes = Attributes.newBuilder().setAttributeMap(
+        Map.of(
+            "a",
+            TestUtil.buildAttributeValue("a-value"),
+            "b",
+            TestUtil.buildAttributeValue("b-value"))).build();
+    when(e.getAttributes()).thenReturn(attributes);
+
+    Builder entityBuilder = Entity.newBuilder();
+    EnricherUtil.setAttributeForFirstExistingKey(e, entityBuilder, Arrays.asList("a", "b", "c"));
+    Assertions.assertTrue(entityBuilder.getAttributesMap().containsKey("a"));
   }
 }
