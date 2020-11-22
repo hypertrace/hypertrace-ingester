@@ -16,6 +16,7 @@ import org.hypertrace.core.attribute.service.v1.AttributeType;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase;
@@ -45,28 +46,34 @@ class DefaultTraceEntityReader implements TraceEntityReader {
   @Override
   public Maybe<Entity> getAssociatedEntityForSpan(
       String entityType, StructuredTrace trace, Event span) {
-    return this.entityTypeClient
-        .get(entityType)
-        .flatMapMaybe(entityTypeDefinition -> this.getOrCreateAvroEntity(entityTypeDefinition, trace, span));
+    return spanTenantContext(span)
+        .wrapSingle(() -> this.entityTypeClient.get(entityType))
+        .flatMapMaybe(
+            entityTypeDefinition -> this.getOrCreateAvroEntity(entityTypeDefinition, trace, span));
   }
 
   @Override
   public Single<Map<String, Entity>> getAssociatedEntitiesForSpan(
       StructuredTrace trace, Event span) {
 
-    return this.entityTypeClient
-        .getAll()
-        .flatMapMaybe(entityType -> this.getOrCreateAvroEntity(entityType, trace, span))
-        .toMap(Entity::getEntityType)
-        .map(Collections::unmodifiableMap);
+    return spanTenantContext(span)
+        .wrapSingle(
+            () ->
+                this.entityTypeClient
+                    .getAll()
+                    .flatMapMaybe(entityType -> this.getOrCreateAvroEntity(entityType, trace, span))
+                    .toMap(Entity::getEntityType)
+                    .map(Collections::unmodifiableMap));
   }
 
   private Maybe<Entity> getOrCreateAvroEntity(
       EntityType entityType, StructuredTrace trace, Event span) {
     return this.buildEntity(entityType, trace, span)
-        .flatMapSingle(this.entityDataClient::getOrCreateEntity)
         .flatMapSingle(
-            entity -> convertToAvroEntity(span.getCustomerId(), entity));
+            entity ->
+                spanTenantContext(span)
+                    .wrapSingle(() -> this.entityDataClient.getOrCreateEntity(entity)))
+        .flatMapSingle(entity -> convertToAvroEntity(span.getCustomerId(), entity));
   }
 
   private Maybe<org.hypertrace.entity.data.service.v1.Entity> buildEntity(
@@ -96,8 +103,8 @@ class DefaultTraceEntityReader implements TraceEntityReader {
 
   private Maybe<Map<String, AttributeValue>> resolveAllAttributes(
       String scope, StructuredTrace trace, Event span) {
-    return this.attributeClient
-        .getAllInScope(scope)
+    return spanTenantContext(span)
+        .wrapSingle(() -> this.attributeClient.getAllInScope(scope))
         .flattenAsObservable(list -> list)
         .filter(attributeMetadata -> attributeMetadata.getType().equals(AttributeType.ATTRIBUTE))
         .flatMapMaybe(attributeMetadata -> this.resolveAttribute(attributeMetadata, trace, span))
@@ -121,5 +128,9 @@ class DefaultTraceEntityReader implements TraceEntityReader {
         .map(AttributeValue::getValue)
         .filter(value -> value.getTypeCase().equals(Value.TypeCase.STRING))
         .map(Value::getString);
+  }
+
+  private GrpcRxExecutionContext spanTenantContext(Event span) {
+    return GrpcRxExecutionContext.forTenantContext(span.getCustomerId());
   }
 }
