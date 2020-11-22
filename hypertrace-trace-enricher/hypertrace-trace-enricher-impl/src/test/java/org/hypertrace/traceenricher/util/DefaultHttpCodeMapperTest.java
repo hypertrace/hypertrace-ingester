@@ -1,4 +1,4 @@
-package org.hypertrace.telemetry.attribute.utils.http;
+package org.hypertrace.traceenricher.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -32,17 +32,17 @@ public class DefaultHttpCodeMapperTest {
 
   @Test
   public void test_getState_successCode_shouldGetSuccess() {
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS),
+    assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS),
         HttpCodeMapper.getState("200"));
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS),
+    assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS),
         HttpCodeMapper.getState("300"));
   }
 
   @Test
   public void test_getState_failCode_shouldGetFail() {
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL),
+    assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL),
         HttpCodeMapper.getState("400"));
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL),
+    assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL),
         HttpCodeMapper.getState("500"));
   }
 }

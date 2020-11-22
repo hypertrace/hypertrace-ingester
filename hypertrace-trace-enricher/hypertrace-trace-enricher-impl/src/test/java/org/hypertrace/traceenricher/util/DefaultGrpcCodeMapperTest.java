@@ -1,4 +1,4 @@
-package org.hypertrace.telemetry.attribute.utils.rpc;
+package org.hypertrace.traceenricher.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -32,13 +32,13 @@ public class DefaultGrpcCodeMapperTest {
 
   @Test
   public void test_getState_successCode_shouldGetSuccess() {
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS),
+    assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS),
         GrpcCodeMapper.getState("0"));
   }
 
   @Test
   public void test_getState_failCode_shouldGetFail() {
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL),
+    assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL),
         GrpcCodeMapper.getState("5"));
   }
 }

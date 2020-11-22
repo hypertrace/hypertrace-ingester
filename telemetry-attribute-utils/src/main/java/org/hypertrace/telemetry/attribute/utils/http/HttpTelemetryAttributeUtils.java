@@ -52,19 +52,4 @@ public class HttpTelemetryAttributeUtils {
     httpStatusCodeKeys.add(OTEL_HTTP_STATUS_CODE);
     return httpStatusCodeKeys;
   }
-
-  /**
-   * @param event Object encapsulating span data
-   * @param statusCode http status code value
-   * @return http status message either from span data or by mapping status code
-   */
-  public static String getHttpStatusMessage(Event event, String statusCode) {
-    String statusMessage = SpanAttributeUtils.getStringAttribute(
-        event,
-        OTHER_HTTP_RESPONSE_STATUS_MESSAGE);
-    if (statusMessage == null) {
-      statusMessage = HttpCodeMapper.getMessage(statusCode);
-    }
-    return statusMessage;
-  }
 }

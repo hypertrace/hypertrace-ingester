@@ -1,4 +1,4 @@
-package org.hypertrace.telemetry.attribute.utils.http;
+package org.hypertrace.traceenricher.util;
 
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;

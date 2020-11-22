@@ -1,4 +1,4 @@
-package org.hypertrace.telemetry.attribute.utils.rpc;
+package org.hypertrace.traceenricher.util;
 
 import io.grpc.Status;
 import io.grpc.Status.Code;

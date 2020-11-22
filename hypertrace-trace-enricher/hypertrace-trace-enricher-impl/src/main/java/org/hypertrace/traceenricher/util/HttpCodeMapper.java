@@ -1,4 +1,4 @@
-package org.hypertrace.telemetry.attribute.utils.http;
+package org.hypertrace.traceenricher.util;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;

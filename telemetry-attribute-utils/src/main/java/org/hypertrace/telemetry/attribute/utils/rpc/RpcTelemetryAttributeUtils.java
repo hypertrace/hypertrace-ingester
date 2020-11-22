@@ -47,52 +47,6 @@ public class RpcTelemetryAttributeUtils {
   }
 
   /**
-   * @return attribute keys for grpc status message
-   */
-  public static List<String> getAttributeKeysForGrpcStatusMessage() {
-    List<String> grpcStatusMessageKeys = new ArrayList<>();
-    grpcStatusMessageKeys.add(RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE));
-    grpcStatusMessageKeys.add(RawSpanConstants.getValue(Envoy.ENVOY_GRPC_STATUS_MESSAGE));
-    return grpcStatusMessageKeys;
-  }
-
-  /**
-   * @return attribute keys for grpc status code
-   */
-  public static List<String> getAttributeKeysForGrpcStatusCode() {
-    List<String> grpcStatusCodeKeys = new ArrayList<>(Arrays.asList(OTHER_GRPC_STATUS_CODES));
-    grpcStatusCodeKeys.add(OTEL_GRPC_STATUS_CODE);
-    return grpcStatusCodeKeys;
-  }
-
-  /**
-   * @param event object encapsulating span data
-   * @param statusCode grpc status code
-   * @return grpc status message from either from span or by mapping status code
-   */
-  public static String getGrpcStatusMessage(Event event, String statusCode) {
-    String statusMessage = null;
-    if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-      Response response = event.getGrpc().getResponse();
-      if (StringUtils.isNotBlank(response.getStatusMessage())) {
-        statusMessage = response.getStatusMessage();
-      } else if (StringUtils.isNotBlank(response.getErrorMessage())) {
-        statusMessage = response.getErrorMessage();
-      }
-    } else {
-      statusMessage = SpanAttributeUtils.getFirstAvailableStringAttribute(
-          event, getAttributeKeysForGrpcStatusMessage());
-    }
-
-    // if application tracer doesn't send the status message, then, we'll use
-    // our default mapping
-    if (statusMessage == null) {
-      statusMessage = GrpcCodeMapper.getMessage(statusCode);
-    }
-    return statusMessage;
-  }
-
-  /**
    * @param event object encapsulating span data
    * @return if the span is for grpc based on OTel format
    */
