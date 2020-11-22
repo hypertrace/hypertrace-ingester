@@ -12,13 +12,13 @@ import org.hypertrace.core.span.constants.v1.Envoy;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
-import org.hypertrace.traceenricher.util.HttpCodeMapper;
-import org.hypertrace.traceenricher.util.GrpcCodeMapper;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.util.GrpcCodeMapper;
+import org.hypertrace.traceenricher.util.HttpCodeMapper;
 
 import java.util.ArrayList;
 import java.util.List;
