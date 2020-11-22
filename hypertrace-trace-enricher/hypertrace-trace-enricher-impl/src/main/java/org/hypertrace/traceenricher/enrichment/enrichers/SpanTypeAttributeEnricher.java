@@ -13,6 +13,7 @@ import org.hypertrace.core.span.constants.v1.OCAttribute;
 import org.hypertrace.core.span.constants.v1.OCSpanKind;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.core.span.constants.v1.SpanNamePrefix;
+import org.hypertrace.telemetry.attribute.utils.rpc.RpcTelemetryAttributeUtils;
 import org.hypertrace.telemetry.attribute.utils.span.OTelSpanAttributes;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
@@ -174,6 +175,10 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
   @Nonnull
   public static Protocol getGrpcProtocol(Event event) {
     Map<String, AttributeValue> attributeMap = event.getAttributes().getAttributeMap();
+
+    if (RpcTelemetryAttributeUtils.isRpcTypeGrpcForOTelFormat(event)) {
+      return Protocol.PROTOCOL_GRPC;
+    }
 
     if (event.getRpc() != null && event.getRpc().getSystem() != null) {
       String rpcSystem = event.getRpc().getSystem();

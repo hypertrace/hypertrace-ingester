@@ -12,7 +12,7 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
-import org.hypertrace.telemetry.attribute.utils.http.HttpAttributeUtils;
+import org.hypertrace.telemetry.attribute.utils.http.HttpTelemetryAttributeUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -50,8 +50,8 @@ public class HttpBackendResolver extends AbstractBackendResolver {
             EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
             createAttributeValue(path));
       }
-      setAttributeForFirstExistingKey(event, entityBuilder, HttpAttributeUtils.getAttributeKeysForHttpMethod());
-      setAttributeForFirstExistingKey(event, entityBuilder, HttpAttributeUtils.getAttributeKeysForHttpRequestMethod());
+      setAttributeForFirstExistingKey(event, entityBuilder, HttpTelemetryAttributeUtils.getAttributeKeysForHttpMethod());
+      setAttributeForFirstExistingKey(event, entityBuilder, HttpTelemetryAttributeUtils.getAttributeKeysForHttpRequestMethod());
       return Optional.of(entityBuilder.build());
     }
     return Optional.empty();

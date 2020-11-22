@@ -14,7 +14,7 @@ import org.hypertrace.core.span.constants.v1.OTSpanTag;
 /**
  * Utility class to fetch http span attributes
  */
-public class HttpAttributeUtils {
+public class HttpTelemetryAttributeUtils {
 
   // otel specific attributes
   private static final String OTEL_HTTP_METHOD = OTelHttpAttributes.HTTP_METHOD.getValue();
