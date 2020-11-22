@@ -16,7 +16,7 @@ public class HttpCodeMapper {
   private static final String HTTP_SUCCESS_CODE_PREFIX = "2";
   private static final String REDIRECTION_CODE_PREFIX = "3";
 
-  private static final Map<String, String> codeToMessage = new ImmutableMap.Builder<String, String>()
+  private static Map<String, String> codeToMessage = new ImmutableMap.Builder<String, String>()
       // Successful 2xx
       .put("200", "OK")
       .put("201", "Created")
