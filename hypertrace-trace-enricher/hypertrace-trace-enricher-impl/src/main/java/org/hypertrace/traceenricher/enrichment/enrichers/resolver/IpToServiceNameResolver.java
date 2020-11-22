@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * Helper class to resolve the IP address to a proper service name so that the logical services
  * are created based on names rather than IPs even though the host header might be an IP.
  */
-public class  IpToServiceNameResolver {
+public class IpToServiceNameResolver {
   private static final Logger LOG = LoggerFactory.getLogger(IpToServiceNameResolver.class);
 
   private static final String EXTERNAL_NAME_ATTR =
