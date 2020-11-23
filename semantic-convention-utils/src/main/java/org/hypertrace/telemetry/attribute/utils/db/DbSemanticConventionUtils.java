@@ -17,33 +17,33 @@ import org.hypertrace.telemetry.attribute.utils.span.SpanTelemetryAttributeUtils
 /**
  * Utility class to fetch database span attributes
  */
-public class DbTelemetryAttributeUtils {
+public class DbSemanticConventionUtils {
 
   // db related OTEL attributes
-  private static final String OTEL_DB_SYSTEM = OTelDbAttributes.DB_SYSTEM.getValue();
-  private static final String OTEL_DB_CONNECTION_STRING = OTelDbAttributes.DB_CONNECTION_STRING.getValue();
-  private static final String OTEL_DB_OPERATION = OTelDbAttributes.DB_OPERATION.getValue();
+  private static final String OTEL_DB_SYSTEM = OTelDbSemanticConventions.DB_SYSTEM.getValue();
+  private static final String OTEL_DB_CONNECTION_STRING = OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue();
+  private static final String OTEL_DB_OPERATION = OTelDbSemanticConventions.DB_OPERATION.getValue();
 
   // mongo specific attributes
-  private static final String OTEL_MONGO_DB_SYSTEM_VALUE = OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue();
+  private static final String OTEL_MONGO_DB_SYSTEM_VALUE = OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue();
   private static final String OTHER_MONGO_ADDRESS = RawSpanConstants.getValue(Mongo.MONGO_ADDRESS);
   private static final String OTHER_MONGO_URL = RawSpanConstants.getValue(Mongo.MONGO_URL);
   private static final String OTHER_MONGO_OPERATION = RawSpanConstants.getValue(Mongo.MONGO_OPERATION);
   private static final String OTHER_MONGO_NAMESPACE = RawSpanConstants.getValue(Mongo.MONGO_NAMESPACE);
-  private static final String OTEL_MONGO_COLLECTION = OTelDbAttributes.MONGODB_COLLECTION.getValue();
+  private static final String OTEL_MONGO_COLLECTION = OTelDbSemanticConventions.MONGODB_COLLECTION.getValue();
 
   // redis specific attributes
   private static final String OTHER_REDIS_CONNECTION = RawSpanConstants.getValue(Redis.REDIS_CONNECTION);
-  private static final String OTEL_REDIS_DB_SYSTEM_VALUE = OTelDbAttributes.REDIS_DB_SYSTEM_VALUE.getValue();
+  private static final String OTEL_REDIS_DB_SYSTEM_VALUE = OTelDbSemanticConventions.REDIS_DB_SYSTEM_VALUE.getValue();
 
   // sql specific attributes
   private static final String[] OTEL_SQL_DB_SYSTEM_VALUES =
       {
-          OTelDbAttributes.MYSQL_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.ORACLE_DB_SYSTEM_VALUE.getValue(),
-          OTelDbAttributes.MSSQL_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.DB2_DB_SYSTEM_VALUE.getValue(),
-          OTelDbAttributes.POSTGRESQL_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.REDSHIFT_DB_SYSTEM_VALUE.getValue(),
-          OTelDbAttributes.HIVE_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.CLOUDSCAPE_DB_SYSTEM_VALUE.getValue(),
-          OTelDbAttributes.HSQLDB_DB_SYSTEM_VALUE.getValue(), OTelDbAttributes.OTHER_SQL_DB_SYSTEM_VALUE.getValue()
+          OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.ORACLE_DB_SYSTEM_VALUE.getValue(),
+          OTelDbSemanticConventions.MSSQL_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.DB2_DB_SYSTEM_VALUE.getValue(),
+          OTelDbSemanticConventions.POSTGRESQL_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.REDSHIFT_DB_SYSTEM_VALUE.getValue(),
+          OTelDbSemanticConventions.HIVE_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.CLOUDSCAPE_DB_SYSTEM_VALUE.getValue(),
+          OTelDbSemanticConventions.HSQLDB_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.OTHER_SQL_DB_SYSTEM_VALUE.getValue()
       };
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final String SQL_URL = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
@@ -111,7 +111,7 @@ public class DbTelemetryAttributeUtils {
    * @param event Object encapsulating span data
    * @return check if the event is for a sql backend
    */
-  public static boolean isSqlBackend(Event event) {
+  static boolean isSqlBackend(Event event) {
     if (event.getEventName() != null
         && event.getEventName().startsWith(JDBC_EVENT_PREFIX)
         && SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
@@ -139,6 +139,9 @@ public class DbTelemetryAttributeUtils {
    * @return sql uri for the event
    */
   public static Optional<String> getSqlURI(Event event) {
+    if (!isSqlBackend(event)) {
+      return Optional.empty();
+    }
     if (SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, SQL_URL));
     }

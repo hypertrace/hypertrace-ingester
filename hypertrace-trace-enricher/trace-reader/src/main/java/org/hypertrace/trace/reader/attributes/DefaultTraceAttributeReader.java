@@ -25,18 +25,22 @@ class DefaultTraceAttributeReader implements TraceAttributeReader {
   @Override
   public Single<LiteralValue> getSpanValue(
       StructuredTrace trace, Event span, String attributeScope, String attributeKey) {
-    return this.getAttribute(attributeScope, attributeKey)
-        .flatMap(
-            definition -> this.valueResolver.resolve(ValueSource.forSpan(trace, span), definition));
+    ValueSource valueSource = ValueSource.forSpan(trace, span);
+    return this.getAttribute(valueSource, attributeScope, attributeKey)
+        .flatMap(definition -> this.valueResolver.resolve(valueSource, definition));
   }
 
   @Override
   public Single<LiteralValue> getTraceValue(StructuredTrace trace, String attributeKey) {
-    return this.getAttribute(TRACE_SCOPE, attributeKey)
-        .flatMap(definition -> this.valueResolver.resolve(ValueSource.forTrace(trace), definition));
+    ValueSource valueSource = ValueSource.forTrace(trace);
+    return this.getAttribute(valueSource, TRACE_SCOPE, attributeKey)
+        .flatMap(definition -> this.valueResolver.resolve(valueSource, definition));
   }
 
-  private Single<AttributeMetadata> getAttribute(String attributeScope, String attributeKey) {
-    return this.attributeClient.get(attributeScope, attributeKey);
+  private Single<AttributeMetadata> getAttribute(
+      ValueSource valueSource, String attributeScope, String attributeKey) {
+    return valueSource
+        .executionContext()
+        .wrapSingle(() -> this.attributeClient.get(attributeScope, attributeKey));
   }
 }

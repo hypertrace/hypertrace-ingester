@@ -10,8 +10,8 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
-import org.hypertrace.telemetry.attribute.utils.db.DbTelemetryAttributeUtils;
-import org.hypertrace.telemetry.attribute.utils.db.OTelDbAttributes;
+import org.hypertrace.telemetry.attribute.utils.db.DbSemanticConventionUtils;
+import org.hypertrace.telemetry.attribute.utils.db.OTelDbSemanticConventions;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.slf4j.Logger;
@@ -26,11 +26,11 @@ public class RedisBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (!DbTelemetryAttributeUtils.isRedisBackend(event)) {
+    if (!DbSemanticConventionUtils.isRedisBackend(event)) {
       return Optional.empty();
     }
 
-    Optional<String> backendURI = DbTelemetryAttributeUtils.getRedisURI(event);
+    Optional<String> backendURI = DbSemanticConventionUtils.getRedisURI(event);
 
     if (backendURI.isEmpty()) {
       return Optional.empty();
@@ -44,7 +44,7 @@ public class RedisBackendResolver extends AbstractBackendResolver {
     final Builder entityBuilder = getBackendEntityBuilder(BackendType.REDIS, backendURI.get(), event);
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_COMMAND));
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_ARGS));
-    setAttributeIfExist(event, entityBuilder, OTelDbAttributes.DB_CONNECTION_STRING.getValue());
+    setAttributeIfExist(event, entityBuilder, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
     return Optional.of(entityBuilder.build());
   }
 }

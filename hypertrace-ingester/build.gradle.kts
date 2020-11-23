@@ -37,9 +37,9 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
-  testImplementation("org.mockito:mockito-core:3.3.3")
-  testImplementation("org.junit-pioneer:junit-pioneer:0.9.0")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
+  testImplementation("org.mockito:mockito-core:3.6.0")
+  testImplementation("org.junit-pioneer:junit-pioneer:1.0.0")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
   testImplementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   testImplementation(project(":span-normalizer:span-normalizer-api"))

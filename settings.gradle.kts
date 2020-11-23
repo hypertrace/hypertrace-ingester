@@ -36,4 +36,4 @@ include("span-normalizer:span-normalizer-constants")
 
 // e2e pipeline
 include("hypertrace-ingester")
-include("telemetry-attribute-utils")
+include("semantic-convention-utils")
