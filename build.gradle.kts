@@ -23,5 +23,12 @@ subprojects {
       targetCompatibility = JavaVersion.VERSION_11
     }
   }
+
+  pluginManager.withPlugin("java-library") {
+    configure<JavaPluginExtension> {
+      sourceCompatibility = JavaVersion.VERSION_11
+      targetCompatibility = JavaVersion.VERSION_11
+    }
+  }
 }
 
