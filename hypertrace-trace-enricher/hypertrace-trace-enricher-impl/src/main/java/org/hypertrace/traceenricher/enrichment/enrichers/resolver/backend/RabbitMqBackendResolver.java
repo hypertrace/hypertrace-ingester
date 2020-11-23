@@ -6,7 +6,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
-import org.hypertrace.telemetry.attribute.utils.messaging.MessagingTelemetryAttributeUtils;
+import org.hypertrace.telemetry.attribute.utils.messaging.MessagingSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    Optional<String> routingKey = MessagingTelemetryAttributeUtils.getRabbitMqRoutingKey(event);
+    Optional<String> routingKey = MessagingSemanticConventionUtils.getRabbitMqRoutingKey(event);
 
     if (routingKey.isEmpty() || StringUtils.isEmpty(routingKey.get())) {
       LOGGER.warn("Unable to infer a rabbitmq backend from event: {}", event);

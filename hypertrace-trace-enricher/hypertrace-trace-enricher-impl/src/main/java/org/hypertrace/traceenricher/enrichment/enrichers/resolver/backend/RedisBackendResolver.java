@@ -10,7 +10,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
-import org.hypertrace.telemetry.attribute.utils.db.DbTelemetryAttributeUtils;
+import org.hypertrace.telemetry.attribute.utils.db.DbSemanticConventionUtils;
 import org.hypertrace.telemetry.attribute.utils.db.OTelDbAttributes;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
@@ -26,11 +26,11 @@ public class RedisBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (!DbTelemetryAttributeUtils.isRedisBackend(event)) {
+    if (!DbSemanticConventionUtils.isRedisBackend(event)) {
       return Optional.empty();
     }
 
-    Optional<String> backendURI = DbTelemetryAttributeUtils.getRedisURI(event);
+    Optional<String> backendURI = DbSemanticConventionUtils.getRedisURI(event);
 
     if (backendURI.isEmpty()) {
       return Optional.empty();

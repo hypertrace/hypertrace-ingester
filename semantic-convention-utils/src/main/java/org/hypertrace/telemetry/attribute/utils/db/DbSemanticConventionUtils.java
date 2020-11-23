@@ -16,7 +16,7 @@ import org.hypertrace.core.span.constants.v1.Sql;
 /**
  * Utility class to fetch database span attributes
  */
-public class DbTelemetryAttributeUtils {
+public class DbSemanticConventionUtils {
 
   // db related OTEL attributes
   private static final String OTEL_DB_SYSTEM = OTelDbAttributes.DB_SYSTEM.getValue();

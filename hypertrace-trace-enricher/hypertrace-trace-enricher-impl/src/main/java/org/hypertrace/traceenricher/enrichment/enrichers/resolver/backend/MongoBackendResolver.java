@@ -9,7 +9,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
-import org.hypertrace.telemetry.attribute.utils.db.DbTelemetryAttributeUtils;
+import org.hypertrace.telemetry.attribute.utils.db.DbSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.slf4j.Logger;
@@ -26,11 +26,11 @@ public class MongoBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (!DbTelemetryAttributeUtils.isMongoBackend(event)) {
+    if (!DbSemanticConventionUtils.isMongoBackend(event)) {
       return Optional.empty();
     }
 
-    Optional<String> backendURI = DbTelemetryAttributeUtils.getMongoURI(event);
+    Optional<String> backendURI = DbSemanticConventionUtils.getMongoURI(event);
 
     if (backendURI.isEmpty() || StringUtils.isEmpty(backendURI.get())) {
       LOGGER.warn("Unable to infer a mongo backend from event: {}", event);
@@ -39,8 +39,8 @@ public class MongoBackendResolver extends AbstractBackendResolver {
 
     final Builder entityBuilder = getBackendEntityBuilder(BackendType.MONGO, backendURI.get(), event);
     setAttributeIfExist(event, entityBuilder, RAW_MONGO_NAMESPACE);
-    setAttributeForFirstExistingKey(event, entityBuilder, DbTelemetryAttributeUtils.getAttributeKeysForMongoNamespace());
-    setAttributeForFirstExistingKey(event, entityBuilder, DbTelemetryAttributeUtils.getAttributeKeysForMongoOperation());
+    setAttributeForFirstExistingKey(event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoNamespace());
+    setAttributeForFirstExistingKey(event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
     return Optional.of(entityBuilder.build());
   }
 }
