@@ -1,6 +1,7 @@
 package org.hypertrace.trace.reader.attributes;
 
 import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributesWithKeyValue;
+import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributesWithKeyValues;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.buildMetricsWithKeyValue;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedEventBuilder;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedStructuredTraceBuilder;
@@ -11,12 +12,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.reactivex.rxjava3.core.Single;
+import java.util.Map;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
+import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.attribute.service.v1.Projection;
 import org.hypertrace.core.attribute.service.v1.ProjectionExpression;
 import org.hypertrace.core.attribute.service.v1.ProjectionOperator;
@@ -173,6 +176,77 @@ class DefaultValueResolverTest {
         stringLiteral("42coolString"),
         this.resolver
             .resolve(ValueSource.forSpan(this.mockStructuredTrace, span), projectionMetadata)
+            .blockingGet());
+  }
+
+  @Test
+  void resolvesExpressionProjectionsForStringEqualsAndConditional() {
+    AttributeMetadata projectionMetadata =
+        AttributeMetadata.newBuilder()
+            .setDefinition(
+                AttributeDefinition.newBuilder()
+                    .setProjection(
+                        Projection.newBuilder()
+                            .setExpression(
+                                ProjectionExpression.newBuilder()
+                                    .setOperator(ProjectionOperator.PROJECTION_OPERATOR_CONDITIONAL)
+                                    .addArguments(
+                                        Projection.newBuilder().setExpression(
+                                            ProjectionExpression.newBuilder()
+                                                .setOperator(ProjectionOperator.PROJECTION_OPERATOR_STRING_EQUALS)
+                                                .addArguments(Projection.newBuilder().setAttributeId("TEST_SCOPE.second"))
+                                                .addArguments(Projection.newBuilder().setLiteral(LiteralValue.newBuilder().setStringValue("foo")))
+                                        )
+                                    )
+                                    .addArguments(
+                                        Projection.newBuilder().setAttributeId("TEST_SCOPE.first"))
+                                    .addArguments(
+                                        Projection.newBuilder()
+                                            .setLiteral(LiteralValue.newBuilder().setStringValue("null")))
+                            )
+                    )
+            )
+            .build();
+
+    AttributeMetadata firstMetadata =
+        AttributeMetadata.newBuilder()
+            .setScopeString("TEST_SCOPE")
+            .setType(AttributeType.ATTRIBUTE)
+            .setValueKind(AttributeKind.TYPE_STRING)
+            .setDefinition(AttributeDefinition.newBuilder().setSourcePath("attrOnePath").build())
+            .build();
+    AttributeMetadata secondMetadata =
+        AttributeMetadata.newBuilder()
+            .setScopeString("TEST_SCOPE")
+            .setType(AttributeType.ATTRIBUTE)
+            .setValueKind(AttributeKind.TYPE_STRING)
+            .setDefinition(AttributeDefinition.newBuilder().setSourcePath("attrTwoPath").build())
+            .build();
+    when(this.mockAttributeClient.get("TEST_SCOPE.first")).thenReturn(Single.just(firstMetadata));
+    when(this.mockAttributeClient.get("TEST_SCOPE.second")).thenReturn(Single.just(secondMetadata));
+
+    Event span1 =
+        defaultedEventBuilder()
+            .setAttributes(buildAttributesWithKeyValues(
+                Map.of("attrOnePath", "coolString1", "attrTwoPath", "foo"))
+            )
+            .build();
+    Event span2 =
+        defaultedEventBuilder()
+            .setAttributes(buildAttributesWithKeyValues(
+                Map.of("attrOnePath", "coolString1", "attrTwoPath", "coolString2"))
+            )
+            .build();
+
+    assertEquals(
+        stringLiteral("coolString1"),
+        this.resolver
+            .resolve(ValueSource.forSpan(this.mockStructuredTrace, span1), projectionMetadata)
+            .blockingGet());
+    assertEquals(
+        stringLiteral("null"),
+        this.resolver
+            .resolve(ValueSource.forSpan(this.mockStructuredTrace, span2), projectionMetadata)
             .blockingGet());
   }
 
