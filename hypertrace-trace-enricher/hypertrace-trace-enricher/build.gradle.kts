@@ -58,11 +58,11 @@ dependencies {
   runtimeOnly("io.grpc:grpc-netty-shaded:1.33.1")
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
-  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
+  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
 
   testImplementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
-  testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
-  testImplementation("org.mockito:mockito-core:3.3.3")
-  testImplementation("org.junit-pioneer:junit-pioneer:0.9.0")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
+  testImplementation("org.mockito:mockito-core:3.6.0")
+  testImplementation("org.junit-pioneer:junit-pioneer:1.0.0")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
 }

@@ -6,6 +6,7 @@ import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 
 class SpanValueSource extends AvroBackedValueSource {
 
@@ -37,6 +38,11 @@ class SpanValueSource extends AvroBackedValueSource {
     return TRACE_SCOPE.equals(scope)
         ? Optional.of(ValueSource.forTrace(this.trace))
         : Optional.of(this);
+  }
+
+  @Override
+  public GrpcRxExecutionContext executionContext() {
+    return GrpcRxExecutionContext.forTenantContext(this.span.getCustomerId());
   }
 
   @Override

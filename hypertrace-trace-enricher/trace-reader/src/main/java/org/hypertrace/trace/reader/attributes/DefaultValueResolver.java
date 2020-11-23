@@ -85,8 +85,9 @@ class DefaultValueResolver implements ValueResolver {
   private Single<LiteralValue> resolveProjection(ValueSource valueSource, Projection projection) {
     switch (projection.getValueCase()) {
       case ATTRIBUTE_ID:
-        return this.attributeClient
-            .get(projection.getAttributeId())
+        return valueSource
+            .executionContext()
+            .wrapSingle(() -> this.attributeClient.get(projection.getAttributeId()))
             .flatMap(attributeMetadata -> this.resolve(valueSource, attributeMetadata));
       case LITERAL:
         return Single.just(projection.getLiteral());

@@ -40,6 +40,6 @@ dependencies {
   implementation("org.apache.avro:avro:1.9.2")
   implementation("org.apache.commons:commons-lang3:3.10")
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
-  testImplementation("org.mockito:mockito-core:3.3.3")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
+  testImplementation("org.mockito:mockito-core:3.6.0")
 }
