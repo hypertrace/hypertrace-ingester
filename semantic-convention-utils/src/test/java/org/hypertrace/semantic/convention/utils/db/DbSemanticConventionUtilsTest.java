@@ -1,4 +1,4 @@
-package org.hypertrace.telemetry.attribute.utils.db;
+package org.hypertrace.semantic.convention.utils.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.Optional;
-import org.hypertrace.telemetry.attribute.utils.SemanticConventionTestUtil;
+import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;

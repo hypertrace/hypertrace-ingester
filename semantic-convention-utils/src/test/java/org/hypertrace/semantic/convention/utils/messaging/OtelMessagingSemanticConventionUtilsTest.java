@@ -1,8 +1,8 @@
-package org.hypertrace.telemetry.attribute.utils.messaging;
+package org.hypertrace.semantic.convention.utils.messaging;
 
 import java.util.Map;
 import java.util.Optional;
-import org.hypertrace.telemetry.attribute.utils.SemanticConventionTestUtil;
+import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;

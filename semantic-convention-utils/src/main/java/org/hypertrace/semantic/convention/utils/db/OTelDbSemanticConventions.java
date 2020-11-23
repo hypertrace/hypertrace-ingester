@@ -1,4 +1,4 @@
-package org.hypertrace.telemetry.attribute.utils.db;
+package org.hypertrace.semantic.convention.utils.db;
 
 /**
  * OTEL specific attributes for database

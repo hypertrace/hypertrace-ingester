@@ -1,4 +1,4 @@
-package org.hypertrace.telemetry.attribute.utils.messaging;
+package org.hypertrace.semantic.convention.utils.messaging;
 
 /**
  * OTEL specific attributes for Messaging system
