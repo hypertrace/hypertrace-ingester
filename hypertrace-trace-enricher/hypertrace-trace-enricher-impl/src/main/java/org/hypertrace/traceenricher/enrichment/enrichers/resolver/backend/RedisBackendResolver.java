@@ -5,12 +5,13 @@ import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
+import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.slf4j.Logger;
@@ -25,19 +26,25 @@ public class RedisBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (!SpanAttributeUtils.containsAttributeKey(event,
-        RawSpanConstants.getValue(Redis.REDIS_CONNECTION))) {
+    if (!DbSemanticConventionUtils.isRedisBackend(event)) {
       return Optional.empty();
     }
-    String backendURI =
-        SpanAttributeUtils.getStringAttribute(event, RawSpanConstants.getValue(Redis.REDIS_CONNECTION));
-    if (StringUtils.isEmpty(backendURI)) {
+
+    Optional<String> backendURI = DbSemanticConventionUtils.getRedisURI(event);
+
+    if (backendURI.isEmpty()) {
+      return Optional.empty();
+    }
+
+    if (StringUtils.isEmpty(backendURI.get())) {
       LOGGER.warn("Unable to infer a redis backend from event: {}", event);
       return Optional.empty();
     }
-    final Builder entityBuilder = getBackendEntityBuilder(BackendType.REDIS, backendURI, event);
+
+    final Builder entityBuilder = getBackendEntityBuilder(BackendType.REDIS, backendURI.get(), event);
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_COMMAND));
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_ARGS));
+    setAttributeIfExist(event, entityBuilder, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
     return Optional.of(entityBuilder.build());
   }
 }

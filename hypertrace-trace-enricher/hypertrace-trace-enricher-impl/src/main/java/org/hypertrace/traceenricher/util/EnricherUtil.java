@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.util;
 
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -15,6 +16,16 @@ public class EnricherUtil {
     if (event.getAttributes().getAttributeMap().get(attributeKey) != null) {
       entityBuilder.putAttributes(attributeKey,
           createAttributeValue(event.getAttributes().getAttributeMap().get(attributeKey).getValue()));
+    }
+  }
+
+  public static void setAttributeForFirstExistingKey(Event event, Builder entityBuilder, List<String> attributeKeys) {
+    for (String attributeKey : attributeKeys) {
+      if (event.getAttributes().getAttributeMap().get(attributeKey) != null) {
+        entityBuilder.putAttributes(attributeKey,
+            createAttributeValue(event.getAttributes().getAttributeMap().get(attributeKey).getValue()));
+        return;
+      }
     }
   }
 

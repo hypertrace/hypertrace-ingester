@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
+import static org.hypertrace.traceenricher.TestUtil.buildAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -27,6 +28,7 @@ import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.AbstractAttributeEnricherTest;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -462,6 +464,53 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
+  public void checkBackendEntityGeneratedFromRedisEventOtelFormat() {
+    Event e = Event.newBuilder().setCustomerId("__default")
+        .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+        .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824")).setEnrichedAttributes(
+            Attributes.newBuilder().setAttributeMap(
+                Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
+        .setAttributes(Attributes.newBuilder().setAttributeMap(Map
+            .of(OTelDbSemanticConventions.DB_SYSTEM.getValue(), buildAttributeValue(
+                OTelDbSemanticConventions.REDIS_DB_SYSTEM_VALUE.getValue()),
+                OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(), buildAttributeValue("redis-cart:6379"),
+                "span.kind", AttributeValue.newBuilder().setValue("client").build(),
+                "k8s.pod_id", buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
+                "docker.container_id", buildAttributeValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
+                "FLAGS", buildAttributeValue("0"),
+                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), buildAttributeValue("devcluster"),
+                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), buildAttributeValue("mypastryshop")))
+            .build())
+        .setEventName("reactive.redis.exit").setStartTimeMillis(1566869077746L)
+        .setEndTimeMillis(1566869077750L)
+        .setMetrics(Metrics.newBuilder().setMetricMap(
+            Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
+        .setEventRefList(Arrays.asList(
+            EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                .setRefType(EventRefType.CHILD_OF).build())).build();
+
+    final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
+    assertEquals("redis-cart.mypastryshop.devcluster:6379", backendEntity.getEntityName());
+    assertEquals(3, backendEntity.getIdentifyingAttributesCount());
+    assertEquals(
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
+            .getValue().getString(), "REDIS");
+    assertEquals(
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
+            .getString(), "redis-cart.mypastryshop.devcluster");
+    assertEquals(
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
+            .getString(), "6379");
+    assertEquals(
+        backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT)).getValue().getString(),
+        "reactive.redis.exit");
+    assertEquals(
+        backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID)).getValue()
+            .getString(), "62646630336466616266356337306638");
+  }
+
+  @Test
   public void checkBackendEntityGeneratedFromUninstrumentedMongoEvent() {
     Event e = Event.newBuilder().setCustomerId("__default")
         .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
@@ -559,6 +608,55 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
 
     assertEquals(backendEntity.getAttributesMap().get(Constants.getRawSpanConstant(Mongo.MONGO_OPERATION)).getValue().getString(),
         "HelloWorld");
+    assertEquals(
+        backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT)).getValue().getString(),
+        "mongo.async.exit");
+    assertEquals(
+        backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID)).getValue()
+            .getString(), "62646630336466616266356337306638");
+  }
+
+  @Test
+  public void checkBackendEntityGeneratedFromInstrumentedMongoEventOtelFormat() {
+    Event e = Event.newBuilder().setCustomerId("__default")
+        .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+        .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824")).setEnrichedAttributes(
+            Attributes.newBuilder().setAttributeMap(
+                Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
+        .setAttributes(Attributes.newBuilder().setAttributeMap(Map
+            .of( OTelDbSemanticConventions.DB_SYSTEM.getValue(), buildAttributeValue(
+                OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue()),
+                OTelDbSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
+                OTelDbSemanticConventions.MONGODB_COLLECTION.getValue(), buildAttributeValue("sampleshop.userReview"),
+                "span.kind", buildAttributeValue("client"),
+                OTelDbSemanticConventions.DB_OPERATION.getValue(), buildAttributeValue("FindOperation"),
+                OTelDbSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("27017"),
+                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), buildAttributeValue("devcluster"),
+                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), buildAttributeValue("sampleshop")))
+            .build())
+        .setEventName("mongo.async.exit").setStartTimeMillis(1566869077746L)
+        .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
+            .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
+        .setEventRefList(Arrays.asList(
+            EventRef.newBuilder().setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                .setRefType(EventRefType.CHILD_OF).build())).build();
+    final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
+    assertEquals("mongodb0.sampleshop.devcluster:27017", backendEntity.getEntityName());
+    assertEquals(3, backendEntity.getIdentifyingAttributesCount());
+    assertEquals(
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
+            .getValue().getString(), "MONGO");
+    assertEquals("mongodb0.sampleshop.devcluster",
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
+            .getString());
+    assertEquals(
+        backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
+            .getString(), "27017");
+    assertEquals(backendEntity.getAttributesMap().get(OTelDbSemanticConventions.MONGODB_COLLECTION.getValue()).getValue().getString(),
+        "sampleshop.userReview");
+    assertEquals(backendEntity.getAttributesMap().get(OTelDbSemanticConventions.DB_OPERATION.getValue()).getValue().getString(),
+        "FindOperation");
     assertEquals(
         backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT)).getValue().getString(),
         "mongo.async.exit");
