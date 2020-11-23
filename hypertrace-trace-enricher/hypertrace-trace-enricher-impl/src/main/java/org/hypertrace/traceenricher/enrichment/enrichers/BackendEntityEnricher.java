@@ -23,7 +23,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache.EntityCacheProvider;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendEntityResolver;
 import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
@@ -49,7 +48,7 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
     LOGGER.info("Initialize BackendEntityEnricher with Config: {}", enricherConfig.toString());
     this.edsClient = provider.createClient(enricherConfig);
     this.entityCache = EntityCacheProvider.get(edsClient);
-    this.backendEntityResolver = new BackendEntityResolver(new FQNResolver(edsClient));
+    this.backendEntityResolver = new BackendEntityResolver();
   }
 
   // At trace level, based on the next span to identify if a backend entity is actually a service

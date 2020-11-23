@@ -17,7 +17,6 @@ import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +37,7 @@ public class RabbitMqBackendResolverTest {
 
   @BeforeEach
   public void setup() {
-    rabbitMqBackendResolver = new RabbitMqBackendResolver(new FQNResolver(edsClient));
+    rabbitMqBackendResolver = new RabbitMqBackendResolver();
     edsClient = mock(EntityDataServiceClient.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }

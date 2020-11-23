@@ -32,7 +32,6 @@ import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.AbstractAttributeEnricherTest;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +51,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
 
   @BeforeEach
   public void setup() {
-    backendEntityResolver = new BackendEntityResolver(new FQNResolver(edsClient));
+    backendEntityResolver = new BackendEntityResolver();
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 

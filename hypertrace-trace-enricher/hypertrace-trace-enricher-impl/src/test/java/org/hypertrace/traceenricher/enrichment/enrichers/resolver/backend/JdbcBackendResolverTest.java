@@ -25,7 +25,6 @@ import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +41,7 @@ public class JdbcBackendResolverTest {
 
   @BeforeEach
   public void setup() {
-    jdbcBackendResolver = new JdbcBackendResolver(new FQNResolver(edsClient));
+    jdbcBackendResolver = new JdbcBackendResolver();
     edsClient = mock(EntityDataServiceClient.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
