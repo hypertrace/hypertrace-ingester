@@ -16,10 +16,10 @@ dependencies {
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.3.2")
   implementation("io.reactivex.rxjava3:rxjava:3.0.6")
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
-  testImplementation("org.mockito:mockito-core:3.3.3")
-  testImplementation("org.mockito:mockito-junit-jupiter:3.3.3")
-  testRuntimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.13.3")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
+  testImplementation("org.mockito:mockito-core:3.6.0")
+  testImplementation("org.mockito:mockito-junit-jupiter:3.6.0")
+  testRuntimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
 
   tasks.test {
     useJUnitPlatform()
