@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.Entity;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 
 /**
  * Composite backend entity resolver which tries to resolve the backend entity using other resolvers
@@ -13,16 +12,15 @@ import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 public class BackendEntityResolver extends AbstractBackendResolver {
   private final List<AbstractBackendResolver> backendResolvers;
 
-  public BackendEntityResolver(FQNResolver fqnResolver) {
-    super(fqnResolver);
+  public BackendEntityResolver() {
     backendResolvers = List.of(
-        new HttpBackendResolver(fqnResolver),
-        new GrpcBackendResolver(fqnResolver),
-        new RedisBackendResolver(fqnResolver),
-        new MongoBackendResolver(fqnResolver),
-        new JdbcBackendResolver(fqnResolver),
-        new RabbitMqBackendResolver(fqnResolver),
-        new ClientSpanEndpointResolver(fqnResolver)
+        new HttpBackendResolver(),
+        new GrpcBackendResolver(),
+        new RedisBackendResolver(),
+        new MongoBackendResolver(),
+        new JdbcBackendResolver(),
+        new RabbitMqBackendResolver(),
+        new ClientSpanEndpointResolver()
     );
   }
 

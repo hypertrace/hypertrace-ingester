@@ -8,17 +8,12 @@ import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.semantic.convention.utils.messaging.MessagingSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RabbitMqBackendResolver extends AbstractBackendResolver {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMqBackendResolver.class);
-
-  public RabbitMqBackendResolver(FQNResolver fqnResolver) {
-    super(fqnResolver);
-  }
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {

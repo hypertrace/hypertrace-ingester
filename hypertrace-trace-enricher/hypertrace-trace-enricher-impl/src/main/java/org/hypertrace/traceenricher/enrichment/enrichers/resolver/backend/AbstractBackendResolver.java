@@ -15,7 +15,6 @@ import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 
 /**
  * Abstract class with common methods for all the different types of backend resolvers
@@ -30,27 +29,21 @@ public abstract class AbstractBackendResolver {
   private static final String BACKEND_PORT_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT);
   private final static String DEFAULT_PORT = "-1";
-
-  private FQNResolver fqnResolver;
-
-  public AbstractBackendResolver(FQNResolver fqnResolver) {
-    this.fqnResolver = fqnResolver;
-  }
+  private static final String SVC_CLUSTER_LOCAL_SUFFIX = ".svc.cluster.local";
 
   public abstract Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph);
 
   Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event) {
     String[] hostAndPort = backendURI.split(COLON);
-    String host = hostAndPort[0];
+    String host = hostAndPort[0].replace(SVC_CLUSTER_LOCAL_SUFFIX, "");;
     String port = (hostAndPort.length == 2) ? hostAndPort[1] : DEFAULT_PORT;
-    String fqn = fqnResolver.resolve(host, event);
-    String entityName = port.equals(DEFAULT_PORT) ? fqn : COLON_JOINER.join(fqn, port);
+    String entityName = port.equals(DEFAULT_PORT) ? host : COLON_JOINER.join(host, port);
     final Builder entityBuilder =
         org.hypertrace.entity.data.service.v1.Entity.newBuilder()
             .setEntityType(EntityType.BACKEND.name())
             .setTenantId(event.getCustomerId()).setEntityName(entityName)
             .putIdentifyingAttributes(BACKEND_PROTOCOL_ATTR_NAME, createAttributeValue(type.name()))
-            .putIdentifyingAttributes(BACKEND_HOST_ATTR_NAME, createAttributeValue(fqn))
+            .putIdentifyingAttributes(BACKEND_HOST_ATTR_NAME, createAttributeValue(host))
             .putIdentifyingAttributes(BACKEND_PORT_ATTR_NAME, createAttributeValue(port));
     entityBuilder.putAttributes(
         EnrichedSpanConstants.getValue(Backend.BACKEND_FROM_EVENT),

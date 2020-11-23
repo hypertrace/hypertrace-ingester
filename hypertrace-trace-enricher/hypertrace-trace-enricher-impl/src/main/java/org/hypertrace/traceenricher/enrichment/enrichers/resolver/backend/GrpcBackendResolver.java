@@ -13,17 +13,12 @@ import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.hypertrace.traceenricher.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class GrpcBackendResolver extends AbstractBackendResolver {
   private static final Logger LOGGER = LoggerFactory.getLogger(GrpcBackendResolver.class);
-
-  public GrpcBackendResolver(FQNResolver fqnResolver) {
-    super(fqnResolver);
-  }
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {

@@ -18,7 +18,6 @@ import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +27,6 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final RateLimiter INVALID_BACKEND_URL_LIMITER = RateLimiter.create(1 / 60d);
   private static final Splitter COLON_SPLITTER = Splitter.on(":");
-
-  public JdbcBackendResolver(FQNResolver fqnResolver) {
-    super(fqnResolver);
-  }
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
