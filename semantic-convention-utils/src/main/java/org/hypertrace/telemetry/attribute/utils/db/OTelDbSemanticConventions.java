@@ -3,7 +3,7 @@ package org.hypertrace.telemetry.attribute.utils.db;
 /**
  * OTEL specific attributes for database
  */
-public enum OTelDbAttributes {
+public enum OTelDbSemanticConventions {
   DB_SYSTEM("db.system"),
   DB_CONNECTION_STRING("db.connection_string"),
   DB_OPERATION("db.operation"),
@@ -28,7 +28,7 @@ public enum OTelDbAttributes {
 
   private final String value;
 
-  OTelDbAttributes(String value) {
+  OTelDbSemanticConventions(String value) {
     this.value = value;
   }
 

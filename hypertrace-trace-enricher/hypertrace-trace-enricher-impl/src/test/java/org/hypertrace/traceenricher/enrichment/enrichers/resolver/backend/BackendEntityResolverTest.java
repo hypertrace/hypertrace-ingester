@@ -28,7 +28,7 @@ import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
-import org.hypertrace.telemetry.attribute.utils.db.OTelDbAttributes;
+import org.hypertrace.telemetry.attribute.utils.db.OTelDbSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.AbstractAttributeEnricherTest;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -471,8 +471,9 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             Attributes.newBuilder().setAttributeMap(
                 Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map
-            .of(OTelDbAttributes.DB_SYSTEM.getValue(), buildAttributeValue(OTelDbAttributes.REDIS_DB_SYSTEM_VALUE.getValue()),
-                OTelDbAttributes.DB_CONNECTION_STRING.getValue(), buildAttributeValue("redis-cart:6379"),
+            .of(OTelDbSemanticConventions.DB_SYSTEM.getValue(), buildAttributeValue(
+                OTelDbSemanticConventions.REDIS_DB_SYSTEM_VALUE.getValue()),
+                OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(), buildAttributeValue("redis-cart:6379"),
                 "span.kind", AttributeValue.newBuilder().setValue("client").build(),
                 "k8s.pod_id", buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
                 "docker.container_id", buildAttributeValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
@@ -623,12 +624,13 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             Attributes.newBuilder().setAttributeMap(
                 Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map
-            .of( OTelDbAttributes.DB_SYSTEM.getValue(), buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
-                OTelDbAttributes.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
-                OTelDbAttributes.MONGODB_COLLECTION.getValue(), buildAttributeValue("sampleshop.userReview"),
+            .of( OTelDbSemanticConventions.DB_SYSTEM.getValue(), buildAttributeValue(
+                OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue()),
+                OTelDbSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
+                OTelDbSemanticConventions.MONGODB_COLLECTION.getValue(), buildAttributeValue("sampleshop.userReview"),
                 "span.kind", buildAttributeValue("client"),
-                OTelDbAttributes.DB_OPERATION.getValue(), buildAttributeValue("FindOperation"),
-                OTelDbAttributes.NET_PEER_PORT.getValue(), buildAttributeValue("27017"),
+                OTelDbSemanticConventions.DB_OPERATION.getValue(), buildAttributeValue("FindOperation"),
+                OTelDbSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("27017"),
                 Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), buildAttributeValue("devcluster"),
                 Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), buildAttributeValue("sampleshop")))
             .build())
@@ -651,9 +653,9 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
             .getString(), "27017");
-    assertEquals(backendEntity.getAttributesMap().get(OTelDbAttributes.MONGODB_COLLECTION.getValue()).getValue().getString(),
+    assertEquals(backendEntity.getAttributesMap().get(OTelDbSemanticConventions.MONGODB_COLLECTION.getValue()).getValue().getString(),
         "sampleshop.userReview");
-    assertEquals(backendEntity.getAttributesMap().get(OTelDbAttributes.DB_OPERATION.getValue()).getValue().getString(),
+    assertEquals(backendEntity.getAttributesMap().get(OTelDbSemanticConventions.DB_OPERATION.getValue()).getValue().getString(),
         "FindOperation");
     assertEquals(
         backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT)).getValue().getString(),

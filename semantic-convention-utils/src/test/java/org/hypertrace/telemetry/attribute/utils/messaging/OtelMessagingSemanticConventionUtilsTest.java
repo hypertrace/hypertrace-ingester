@@ -15,7 +15,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit test for {@link OtelMessagingAttributes}
+ * Unit test for {@link OtelMessagingSemanticConventions}
  */
 public class OtelMessagingSemanticConventionUtilsTest {
 
@@ -25,7 +25,7 @@ public class OtelMessagingSemanticConventionUtilsTest {
     // otel format
     String routingKey = "otelRoutingKey";
     Attributes attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(OtelMessagingAttributes.RABBITMQ_ROUTING_KEY.getValue(), SemanticConventionTestUtil.buildAttributeValue(routingKey)));
+        Map.of(OtelMessagingSemanticConventions.RABBITMQ_ROUTING_KEY.getValue(), SemanticConventionTestUtil.buildAttributeValue(routingKey)));
     when(e.getAttributes()).thenReturn(attributes);
     Optional<String> v = MessagingSemanticConventionUtils.getRabbitMqRoutingKey(e);
     assertEquals(routingKey, v.get());

@@ -17,7 +17,7 @@ public class MessagingSemanticConventionUtils {
   private static final List<String> RABBITMQ_ROUTING_KEYS =
       new ArrayList<>(Arrays.asList(
           RawSpanConstants.getValue(RabbitMq.RABBIT_MQ_ROUTING_KEY),
-          OtelMessagingAttributes.RABBITMQ_ROUTING_KEY.getValue()
+          OtelMessagingSemanticConventions.RABBITMQ_ROUTING_KEY.getValue()
   ));
 
   /**

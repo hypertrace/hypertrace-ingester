@@ -28,9 +28,9 @@ public class DbSemanticConventionUtilsTest {
     // otel format
     Attributes attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
-            OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
     boolean v = DbSemanticConventionUtils.isMongoBackend(e);
@@ -39,9 +39,9 @@ public class DbSemanticConventionUtilsTest {
     // otel format, dbsystem is not mongo
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbAttributes.MYSQL_DB_SYSTEM_VALUE.getValue()),
-            OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.isMongoBackend(e);
@@ -79,9 +79,9 @@ public class DbSemanticConventionUtilsTest {
     // otel format
     Attributes attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
-            OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
     Optional<String> v = DbSemanticConventionUtils.getMongoURI(e);
@@ -120,9 +120,9 @@ public class DbSemanticConventionUtilsTest {
 
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbAttributes.REDIS_DB_SYSTEM_VALUE.getValue()),
-            OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.REDIS_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("redis:1111")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.isRedisBackend(e);
@@ -130,9 +130,9 @@ public class DbSemanticConventionUtilsTest {
 
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
-            OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("redis:1111")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.isRedisBackend(e);
@@ -154,7 +154,7 @@ public class DbSemanticConventionUtilsTest {
     // sql url not present, use db connection string
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("redis://127.0.0.1:4562")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getRedisURI(e);
@@ -185,16 +185,16 @@ public class DbSemanticConventionUtilsTest {
 
     Attributes attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbAttributes.DB2_DB_SYSTEM_VALUE.getValue())));
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.DB2_DB_SYSTEM_VALUE.getValue())));
     when(e.getAttributes()).thenReturn(attributes);
     boolean v = DbSemanticConventionUtils.isSqlTypeBackendForOtelFormat(e);
     assertTrue(v);
 
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue())));
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue())));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.isSqlTypeBackendForOtelFormat(e);
     assertFalse(v);
@@ -215,7 +215,7 @@ public class DbSemanticConventionUtilsTest {
     // sql url not present, use db connection string
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mysql://127.0.0.1:3306")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getSqlURI(e);
@@ -237,7 +237,7 @@ public class DbSemanticConventionUtilsTest {
     // connection string is present
     Attributes attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mysql://127.0.0.1:3306")));
     when(e.getAttributes()).thenReturn(attributes);
     Optional<String> v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
@@ -246,7 +246,7 @@ public class DbSemanticConventionUtilsTest {
     // only ip is present
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.NET_PEER_IP.getValue(),
+            OTelDbSemanticConventions.NET_PEER_IP.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("127.0.0.1")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
@@ -255,9 +255,9 @@ public class DbSemanticConventionUtilsTest {
     // ip & host present
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.NET_PEER_IP.getValue(),
+            OTelDbSemanticConventions.NET_PEER_IP.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("127.0.0.1"),
-            OTelDbAttributes.NET_PEER_NAME.getValue(),
+            OTelDbSemanticConventions.NET_PEER_NAME.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mysql.example.com")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
@@ -266,11 +266,11 @@ public class DbSemanticConventionUtilsTest {
     // host & port present
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.NET_PEER_IP.getValue(),
+            OTelDbSemanticConventions.NET_PEER_IP.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("127.0.0.1"),
-            OTelDbAttributes.NET_PEER_NAME.getValue(),
+            OTelDbSemanticConventions.NET_PEER_NAME.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mysql.example.com"),
-            OTelDbAttributes.NET_PEER_PORT.getValue(),
+            OTelDbSemanticConventions.NET_PEER_PORT.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("3306")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
@@ -282,20 +282,20 @@ public class DbSemanticConventionUtilsTest {
     Event e = mock(Event.class);
     Attributes attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue())));
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue())));
     when(e.getAttributes()).thenReturn(attributes);
     Optional<String> v = DbSemanticConventionUtils.getDbTypeForOtelFormat(e);
-    assertEquals(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue(), v.get());
+    assertEquals(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue(), v.get());
 
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbAttributes.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue())));
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue())));
     when(e.getAttributes()).thenReturn(null);
     when(e.getEnrichedAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getDbTypeForOtelFormat(e);
-    assertEquals(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue(), v.get());
+    assertEquals(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue(), v.get());
 
     when(e.getAttributes()).thenReturn(null);
     when(e.getEnrichedAttributes()).thenReturn(null);

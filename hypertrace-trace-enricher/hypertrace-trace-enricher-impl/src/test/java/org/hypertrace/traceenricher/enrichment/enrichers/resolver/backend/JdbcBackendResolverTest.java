@@ -22,7 +22,7 @@ import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
-import org.hypertrace.telemetry.attribute.utils.db.OTelDbAttributes;
+import org.hypertrace.telemetry.attribute.utils.db.OTelDbSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
@@ -107,10 +107,10 @@ public class JdbcBackendResolverTest {
             Attributes.newBuilder().setAttributeMap(
                 Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map.of(
-            OTelDbAttributes.DB_CONNECTION_STRING.getValue(), buildAttributeValue("mysql://127.0.0.1:3306"),
-            OTelDbAttributes.DB_SYSTEM.getValue(), buildAttributeValue("mysql"),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(), buildAttributeValue("mysql://127.0.0.1:3306"),
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(), buildAttributeValue("mysql"),
             "span.kind", buildAttributeValue("client"),
-            OTelDbAttributes.DB_STATEMENT.getValue(), buildAttributeValue("SELECT * from example.user"),
+            OTelDbSemanticConventions.DB_STATEMENT.getValue(), buildAttributeValue("SELECT * from example.user"),
             "k8s.pod_id", buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
             "docker.container_id", buildAttributeValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
             Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
