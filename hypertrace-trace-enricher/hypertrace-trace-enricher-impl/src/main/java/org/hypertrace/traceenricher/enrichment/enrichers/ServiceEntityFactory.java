@@ -34,10 +34,6 @@ public class ServiceEntityFactory {
 
   private static final RateLimiter MULTIPLE_SERVICES_LIMITER = RateLimiter.create(1 / 60d);
 
-  private static final String CLUSTER_NAME_ATTRIBUTE_NAME =
-      EntityConstants.getValue(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME);
-  private static final String NAMESPACE_ATTRIBUTE_NAME =
-      EntityConstants.getValue(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME);
   private static final String FQN_ATTRIBUTE_NAME =
       EntityConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_FQN);
   private static final String SERVICE_TYPE_ATTRIBUTE_NAME =
@@ -45,39 +41,10 @@ public class ServiceEntityFactory {
 
   private final EdsClient edsClient;
   private final EntityCache entityCache;
-  private final FQNResolver fqnResolver;
 
   public ServiceEntityFactory(EdsClient edsClient) {
     this.edsClient = edsClient;
     this.entityCache = EntityCacheProvider.get(edsClient);
-    this.fqnResolver = new FQNResolver(edsClient);
-  }
-
-  @Nonnull
-  public Entity getService(Event span, String hostname, String serviceType) {
-    String customerId = span.getCustomerId();
-    // Get the fully qualified service name, which will be used in constructing our service.
-    // FQN includes the cluster name, namespace and service name.
-    String fqn = fqnResolver.resolve(hostname, span);
-
-    org.hypertrace.entity.data.service.v1.Entity service = null;
-    try {
-      service = entityCache.getFqnToServiceEntityCache()
-          .get(Pair.of(customerId, fqn)).orElse(null);
-    } catch (ExecutionException e) {
-      LOG.error("Could not get service; customerId: {}, fqn: {}", customerId, fqn, e);
-    }
-
-    if (service == null) {
-      Map<String, String> attributes = Map.of(
-          SERVICE_TYPE_ATTRIBUTE_NAME, serviceType,
-          CLUSTER_NAME_ATTRIBUTE_NAME, EnrichedSpanUtils.getClusterName(span),
-          NAMESPACE_ATTRIBUTE_NAME, EnrichedSpanUtils.getNamespaceName(span)
-      );
-      service = createServiceEntity(customerId, hostname, fqn, serviceType, attributes);
-    }
-
-    return service;
   }
 
   Entity getService(String customerId, String name, String serviceType,
