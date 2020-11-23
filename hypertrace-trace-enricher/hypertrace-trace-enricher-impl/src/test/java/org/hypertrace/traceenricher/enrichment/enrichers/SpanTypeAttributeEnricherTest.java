@@ -11,7 +11,7 @@ import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.core.span.constants.v1.SpanAttribute;
-import org.hypertrace.telemetry.attribute.utils.span.OTelSpanAttributes;
+import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.util.Constants;
@@ -57,8 +57,8 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
     e = createMockEvent();
     attributeValueMap = e.getAttributes().getAttributeMap();
     attributeValueMap.put(
-        OTelSpanAttributes.SPAN_KIND.getValue(),
-        AttributeValueCreator.create(OTelSpanAttributes.SPAN_KIND_SERVER_VALUE.getValue()));
+        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
+        AttributeValueCreator.create(OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE.getValue()));
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -77,8 +77,8 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
     e = createMockEvent();
     attributeValueMap = e.getAttributes().getAttributeMap();
     attributeValueMap.put(
-        OTelSpanAttributes.SPAN_KIND.getValue(),
-        AttributeValueCreator.create(OTelSpanAttributes.SPAN_KIND_CLIENT_VALUE.getValue()));
+        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
+        AttributeValueCreator.create(OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE.getValue()));
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(

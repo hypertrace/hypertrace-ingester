@@ -10,7 +10,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.v1.Error;
-import org.hypertrace.telemetry.attribute.utils.error.OTelErrorAttributes;
+import org.hypertrace.semantic.convention.utils.error.OTelErrorSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
@@ -104,7 +104,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
 
     Event e5 = createMockEvent();
     attributeValueMap = e5.getAttributes().getAttributeMap();
-    attributeValueMap.put(OTelErrorAttributes.EXCEPTION_TYPE.getValue().toLowerCase(), AttributeValueCreator.create(true));
+    attributeValueMap.put(OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue().toLowerCase(), AttributeValueCreator.create(true));
     enricher.enrichEvent(null, e5);
     Assertions.assertEquals(
         1.0d,
@@ -112,7 +112,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
 
     Event e6 = createMockEvent();
     attributeValueMap = e6.getAttributes().getAttributeMap();
-    attributeValueMap.put(OTelErrorAttributes.EXCEPTION_STACKTRACE.getValue().toLowerCase(), AttributeValueCreator.create(true));
+    attributeValueMap.put(OTelErrorSemanticConventions.EXCEPTION_STACKTRACE.getValue().toLowerCase(), AttributeValueCreator.create(true));
     enricher.enrichEvent(null, e6);
     Assertions.assertEquals(
         1.0d,

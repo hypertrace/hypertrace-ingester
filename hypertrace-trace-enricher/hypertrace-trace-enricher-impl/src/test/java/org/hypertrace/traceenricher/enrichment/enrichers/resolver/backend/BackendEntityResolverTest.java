@@ -28,12 +28,8 @@ import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
-<<<<<<< HEAD
-import org.hypertrace.telemetry.attribute.utils.db.OTelDbAttributes;
-import org.hypertrace.telemetry.attribute.utils.span.OTelSpanAttributes;
-=======
-import org.hypertrace.telemetry.attribute.utils.db.OTelDbSemanticConventions;
->>>>>>> otel-backend-entity
+import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
+import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.AbstractAttributeEnricherTest;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -629,22 +625,13 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             Attributes.newBuilder().setAttributeMap(
                 Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map
-<<<<<<< HEAD
-            .of( OTelDbAttributes.DB_SYSTEM.getValue(), buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
-                OTelSpanAttributes.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
-                OTelDbAttributes.MONGODB_COLLECTION.getValue(), buildAttributeValue("sampleshop.userReview"),
-                "span.kind", buildAttributeValue("client"),
-                OTelDbAttributes.DB_OPERATION.getValue(), buildAttributeValue("FindOperation"),
-                OTelSpanAttributes.NET_PEER_PORT.getValue(), buildAttributeValue("27017"),
-=======
             .of( OTelDbSemanticConventions.DB_SYSTEM.getValue(), buildAttributeValue(
                 OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue()),
-                OTelDbSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
+                OTelSpanSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
                 OTelDbSemanticConventions.MONGODB_COLLECTION.getValue(), buildAttributeValue("sampleshop.userReview"),
                 "span.kind", buildAttributeValue("client"),
                 OTelDbSemanticConventions.DB_OPERATION.getValue(), buildAttributeValue("FindOperation"),
-                OTelDbSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("27017"),
->>>>>>> otel-backend-entity
+                OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("27017"),
                 Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), buildAttributeValue("devcluster"),
                 Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), buildAttributeValue("sampleshop")))
             .build())

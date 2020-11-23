@@ -11,7 +11,6 @@ import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
-import org.hypertrace.telemetry.attribute.utils.span.OTelSpanAttributes;
 import org.hypertrace.traceenricher.TestUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
