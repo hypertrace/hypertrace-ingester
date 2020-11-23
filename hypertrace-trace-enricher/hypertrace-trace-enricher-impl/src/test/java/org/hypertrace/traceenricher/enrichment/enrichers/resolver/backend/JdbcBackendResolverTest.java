@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Test;
  * Unit tests for {@link JdbcBackendResolver}
  */
 public class JdbcBackendResolverTest {
-  private EntityDataServiceClient edsClient;
 
   private JdbcBackendResolver jdbcBackendResolver;
   private StructuredTraceGraph structuredTraceGraph;
@@ -42,7 +41,6 @@ public class JdbcBackendResolverTest {
   @BeforeEach
   public void setup() {
     jdbcBackendResolver = new JdbcBackendResolver();
-    edsClient = mock(EntityDataServiceClient.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -62,11 +60,7 @@ public class JdbcBackendResolverTest {
                 AttributeValue.newBuilder().setValue("55636196-c840-11e9-a417-42010a8a0064").build(),
                 "docker.container_id", AttributeValue.newBuilder()
                     .setValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f").build(),
-                "FLAGS", AttributeValue.newBuilder().setValue("0").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-                AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-                AttributeValue.newBuilder().setValue("hipstershop").build())).build())
+                "FLAGS", AttributeValue.newBuilder().setValue("0").build())).build())
         .setEventName("jdbc.connection.prepare").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
@@ -75,13 +69,13 @@ public class JdbcBackendResolverTest {
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
                 .setRefType(EventRefType.CHILD_OF).build())).build();
     final Entity backendEntity = jdbcBackendResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("dbhost.hipstershop.devcluster:9001", backendEntity.getEntityName());
+    assertEquals("dbhost:9001", backendEntity.getEntityName());
     assertEquals(4, backendEntity.getIdentifyingAttributesCount());
     Assertions.assertEquals(BackendType.JDBC.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(
             BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString());
-    assertEquals("dbhost.hipstershop.devcluster",
+    assertEquals("dbhost",
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString());
     assertEquals("9001",
@@ -111,11 +105,7 @@ public class JdbcBackendResolverTest {
             "span.kind", buildAttributeValue("client"),
             OTelDbSemanticConventions.DB_STATEMENT.getValue(), buildAttributeValue("SELECT * from example.user"),
             "k8s.pod_id", buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
-            "docker.container_id", buildAttributeValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
-            Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-            buildAttributeValue("devcluster"),
-            Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-            buildAttributeValue("hipstershop")
+            "docker.container_id", buildAttributeValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f")
         )).build())
         .setEventName("jdbc.connection.prepare").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
