@@ -123,7 +123,7 @@ public class DbTelemetryAttributeUtilsTest {
             OTelDbAttributes.DB_SYSTEM.getValue(),
             AttributeTestUtil.buildAttributeValue(OTelDbAttributes.REDIS_DB_SYSTEM_VALUE.getValue()),
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            AttributeTestUtil.buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("redis:1111")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbTelemetryAttributeUtils.isRedisBackend(e);
     assertTrue(v);
@@ -133,7 +133,7 @@ public class DbTelemetryAttributeUtilsTest {
             OTelDbAttributes.DB_SYSTEM.getValue(),
             AttributeTestUtil.buildAttributeValue(OTelDbAttributes.MONGODB_DB_SYSTEM_VALUE.getValue()),
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            AttributeTestUtil.buildAttributeValue("mongo:27017")));
+            AttributeTestUtil.buildAttributeValue("redis:1111")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbTelemetryAttributeUtils.isRedisBackend(e);
     assertFalse(v);
@@ -155,10 +155,10 @@ public class DbTelemetryAttributeUtilsTest {
     attributes = AttributeTestUtil.buildAttributes(
         Map.of(
             OTelDbAttributes.DB_CONNECTION_STRING.getValue(),
-            AttributeTestUtil.buildAttributeValue("mysql://127.0.0.1:4562")));
+            AttributeTestUtil.buildAttributeValue("redis://127.0.0.1:4562")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbTelemetryAttributeUtils.getRedisURI(e);
-    assertEquals("mysql://127.0.0.1:4562", v.get());
+    assertEquals("redis://127.0.0.1:4562", v.get());
   }
 
   @Test
