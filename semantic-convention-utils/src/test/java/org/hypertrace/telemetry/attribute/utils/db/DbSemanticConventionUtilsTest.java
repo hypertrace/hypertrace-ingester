@@ -207,14 +207,17 @@ public class DbSemanticConventionUtilsTest {
     Attributes attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Sql.SQL_SQL_URL),
-            SemanticConventionTestUtil.buildAttributeValue("127.0.0.1:3306")));
+            SemanticConventionTestUtil.buildAttributeValue("jdbc:mysql://mysql:3306/shop")));
     when(e.getAttributes()).thenReturn(attributes);
+    when(e.getEventName()).thenReturn("jdbc:event");
     Optional<String> v = DbSemanticConventionUtils.getSqlURI(e);
-    assertEquals("127.0.0.1:3306", v.get());
+    assertEquals("jdbc:mysql://mysql:3306/shop", v.get());
 
     // sql url not present, use db connection string
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
             OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mysql://127.0.0.1:3306")));
     when(e.getAttributes()).thenReturn(attributes);
