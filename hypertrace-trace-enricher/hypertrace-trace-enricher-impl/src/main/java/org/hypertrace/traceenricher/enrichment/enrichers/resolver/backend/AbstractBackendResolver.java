@@ -29,12 +29,13 @@ public abstract class AbstractBackendResolver {
   private static final String BACKEND_PORT_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT);
   private final static String DEFAULT_PORT = "-1";
+  private static final String SVC_CLUSTER_LOCAL_SUFFIX = ".svc.cluster.local";
 
   public abstract Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph);
 
   Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event) {
     String[] hostAndPort = backendURI.split(COLON);
-    String host = hostAndPort[0];
+    String host = hostAndPort[0].replace(SVC_CLUSTER_LOCAL_SUFFIX, "");;
     String port = (hostAndPort.length == 2) ? hostAndPort[1] : DEFAULT_PORT;
     String entityName = port.equals(DEFAULT_PORT) ? host : COLON_JOINER.join(host, port);
     final Builder entityBuilder =
