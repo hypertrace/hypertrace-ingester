@@ -1,3 +1,4 @@
+# run `circleci config validate` to avoid syntax problems upon update
 version: 2.1
 
 orbs:
@@ -8,15 +9,9 @@ executors:
   gradle_docker:
     docker:
       - image: cimg/openjdk:11.0
-        auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_PASSWORD
   helm:
     docker:
       - image: hypertrace/helm-gcs-packager:0.3.0
-        auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_PASSWORD
 
 commands:
   gradle:
@@ -54,12 +49,6 @@ commands:
           paths:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "/tmp/checksum.txt" }}
-  docker_login:
-    description: "Login to dockerhub with readonly credentials"
-    steps:
-      - run:
-          name: Dockerhub login
-          command: echo $DOCKERHUB_PASSWORD | docker login --username $DOCKERHUB_USERNAME --password-stdin
 jobs:
   build:
     executor: gradle_docker
@@ -67,7 +56,6 @@ jobs:
       - setup_build_environment
       - setup_remote_docker: &latest_remote_docker
           version: 19.03.12
-      - docker_login
       - populate_and_save_cache
       - gradle:
           args: build dockerBuildImages
@@ -80,7 +68,6 @@ jobs:
     steps:
       - setup_build_environment
       - setup_remote_docker: *latest_remote_docker
-      - docker_login
       - gradle:
           args: dockerPushImages
   release-publish:
@@ -88,7 +75,6 @@ jobs:
     steps:
       - setup_build_environment
       - setup_remote_docker: *latest_remote_docker
-      - docker_login
       - gradle:
           args: publish dockerPushImages
   validate-charts:
@@ -140,20 +126,14 @@ workflows:
   version: 2
   build-and-publish:
     jobs:
-      - build:
-          context:
-            - dockerhub-read
-      - validate-charts:
-          context:
-            - dockerhub-read
+      - build
+      - validate-charts
       - snyk-scan:
           context:
             - hypertrace-vulnerability-scanning
-            - dockerhub-read
       - merge-publish:
           context:
             - hypertrace-publishing
-            - dockerhub-read
           requires:
             - build
             - validate-charts
@@ -165,7 +145,6 @@ workflows:
       - release-publish:
           context:
             - hypertrace-publishing
-            - dockerhub-read
           filters:
             branches:
               ignore: /.*/
@@ -174,7 +153,6 @@ workflows:
       - release-charts:
           context:
             - hypertrace-publishing
-            - dockerhub-read
           requires:
             - release-publish
           filters:
