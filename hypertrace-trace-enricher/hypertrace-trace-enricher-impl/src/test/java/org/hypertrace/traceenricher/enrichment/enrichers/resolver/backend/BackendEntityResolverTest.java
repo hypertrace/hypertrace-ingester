@@ -33,27 +33,22 @@ import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.AbstractAttributeEnricherTest;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 
 public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
   private static final String MONGO_URL = "mongo:27017";
   private static final String SERVICE_NAME_ATTR =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
 
-  @Mock
-  private EntityDataServiceClient edsClient;
-
   private BackendEntityResolver backendEntityResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    backendEntityResolver = new BackendEntityResolver(new FQNResolver(edsClient));
+    backendEntityResolver = new BackendEntityResolver();
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -74,9 +69,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 "status.message", AttributeValue.newBuilder().setValue("200").build(),
                 Constants.getRawSpanConstant(Http.HTTP_METHOD), AttributeValue.newBuilder().setValue("GET").build(),
                 "http.host", AttributeValue.newBuilder().setValue("dataservice:9394").build(),
-                "status.code", AttributeValue.newBuilder().setValue("0").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), AttributeValue.newBuilder().setValue("mypastryshop").build()))
+                "status.code", AttributeValue.newBuilder().setValue("0").build()))
             .build())
         .setEventName("Sent./product/5d644175551847d7408760b1").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
@@ -95,14 +88,14 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
+    assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(BackendType.HTTP.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
-            .getString(), "dataservice.mypastryshop.devcluster");
+            .getString(), "dataservice");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
             .getString(), "9394");
@@ -125,10 +118,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
         .setEnrichedAttributes(Attributes.newBuilder().setAttributeMap(
             Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build(),
-                "PROTOCOL", AttributeValue.newBuilder().setValue("HTTP").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), AttributeValue.newBuilder().setValue("mypastryshop").build()
-            )).build())
+                "PROTOCOL", AttributeValue.newBuilder().setValue("HTTP").build())).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(
             Map.of("http.response.header.x-envoy-upstream-service-time", AttributeValue.newBuilder().setValue("11").build(),
                 "http.response.header.x-forwarded-proto", AttributeValue.newBuilder().setValue("http").build(),
@@ -156,12 +146,12 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
+    assertEquals("dataservice:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(BackendType.HTTP.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString());
-    assertEquals("dataservice.mypastryshop.devcluster",
+    assertEquals("dataservice",
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString());
     assertEquals(
@@ -190,11 +180,8 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 AttributeValue.newBuilder().setValue("OK").build(), "http.request.url",
                 AttributeValue.newBuilder()
                     .setValue("http://dataservice:9394/userreview?productId=5d644175551847d7408760b4")
-                    .build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-                AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-                AttributeValue.newBuilder().setValue("mypastryshop").build())).build()).setEventName("jaxrs.client.exit").setStartTimeMillis(1566869077746L)
+                    .build()))
+            .build()).setEventName("jaxrs.client.exit").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
         .setEventRefList(Arrays.asList(
@@ -212,12 +199,12 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
+    assertEquals("dataservice:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(BackendType.HTTP.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString());
-    assertEquals("dataservice.mypastryshop.devcluster",
+    assertEquals("dataservice",
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString());
     assertEquals(
@@ -250,9 +237,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 "status.message", AttributeValue.newBuilder().setValue("200").build(),
                 Constants.getRawSpanConstant(Http.HTTP_METHOD), AttributeValue.newBuilder().setValue("GET").build(),
                 "http.host", AttributeValue.newBuilder().setValue("dataservice:9394").build(),
-                "status.code", AttributeValue.newBuilder().setValue("0").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), AttributeValue.newBuilder().setValue("mypastryshop").build()))
+                "status.code", AttributeValue.newBuilder().setValue("0").build()))
             .build())
         .setEventName("Sent./product/5d644175551847d7408760b1").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
@@ -271,14 +256,14 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
+    assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(BackendType.HTTPS.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
-            .getString(), "dataservice.mypastryshop.devcluster");
+            .getString(), "dataservice");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
             .getString(), "9394");
@@ -301,10 +286,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
         .setEnrichedAttributes(Attributes.newBuilder().setAttributeMap(
             Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build(),
-                "PROTOCOL", AttributeValue.newBuilder().setValue("HTTP").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), AttributeValue.newBuilder().setValue("mypastryshop").build()
-            )).build())
+                "PROTOCOL", AttributeValue.newBuilder().setValue("HTTP").build())).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(
             Map.of("http.response.header.x-envoy-upstream-service-time", AttributeValue.newBuilder().setValue("11").build(),
                 "http.response.header.x-forwarded-proto", AttributeValue.newBuilder().setValue("http").build(),
@@ -334,11 +316,11 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .build();
 
     Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("dataservice.mypastryshop.devcluster:9394", backendEntity.getEntityName());
+    assertEquals("dataservice:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals("HTTP", backendEntity.getIdentifyingAttributesMap()
             .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL)).getValue().getString());
-    assertEquals("dataservice.mypastryshop.devcluster", backendEntity.getIdentifyingAttributesMap()
+    assertEquals("dataservice", backendEntity.getIdentifyingAttributesMap()
             .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue().getString());
     assertEquals("9394", backendEntity.getIdentifyingAttributesMap()
             .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue().getString());
@@ -367,9 +349,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 "FLAGS", AttributeValue.newBuilder().setValue("OK").build(),
                 "status.message", AttributeValue.newBuilder().setValue("200").build(),
                 Constants.getRawSpanConstant(Http.HTTP_METHOD), AttributeValue.newBuilder().setValue("GET").build(),
-                "http.host", AttributeValue.newBuilder().setValue("dataservice:9394").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), AttributeValue.newBuilder().setValue("mypastryshop").build()))
+                "http.host", AttributeValue.newBuilder().setValue("dataservice:9394").build()))
             .build())
         .setEventName("Sent./api/timelines").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
@@ -390,14 +370,14 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             .build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals(backendEntity.getEntityName(), "dataservice.mypastryshop.devcluster:9394");
+    assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString(), "HTTP");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
-            .getString(), "dataservice.mypastryshop.devcluster");
+            .getString(), "dataservice");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
             .getString(), "9394");
@@ -428,11 +408,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 "docker.container_id", AttributeValue.newBuilder()
                     .setValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f").build(),
                 "FLAGS", AttributeValue.newBuilder().setValue("0").build(), "redis.args",
-                AttributeValue.newBuilder().setValue("key<product_5d644175551847d7408760b3>").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-                AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-                AttributeValue.newBuilder().setValue("mypastryshop").build()))
+                AttributeValue.newBuilder().setValue("key<product_5d644175551847d7408760b3>").build()))
             .build()).setEventName("reactive.redis.exit").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
@@ -441,14 +417,14 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
                 .setRefType(EventRefType.CHILD_OF).build())).build();
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("redis-cart.mypastryshop.devcluster:6379", backendEntity.getEntityName());
+    assertEquals("redis-cart:6379", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString(), "REDIS");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
-            .getString(), "redis-cart.mypastryshop.devcluster");
+            .getString(), "redis-cart");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
             .getString(), "6379");
@@ -478,9 +454,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 "span.kind", AttributeValue.newBuilder().setValue("client").build(),
                 "k8s.pod_id", buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
                 "docker.container_id", buildAttributeValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
-                "FLAGS", buildAttributeValue("0"),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), buildAttributeValue("devcluster"),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), buildAttributeValue("mypastryshop")))
+                "FLAGS", buildAttributeValue("0")))
             .build())
         .setEventName("reactive.redis.exit").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L)
@@ -492,14 +466,14 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 .setRefType(EventRefType.CHILD_OF).build())).build();
 
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("redis-cart.mypastryshop.devcluster:6379", backendEntity.getEntityName());
+    assertEquals("redis-cart:6379", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString(), "REDIS");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
-            .getString(), "redis-cart.mypastryshop.devcluster");
+            .getString(), "redis-cart");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
             .getString(), "6379");
@@ -526,11 +500,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 "docker.container_id", AttributeValue.newBuilder()
                     .setValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f").build(),
                 "FLAGS", AttributeValue.newBuilder().setValue("0").build(), "address",
-                AttributeValue.newBuilder().setValue(MONGO_URL).build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-                AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-                AttributeValue.newBuilder().setValue("sampleshop").build())).build())
+                AttributeValue.newBuilder().setValue(MONGO_URL).build())).build())
         .setEventName("mongo.async.exit").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
@@ -539,12 +509,12 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
                 .setRefType(EventRefType.CHILD_OF).build())).build();
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("mongo.sampleshop.devcluster:27017", backendEntity.getEntityName());
+    assertEquals("mongo:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString(), "MONGO");
-    assertEquals("mongo.sampleshop.devcluster",
+    assertEquals("mongo",
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString());
     assertEquals(
@@ -580,11 +550,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 "FLAGS", AttributeValue.newBuilder().setValue("0").build(),
                 "mongo.operation", AttributeValue.newBuilder().setValue("HelloWorld").build(),
                 "mongo.url",
-                AttributeValue.newBuilder().setValue(MONGO_URL).build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-                AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-                AttributeValue.newBuilder().setValue("sampleshop").build())).build())
+                AttributeValue.newBuilder().setValue(MONGO_URL).build())).build())
         .setEventName("mongo.async.exit").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
@@ -593,12 +559,12 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
                 .setRefType(EventRefType.CHILD_OF).build())).build();
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("mongo.sampleshop.devcluster:27017", backendEntity.getEntityName());
+    assertEquals("mongo:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString(), "MONGO");
-    assertEquals("mongo.sampleshop.devcluster",
+    assertEquals("mongo",
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString());
     assertEquals(
@@ -631,9 +597,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 OTelDbSemanticConventions.MONGODB_COLLECTION.getValue(), buildAttributeValue("sampleshop.userReview"),
                 "span.kind", buildAttributeValue("client"),
                 OTelDbSemanticConventions.DB_OPERATION.getValue(), buildAttributeValue("FindOperation"),
-                OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("27017"),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME), buildAttributeValue("devcluster"),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME), buildAttributeValue("sampleshop")))
+                OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("27017")))
             .build())
         .setEventName("mongo.async.exit").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
@@ -643,12 +607,12 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
                 .setRefType(EventRefType.CHILD_OF).build())).build();
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("mongodb0.sampleshop.devcluster:27017", backendEntity.getEntityName());
+    assertEquals("mongodb0:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString(), "MONGO");
-    assertEquals("mongodb0.sampleshop.devcluster",
+    assertEquals("mongodb0",
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString());
     assertEquals(
@@ -683,10 +647,6 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             "products {\\n  id: \\\"5d644175551847d7408760b5\\\"\\n  name: \\\"Vintage Record Player\\\"\\n  description: \\\"It still works.\\\"\\n  picture: \\\"/static")
             .build())
         .put("grpc.request.body", AttributeValue.newBuilder().setValue("").build())
-        .put(Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-            AttributeValue.newBuilder().setValue("devcluster").build())
-        .put(Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-            AttributeValue.newBuilder().setValue("hipstershop").build())
         .build();
     Event e = Event.newBuilder().setCustomerId("__default")
         .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
@@ -704,14 +664,14 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
                 .setRefType(EventRefType.CHILD_OF).build())).build();
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("productcatalogservice.hipstershop.devcluster:3550", backendEntity.getEntityName());
+    assertEquals("productcatalogservice:3550", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString(), "GRPC");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
-            .getString(), "productcatalogservice.hipstershop.devcluster");
+            .getString(), "productcatalogservice");
     assertEquals(
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
             .getString(), "3550");
@@ -742,11 +702,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 AttributeValue.newBuilder().setValue("55636196-c840-11e9-a417-42010a8a0064").build(),
                 "docker.container_id", AttributeValue.newBuilder()
                     .setValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f").build(),
-                "FLAGS", AttributeValue.newBuilder().setValue("0").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-                AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-                AttributeValue.newBuilder().setValue("hipstershop").build())).build())
+                "FLAGS", AttributeValue.newBuilder().setValue("0").build())).build())
         .setEventName("jdbc.connection.prepare").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
@@ -755,12 +711,12 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
                 .setRefType(EventRefType.CHILD_OF).build())).build();
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("mysql.hipstershop.devcluster:3306", backendEntity.getEntityName());
+    assertEquals("mysql:3306", backendEntity.getEntityName());
     assertEquals(4, backendEntity.getIdentifyingAttributesCount());
     Assertions.assertEquals(BackendType.JDBC.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString());
-    assertEquals("mysql.hipstershop.devcluster",
+    assertEquals("mysql",
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue()
             .getString());
     assertEquals("3306",
@@ -791,11 +747,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 AttributeValue.newBuilder().setValue("55636196-c840-11e9-a417-42010a8a0064").build(),
                 "docker.container_id", AttributeValue.newBuilder()
                     .setValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f").build(),
-                "FLAGS", AttributeValue.newBuilder().setValue("0").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-                AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-                AttributeValue.newBuilder().setValue("hipstershop").build())).build())
+                "FLAGS", AttributeValue.newBuilder().setValue("0").build())).build())
         .setEventName("jdbc.connection.prepare").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
@@ -805,7 +757,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 .setRefType(EventRefType.CHILD_OF).build())).build();
     Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     Map<String, org.hypertrace.entity.data.service.v1.AttributeValue> idAttrMap = backendEntity.getIdentifyingAttributesMap();
-    assertEquals("mysql.hipstershop.devcluster", idAttrMap.get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue().getString());
+    assertEquals("mysql", idAttrMap.get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue().getString());
     assertEquals("3306", idAttrMap.get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue().getString());
     assertEquals("JDBC", idAttrMap.get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL)).getValue().getString());
     assertEquals("mysql", idAttrMap.get(Constants.getRawSpanConstant(Sql.SQL_DB_TYPE)).getValue().getString());
@@ -825,11 +777,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 AttributeValue.newBuilder().setValue("55636196-c840-11e9-a417-42010a8a0064").build(),
                 "docker.container_id", AttributeValue.newBuilder()
                     .setValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f").build(),
-                "FLAGS", AttributeValue.newBuilder().setValue("0").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-                AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-                AttributeValue.newBuilder().setValue("hipstershop").build())).build())
+                "FLAGS", AttributeValue.newBuilder().setValue("0").build())).build())
         .setEventName("redis::getDrivers").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
@@ -855,7 +803,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
 
     when(structuredTraceGraph.getParentEvent(e)).thenReturn(parentEvent);
     Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
-    assertEquals("redis.hipstershop.devcluster", backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue().getString());
+    assertEquals("redis", backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue().getString());
   }
 
   @Test
@@ -872,11 +820,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 AttributeValue.newBuilder().setValue("55636196-c840-11e9-a417-42010a8a0064").build(),
                 "docker.container_id", AttributeValue.newBuilder()
                     .setValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f").build(),
-                "FLAGS", AttributeValue.newBuilder().setValue("0").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME),
-                AttributeValue.newBuilder().setValue("devcluster").build(),
-                Constants.getEntityConstant(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME),
-                AttributeValue.newBuilder().setValue("hipstershop").build())).build())
+                "FLAGS", AttributeValue.newBuilder().setValue("0").build())).build())
         .setEventName("redis::getDrivers").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())

@@ -16,16 +16,11 @@ import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.FQNResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HttpBackendResolver extends AbstractBackendResolver {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpBackendResolver.class);
-
-  public HttpBackendResolver(FQNResolver fqnResolver) {
-    super(fqnResolver);
-  }
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
