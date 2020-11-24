@@ -42,6 +42,10 @@ public class RpcSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTEL_RPC_METHOD, OTHER_GRPC_METHOD));
   }
 
+  public static List<String> getAttributeKeysForGrpcStatusCode() {
+
+  }
+
   /**
    * @param event object encapsulating span data
    * @return if the span is for grpc based on OTel format

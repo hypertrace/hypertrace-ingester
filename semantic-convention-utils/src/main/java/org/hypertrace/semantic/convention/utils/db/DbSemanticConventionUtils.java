@@ -4,8 +4,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -135,6 +137,21 @@ public class DbSemanticConventionUtils {
   }
 
   /**
+   * @param attributeValueMap attribute key value
+   * @return check if the corresponding event is for a sql backend based on otel format
+   */
+  public static boolean isSqlTypeBackendForOtelFormat(
+      Map<String, AttributeValue> attributeValueMap) {
+    if (attributeValueMap.containsKey(OTEL_DB_SYSTEM)) {
+      return Arrays
+          .stream(OTEL_SQL_DB_SYSTEM_VALUES)
+          .anyMatch(v -> v.equals(
+              attributeValueMap.get(OTEL_DB_SYSTEM).getValue()));
+    }
+    return false;
+  }
+
+  /**
    * @param event Object encapsulating span data
    * @return sql uri for the event
    */
@@ -157,6 +174,18 @@ public class DbSemanticConventionUtils {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_CONNECTION_STRING));
     } else {
       return SpanSemanticConventionUtils.getURIForOtelFormat(event);
+    }
+  }
+
+  /**
+   * @param attributeValueMap map of attribute key value
+   * @return backend uri based on otel format
+   */
+  public static Optional<String> getBackendURIForOtelFormat(Map<String, AttributeValue> attributeValueMap) {
+    if (attributeValueMap.containsKey(OTEL_DB_CONNECTION_STRING)) {
+      return Optional.of(attributeValueMap.get(OTEL_DB_CONNECTION_STRING).getValue());
+    } else {
+      return SpanSemanticConventionUtils.getURIForOtelFormat(attributeValueMap);
     }
   }
 

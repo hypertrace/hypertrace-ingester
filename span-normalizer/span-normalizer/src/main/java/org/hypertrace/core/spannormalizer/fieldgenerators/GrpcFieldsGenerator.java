@@ -39,12 +39,7 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_STATU
 
 public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
   private static final String METADATA_STR_VAL_PREFIX = "Metadata(";
-  private static final List<String> STATUS_CODE_ATTRIBUTES =
-      List.of(
-          RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE),
-          RawSpanConstants.getValue(GRPC_STATUS_CODE),
-          RPC_STATUS_CODE.getValue(),
-          RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE));
+
   private static final List<String> STATUS_MESSAGE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
