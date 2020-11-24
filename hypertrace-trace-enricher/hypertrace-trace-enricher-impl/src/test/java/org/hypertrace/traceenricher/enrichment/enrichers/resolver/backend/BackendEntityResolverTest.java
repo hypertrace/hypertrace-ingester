@@ -29,6 +29,7 @@ import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
+import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.AbstractAttributeEnricherTest;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -592,11 +593,11 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map
             .of( OTelDbSemanticConventions.DB_SYSTEM.getValue(), buildAttributeValue(
                 OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue()),
-                OTelDbSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
+                OTelSpanSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("mongodb0"),
                 OTelDbSemanticConventions.MONGODB_COLLECTION.getValue(), buildAttributeValue("sampleshop.userReview"),
                 "span.kind", buildAttributeValue("client"),
                 OTelDbSemanticConventions.DB_OPERATION.getValue(), buildAttributeValue("FindOperation"),
-                OTelDbSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("27017")))
+                OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("27017")))
             .build())
         .setEventName("mongo.async.exit").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()

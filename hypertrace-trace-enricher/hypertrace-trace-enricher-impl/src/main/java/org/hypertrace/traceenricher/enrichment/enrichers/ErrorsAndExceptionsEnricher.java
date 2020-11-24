@@ -14,6 +14,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Error;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
+import org.hypertrace.semantic.convention.utils.error.ErrorSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
@@ -50,14 +51,13 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
       return;
     }
 
-    enrichErrorDetails(event, event.getAttributes().getAttributeMap());
-    enrichExceptionDetails(event, event.getAttributes().getAttributeMap());
+    enrichErrorDetails(event);
+    enrichExceptionDetails(event);
   }
 
-  private void enrichExceptionDetails(Event event, Map<String, AttributeValue> attributeMap) {
+  private void enrichExceptionDetails(Event event) {
     // Figure out if event has any exceptions in it.
-    boolean hasException = attributeMap.containsKey(
-        RawSpanConstants.getValue(Error.ERROR_STACK_TRACE));
+    boolean hasException = ErrorSemanticConventionUtils.checkForErrorStackTrace(event);
 
     if (hasException) {
       if (event.getMetrics() == null) {
@@ -70,13 +70,11 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
     }
   }
 
-  private void enrichErrorDetails(Event event, Map<String, AttributeValue> attributeMap) {
+  private void enrichErrorDetails(Event event) {
     // Figure out if there are any errors in the event.
-    boolean hasError = attributeMap.containsKey(
-        RawSpanConstants.getValue(Error.ERROR_ERROR)) ||
-        // Check for OT error
-        attributeMap.containsKey(RawSpanConstants.getValue(OTSpanTag.OT_SPAN_TAG_ERROR)) ||
-        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL).equals(EnrichedSpanUtils.getStatus(event));
+    boolean hasError = ErrorSemanticConventionUtils.checkForError(event) ||
+        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL)
+            .equals(EnrichedSpanUtils.getStatus(event));
 
     if (hasError) {
       if (event.getMetrics() == null) {

@@ -12,6 +12,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.core.span.constants.v1.Sql;
+import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
 /**
  * Utility class to fetch database span attributes
@@ -22,10 +23,6 @@ public class DbSemanticConventionUtils {
   private static final String OTEL_DB_SYSTEM = OTelDbSemanticConventions.DB_SYSTEM.getValue();
   private static final String OTEL_DB_CONNECTION_STRING = OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue();
   private static final String OTEL_DB_OPERATION = OTelDbSemanticConventions.DB_OPERATION.getValue();
-  private static final String OTEL_NET_PEER_IP = OTelDbSemanticConventions.NET_PEER_IP.getValue();
-  private static final String OTEL_NET_PEER_PORT = OTelDbSemanticConventions.NET_PEER_PORT.getValue();
-  private static final String OTEL_NET_PEER_NAME = OTelDbSemanticConventions.NET_PEER_NAME.getValue();
-  private static final String OTEL_NET_TRANSPORT = OTelDbSemanticConventions.NET_TRANSPORT.getValue();
 
   // mongo specific attributes
   private static final String OTEL_MONGO_DB_SYSTEM_VALUE = OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue();
@@ -159,17 +156,7 @@ public class DbSemanticConventionUtils {
     if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_CONNECTION_STRING)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_CONNECTION_STRING));
     } else {
-      String host = SpanAttributeUtils.getStringAttributeWithDefault(
-          event, OTEL_NET_PEER_NAME,
-          SpanAttributeUtils.getStringAttribute(event, OTEL_NET_PEER_IP));
-      if (StringUtils.isBlank(host)) {
-        return Optional.empty();
-      }
-      if (SpanAttributeUtils.containsAttributeKey(event, OTEL_NET_PEER_PORT)) {
-        return Optional.of(String.format(
-            "%s:%s", host, SpanAttributeUtils.getStringAttribute(event, OTEL_NET_PEER_PORT)));
-      }
-      return Optional.of(host);
+      return SpanSemanticConventionUtils.getURIForOtelFormat(event);
     }
   }
 

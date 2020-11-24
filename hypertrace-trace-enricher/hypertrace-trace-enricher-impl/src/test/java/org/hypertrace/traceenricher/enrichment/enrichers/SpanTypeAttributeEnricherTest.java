@@ -11,6 +11,7 @@ import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.core.span.constants.v1.SpanAttribute;
+import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.util.Constants;
@@ -55,7 +56,29 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
 
     e = createMockEvent();
     attributeValueMap = e.getAttributes().getAttributeMap();
+    attributeValueMap.put(
+        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
+        AttributeValueCreator.create(OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE.getValue()));
+    enricher.enrichEvent(null, e);
+    enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
+    Assertions.assertEquals(
+        Constants.getEnrichedSpanConstant(ENTRY),
+        enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue());
+
+    e = createMockEvent();
+    attributeValueMap = e.getAttributes().getAttributeMap();
     attributeValueMap.put(SPAN_KIND_KEY, AttributeValueCreator.create(CLIENT_VALUE));
+    enricher.enrichEvent(null, e);
+    enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
+    Assertions.assertEquals(
+        enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue(),
+        Constants.getEnrichedSpanConstant(EXIT));
+
+    e = createMockEvent();
+    attributeValueMap = e.getAttributes().getAttributeMap();
+    attributeValueMap.put(
+        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
+        AttributeValueCreator.create(OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE.getValue()));
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(

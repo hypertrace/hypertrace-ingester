@@ -15,6 +15,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.core.span.constants.v1.Sql;
+import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -249,7 +250,7 @@ public class DbSemanticConventionUtilsTest {
     // only ip is present
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbSemanticConventions.NET_PEER_IP.getValue(),
+            OTelSpanSemanticConventions.NET_PEER_IP.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("127.0.0.1")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
@@ -258,9 +259,9 @@ public class DbSemanticConventionUtilsTest {
     // ip & host present
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbSemanticConventions.NET_PEER_IP.getValue(),
+            OTelSpanSemanticConventions.NET_PEER_IP.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("127.0.0.1"),
-            OTelDbSemanticConventions.NET_PEER_NAME.getValue(),
+            OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mysql.example.com")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
@@ -269,11 +270,11 @@ public class DbSemanticConventionUtilsTest {
     // host & port present
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
-            OTelDbSemanticConventions.NET_PEER_IP.getValue(),
+            OTelSpanSemanticConventions.NET_PEER_IP.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("127.0.0.1"),
-            OTelDbSemanticConventions.NET_PEER_NAME.getValue(),
+            OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mysql.example.com"),
-            OTelDbSemanticConventions.NET_PEER_PORT.getValue(),
+            OTelSpanSemanticConventions.NET_PEER_PORT.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("3306")));
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
