@@ -48,6 +48,14 @@ public class ErrorSemanticConventionUtilsTest {
 
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
+            OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("xyzerror")));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = ErrorSemanticConventionUtils.checkForError(e);
+    assertTrue(v);
+
+    attributes = SemanticConventionTestUtil.buildAttributes(
+        Map.of(
             "other_error",
             SemanticConventionTestUtil.buildAttributeValue("xyzerror")));
     when(e.getAttributes()).thenReturn(attributes);

@@ -20,7 +20,8 @@ public class ErrorSemanticConventionUtils {
   private static final String[] EXCEPTION_ATTRIBUTES = {
       RawSpanConstants.getValue(Error.ERROR_ERROR),
       RawSpanConstants.getValue(OTSpanTag.OT_SPAN_TAG_ERROR),
-      OTEL_EXCEPTION_TYPE
+      OTEL_EXCEPTION_TYPE,
+      OTEL_EXCEPTION_MESSAGE
   };
 
   private static final String[] EXCEPTION_STACK_TRACE_ATTRIBUTES = {
