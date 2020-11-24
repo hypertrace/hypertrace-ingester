@@ -49,6 +49,19 @@ public class SpanSemanticConventionUtilsTest {
     v = SpanSemanticConventionUtils.getURIForOtelFormat(e);
     assertEquals("172.0.1.17:2705", v.get());
 
+    // ip & host both present
+    attributes = SemanticConventionTestUtil.buildAttributes(
+        Map.of(
+            OTelSpanSemanticConventions.NET_PEER_IP.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("172.0.1.17"),
+            OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("example.com"),
+            OTelSpanSemanticConventions.NET_PEER_PORT.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("2705")));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = SpanSemanticConventionUtils.getURIForOtelFormat(e);
+    assertEquals("example.com:2705", v.get());
+
     // empty host
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(

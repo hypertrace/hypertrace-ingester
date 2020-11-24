@@ -30,8 +30,7 @@ public class GrpcBackendResolver extends AbstractBackendResolver {
 
       if (backendURI.isEmpty() || StringUtils.isEmpty(backendURI.get())) {
         LOGGER.debug(
-            "Detected GRPC span, but unable to find the {} attribute as the URI. Span Event: {}",
-            Constants.getRawSpanConstant(Grpc.GRPC_HOST_PORT), event);
+            "Detected GRPC span, but unable to derive the URI. Span Event: {}", event);
         // todo: Proxy with GRPC backend. Proxy supports only HTTP now, and there's no GRPC
         // method information that we can extract from Proxy.
         return Optional.empty();

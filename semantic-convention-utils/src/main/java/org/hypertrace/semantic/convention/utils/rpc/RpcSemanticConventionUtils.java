@@ -39,11 +39,7 @@ public class RpcSemanticConventionUtils {
    * @return attribute keys for grpc method
    */
   public static List<String> getAttributeKeysForGrpcMethod() {
-    return Lists.newArrayList(Sets.newHashSet(OTEL_RPC_METHOD, OTHER_GRPC_METHOD));
-  }
-
-  public static List<String> getAttributeKeysForGrpcStatusCode() {
-
+    return Lists.newArrayList(Sets.newHashSet(OTHER_GRPC_METHOD, OTEL_RPC_METHOD));
   }
 
   /**
