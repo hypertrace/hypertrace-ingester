@@ -117,7 +117,7 @@ class DefaultTraceEntityReader implements TraceEntityReader {
     return this.traceAttributeReader
         .getSpanValue(trace, span, attributeMetadata.getScopeString(), attributeMetadata.getKey())
         .onErrorComplete()
-        .flatMapSingle(AttributeValueConverter::convertToAttributeValue)
+        .flatMap(AttributeValueConverter::convertToAttributeValue)
         .map(value -> Map.entry(attributeMetadata.getKey(), value));
   }
 

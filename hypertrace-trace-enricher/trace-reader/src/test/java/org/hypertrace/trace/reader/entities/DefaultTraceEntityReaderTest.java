@@ -5,6 +5,7 @@ import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedEventBuil
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedStructuredTraceBuilder;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
+import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -92,7 +94,8 @@ class DefaultTraceEntityReaderTest {
   void canReadAnEntity() {
     mockSingleEntityType();
     mockAvailableAttributes();
-    mockSpanAttributeReads();
+    mockEntityIdWith(stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
+    mockEntityNameWith(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockEntityUpsert();
 
     assertEquals(
@@ -106,7 +109,8 @@ class DefaultTraceEntityReaderTest {
   void canReadAllEntities() {
     mockAllEntityTypes();
     mockAvailableAttributes();
-    mockSpanAttributeReads();
+    mockEntityIdWith(stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
+    mockEntityNameWith(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockEntityUpsert();
 
     assertEquals(
@@ -114,13 +118,30 @@ class DefaultTraceEntityReaderTest {
         this.entityReader.getAssociatedEntitiesForSpan(TEST_TRACE, TEST_SPAN).blockingGet());
   }
 
-  private void mockSpanAttributeReads() {
-    when(this.mockAttributeReader.getSpanValue(
-            TEST_TRACE, TEST_SPAN, TEST_ENTITY_TYPE_NAME, TEST_ENTITY_ID_ATTRIBUTE_KEY))
-        .thenReturn(Single.just(stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE)));
+  @Test
+  void omitsEntityBasedOnMissingAttributes() {
+    mockSingleEntityType();
+    mockAvailableAttributes();
+    mockEntityIdWith(LiteralValue.getDefaultInstance());
+    mockEntityNameWith(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
+
+    assertTrue(
+        this.entityReader
+            .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
+            .isEmpty()
+            .blockingGet());
+  }
+
+  private void mockEntityNameWith(LiteralValue value) {
     when(this.mockAttributeReader.getSpanValue(
             TEST_TRACE, TEST_SPAN, TEST_ENTITY_TYPE_NAME, TEST_ENTITY_NAME_ATTRIBUTE_KEY))
-        .thenReturn(Single.just(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE)));
+        .thenReturn(Single.just(value));
+  }
+
+  private void mockEntityIdWith(LiteralValue value) {
+    when(this.mockAttributeReader.getSpanValue(
+            TEST_TRACE, TEST_SPAN, TEST_ENTITY_TYPE_NAME, TEST_ENTITY_ID_ATTRIBUTE_KEY))
+        .thenReturn(Single.just(value));
   }
 
   private void mockEntityUpsert() {

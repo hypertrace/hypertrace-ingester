@@ -1,30 +1,34 @@
 package org.hypertrace.trace.reader.entities;
 
-import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.Maybe;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class AttributeValueConverter {
-  static Single<AttributeValue> convertToAttributeValue(LiteralValue literalValue) {
+  private static final Logger LOG = LoggerFactory.getLogger(AttributeValueConverter.class);
+
+  static Maybe<AttributeValue> convertToAttributeValue(LiteralValue literalValue) {
     switch (literalValue.getValueCase()) {
       case STRING_VALUE:
-        return attributeValueSingle(Value.newBuilder().setString(literalValue.getStringValue()));
+        return attributeValueMaybe(Value.newBuilder().setString(literalValue.getStringValue()));
       case BOOLEAN_VALUE:
-        return attributeValueSingle(Value.newBuilder().setBoolean(literalValue.getBooleanValue()));
+        return attributeValueMaybe(Value.newBuilder().setBoolean(literalValue.getBooleanValue()));
       case FLOAT_VALUE:
-        return attributeValueSingle(Value.newBuilder().setDouble(literalValue.getFloatValue()));
+        return attributeValueMaybe(Value.newBuilder().setDouble(literalValue.getFloatValue()));
       case INT_VALUE:
-        return attributeValueSingle(Value.newBuilder().setLong(literalValue.getIntValue()));
+        return attributeValueMaybe(Value.newBuilder().setLong(literalValue.getIntValue()));
       case VALUE_NOT_SET:
+        return Maybe.empty();
       default:
-        return Single.error(
-            new UnsupportedOperationException(
-                "Unexpected literal value case: " + literalValue.getValueCase()));
+        LOG.error("Unexpected literal value case: " + literalValue.getValueCase());
+        return Maybe.empty();
     }
   }
 
-  private static Single<AttributeValue> attributeValueSingle(Value.Builder value) {
-    return Single.just(AttributeValue.newBuilder().setValue(value).build());
+  private static Maybe<AttributeValue> attributeValueMaybe(Value.Builder value) {
+    return Maybe.just(AttributeValue.newBuilder().setValue(value).build());
   }
 }
