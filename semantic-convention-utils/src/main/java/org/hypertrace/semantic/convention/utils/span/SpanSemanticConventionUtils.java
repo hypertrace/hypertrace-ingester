@@ -53,4 +53,20 @@ public class SpanSemanticConventionUtils {
     }
     return Optional.of(hostAttribute.getValue());
   }
+
+  public static boolean isClientSpanForOtelFormat(Map<String, AttributeValue> attributeValueMap) {
+    if (attributeValueMap.containsKey(OTelSpanSemanticConventions.SPAN_KIND.getValue())) {
+      return OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE.getValue().equals(
+          attributeValueMap.get(OTelSpanSemanticConventions.SPAN_KIND.getValue()).getValue());
+    }
+    return false;
+  }
+
+  public static boolean isServerSpanForOtelFormat(Map<String, AttributeValue> attributeValueMap) {
+    if (attributeValueMap.containsKey(OTelSpanSemanticConventions.SPAN_KIND.getValue())) {
+      return OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE.getValue().equals(
+          attributeValueMap.get(OTelSpanSemanticConventions.SPAN_KIND.getValue()).getValue());
+    }
+    return false;
+  }
 }
