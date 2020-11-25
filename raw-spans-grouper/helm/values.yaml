@@ -112,6 +112,9 @@ rawSpansGrouperConfig:
         bootstrapServers: "bootstrap:9092"
         schemaRegistryUrl: "http://schema-registry-service:8081"
         cacheMaxBytesBuffering: 16777216 # 16MB
+        commitIntervalMs: 5000 #default
+        producerBatchSize: 16384 #default
+        producerLingerMs: 0 #default
         rocksdbBlockCacheSize: 33554432
         rocksdbWriteBufferSize: 8388608
         rocksdbMaxWriteBuffers: 2
