@@ -1,6 +1,7 @@
 package org.hypertrace.core.spannormalizer.fieldgenerators;
 
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
 import org.slf4j.Logger;
@@ -42,9 +43,9 @@ public class FieldsGenerator {
         .forEach(k -> protocolFieldsGeneratorMap.put(k, rpcFieldsGenerator));
   }
 
-  public void populateOtherFields(Event.Builder eventBuilder) {
+  public void populateOtherFields(Event.Builder eventBuilder, Map<String, AttributeValue> valueMap) {
     try {
-      this.httpFieldsGenerator.populateOtherFields(eventBuilder);
+      this.httpFieldsGenerator.populateOtherFields(eventBuilder, valueMap);
     } catch (Exception ex) {
       LOGGER.error("An error occurred while populating other fields: %s", ex);
     }

@@ -1,5 +1,13 @@
 package org.hypertrace.semantic.convention.utils.http;
 
+import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_HOST;
+import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
+import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_NET_HOST_PORT;
+import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_SCHEME;
+import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_SERVER_NAME;
+import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_TARGET;
+import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_URL;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.List;
@@ -46,17 +54,17 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<String> getHttpUrlForOTelFormat(Map<String, AttributeValue> attributeValueMap) {
-    if (attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_URL.getValue())) {
-      return Optional.of(attributeValueMap.get(OTelHttpSemanticConventions.HTTP_URL.getValue()).getValue());
+    if (attributeValueMap.containsKey(HTTP_URL.getValue())) {
+      return Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
     } else if (
-        attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_SCHEME.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_HOST.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_TARGET.getValue())) {
+        attributeValueMap.containsKey(HTTP_SCHEME.getValue())
+            && attributeValueMap.containsKey(HTTP_HOST.getValue())
+            && attributeValueMap.containsKey(HTTP_TARGET.getValue())) {
       String url = String.format(
           "%s://%s%s",
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_SCHEME.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_HOST.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_TARGET.getValue()));
+          attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+          attributeValueMap.get(HTTP_HOST.getValue()).getValue(),
+          attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
         return Optional.of(url);
     } else if (SpanSemanticConventionUtils.isClientSpanForOtelFormat(attributeValueMap)) {
       return getHttpUrlForOtelFormatClientSpan(attributeValueMap);
@@ -69,28 +77,28 @@ public class HttpSemanticConventionUtils {
   private static Optional<String> getHttpUrlForOtelFormatClientSpan(
       Map<String, AttributeValue> attributeValueMap) {
     if (
-        attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_SCHEME.getValue())
+        attributeValueMap.containsKey(HTTP_SCHEME.getValue())
             && attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_PEER_NAME.getValue())
             && attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_PEER_PORT.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_TARGET.getValue())) {
+            && attributeValueMap.containsKey(HTTP_TARGET.getValue())) {
       String url = String.format(
           "%s://%s:%s%s",
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_SCHEME.getValue()),
-          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_NAME.getValue()),
-          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_TARGET.getValue()));
+          attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_NAME.getValue()).getValue(),
+          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue()).getValue(),
+          attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
       return Optional.of(url);
     } else if (
-        attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_SCHEME.getValue())
+        attributeValueMap.containsKey(HTTP_SCHEME.getValue())
             && attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_PEER_IP.getValue())
             && attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_PEER_PORT.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_TARGET.getValue())) {
+            && attributeValueMap.containsKey(HTTP_TARGET.getValue())) {
       String url = String.format(
           "%s://%s:%s%s",
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_SCHEME.getValue()),
-          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_IP.getValue()),
-          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_TARGET.getValue()));
+          attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_IP.getValue()).getValue(),
+          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue()).getValue(),
+          attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
       return Optional.of(url);
     }
     return Optional.empty();
@@ -99,28 +107,28 @@ public class HttpSemanticConventionUtils {
   private static Optional<String> getHttpUrlForOtelFormatServerSpan(
       Map<String, AttributeValue> attributeValueMap) {
     if (
-        attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_SCHEME.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_SERVER_NAME.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_NET_HOST_PORT.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_TARGET.getValue())) {
+        attributeValueMap.containsKey(HTTP_SCHEME.getValue())
+            && attributeValueMap.containsKey(HTTP_SERVER_NAME.getValue())
+            && attributeValueMap.containsKey(HTTP_NET_HOST_PORT.getValue())
+            && attributeValueMap.containsKey(HTTP_TARGET.getValue())) {
       String url = String.format(
           "%s://%s:%s%s",
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_SCHEME.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_SERVER_NAME.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_NET_HOST_PORT.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_TARGET.getValue()));
+          attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+          attributeValueMap.get(HTTP_SERVER_NAME.getValue()).getValue(),
+          attributeValueMap.get(HTTP_NET_HOST_PORT.getValue()).getValue(),
+          attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
       return Optional.of(url);
     } else if (
-        attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_SCHEME.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_NET_HOST_NAME.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_NET_HOST_PORT.getValue())
-            && attributeValueMap.containsKey(OTelHttpSemanticConventions.HTTP_TARGET.getValue())) {
+        attributeValueMap.containsKey(HTTP_SCHEME.getValue())
+            && attributeValueMap.containsKey(HTTP_NET_HOST_NAME.getValue())
+            && attributeValueMap.containsKey(HTTP_NET_HOST_PORT.getValue())
+            && attributeValueMap.containsKey(HTTP_TARGET.getValue())) {
       String url = String.format(
           "%s://%s:%s%s",
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_SCHEME.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_SERVER_NAME.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_NET_HOST_PORT.getValue()),
-          attributeValueMap.get(OTelHttpSemanticConventions.HTTP_TARGET.getValue()));
+          attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+          attributeValueMap.get(HTTP_NET_HOST_NAME.getValue()).getValue(),
+          attributeValueMap.get(HTTP_NET_HOST_PORT.getValue()).getValue(),
+          attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
       return Optional.of(url);
     }
     return Optional.empty();
