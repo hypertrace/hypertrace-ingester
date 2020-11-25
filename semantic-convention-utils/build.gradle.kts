@@ -1,9 +1,6 @@
 plugins {
     `java-library`
-    id("org.hypertrace.publish-plugin")
 }
-
-group = "org.hypertrace.utils"
 
 tasks.test {
     useJUnitPlatform()
