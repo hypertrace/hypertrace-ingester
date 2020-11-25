@@ -1,6 +1,8 @@
 package org.hypertrace.core.spannormalizer.fieldgenerators;
 
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
+import java.util.Optional;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.grpc.Grpc;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -8,6 +10,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_CODE;
@@ -47,9 +50,9 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
   private static final Map<String, String> EMPTY_METADATA_MAP = Map.of();
   private static final String METADATA_DELIMITER = ",";
   private static final String METADATA_KEY_VALUE_DELIMITER = "=";
-  private static Map<String, FieldGenerator<Grpc.Builder>> fieldGeneratorMap =
+  private static final Map<String, FieldGenerator<Grpc.Builder>> fieldGeneratorMap =
       initializeFieldGenerators();
-  private static Map<String, FieldGenerator<Grpc.Builder>> rpcFieldGeneratorMap =
+  private static final Map<String, FieldGenerator<Grpc.Builder>> rpcFieldGeneratorMap =
       initializeRpcFieldGenerators();
 
   private static Map<String, FieldGenerator<Grpc.Builder>> initializeFieldGenerators() {
@@ -72,10 +75,13 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
         RawSpanConstants.getValue(GRPC_HOST_PORT),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().setHostPort(ValueConverter.getString(keyValue)));
-    fieldGeneratorMap.put(
-        RawSpanConstants.getValue(GRPC_METHOD),
-        (key, keyValue, builder, tagsMap) ->
-            builder.getRequestBuilder().setMethod(ValueConverter.getString(keyValue)));
+
+    // grpc method
+    RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod().forEach(v ->
+        fieldGeneratorMap.put(
+            v, (key, keyValue, builder, tagsMap) ->
+                builder.getRequestBuilder().setMethod(ValueConverter.getString(keyValue))));
+
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(GRPC_ERROR_NAME),
         (key, keyValue, builder, tagsMap) ->
@@ -84,21 +90,16 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
         RawSpanConstants.getValue(GRPC_ERROR_MESSAGE),
         (key, keyValue, builder, tagsMap) ->
             builder.getResponseBuilder().setErrorMessage(ValueConverter.getString(keyValue)));
+
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(GRPC_REQUEST_CALL_OPTIONS),
         (key, keyValue, builder, tagsMap) ->
             builder.getRequestBuilder().setCallOptions(ValueConverter.getString(keyValue)));
 
     // Response Status Code
-    fieldGeneratorMap.put(
-        RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE),
-        (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap));
-    fieldGeneratorMap.put(
-        RawSpanConstants.getValue(GRPC_STATUS_CODE),
-        (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap));
-    fieldGeneratorMap.put(
-        RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE),
-        (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap));
+    RpcSemanticConventionUtils.getAttributeKeysForGrpcStatusCode().forEach(v ->
+        fieldGeneratorMap.put(
+            v, (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap)));
 
     // Response Status message
     fieldGeneratorMap.put(
@@ -202,8 +203,9 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
       return;
     }
 
-    FirstMatchingKeyFinder.getIntegerValueByFirstMatchingKey(tagsMap, STATUS_CODE_ATTRIBUTES)
-        .ifPresent(statusCode -> grpcBuilder.getResponseBuilder().setStatusCode(statusCode));
+    FirstMatchingKeyFinder.getIntegerValueByFirstMatchingKey(
+        tagsMap, RpcSemanticConventionUtils.getAttributeKeysForGrpcStatusCode()).ifPresent(
+            statusCode -> grpcBuilder.getResponseBuilder().setStatusCode(statusCode));
   }
 
   private static void setResponseStatusMessage(
@@ -312,5 +314,10 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
   protected void handleRpcResponseMetadata(String key, JaegerSpanInternalModel.KeyValue keyValue, Grpc.Builder grpcBuilder) {
     grpcBuilder.getResponseBuilder().getResponseMetadataBuilder().getOtherMetadata().put(key, ValueConverter.getString(keyValue));
     grpcBuilder.getResponseBuilder().getMetadata().put(key, ValueConverter.getString(keyValue));
+  }
+
+  protected void maybeSetHostPortForOtelFormat(Event.Builder builder, Map<String, AttributeValue> attributeValueMap) {
+    Optional<String> grpcHostPort = RpcSemanticConventionUtils.getGrpcURI(attributeValueMap);
+    grpcHostPort.ifPresent(s -> builder.getGrpcBuilder().getRequestBuilder().setHostPort(s));
   }
 }
