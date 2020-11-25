@@ -235,6 +235,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
   }
 
   void populateOtherFields(Event.Builder eventBuilder, Map<String, AttributeValue> attributeValueMap) {
+    // we may need derive url for otel format, populateUrlParts should take care of setting other fields
     maybeSetHttpUrlForOtelFormat(eventBuilder.getHttpBuilder().getRequestBuilder(), attributeValueMap);
     populateUrlParts(eventBuilder.getHttpBuilder().getRequestBuilder());
   }

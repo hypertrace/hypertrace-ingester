@@ -53,6 +53,20 @@ public class HttpSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTHER_HTTP_REQUEST_METHOD));
   }
 
+  /**
+   * OTel mandates one of the following set to be present for
+   * http server span
+   * - http.scheme, http.host, http.target
+   * - http.scheme, http.server_name, net.host.port, http.target
+   * - http.scheme, net.host.name, net.host.port, http.target
+   * - http.url
+   *
+   * http client span
+   * - http.url
+   * - http.scheme, http.host, http.target
+   * - http.scheme, net.peer.name, net.peer.port, http.target
+   * - http.scheme, net.peer.ip, net.peer.port, http.target
+   */
   public static Optional<String> getHttpUrlForOTelFormat(Map<String, AttributeValue> attributeValueMap) {
     if (attributeValueMap.containsKey(HTTP_URL.getValue())) {
       return Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
