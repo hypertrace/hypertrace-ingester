@@ -20,7 +20,9 @@ data:
       {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
       session.timeout.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
       {{- end }}
+      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.commitIntervalMs }}
       commit.interval.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.commitIntervalMs }}
+      {{- end }}
       {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.producerBatchSize }}
       producer.batch.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerBatchSize }}
       {{- end }}
