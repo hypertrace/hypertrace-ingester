@@ -321,6 +321,10 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
     grpcBuilder.getResponseBuilder().getMetadata().put(key, ValueConverter.getString(keyValue));
   }
 
+  protected void populateOtherFields(Event.Builder eventBuilder, Map<String, AttributeValue> attributeValueMap) {
+    maybeSetHostPortForOtelFormat(eventBuilder, attributeValueMap);
+  }
+
   protected void maybeSetHostPortForOtelFormat(Event.Builder builder, Map<String, AttributeValue> attributeValueMap) {
     Optional<String> grpcHostPort = RpcSemanticConventionUtils.getGrpcURI(attributeValueMap);
     grpcHostPort.ifPresent(s -> builder.getGrpcBuilder().getRequestBuilder().setHostPort(s));

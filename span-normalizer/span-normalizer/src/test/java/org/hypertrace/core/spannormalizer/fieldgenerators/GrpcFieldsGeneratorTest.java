@@ -17,13 +17,20 @@ import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_METADATA;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_STATUS_CODE;
 import static org.hypertrace.core.spannormalizer.utils.TestUtils.createKeyValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.google.common.collect.Maps;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.util.HashMap;
 import java.util.Map;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.grpc.Grpc;
 import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
+import org.hypertrace.semantic.convention.utils.rpc.OTelRpcSemanticConventions;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -251,5 +258,39 @@ public class GrpcFieldsGeneratorTest {
             grpcFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
     Assertions.assertEquals(Map.of(), grpcBuilder2.getRequestBuilder().getMetadata());
+  }
+
+  @Test
+  public void testGrpcFieldsConverterForOTelSpan() {
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap = new HashMap<>();
+    tagsMap.put(OTelRpcSemanticConventions.RPC_METHOD.getValue(), createKeyValue("GET"));
+    tagsMap.put(OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue(), createKeyValue(5));
+
+    GrpcFieldsGenerator grpcFieldsGenerator = new GrpcFieldsGenerator();
+    Event.Builder eventBuilder = Event.newBuilder();
+    Grpc.Builder grpcBuilder = grpcFieldsGenerator.getProtocolBuilder(eventBuilder);
+
+    Assertions.assertSame(eventBuilder.getGrpcBuilder(), grpcBuilder);
+
+    tagsMap.forEach(
+        (key, keyValue) ->
+            grpcFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder, tagsMap));
+
+    Assertions.assertEquals("GET", grpcBuilder.getRequestBuilder().getMethod());
+    Assertions.assertEquals(5, grpcBuilder.getResponseBuilder().getStatusCode());
+  }
+
+  @Test
+  public void testPopulateOtherFields() {
+    GrpcFieldsGenerator grpcFieldsGenerator = new GrpcFieldsGenerator();
+    Event.Builder eventBuilder = Event.newBuilder();
+    Map<String, AttributeValue> map = Maps.newHashMap();
+    map.put(OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+        AttributeValue.newBuilder().setValue(OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue()).build());
+    map.put(OTelSpanSemanticConventions.NET_PEER_IP.getValue(), AttributeValue.newBuilder().setValue(("172.0.1.17")).build());
+    map.put(OTelSpanSemanticConventions.NET_PEER_NAME.getValue(), AttributeValue.newBuilder().setValue("example.com").build());
+    map.put(OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), AttributeValue.newBuilder().setValue("2705").build());
+    grpcFieldsGenerator.populateOtherFields(eventBuilder, map);
+    assertEquals("example.com:2705", eventBuilder.getGrpcBuilder().getRequestBuilder().getHostPort());
   }
 }
