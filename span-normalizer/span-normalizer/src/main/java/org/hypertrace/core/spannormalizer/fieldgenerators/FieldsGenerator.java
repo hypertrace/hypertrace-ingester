@@ -47,7 +47,7 @@ public class FieldsGenerator {
       Event.Builder eventBuilder,
       Map<String, AttributeValue> attributeValueMap) {
     try {
-      this.httpFieldsGenerator.populateOtherFields(eventBuilder);
+      this.httpFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
       this.sqlFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
       this.grpcFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
     } catch (Exception ex) {
