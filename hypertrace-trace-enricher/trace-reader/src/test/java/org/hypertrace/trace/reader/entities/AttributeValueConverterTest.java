@@ -10,7 +10,7 @@ import static org.hypertrace.trace.reader.entities.AttributeValueUtil.doubleAttr
 import static org.hypertrace.trace.reader.entities.AttributeValueUtil.longAttributeValue;
 import static org.hypertrace.trace.reader.entities.AttributeValueUtil.stringAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.junit.jupiter.api.Test;
@@ -48,9 +48,7 @@ class AttributeValueConverterTest {
   }
 
   @Test
-  void errorsOnUnknownValue() {
-    assertThrows(
-        UnsupportedOperationException.class,
-        () -> convertToAttributeValue(LiteralValue.getDefaultInstance()).blockingGet());
+  void emptyOnUnknownValue() {
+    assertTrue(convertToAttributeValue(LiteralValue.getDefaultInstance()).isEmpty().blockingGet());
   }
 }

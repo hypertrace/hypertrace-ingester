@@ -20,7 +20,15 @@ data:
       {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
       session.timeout.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
       {{- end }}
-
+      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.commitIntervalMs }}
+      commit.interval.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.commitIntervalMs }}
+      {{- end }}
+      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.producerBatchSize }}
+      producer.batch.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerBatchSize }}
+      {{- end }}
+      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.producerLingerMs }}
+      producer.linger.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerLingerMs }}
+      {{- end }}
       default.production.exception.handler = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.defaultProductionExceptionHandler }}
       ignore.production.exception.classes = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.ignoreProductionExceptionClasses }}
 
