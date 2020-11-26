@@ -1,7 +1,13 @@
 package org.hypertrace.semantic.convention.utils.span;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 
@@ -30,5 +36,50 @@ public class SpanSemanticConventionUtils {
           "%s:%s", host, SpanAttributeUtils.getStringAttribute(event, OTEL_NET_PEER_PORT)));
     }
     return Optional.of(host);
+  }
+
+  /**
+   * @param attributeValueMap map of span data and attribute value
+   * @return URI based on OTel format
+   */
+  public static Optional<String> getURIForOtelFormat(Map<String, AttributeValue> attributeValueMap) {
+    AttributeValue hostAttribute = attributeValueMap.getOrDefault(
+        OTEL_NET_PEER_NAME,
+        attributeValueMap.get(OTEL_NET_PEER_IP));
+    if (null == hostAttribute || StringUtils.isBlank(hostAttribute.getValue())) {
+      return Optional.empty();
+    }
+    if (attributeValueMap.containsKey(OTEL_NET_PEER_PORT)
+        && !StringUtils.isBlank(attributeValueMap.get(OTEL_NET_PEER_PORT).getValue())) {
+      return Optional.of(String.format(
+          "%s:%s", hostAttribute.getValue(),
+          attributeValueMap.get(OTEL_NET_PEER_PORT).getValue()));
+    }
+    return Optional.of(hostAttribute.getValue());
+  }
+
+  public static boolean isClientSpanForOtelFormat(Map<String, AttributeValue> attributeValueMap) {
+    if (attributeValueMap.containsKey(OTelSpanSemanticConventions.SPAN_KIND.getValue())) {
+      return OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE.getValue().equals(
+          attributeValueMap.get(OTelSpanSemanticConventions.SPAN_KIND.getValue()).getValue());
+    }
+    return false;
+  }
+
+  public static boolean isServerSpanForOtelFormat(Map<String, AttributeValue> attributeValueMap) {
+    if (attributeValueMap.containsKey(OTelSpanSemanticConventions.SPAN_KIND.getValue())) {
+      return OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE.getValue().equals(
+          attributeValueMap.get(OTelSpanSemanticConventions.SPAN_KIND.getValue()).getValue());
+    }
+    return false;
+  }
+
+  public static boolean isValidUri(String uri) {
+    try {
+      new URI(uri);
+    } catch (URISyntaxException e) {
+      return false;
+    }
+    return true;
   }
 }
