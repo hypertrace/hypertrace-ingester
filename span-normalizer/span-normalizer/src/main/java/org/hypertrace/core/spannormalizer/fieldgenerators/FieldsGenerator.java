@@ -49,6 +49,7 @@ public class FieldsGenerator {
     try {
       this.httpFieldsGenerator.populateOtherFields(eventBuilder);
       this.sqlFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
+      this.grpcFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
     } catch (Exception ex) {
       LOGGER.error("An error occurred while populating other fields: %s", ex);
     }

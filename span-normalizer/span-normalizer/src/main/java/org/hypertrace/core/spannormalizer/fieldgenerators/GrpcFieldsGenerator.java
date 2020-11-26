@@ -10,6 +10,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.hypertrace.semantic.convention.utils.error.OTelErrorSemanticConventions;
 import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE;
@@ -42,12 +43,6 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_STATU
 
 public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
   private static final String METADATA_STR_VAL_PREFIX = "Metadata(";
-  private static final List<String> STATUS_CODE_ATTRIBUTES =
-      List.of(
-          RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE),
-          RawSpanConstants.getValue(GRPC_STATUS_CODE),
-          RPC_STATUS_CODE.getValue(),
-          RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE));
   private static final List<String> STATUS_MESSAGE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
@@ -321,7 +316,25 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
     grpcBuilder.getResponseBuilder().getMetadata().put(key, ValueConverter.getString(keyValue));
   }
 
-  protected void maybeSetHostPortForOtelFormat(Event.Builder builder, Map<String, AttributeValue> attributeValueMap) {
+  protected void populateOtherFields(Event.Builder eventBuilder, Map<String, AttributeValue> attributeValueMap) {
+    maybeSetGrpcHostPortForOtelFormat(eventBuilder, attributeValueMap);
+    maybeSetGrpcExceptionForOtelFormat(eventBuilder, attributeValueMap);
+  }
+
+  protected void maybeSetGrpcExceptionForOtelFormat(Event.Builder builder, Map<String, AttributeValue> attributeValueMap) {
+    if (RpcSemanticConventionUtils.isRpcTypeGrpcForOTelFormat(attributeValueMap)) {
+      if (attributeValueMap.containsKey(OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue())) {
+        builder.getGrpcBuilder().getResponseBuilder().setErrorName(
+            attributeValueMap.get(OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue()).getValue());
+      }
+      if (attributeValueMap.containsKey(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue())) {
+        builder.getGrpcBuilder().getResponseBuilder().setErrorMessage(
+            attributeValueMap.get(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue()).getValue());
+      }
+    }
+  }
+
+  protected void maybeSetGrpcHostPortForOtelFormat(Event.Builder builder, Map<String, AttributeValue> attributeValueMap) {
     Optional<String> grpcHostPort = RpcSemanticConventionUtils.getGrpcURI(attributeValueMap);
     grpcHostPort.ifPresent(s -> builder.getGrpcBuilder().getRequestBuilder().setHostPort(s));
   }

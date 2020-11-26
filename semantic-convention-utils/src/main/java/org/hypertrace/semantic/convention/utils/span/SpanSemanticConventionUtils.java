@@ -76,7 +76,7 @@ public class SpanSemanticConventionUtils {
 
   public static boolean isValidUri(String uri) {
     try {
-      URI x = new URI(uri);
+      new URI(uri);
     } catch (URISyntaxException e) {
       return false;
     }

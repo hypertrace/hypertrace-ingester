@@ -26,6 +26,7 @@ public class RpcSemanticConventionUtils {
   private static final String OTEL_RPC_SYSTEM = OTelRpcSemanticConventions.RPC_SYSTEM.getValue();
   private static final String OTEL_RPC_METHOD = OTelRpcSemanticConventions.RPC_METHOD.getValue();
   private static final String OTEL_GRPC_STATUS_CODE = OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue();
+  private static final String RPC_STATUS_CODE = OTelRpcSemanticConventions.RPC_STATUS_CODE.getValue();
   private static final String OTEL_RPC_SYSTEM_GRPC = OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue();
 
   private static final String OTHER_GRPC_HOST_PORT = RawSpanConstants.getValue(Grpc.GRPC_HOST_PORT);
@@ -35,6 +36,7 @@ public class RpcSemanticConventionUtils {
           RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_CODE),
           RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),
           RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE),
+          RPC_STATUS_CODE,
           OTEL_GRPC_STATUS_CODE
       );
 
