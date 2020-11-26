@@ -62,13 +62,13 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
     return FIELD_GENERATOR_MAP;
   }
 
-  protected void populateOtherFields(Event.Builder eventBuilder, Map<String, AttributeValue> attributeValueMap) {
+  protected void populateOtherFields(Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
     maybePopulateSqlUrlForOtelSpan(eventBuilder, attributeValueMap);
   }
 
   protected void maybePopulateSqlUrlForOtelSpan(
       Event.Builder eventBuilder,
-      Map<String, AttributeValue> attributeFieldMap) {
+      final Map<String, AttributeValue> attributeFieldMap) {
     if (DbSemanticConventionUtils.isSqlTypeBackendForOtelFormat(attributeFieldMap)) {
       Optional<String> sqlUrl = DbSemanticConventionUtils.getBackendURIForOtelFormat(attributeFieldMap);
       sqlUrl.ifPresent(s -> eventBuilder.getSqlBuilder().setUrl(s));

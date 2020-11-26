@@ -33,11 +33,11 @@ public class RpcSemanticConventionUtils {
   private static final String OTHER_GRPC_METHOD = RawSpanConstants.getValue(Grpc.GRPC_METHOD);
   private static final List<String> ALL_GRPC_STATUS_CODES =
       List.of(
+          OTEL_GRPC_STATUS_CODE,
           RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_CODE),
           RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),
-          RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE),
           RPC_STATUS_CODE,
-          OTEL_GRPC_STATUS_CODE
+          RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE)
       );
 
   /**

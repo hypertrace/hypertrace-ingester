@@ -45,7 +45,7 @@ public class FieldsGenerator {
 
   public void populateOtherFields(
       Event.Builder eventBuilder,
-      Map<String, AttributeValue> attributeValueMap) {
+      final Map<String, AttributeValue> attributeValueMap) {
     try {
       this.httpFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
       this.sqlFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);

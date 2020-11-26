@@ -745,6 +745,7 @@ public class HttpFieldsGeneratorTest {
     tagsMap.put(OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(), createKeyValue(200));
     tagsMap.put(OTelHttpSemanticConventions.HTTP_STATUS_CODE.getValue(), createKeyValue(400));
     tagsMap.put(OTelHttpSemanticConventions.HTTP_METHOD.getValue(), createKeyValue("GET"));
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_SCHEME.getValue(), createKeyValue("https"));
     HttpFieldsGenerator httpFieldsGenerator = new HttpFieldsGenerator();
     Event.Builder eventBuilder = Event.newBuilder();
     Http.Builder httpBuilder = httpFieldsGenerator.getProtocolBuilder(eventBuilder);
@@ -760,6 +761,7 @@ public class HttpFieldsGeneratorTest {
     assertEquals(100, httpBuilder.getRequestBuilder().getSize());
     assertEquals(200, httpBuilder.getResponseBuilder().getSize());
     assertEquals(400, httpBuilder.getResponseBuilder().getStatusCode());
+    assertEquals("https", httpBuilder.getRequestBuilder().getScheme());
   }
 
   @Test

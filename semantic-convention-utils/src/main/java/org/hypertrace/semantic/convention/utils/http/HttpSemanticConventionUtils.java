@@ -66,6 +66,8 @@ public class HttpSemanticConventionUtils {
    * - http.scheme, http.host, http.target
    * - http.scheme, net.peer.name, net.peer.port, http.target
    * - http.scheme, net.peer.ip, net.peer.port, http.target
+   *
+   * Reference: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/http.md
    */
   public static Optional<String> getHttpUrlForOTelFormat(Map<String, AttributeValue> attributeValueMap) {
     if (attributeValueMap.containsKey(HTTP_URL.getValue())) {

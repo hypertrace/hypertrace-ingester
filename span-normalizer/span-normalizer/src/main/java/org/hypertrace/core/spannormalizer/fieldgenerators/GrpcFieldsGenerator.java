@@ -314,12 +314,12 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
     grpcBuilder.getResponseBuilder().getMetadata().put(key, ValueConverter.getString(keyValue));
   }
 
-  protected void populateOtherFields(Event.Builder eventBuilder, Map<String, AttributeValue> attributeValueMap) {
+  protected void populateOtherFields(Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
     maybeSetGrpcHostPortForOtelFormat(eventBuilder, attributeValueMap);
     maybeSetGrpcExceptionForOtelFormat(eventBuilder, attributeValueMap);
   }
 
-  protected void maybeSetGrpcExceptionForOtelFormat(Event.Builder builder, Map<String, AttributeValue> attributeValueMap) {
+  protected void maybeSetGrpcExceptionForOtelFormat(Event.Builder builder, final Map<String, AttributeValue> attributeValueMap) {
     if (RpcSemanticConventionUtils.isRpcTypeGrpcForOTelFormat(attributeValueMap)) {
       if (attributeValueMap.containsKey(OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue())) {
         builder.getGrpcBuilder().getResponseBuilder().setErrorName(
@@ -332,7 +332,7 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
     }
   }
 
-  protected void maybeSetGrpcHostPortForOtelFormat(Event.Builder builder, Map<String, AttributeValue> attributeValueMap) {
+  protected void maybeSetGrpcHostPortForOtelFormat(Event.Builder builder, final Map<String, AttributeValue> attributeValueMap) {
     Optional<String> grpcHostPort = RpcSemanticConventionUtils.getGrpcURI(attributeValueMap);
     grpcHostPort.ifPresent(s -> builder.getGrpcBuilder().getRequestBuilder().setHostPort(s));
   }
