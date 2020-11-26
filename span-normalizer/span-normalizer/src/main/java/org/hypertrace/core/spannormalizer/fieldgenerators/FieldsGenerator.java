@@ -43,9 +43,13 @@ public class FieldsGenerator {
         .forEach(k -> protocolFieldsGeneratorMap.put(k, rpcFieldsGenerator));
   }
 
-  public void populateOtherFields(Event.Builder eventBuilder, Map<String, AttributeValue> valueMap) {
+  public void populateOtherFields(
+      Event.Builder eventBuilder,
+      Map<String, AttributeValue> attributeValueMap) {
     try {
-      this.httpFieldsGenerator.populateOtherFields(eventBuilder, valueMap);
+      this.httpFieldsGenerator.populateOtherFields(eventBuilder);
+      this.sqlFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
+      this.grpcFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
     } catch (Exception ex) {
       LOGGER.error("An error occurred while populating other fields: %s", ex);
     }
