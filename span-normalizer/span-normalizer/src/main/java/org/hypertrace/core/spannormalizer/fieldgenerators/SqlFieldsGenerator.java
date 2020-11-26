@@ -23,15 +23,21 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
   private static Map<String, FieldGenerator<Sql.Builder>> initializeFieldGenerators() {
     Map<String, FieldGenerator<Sql.Builder>> fieldGeneratorMap = new HashMap<>();
 
+    // set sql query
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(SQL_QUERY),
         (key, keyValue, builder, tagsMap) -> builder.setQuery(keyValue.getVStr()));
+    fieldGeneratorMap.put(
+        OTelDbSemanticConventions.DB_STATEMENT.getValue(),
+        (key, keyValue, builder, tagsMap) -> builder.setQuery(keyValue.getVStr()));
+    // db type
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(SQL_DB_TYPE),
         (key, keyValue, builder, tagsMap) -> builder.setDbType(keyValue.getVStr()));
     fieldGeneratorMap.put(
         OTelDbSemanticConventions.DB_SYSTEM.getValue(),
         (key, keyValue, builder, tagsMap) -> builder.setDbType(keyValue.getVStr()));
+
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(SQL_SQL_URL),
         (key, keyValue, builder, tagsMap) -> builder.setUrl(keyValue.getVStr()));
@@ -60,7 +66,9 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
     maybePopulateSqlUrlForOtelSpan(eventBuilder, attributeValueMap);
   }
 
-  protected void maybePopulateSqlUrlForOtelSpan(Event.Builder eventBuilder, Map<String, AttributeValue> attributeFieldMap) {
+  protected void maybePopulateSqlUrlForOtelSpan(
+      Event.Builder eventBuilder,
+      Map<String, AttributeValue> attributeFieldMap) {
     if (DbSemanticConventionUtils.isSqlTypeBackendForOtelFormat(attributeFieldMap)) {
       Optional<String> sqlUrl = DbSemanticConventionUtils.getBackendURIForOtelFormat(attributeFieldMap);
       sqlUrl.ifPresent(s -> eventBuilder.getSqlBuilder().setUrl(s));
