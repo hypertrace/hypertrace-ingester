@@ -9,6 +9,7 @@ import org.hypertrace.core.datamodel.eventfields.grpc.RequestMetadata;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
@@ -147,6 +148,15 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
   public void testEnrichEventWithHostHeader() {
     addEnrichedAttributeToEvent(innerEntrySpan,
         RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_HOST),
+        AttributeValueCreator.create("testHost"));
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
+  }
+
+  @Test
+  public void testEnrichEventWithHostHeaderOTelFormat() {
+    addEnrichedAttributeToEvent(innerEntrySpan,
+        OTelHttpSemanticConventions.HTTP_HOST.getValue(),
         AttributeValueCreator.create("testHost"));
     target.enrichEvent(trace, innerEntrySpan);
     Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");

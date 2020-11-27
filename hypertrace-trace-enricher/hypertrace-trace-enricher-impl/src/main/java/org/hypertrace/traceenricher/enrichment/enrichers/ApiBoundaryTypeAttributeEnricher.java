@@ -12,6 +12,7 @@ import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -55,7 +56,8 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
       // In the cases where there are sidecar proxies, the host header might be set to localhost
       // while the original host will be moved to x-forwarded headers. Hence, read them too.
       X_FORWARDED_HOST_HEADER,
-      X_FORWARDED_HOST_METADATA
+      X_FORWARDED_HOST_METADATA,
+      OTelHttpSemanticConventions.HTTP_HOST.getValue()
   );
   private static final String LOCALHOST = "localhost";
 
