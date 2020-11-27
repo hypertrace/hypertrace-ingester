@@ -47,10 +47,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions;
+import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +81,8 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
       List.of(
           RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL),
           RawSpanConstants.getValue(HTTP_REQUEST_URL),
-          RawSpanConstants.getValue(HTTP_URL));
+          RawSpanConstants.getValue(HTTP_URL),
+          OTelHttpSemanticConventions.HTTP_URL.getValue());
 
   private static final List<String> USER_AGENT_ATTRIBUTES =
       List.of(
@@ -84,30 +90,38 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
           RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE),
           RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH),
           RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER),
-          RawSpanConstants.getValue(HTTP_USER_AGENT));
+          RawSpanConstants.getValue(HTTP_USER_AGENT),
+          OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue());
 
   private static final List<String> URL_PATH_ATTRIBUTES =
-      List.of(RawSpanConstants.getValue(HTTP_REQUEST_PATH), RawSpanConstants.getValue(HTTP_PATH));
+      List.of(
+          RawSpanConstants.getValue(HTTP_REQUEST_PATH),
+          RawSpanConstants.getValue(HTTP_PATH),
+          OTelHttpSemanticConventions.HTTP_TARGET.getValue());
 
   private static final List<String> REQUEST_SIZE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(ENVOY_REQUEST_SIZE),
-          RawSpanConstants.getValue(HTTP_REQUEST_SIZE));
+          RawSpanConstants.getValue(HTTP_REQUEST_SIZE),
+          OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue());
 
   private static final List<String> RESPONSE_SIZE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
-          RawSpanConstants.getValue(HTTP_RESPONSE_SIZE));
+          RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
+          OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue());
 
   private static final List<String> STATUS_CODE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_STATUS_CODE),
-          RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE));
+          RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE),
+          OTelHttpSemanticConventions.HTTP_STATUS_CODE.getValue());
 
   private static final List<String> METHOD_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(HTTP_REQUEST_METHOD),
-          RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD));
+          RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD),
+          OTelHttpSemanticConventions.HTTP_METHOD.getValue());
 
   private static Map<String, FieldGenerator<Http.Builder>> fieldGeneratorMap =
       initializeFieldGenerators();
@@ -220,7 +234,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     return fieldGeneratorMap;
   }
 
-  void populateOtherFields(Event.Builder eventBuilder) {
+  void populateOtherFields(Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
+    // we may need derive url for otel format, populateUrlParts should take care of setting other fields
+    maybeSetHttpUrlForOtelFormat(eventBuilder.getHttpBuilder().getRequestBuilder(), attributeValueMap);
     populateUrlParts(eventBuilder.getHttpBuilder().getRequestBuilder());
   }
 
@@ -235,6 +251,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD),
         (key, keyValue, builder, tagsMap) -> setMethod(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTelHttpSemanticConventions.HTTP_METHOD.getValue(),
+        (key, keyValue, builder, tagsMap) -> setMethod(builder, tagsMap));
 
     // URL Handlers
     // OT_SPAN_TAG_HTTP_URL == HTTP_URL_WITH_HTTP. No need to have both
@@ -247,6 +266,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_REQUEST_URL),
         (key, keyValue, builder, tagsMap) -> setUrl(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTelHttpSemanticConventions.HTTP_URL.getValue(),
+        (key, keyValue, builder, tagsMap) -> setUrl(builder, tagsMap));
 
     // URL Path
     fieldGeneratorMap.put(
@@ -255,11 +277,22 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_PATH),
         (key, keyValue, builder, tagsMap) -> setPath(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTelHttpSemanticConventions.HTTP_TARGET.getValue(),
+        (key, keyValue, builder, tagsMap) -> setPath(builder, tagsMap));
 
     // Host Handler
     fieldGeneratorMap.put(
             RawSpanConstants.getValue(HTTP_HOST),
             (key, keyValue, builder, tagsMap) -> builder.getRequestBuilder().setHost(keyValue.getVStr()));
+    fieldGeneratorMap.put(
+        OTelHttpSemanticConventions.HTTP_HOST.getValue(),
+        (key, keyValue, builder, tagsMap) -> builder.getRequestBuilder().setHost(keyValue.getVStr()));
+
+    // set scheme if specified
+    fieldGeneratorMap.put(
+        OTelHttpSemanticConventions.HTTP_SCHEME.getValue(),
+        (key, keyValue, builder, tagsMap) -> builder.getRequestBuilder().setScheme(keyValue.getVStr()));
 
     // User Agent handlers
     fieldGeneratorMap.put(
@@ -280,6 +313,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         });
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_USER_AGENT),
+        (key, keyValue, builder, tagsMap) -> setUserAgent(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue(),
         (key, keyValue, builder, tagsMap) -> setUserAgent(builder, tagsMap));
 
     // Declared Request Headers
@@ -337,6 +373,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_REQUEST_SIZE),
         (key, keyValue, builder, tagsMap) -> setRequestSize(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(),
+        (key, keyValue, builder, tagsMap) -> setRequestSize(builder, tagsMap));
 
     // Response Size
     fieldGeneratorMap.put(
@@ -345,6 +384,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
         (key, keyValue, builder, tagsMap) -> setResponseSize(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(),
+        (key, keyValue, builder, tagsMap) -> setResponseSize(builder, tagsMap));
 
     // Response status and status code
     fieldGeneratorMap.put(
@@ -352,6 +394,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap));
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE),
+        (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap));
+    fieldGeneratorMap.put(
+        OTelHttpSemanticConventions.HTTP_STATUS_CODE.getValue(),
         (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap));
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_MESSAGE),
@@ -524,5 +569,15 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
   private static URL getNormalizedUrl(String url) throws MalformedURLException {
     return new URL(new URL(RELATIVE_URL_CONTEXT), url);
+  }
+
+  private void maybeSetHttpUrlForOtelFormat(
+      Request.Builder requestBuilder,
+      final Map<String, AttributeValue> attributeValueMap) {
+    if (requestBuilder.hasUrl()) {
+      return;
+    }
+    Optional<String> url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(attributeValueMap);
+    url.ifPresent(requestBuilder::setUrl);
   }
 }

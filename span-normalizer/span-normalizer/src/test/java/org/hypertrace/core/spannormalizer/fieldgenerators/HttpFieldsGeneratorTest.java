@@ -37,16 +37,21 @@ import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_M
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 import static org.hypertrace.core.spannormalizer.utils.TestUtils.createKeyValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.google.common.collect.Maps;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -151,49 +156,49 @@ public class HttpFieldsGeneratorTest {
             httpFieldsGenerator.handleStartsWithKeyIfNecessary(
                 key, tagsMap.get(key), eventBuilder));
 
-    Assertions.assertEquals("GET", httpBuilder.getRequestBuilder().getMethod());
-    Assertions.assertEquals(requestBody, httpBuilder.getRequestBuilder().getBody());
-    Assertions.assertEquals(responseBody, httpBuilder.getResponseBuilder().getBody());
-    Assertions.assertEquals("https://example.ai/url1", httpBuilder.getRequestBuilder().getUrl());
-    Assertions.assertEquals("example.ai", httpBuilder.getRequestBuilder().getHost());
-    Assertions.assertEquals("/url1", httpBuilder.getRequestBuilder().getPath());
-    Assertions.assertEquals("Chrome 1", httpBuilder.getRequestBuilder().getUserAgent());
-    Assertions.assertEquals(
+    assertEquals("GET", httpBuilder.getRequestBuilder().getMethod());
+    assertEquals(requestBody, httpBuilder.getRequestBuilder().getBody());
+    assertEquals(responseBody, httpBuilder.getResponseBuilder().getBody());
+    assertEquals("https://example.ai/url1", httpBuilder.getRequestBuilder().getUrl());
+    assertEquals("example.ai", httpBuilder.getRequestBuilder().getHost());
+    assertEquals("/url1", httpBuilder.getRequestBuilder().getPath());
+    assertEquals("Chrome 1", httpBuilder.getRequestBuilder().getUserAgent());
+    assertEquals(
         "example.ai", httpBuilder.getRequestBuilder().getHeadersBuilder().getHost());
-    Assertions.assertEquals(
+    assertEquals(
         "https:example.ai", httpBuilder.getRequestBuilder().getHeadersBuilder().getAuthority());
-    Assertions.assertEquals(
+    assertEquals(
         "application/text", httpBuilder.getRequestBuilder().getHeadersBuilder().getContentType());
-    Assertions.assertEquals(
+    assertEquals(
         "/url1_path", httpBuilder.getRequestBuilder().getHeadersBuilder().getPath());
-    Assertions.assertEquals(
+    assertEquals(
         "forwarded for header val",
         httpBuilder.getRequestBuilder().getHeadersBuilder().getXForwardedFor());
-    Assertions.assertEquals(
+    assertEquals(
         "cookie1=val1; cookie2=val2;",
         httpBuilder.getRequestBuilder().getHeadersBuilder().getCookie());
-    Assertions.assertEquals(
+    assertEquals(
         "application/json", httpBuilder.getResponseBuilder().getHeadersBuilder().getContentType());
-    Assertions.assertEquals(
+    assertEquals(
         "cookie4=val4;", httpBuilder.getResponseBuilder().getHeadersBuilder().getSetCookie());
-    Assertions.assertEquals(50, httpBuilder.getRequestBuilder().getSize());
-    Assertions.assertEquals(30, httpBuilder.getResponseBuilder().getSize());
-    Assertions.assertEquals(200, httpBuilder.getResponseBuilder().getStatusCode());
-    Assertions.assertEquals("OK 200 Received", httpBuilder.getResponseBuilder().getStatusMessage());
-    Assertions.assertEquals("a1=v1&a2=v2", httpBuilder.getRequestBuilder().getQueryString());
-    Assertions.assertEquals(
+    assertEquals(50, httpBuilder.getRequestBuilder().getSize());
+    assertEquals(30, httpBuilder.getResponseBuilder().getSize());
+    assertEquals(200, httpBuilder.getResponseBuilder().getStatusCode());
+    assertEquals("OK 200 Received", httpBuilder.getResponseBuilder().getStatusMessage());
+    assertEquals("a1=v1&a2=v2", httpBuilder.getRequestBuilder().getQueryString());
+    assertEquals(
         Map.of("authorization", "Bearer some-auth-header", "x-some-request-header", "header-val1"),
         httpBuilder.getRequestBuilder().getHeadersBuilder().getOtherHeaders());
-    Assertions.assertEquals(
+    assertEquals(
         Map.of("contentlength", "23", "x-some-response-header", "response-header-val2"),
         httpBuilder.getResponseBuilder().getHeadersBuilder().getOtherHeaders());
-    Assertions.assertEquals(
+    assertEquals(
         Map.of("param1", "param-val1", "param2", "param-val2"),
         httpBuilder.getRequestBuilder().getParams());
-    Assertions.assertEquals(
+    assertEquals(
         List.of("cookie1=cookie-v1", "cookie2=cookie-v2"),
         httpBuilder.getRequestBuilder().getCookies());
-    Assertions.assertEquals(
+    assertEquals(
         List.of("responsecookie1=cookie-v11", "responsecookie2=cookie-v12"),
         httpBuilder.getResponseBuilder().getCookies());
   }
@@ -245,19 +250,19 @@ public class HttpFieldsGeneratorTest {
                 key, tagsMap.get(key), eventBuilder));
 
     Http.Builder httpBuilder = eventBuilder.getHttpBuilder();
-    Assertions.assertEquals(
+    assertEquals(
         Map.of("authorization", "Bearer some-auth-header", "x-some-request-header", "header-val1"),
         httpBuilder.getRequestBuilder().getHeadersBuilder().getOtherHeaders());
-    Assertions.assertEquals(
+    assertEquals(
         Map.of("contentlength", "23", "x-some-response-header", "response-header-val2"),
         httpBuilder.getResponseBuilder().getHeadersBuilder().getOtherHeaders());
-    Assertions.assertEquals(
+    assertEquals(
         Map.of("param1", "param-val1", "param2", "param-val2"),
         httpBuilder.getRequestBuilder().getParams());
-    Assertions.assertEquals(
+    assertEquals(
         List.of("cookie1=cookie-v1", "cookie2=cookie-v2"),
         httpBuilder.getRequestBuilder().getCookies());
-    Assertions.assertEquals(
+    assertEquals(
         List.of("responsecookie1=cookie-v11", "responsecookie2=cookie-v12"),
         httpBuilder.getResponseBuilder().getCookies());
   }
@@ -275,7 +280,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder1, tagsMap1));
 
-    Assertions.assertEquals(
+    assertEquals(
         "GET",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder1).getRequestBuilder().getMethod());
 
@@ -287,7 +292,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
-    Assertions.assertEquals(
+    assertEquals(
         "POST",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder2).getRequestBuilder().getMethod());
   }
@@ -308,7 +313,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder1, tagsMap1));
 
-    Assertions.assertEquals(
+    assertEquals(
         "https://example.ai/url1",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder1).getRequestBuilder().getUrl());
 
@@ -322,7 +327,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
-    Assertions.assertEquals(
+    assertEquals(
         "https://example.ai/url3",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder2).getRequestBuilder().getUrl());
 
@@ -334,7 +339,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder3, tagsMap3));
 
-    Assertions.assertEquals(
+    assertEquals(
         "https://example.ai/url2",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder3).getRequestBuilder().getUrl());
   }
@@ -352,7 +357,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder1, tagsMap1));
 
-    Assertions.assertEquals(
+    assertEquals(
         "/path1",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder1).getRequestBuilder().getPath());
 
@@ -364,7 +369,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
-    Assertions.assertEquals(
+    assertEquals(
         "/path2",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder2).getRequestBuilder().getPath());
   }
@@ -394,7 +399,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
-    Assertions.assertEquals(
+    assertEquals(
         "/", httpFieldsGenerator.getProtocolBuilder(eventBuilder2).getRequestBuilder().getPath());
   }
 
@@ -416,7 +421,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder1, tagsMap1));
 
-    Assertions.assertEquals(
+    assertEquals(
         "Chrome 1",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder1).getRequestBuilder().getUserAgent());
 
@@ -433,7 +438,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
-    Assertions.assertEquals(
+    assertEquals(
         "Chrome 2",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder2).getRequestBuilder().getUserAgent());
 
@@ -448,7 +453,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder3, tagsMap3));
 
-    Assertions.assertEquals(
+    assertEquals(
         "Chrome 3",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder3).getRequestBuilder().getUserAgent());
 
@@ -462,7 +467,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder4, tagsMap4));
 
-    Assertions.assertEquals(
+    assertEquals(
         "Chrome 4",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder4).getRequestBuilder().getUserAgent());
 
@@ -474,7 +479,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder5, tagsMap5));
 
-    Assertions.assertEquals(
+    assertEquals(
         "Chrome 5",
         httpFieldsGenerator.getProtocolBuilder(eventBuilder5).getRequestBuilder().getUserAgent());
   }
@@ -494,7 +499,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder1, tagsMap1));
 
-    Assertions.assertEquals(50, httpBuilder1.getRequestBuilder().getSize());
+    assertEquals(50, httpBuilder1.getRequestBuilder().getSize());
 
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap2 = new HashMap<>();
     tagsMap2.put(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), createKeyValue(35));
@@ -506,7 +511,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
-    Assertions.assertEquals(35, httpBuilder2.getRequestBuilder().getSize());
+    assertEquals(35, httpBuilder2.getRequestBuilder().getSize());
   }
 
   @Test
@@ -524,7 +529,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder1, tagsMap1));
 
-    Assertions.assertEquals(100, httpBuilder1.getResponseBuilder().getSize());
+    assertEquals(100, httpBuilder1.getResponseBuilder().getSize());
 
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap2 = new HashMap<>();
     tagsMap2.put(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), createKeyValue(85));
@@ -536,7 +541,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
-    Assertions.assertEquals(85, httpBuilder2.getResponseBuilder().getSize());
+    assertEquals(85, httpBuilder2.getResponseBuilder().getSize());
   }
 
   @Test
@@ -554,7 +559,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder1, tagsMap1));
 
-    Assertions.assertEquals(200, httpBuilder1.getResponseBuilder().getStatusCode());
+    assertEquals(200, httpBuilder1.getResponseBuilder().getStatusCode());
 
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap2 = new HashMap<>();
     tagsMap2.put(RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE), createKeyValue(501));
@@ -566,7 +571,7 @@ public class HttpFieldsGeneratorTest {
         (key, keyValue) ->
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
-    Assertions.assertEquals(501, httpBuilder2.getResponseBuilder().getStatusCode());
+    assertEquals(501, httpBuilder2.getResponseBuilder().getStatusCode());
   }
 
   @Test
@@ -582,9 +587,9 @@ public class HttpFieldsGeneratorTest {
     tagsMap.forEach(
             (key, keyValue) ->
                     httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder, tagsMap));
-    Assertions.assertEquals("/dispatch/test?a=b&k1=v1", httpBuilder.getRequestBuilder().getUrl());
+    assertEquals("/dispatch/test?a=b&k1=v1", httpBuilder.getRequestBuilder().getUrl());
 
-    httpFieldsGenerator.populateOtherFields(eventBuilder);  // this should unset the url field
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());  // this should unset the url field
     Assertions.assertNull(httpBuilder.getRequestBuilder().getUrl());
   }
 
@@ -600,9 +605,9 @@ public class HttpFieldsGeneratorTest {
     tagsMap.forEach(
             (key, keyValue) ->
                     httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder, tagsMap));
-    httpFieldsGenerator.populateOtherFields(eventBuilder);
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
-    Assertions.assertEquals("http://abc.xyz/dispatch/test?a=b&k1=v1", httpBuilder.getRequestBuilder().getUrl());
+    assertEquals("http://abc.xyz/dispatch/test?a=b&k1=v1", httpBuilder.getRequestBuilder().getUrl());
   }
 
   @Test
@@ -626,7 +631,7 @@ public class HttpFieldsGeneratorTest {
 
     Event.Builder eventBuilder = Event.newBuilder();
 
-    httpFieldsGenerator.populateOtherFields(eventBuilder);
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
@@ -637,14 +642,14 @@ public class HttpFieldsGeneratorTest {
         .getHttpBuilder()
         .getRequestBuilder()
         .setUrl("https://example.ai/apis/5673/events?a1=v1&a2=v2");
-    httpFieldsGenerator.populateOtherFields(eventBuilder);
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
-    Assertions.assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
-    Assertions.assertEquals(
+    assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
         "example.ai", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
-    Assertions.assertEquals(
+    assertEquals(
         "/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
-    Assertions.assertEquals(
+    assertEquals(
         "a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
 
     eventBuilder = Event.newBuilder();
@@ -654,60 +659,60 @@ public class HttpFieldsGeneratorTest {
         .getHttpBuilder()
         .getRequestBuilder()
         .setUrl("https://example.ai/apis/5673/events/?a1=v1&a2=v2");
-    httpFieldsGenerator.populateOtherFields(eventBuilder);
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
-    Assertions.assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
-    Assertions.assertEquals(
+    assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
         "example.ai", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
-    Assertions.assertEquals(
+    assertEquals(
         "/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
-    Assertions.assertEquals(
+    assertEquals(
         "a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
 
     // No query
     eventBuilder = Event.newBuilder();
     eventBuilder.getHttpBuilder().getRequestBuilder().setUrl("https://example.ai/apis/5673/events");
-    httpFieldsGenerator.populateOtherFields(eventBuilder);
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
-    Assertions.assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
-    Assertions.assertEquals(
+    assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
         "example.ai", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
-    Assertions.assertEquals(
+    assertEquals(
         "/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
 
     // No path
     eventBuilder = Event.newBuilder();
     eventBuilder.getHttpBuilder().getRequestBuilder().setUrl("https://example.ai");
-    httpFieldsGenerator.populateOtherFields(eventBuilder);
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
-    Assertions.assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
-    Assertions.assertEquals(
+    assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
         "example.ai", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
-    Assertions.assertEquals("/", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    assertEquals("/", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
 
     // Relative URL - should extract path and query string only
     eventBuilder = Event.newBuilder();
     eventBuilder.getHttpBuilder().getRequestBuilder().setUrl("/apis/5673/events?a1=v1&a2=v2");
-    httpFieldsGenerator.populateOtherFields(eventBuilder);
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
-    Assertions.assertEquals("/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
-    Assertions.assertEquals("a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+    assertEquals("/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    assertEquals("a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
 
     // "/" home path, host with port
     eventBuilder = Event.newBuilder();
     eventBuilder.getHttpBuilder().getRequestBuilder().setUrl("http://example.ai:9000/?a1=v1&a2=v2");
-    httpFieldsGenerator.populateOtherFields(eventBuilder);
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
-    Assertions.assertEquals("http", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
-    Assertions.assertEquals(
+    assertEquals("http", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
         "example.ai:9000", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
-    Assertions.assertEquals("/", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
-    Assertions.assertEquals(
+    assertEquals("/", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    assertEquals(
         "a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
 
     // Set path and query string before calling populateOtherFields. Simulate case where fields came
@@ -719,14 +724,162 @@ public class HttpFieldsGeneratorTest {
         .setUrl("http://example.ai:9000/apis/4533?a1=v1&a2=v2");
     eventBuilder.getHttpBuilder().getRequestBuilder().setQueryString("some-query-str=v1");
     eventBuilder.getHttpBuilder().getRequestBuilder().setPath("/some-test-path");
-    httpFieldsGenerator.populateOtherFields(eventBuilder);
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
-    Assertions.assertEquals("http", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
-    Assertions.assertEquals(
+    assertEquals("http", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
         "example.ai:9000", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
-    Assertions.assertEquals(
+    assertEquals(
         "/some-test-path", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
-    Assertions.assertEquals(
+    assertEquals(
         "some-query-str=v1", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+  }
+
+  @Test
+  public void testHttpFieldGenerationForOtelSpan() {
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap = new HashMap<>();
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_TARGET.getValue(), createKeyValue("/url2"));
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_URL.getValue(), createKeyValue("https://example.ai/url1"));
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue(), createKeyValue("Chrome 1"));
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(), createKeyValue(100));
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(), createKeyValue(200));
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_STATUS_CODE.getValue(), createKeyValue(400));
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_METHOD.getValue(), createKeyValue("GET"));
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_SCHEME.getValue(), createKeyValue("https"));
+    HttpFieldsGenerator httpFieldsGenerator = new HttpFieldsGenerator();
+    Event.Builder eventBuilder = Event.newBuilder();
+    Http.Builder httpBuilder = httpFieldsGenerator.getProtocolBuilder(eventBuilder);
+    List<String> directKeysSet = new ArrayList<>(tagsMap.keySet());
+    directKeysSet.forEach(
+        key -> httpFieldsGenerator.addValueToBuilder(
+            key, tagsMap.get(key), eventBuilder, tagsMap));
+
+    assertEquals("GET", httpBuilder.getRequestBuilder().getMethod());
+    assertEquals("https://example.ai/url1", httpBuilder.getRequestBuilder().getUrl());
+    assertEquals("/url2", httpBuilder.getRequestBuilder().getPath());
+    assertEquals("Chrome 1", httpBuilder.getRequestBuilder().getUserAgent());
+    assertEquals(100, httpBuilder.getRequestBuilder().getSize());
+    assertEquals(200, httpBuilder.getResponseBuilder().getSize());
+    assertEquals(400, httpBuilder.getResponseBuilder().getStatusCode());
+    assertEquals("https", httpBuilder.getRequestBuilder().getScheme());
+  }
+
+  @Test
+  public void testPopulateOtherFieldsOTelSpan() {
+    HttpFieldsGenerator httpFieldsGenerator = new HttpFieldsGenerator();
+
+    Event.Builder eventBuilder = Event.newBuilder();
+
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+
+    String url = "https://example.ai/apis/5673/events?a1=v1&a2=v2";
+    Map<String, AttributeValue> map = Maps.newHashMap();
+    map.put(OTelHttpSemanticConventions.HTTP_URL.getValue(), buildAttributeValue(url));
+    httpFieldsGenerator.populateOtherFields(eventBuilder, map);
+
+    assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
+        "example.ai", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
+    assertEquals(
+        "/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    assertEquals(
+        "a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+
+    eventBuilder = Event.newBuilder();
+
+    // Removes the trailing "/" for path
+    url = "https://example.ai/apis/5673/events/?a1=v1&a2=v2";
+    map = Maps.newHashMap();
+    map.put(OTelHttpSemanticConventions.HTTP_URL.getValue(), buildAttributeValue(url));
+    httpFieldsGenerator.populateOtherFields(eventBuilder, map);
+
+    assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
+        "example.ai", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
+    assertEquals(
+        "/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    assertEquals(
+        "a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+
+    // No query
+    eventBuilder = Event.newBuilder();
+    url = "https://example.ai/apis/5673/events";
+    map = Maps.newHashMap();
+    map.put(OTelHttpSemanticConventions.HTTP_URL.getValue(), buildAttributeValue(url));
+    httpFieldsGenerator.populateOtherFields(eventBuilder, map);
+
+    assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
+        "example.ai", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
+    assertEquals(
+        "/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+
+    // No path
+    eventBuilder = Event.newBuilder();
+    url = "https://example.ai";
+    map = Maps.newHashMap();
+    map.put(OTelHttpSemanticConventions.HTTP_URL.getValue(), buildAttributeValue(url));
+    httpFieldsGenerator.populateOtherFields(eventBuilder, map);
+
+    assertEquals("https", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
+        "example.ai", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
+    assertEquals("/", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+
+    // Relative URL - should extract path and query string only
+    eventBuilder = Event.newBuilder();
+    eventBuilder.getHttpBuilder().getRequestBuilder().setUrl("/apis/5673/events?a1=v1&a2=v2");
+    map = Maps.newHashMap();
+    map.put(OTelHttpSemanticConventions.HTTP_URL.getValue(), buildAttributeValue(url));
+    httpFieldsGenerator.populateOtherFields(eventBuilder, map);
+
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
+    assertEquals("/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    assertEquals("a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+
+    // "/" home path, host with port
+    eventBuilder = Event.newBuilder();
+    url = "http://example.ai:9000/?a1=v1&a2=v2";
+    map = Maps.newHashMap();
+    map.put(OTelHttpSemanticConventions.HTTP_URL.getValue(), buildAttributeValue(url));
+    httpFieldsGenerator.populateOtherFields(eventBuilder, map);
+    assertEquals("http", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
+        "example.ai:9000", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
+    assertEquals("/", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    assertEquals(
+        "a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+
+    // Set path and query string before calling populateOtherFields. Simulate case where fields came
+    // from attributes
+    eventBuilder = Event.newBuilder();
+    url = "http://example.ai:9000/apis/4533?a1=v1&a2=v2";
+    map = Maps.newHashMap();
+    map.put(OTelHttpSemanticConventions.HTTP_URL.getValue(), buildAttributeValue(url));
+    httpFieldsGenerator.populateOtherFields(eventBuilder, map);
+    eventBuilder.getHttpBuilder().getRequestBuilder().setQueryString("some-query-str=v1");
+    eventBuilder.getHttpBuilder().getRequestBuilder().setPath("/some-test-path");
+    httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
+
+    assertEquals("http", eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
+    assertEquals(
+        "example.ai:9000", eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
+    assertEquals(
+        "/some-test-path", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
+    assertEquals(
+        "some-query-str=v1", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+  }
+
+  private static AttributeValue buildAttributeValue(String value) {
+    return AttributeValue.newBuilder().setValue(value).build();
   }
 }
