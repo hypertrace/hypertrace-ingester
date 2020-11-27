@@ -20,7 +20,7 @@ images:
     tagOverride: ""
   generator:
     repository: hypertrace/hypertrace-view-generator
-    tagOverride: "main"
+    tagOverride: ""
 
 imagePullSecrets: []
 
