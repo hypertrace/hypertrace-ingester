@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.fieldgenerators;
 
+import com.google.common.collect.Maps;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -43,7 +44,7 @@ public class FieldsGeneratorTest {
             fieldsGenerator.addValueToBuilder(
                 tagKey.toLowerCase(), tagKeyValue, eventBuilder, tagsMap));
     // Some http fields can be populated from other fields eg. method, scheme from url.
-    fieldsGenerator.populateOtherFields(eventBuilder);
+    fieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
     Assertions.assertEquals("GET", eventBuilder.getHttpBuilder().getRequestBuilder().getMethod());
     Assertions.assertEquals(

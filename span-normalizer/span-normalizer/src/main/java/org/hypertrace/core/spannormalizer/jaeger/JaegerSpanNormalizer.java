@@ -242,7 +242,8 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
 
     // Generate other fields if possible from the existing ones. eg. http scheme and query string
     // from url
-    this.fieldsGenerator.populateOtherFields(eventBuilder);
+    // note: attribute field map should be populated with attribute keys prior to this call
+    this.fieldsGenerator.populateOtherFields(eventBuilder, attributeFieldMap);
 
     // Jaeger Fields - flags, warnings, logs, jaeger service name in the Process
     JaegerFields.Builder jaegerFieldsBuilder = eventBuilder.getJaegerFieldsBuilder();
