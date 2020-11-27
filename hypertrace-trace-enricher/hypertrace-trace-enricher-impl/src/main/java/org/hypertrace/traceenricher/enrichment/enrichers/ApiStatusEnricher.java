@@ -12,6 +12,8 @@ import org.hypertrace.core.span.constants.v1.Envoy;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
+import org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions;
+import org.hypertrace.semantic.convention.utils.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -109,6 +111,7 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
     grpcStatusCodeKeys.add(RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_CODE));
     grpcStatusCodeKeys.add(RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE));
     grpcStatusCodeKeys.add(RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE));
+    grpcStatusCodeKeys.add(OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue());
     return grpcStatusCodeKeys;
   }
 
@@ -116,6 +119,7 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
     List<String> httpStatusCodeKeys = new ArrayList<>();
     httpStatusCodeKeys.add(RawSpanConstants.getValue(OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE));
     httpStatusCodeKeys.add(RawSpanConstants.getValue(Http.HTTP_RESPONSE_STATUS_CODE));
+    httpStatusCodeKeys.add(OTelHttpSemanticConventions.HTTP_STATUS_CODE.getValue());
     return httpStatusCodeKeys;
   }
 
