@@ -170,12 +170,7 @@ public class DbSemanticConventionUtils {
    * @return backend uri based on otel format
    */
   public static Optional<String> getBackendURIForOtelFormat(Event event) {
-    if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_CONNECTION_STRING)
-        && SpanSemanticConventionUtils.isValidUri(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_CONNECTION_STRING))) {
-      return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_CONNECTION_STRING));
-    } else {
-      return SpanSemanticConventionUtils.getURIForOtelFormat(event);
-    }
+    return SpanSemanticConventionUtils.getURIForOtelFormat(event);
   }
 
   /**
@@ -183,12 +178,7 @@ public class DbSemanticConventionUtils {
    * @return backend uri based on otel format
    */
   public static Optional<String> getBackendURIForOtelFormat(Map<String, AttributeValue> attributeValueMap) {
-    if (attributeValueMap.containsKey(OTEL_DB_CONNECTION_STRING)
-      && SpanSemanticConventionUtils.isValidUri(attributeValueMap.get(OTEL_DB_CONNECTION_STRING).getValue())) {
-      return Optional.of(attributeValueMap.get(OTEL_DB_CONNECTION_STRING).getValue());
-    } else {
-      return SpanSemanticConventionUtils.getURIForOtelFormat(attributeValueMap);
-    }
+    return SpanSemanticConventionUtils.getURIForOtelFormat(attributeValueMap);
   }
 
   /**

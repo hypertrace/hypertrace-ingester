@@ -16,6 +16,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.sql.Sql;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
+import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -78,13 +79,18 @@ public class SqlFieldsGeneratorTest {
     SqlFieldsGenerator sqlFieldsGenerator = new SqlFieldsGenerator();
 
     Event.Builder eventBuilder = Event.newBuilder();
-    Map<String, AttributeValue> map = Maps.newHashMap();
-    map.put(OTelDbSemanticConventions.DB_SYSTEM.getValue(),
-        AttributeValue.newBuilder().setValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()).build());
-    map.put(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
-        AttributeValue.newBuilder().setValue("jdbc:mysql://mysql:3306/shop").build());
+
+    Map<String, AttributeValue> map = Map.of(
+        OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+        AttributeValue.newBuilder().setValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()).build(),
+        OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
+        AttributeValue.newBuilder().setValue("jdbc:mysql://mysql:3306/shop").build(),
+        OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+        AttributeValue.newBuilder().setValue("mysql.example.com").build(),
+        OTelSpanSemanticConventions.NET_PEER_PORT.getValue(),
+        AttributeValue.newBuilder().setValue("3306").build());
     sqlFieldsGenerator.populateOtherFields(eventBuilder, map);
     assertEquals(
-        "jdbc:mysql://mysql:3306/shop", eventBuilder.getSqlBuilder().getUrl());
+        "mysql.example.com:3306", eventBuilder.getSqlBuilder().getUrl());
   }
 }
