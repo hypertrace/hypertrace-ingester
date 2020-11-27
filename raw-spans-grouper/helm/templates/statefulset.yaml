@@ -85,7 +85,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
         - name: {{ .Values.name }}
-          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          image: "{{ include "grouperservice.image" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: admin-port

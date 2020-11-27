@@ -31,7 +31,7 @@ spec:
     {{- end }}
       containers:
         - name: {{ .Values.serviceCallView.creator.jobName }}
-          image: "{{ .Values.images.creator.repository }}:{{ .Chart.AppVersion }}"
+          image: "{{ include "creatorservice.image" . }}"
           imagePullPolicy: {{ .Values.images.pullPolicy }}
           resources:
             {{- toYaml .Values.serviceCallView.creator.resources | nindent 12 }}

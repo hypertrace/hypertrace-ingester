@@ -17,8 +17,10 @@ images:
   pullPolicy: IfNotPresent
   creator:
     repository: hypertrace/hypertrace-view-creator
+    tagOverride: ""
   generator:
     repository: hypertrace/hypertrace-view-generator
+    tagOverride: "main"
 
 imagePullSecrets: []
 

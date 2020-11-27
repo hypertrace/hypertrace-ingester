@@ -19,6 +19,7 @@ maxUnavailable: 0
 image:
   repository: hypertrace/span-normalizer
   pullPolicy: IfNotPresent
+  tagOverride: ""
 
 imagePullSecrets: []
 

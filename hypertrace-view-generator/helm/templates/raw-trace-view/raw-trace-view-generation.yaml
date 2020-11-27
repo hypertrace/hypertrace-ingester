@@ -39,7 +39,7 @@ spec:
     {{- end }}
       containers:
         - name: {{ .Values.rawTraceView.generator.deploymentName }}
-          image: "{{ .Values.images.generator.repository }}:{{ .Chart.AppVersion }}"
+          image: "{{ include "generatorservice.image" . }}"
           imagePullPolicy: {{ .Values.images.pullPolicy }}
           ports:
             - name: admin-port
