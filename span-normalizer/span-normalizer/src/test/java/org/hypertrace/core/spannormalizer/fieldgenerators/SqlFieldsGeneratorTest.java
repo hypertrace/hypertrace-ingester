@@ -84,7 +84,7 @@ public class SqlFieldsGeneratorTest {
         OTelDbSemanticConventions.DB_SYSTEM.getValue(),
         AttributeValue.newBuilder().setValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()).build(),
         OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
-        AttributeValue.newBuilder().setValue("jdbc:mysql://mysql:3306/shop").build(),
+        AttributeValue.newBuilder().setValue("Server=shopdb.example.com;Database=ShopDb;Uid=billing_user;TableCache=true;UseCompression=True;MinimumPoolSize=10;MaximumPoolSize=50;").build(),
         OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
         AttributeValue.newBuilder().setValue("mysql.example.com").build(),
         OTelSpanSemanticConventions.NET_PEER_PORT.getValue(),
