@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 
 /**
  * Utility to read span attributes

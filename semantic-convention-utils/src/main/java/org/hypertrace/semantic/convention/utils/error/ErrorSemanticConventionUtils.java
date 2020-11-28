@@ -3,6 +3,7 @@ package org.hypertrace.semantic.convention.utils.error;
 import java.util.List;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
+import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Error;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;

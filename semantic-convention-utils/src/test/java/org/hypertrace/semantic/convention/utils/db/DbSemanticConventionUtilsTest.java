@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.Optional;
+import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -15,7 +17,6 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.core.span.constants.v1.Sql;
-import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.junit.jupiter.api.Test;
 
 /**

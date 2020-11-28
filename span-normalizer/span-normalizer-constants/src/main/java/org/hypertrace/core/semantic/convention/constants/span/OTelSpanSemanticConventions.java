@@ -1,4 +1,4 @@
-package org.hypertrace.semantic.convention.utils.span;
+package org.hypertrace.core.semantic.convention.constants.span;
 
 /**
  * Otel attributes for span

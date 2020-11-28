@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
 import org.junit.jupiter.api.Test;
 

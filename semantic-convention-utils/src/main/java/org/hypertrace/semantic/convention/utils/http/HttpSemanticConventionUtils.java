@@ -1,12 +1,12 @@
 package org.hypertrace.semantic.convention.utils.http;
 
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_HOST;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_NET_HOST_PORT;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_SCHEME;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_SERVER_NAME;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_TARGET;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_URL;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_HOST;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_PORT;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_SCHEME;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_SERVER_NAME;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_TARGET;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_URL;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -14,10 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
-import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
 /**

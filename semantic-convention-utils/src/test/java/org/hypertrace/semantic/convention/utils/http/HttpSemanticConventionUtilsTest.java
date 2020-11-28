@@ -1,22 +1,22 @@
 package org.hypertrace.semantic.convention.utils.http;
 
 import static org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil.buildAttributeValue;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_HOST;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_NET_HOST_PORT;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_SCHEME;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_SERVER_NAME;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_TARGET;
-import static org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions.HTTP_URL;
-import static org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions.SPAN_KIND;
-import static org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE;
-import static org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_HOST;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_PORT;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_SCHEME;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_SERVER_NAME;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_TARGET;
+import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_URL;
+import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions.SPAN_KIND;
+import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE;
+import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.Maps;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
-import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.junit.jupiter.api.Test;
 
 /**

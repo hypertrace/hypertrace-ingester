@@ -8,15 +8,14 @@ import static org.hypertrace.core.span.constants.v1.Sql.SQL_STATE;
 import static org.hypertrace.core.spannormalizer.utils.TestUtils.createKeyValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.google.common.collect.Maps;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.sql.Sql;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
-import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

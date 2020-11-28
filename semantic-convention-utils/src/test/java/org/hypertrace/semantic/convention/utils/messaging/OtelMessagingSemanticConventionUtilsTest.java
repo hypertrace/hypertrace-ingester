@@ -2,6 +2,7 @@ package org.hypertrace.semantic.convention.utils.messaging;
 
 import java.util.Map;
 import java.util.Optional;
+import org.hypertrace.core.semantic.convention.constants.messaging.OtelMessagingSemanticConventions;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
