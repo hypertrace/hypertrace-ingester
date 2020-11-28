@@ -1,9 +1,5 @@
 package org.hypertrace.semantic.convention.utils.span;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -72,14 +68,5 @@ public class SpanSemanticConventionUtils {
           attributeValueMap.get(OTelSpanSemanticConventions.SPAN_KIND.getValue()).getValue());
     }
     return false;
-  }
-
-  public static boolean isValidUri(String uri) {
-    try {
-      new URI(uri);
-    } catch (URISyntaxException e) {
-      return false;
-    }
-    return true;
   }
 }

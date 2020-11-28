@@ -52,10 +52,8 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.semantic.convention.utils.http.OTelHttpSemanticConventions;
-import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

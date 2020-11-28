@@ -43,6 +43,10 @@ public class FieldsGenerator {
         .forEach(k -> protocolFieldsGeneratorMap.put(k, rpcFieldsGenerator));
   }
 
+  /**
+   * @param eventBuilder
+   * @param attributeValueMap attribute key value, should be populated before-hand
+   */
   public void populateOtherFields(
       Event.Builder eventBuilder,
       final Map<String, AttributeValue> attributeValueMap) {

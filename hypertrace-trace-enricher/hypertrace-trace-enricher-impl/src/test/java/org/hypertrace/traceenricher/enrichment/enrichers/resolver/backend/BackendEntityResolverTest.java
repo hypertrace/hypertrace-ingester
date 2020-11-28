@@ -451,6 +451,10 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             .of(OTelDbSemanticConventions.DB_SYSTEM.getValue(), buildAttributeValue(
                 OTelDbSemanticConventions.REDIS_DB_SYSTEM_VALUE.getValue()),
                 OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(), buildAttributeValue("redis-cart:6379"),
+                OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+                buildAttributeValue("redis-cart"),
+                OTelSpanSemanticConventions.NET_PEER_PORT.getValue(),
+                buildAttributeValue("6379"),
                 "span.kind", AttributeValue.newBuilder().setValue("client").build(),
                 "k8s.pod_id", buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
                 "docker.container_id", buildAttributeValue("ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
