@@ -27,9 +27,9 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.grpc.Grpc;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.semantic.convention.utils.error.OTelErrorSemanticConventions;
-import org.hypertrace.semantic.convention.utils.rpc.OTelRpcSemanticConventions;
-import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

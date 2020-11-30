@@ -1,4 +1,4 @@
-package org.hypertrace.semantic.convention.utils.rpc;
+package org.hypertrace.core.semantic.convention.constants.rpc;
 
 /**
  * OTel rpc attributes

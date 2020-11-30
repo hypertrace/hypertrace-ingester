@@ -1,4 +1,4 @@
-package org.hypertrace.semantic.convention.utils.http;
+package org.hypertrace.core.semantic.convention.constants.http;
 
 /**
  * OTel specific attributes for Http

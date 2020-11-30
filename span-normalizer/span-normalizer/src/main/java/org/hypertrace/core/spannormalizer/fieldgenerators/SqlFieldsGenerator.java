@@ -14,7 +14,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.sql.Sql;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
-import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
 
 public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
   private static final Map<String, FieldGenerator<Sql.Builder>> FIELD_GENERATOR_MAP =
