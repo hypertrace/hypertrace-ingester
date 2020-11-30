@@ -71,11 +71,9 @@ public class EnrichedSpanUtils {
   private static final String PROTOCOL_ATTR =
       EnrichedSpanConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_PROTOCOL);
   private static final String HOST_HEADER_ATTR = EnrichedSpanConstants.getValue(Http.HTTP_HOST);
+
   private static final String HTTP_USER_AGENT =
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT);
-
-  private static final String CONTAINER_ID_ATTR =
-      RawSpanConstants.getValue(Docker.DOCKER_CONTAINER_ID);
   private static final String USER_AGENT =
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT);
   private static final String USER_AGENT_UNDERSCORE =
@@ -84,6 +82,7 @@ public class EnrichedSpanUtils {
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH);
   private static final String USER_AGENT_REQUEST_HEADER =
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER);
+  //private static final String OTEL_HTTP_USER_AGENT = HttpSeman
 
   @VisibleForTesting
   static final List<String> USER_AGENT_ATTRIBUTES =
@@ -117,10 +116,6 @@ public class EnrichedSpanUtils {
       }
     }
     return null;
-  }
-
-  public static String getDockerContainerId(Event event) {
-    return getStringAttribute(event, CONTAINER_ID_ATTR);
   }
 
   public static String getServiceId(Event event) {
