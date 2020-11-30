@@ -52,7 +52,7 @@ dependencies {
   implementation("org.hypertrace.entity.service:entity-service-client:0.1.23")
 
   implementation("com.typesafe:config:1.4.0")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.13")
+  implementation(project(":kafka-streams-framework:kafka-streams-framework"))
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty-shaded:1.33.1")
