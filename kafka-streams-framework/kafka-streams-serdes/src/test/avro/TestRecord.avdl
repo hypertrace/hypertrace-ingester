@@ -1,8 +1,0 @@
-@namespace("org.hypertrace.core.kafkastreams.framework.serdes")
-protocol TestRecordProtocol {
-
-  record TestRecord {
-    long id;
-    string name;
-  }
-}
