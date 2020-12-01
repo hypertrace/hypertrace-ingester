@@ -12,10 +12,6 @@ plugins {
 
 rootProject.name = "hypertrace-ingester"
 
-// kafka-streams-framework
-include("kafka-streams-framework:kafka-streams-framework")
-include("kafka-streams-framework:kafka-streams-serdes")
-
 // trace-enricher
 include("hypertrace-trace-enricher:enriched-span-constants")
 include("hypertrace-trace-enricher:hypertrace-trace-visualizer")
