@@ -41,23 +41,23 @@ dependencies {
   implementation(project(":semantic-convention-utils"))
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.10")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.7")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.18")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.18")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.13")
 
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.33.0")
-  runtime("io.netty:netty-codec-http2:4.1.53.Final") {
+  runtimeOnly("io.netty:netty-codec-http2:4.1.53.Final") {
     because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
   }
-  runtime("io.netty:netty-handler-proxy:4.1.53.Final") {
+  runtimeOnly("io.netty:netty-handler-proxy:4.1.53.Final") {
     because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
   }
-  implementation("com.typesafe:config:1.4.0")
+  implementation("com.typesafe:config:1.4.1")
   implementation("de.javakaffee:kryo-serializers:0.45")
   implementation("io.confluent:kafka-avro-serializer:5.5.1")
-  implementation("org.apache.commons:commons-lang3:3.10")
+  implementation("org.apache.commons:commons-lang3:3.11")
   implementation("org.apache.httpcomponents:httpclient:4.5.13")
 
   // Logging
@@ -65,7 +65,7 @@ dependencies {
   runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-  testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
-  testImplementation("org.junit-pioneer:junit-pioneer:0.9.0")
+  testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.18")
+  testImplementation("org.junit-pioneer:junit-pioneer:1.1.0")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
 }

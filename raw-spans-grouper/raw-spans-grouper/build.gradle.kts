@@ -36,11 +36,11 @@ tasks.test {
 dependencies {
     implementation(project(":span-normalizer:span-normalizer-api"))
     implementation("org.hypertrace.core.datamodel:data-model:0.1.10")
-    implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.16")
-    implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.16")
+    implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.18")
+    implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.18")
 
-    implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.12")
-    implementation("com.typesafe:config:1.4.0")
+    implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.13")
+    implementation("com.typesafe:config:1.4.1")
     implementation("de.javakaffee:kryo-serializers:0.45")
     implementation("io.confluent:kafka-avro-serializer:5.5.0")
 
@@ -49,7 +49,7 @@ dependencies {
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-    testImplementation("org.mockito:mockito-core:3.6.0")
-    testImplementation("org.junit-pioneer:junit-pioneer:1.0.0")
+    testImplementation("org.mockito:mockito-core:3.6.28")
+    testImplementation("org.junit-pioneer:junit-pioneer:1.1.0")
     testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
 }

@@ -12,7 +12,7 @@ dependencies {
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
 
   implementation("org.slf4j:slf4j-api:1.7.30")
-  implementation("org.apache.commons:commons-lang3:3.10")
+  implementation("org.apache.commons:commons-lang3:3.11")
   constraints {
     implementation("com.google.guava:guava:30.0-jre") {
       because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415")

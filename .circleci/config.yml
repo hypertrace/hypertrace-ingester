@@ -3,7 +3,7 @@ version: 2.1
 
 orbs:
   codecov: codecov/codecov@1
-  snyk: snyk/snyk@0.0.10
+  snyk: snyk/snyk@0.0.11
 
 executors:
   gradle_docker:
@@ -94,7 +94,7 @@ jobs:
     steps:
       - setup_build_environment
       - snyk/scan:
-          additional-arguments: --all-sub-projects --policy-path=.snyk
+          additional-arguments: --all-sub-projects --policy-path=.snyk --configuration-matching='^runtimeClasspath$'
   release-charts:
     executor: helm
     working_directory: ~/repo

@@ -12,7 +12,7 @@ repositories {
 }
 
 application {
-  mainClassName = "org.hypertrace.core.serviceframework.PlatformServiceLauncher"
+  mainClass.set("org.hypertrace.core.serviceframework.PlatformServiceLauncher")
 }
 
 hypertraceDocker {
@@ -48,10 +48,10 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-impl"))
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
   implementation("org.hypertrace.core.flinkutils:flink-utils:0.1.6")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.15")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.18")
   implementation("org.hypertrace.entity.service:entity-service-client:0.1.23")
 
-  implementation("com.typesafe:config:1.4.0")
+  implementation("com.typesafe:config:1.4.1")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.13")
 
   // Required for the GRPC clients.
@@ -62,7 +62,7 @@ dependencies {
 
   testImplementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-  testImplementation("org.mockito:mockito-core:3.6.0")
-  testImplementation("org.junit-pioneer:junit-pioneer:1.0.0")
+  testImplementation("org.mockito:mockito-core:3.6.28")
+  testImplementation("org.junit-pioneer:junit-pioneer:1.1.0")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
 }
