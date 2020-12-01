@@ -12,7 +12,7 @@ subprojects {
 }
 
 application {
-  mainClassName = "org.hypertrace.core.serviceframework.PlatformServiceLauncher"
+  mainClass.set("org.hypertrace.core.serviceframework.PlatformServiceLauncher")
 }
 
 hypertraceDocker {
