@@ -16,13 +16,12 @@ import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.v1.Sql;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
-import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
-import org.hypertrace.semantic.convention.utils.db.OTelDbSemanticConventions;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.util.Constants;
@@ -100,7 +99,11 @@ public class JdbcBackendResolverTest {
             Attributes.newBuilder().setAttributeMap(
                 Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map.of(
-            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(), buildAttributeValue("mysql://127.0.0.1:3306"),
+            OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+            buildAttributeValue("127.0.0.1"),
+            OTelSpanSemanticConventions.NET_PEER_PORT.getValue(),
+            buildAttributeValue("3306"),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(), buildAttributeValue("service(localhost)\\db;;"),
             OTelDbSemanticConventions.DB_SYSTEM.getValue(), buildAttributeValue("mysql"),
             "span.kind", buildAttributeValue("client"),
             OTelDbSemanticConventions.DB_STATEMENT.getValue(), buildAttributeValue("SELECT * from example.user"),

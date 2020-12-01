@@ -10,6 +10,7 @@ import org.apache.avro.reflect.Nullable;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
+import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Docker;
 import org.hypertrace.core.span.constants.v1.TracerAttribute;
@@ -71,11 +72,9 @@ public class EnrichedSpanUtils {
   private static final String PROTOCOL_ATTR =
       EnrichedSpanConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_PROTOCOL);
   private static final String HOST_HEADER_ATTR = EnrichedSpanConstants.getValue(Http.HTTP_HOST);
+
   private static final String HTTP_USER_AGENT =
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT);
-
-  private static final String CONTAINER_ID_ATTR =
-      RawSpanConstants.getValue(Docker.DOCKER_CONTAINER_ID);
   private static final String USER_AGENT =
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT);
   private static final String USER_AGENT_UNDERSCORE =
@@ -84,10 +83,13 @@ public class EnrichedSpanUtils {
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH);
   private static final String USER_AGENT_REQUEST_HEADER =
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER);
+  private static final String OTEL_HTTP_USER_AGENT = OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue();
 
   @VisibleForTesting
   static final List<String> USER_AGENT_ATTRIBUTES =
-      ImmutableList.of(USER_AGENT, USER_AGENT_UNDERSCORE, USER_AGENT_DASH, USER_AGENT_REQUEST_HEADER, HTTP_USER_AGENT);
+      ImmutableList.of(
+          USER_AGENT, USER_AGENT_UNDERSCORE, USER_AGENT_DASH,
+          USER_AGENT_REQUEST_HEADER, HTTP_USER_AGENT, OTEL_HTTP_USER_AGENT);
 
   @Nullable
   private static String getStringAttribute(Event event, String attributeKey) {
@@ -117,10 +119,6 @@ public class EnrichedSpanUtils {
       }
     }
     return null;
-  }
-
-  public static String getDockerContainerId(Event event) {
-    return getStringAttribute(event, CONTAINER_ID_ATTR);
   }
 
   public static String getServiceId(Event event) {

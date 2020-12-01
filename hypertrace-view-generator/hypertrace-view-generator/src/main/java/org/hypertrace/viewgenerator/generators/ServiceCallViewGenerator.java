@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -16,11 +17,12 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.eventfields.http.Http;
+import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
@@ -320,13 +322,11 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
 
     // If this is a HTTP request, parse the http response status code.
     if (protocol == Protocol.PROTOCOL_HTTP || protocol == Protocol.PROTOCOL_HTTPS) {
+      Optional<Request> httpRequest = Optional.ofNullable(event.getHttp())
+          .map(org.hypertrace.core.datamodel.eventfields.http.Http::getRequest);
       // Set request related attributes.
-      builder.setRequestUrl(
-          getStringAttributeWithDefault(
-              event, RawSpanConstants.getValue(Http.HTTP_REQUEST_URL), null));
-      builder.setRequestMethod(
-          getStringAttributeWithDefault(
-              event, RawSpanConstants.getValue(Http.HTTP_REQUEST_METHOD), null));
+      builder.setRequestUrl(httpRequest.map(Request::getUrl).orElse(null));
+      builder.setRequestMethod(httpRequest.map(Request::getMethod).orElse(null));
     }
 
     String statusValue = EnrichedSpanUtils.getStatusCode(event);

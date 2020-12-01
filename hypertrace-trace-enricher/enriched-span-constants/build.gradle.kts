@@ -62,6 +62,7 @@ dependencies {
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
   implementation(project(":span-normalizer:raw-span-constants"))
+  implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation("org.hypertrace.entity.service:entity-service-api:0.1.23")
 
   constraints {

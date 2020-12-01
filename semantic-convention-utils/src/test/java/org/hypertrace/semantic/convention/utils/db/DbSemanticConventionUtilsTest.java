@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.Optional;
+import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -15,7 +17,6 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.core.span.constants.v1.Sql;
-import org.hypertrace.semantic.convention.utils.span.OTelSpanSemanticConventions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,26 +27,16 @@ public class DbSemanticConventionUtilsTest {
   @Test
   public void isMongoBackend() {
     Event e = mock(Event.class);
-    // otel format
-    Attributes attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue()),
-            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue("mongo:27017")));
-    when(e.getAttributes()).thenReturn(attributes);
-    boolean v = DbSemanticConventionUtils.isMongoBackend(e);
-    assertTrue(v);
 
     // otel format, dbsystem is not mongo
-    attributes = SemanticConventionTestUtil.buildAttributes(
+    Attributes attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
             OTelDbSemanticConventions.DB_SYSTEM.getValue(),
             SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
             OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbSemanticConventionUtils.isMongoBackend(e);
+    boolean v = DbSemanticConventionUtils.isMongoBackend(e);
     assertFalse(v);
 
     attributes = SemanticConventionTestUtil.buildAttributes(
@@ -77,24 +68,13 @@ public class DbSemanticConventionUtilsTest {
   @Test
   public void testGetMongoURI() {
     Event e = mock(Event.class);
-    // otel format
-    Attributes attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue()),
-            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue("mongo:27017")));
-    when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbSemanticConventionUtils.getMongoURI(e);
-    assertEquals("mongo:27017", v.get());
-
     // mongo url key is present
-    attributes = SemanticConventionTestUtil.buildAttributes(
+    Attributes attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
             RawSpanConstants.getValue(Mongo.MONGO_URL),
             SemanticConventionTestUtil.buildAttributeValue("mongo:27017")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbSemanticConventionUtils.getMongoURI(e);
+    Optional<String> v = DbSemanticConventionUtils.getMongoURI(e);
     assertEquals("mongo:27017", v.get());
 
     // mongo address is present
@@ -151,15 +131,6 @@ public class DbSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     Optional<String> v = DbSemanticConventionUtils.getRedisURI(e);
     assertEquals("127.0.0.1:4562", v.get());
-
-    // sql url not present, use db connection string
-    attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue("redis://127.0.0.1:4562")));
-    when(e.getAttributes()).thenReturn(attributes);
-    v = DbSemanticConventionUtils.getRedisURI(e);
-    assertEquals("redis://127.0.0.1:4562", v.get());
   }
 
   @Test
@@ -214,17 +185,6 @@ public class DbSemanticConventionUtilsTest {
     Optional<String> v = DbSemanticConventionUtils.getSqlURI(e);
     assertEquals("jdbc:mysql://mysql:3306/shop", v.get());
 
-    // sql url not present, use db connection string
-    attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
-            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue("mysql://127.0.0.1:3306")));
-    when(e.getAttributes()).thenReturn(attributes);
-    v = DbSemanticConventionUtils.getSqlURI(e);
-    assertEquals("mysql://127.0.0.1:3306", v.get());
-
     // no sql related attributes present
     attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
@@ -238,22 +198,14 @@ public class DbSemanticConventionUtilsTest {
   @Test
   public void testGetBackendURIForOtelFormat() {
     Event e = mock(Event.class);
-    // connection string is present
-    Attributes attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue("mysql://127.0.0.1:3306")));
-    when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
-    assertEquals("mysql://127.0.0.1:3306", v.get());
 
     // only ip is present
-    attributes = SemanticConventionTestUtil.buildAttributes(
+    Attributes attributes = SemanticConventionTestUtil.buildAttributes(
         Map.of(
             OTelSpanSemanticConventions.NET_PEER_IP.getValue(),
             SemanticConventionTestUtil.buildAttributeValue("127.0.0.1")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
+    Optional<String> v = DbSemanticConventionUtils.getBackendURIForOtelFormat(e);
     assertEquals("127.0.0.1", v.get());
 
     // ip & host present

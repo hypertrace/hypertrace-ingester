@@ -1,4 +1,4 @@
-package org.hypertrace.semantic.convention.utils.db;
+package org.hypertrace.core.semantic.convention.constants.db;
 
 /**
  * OTEL specific attributes for database

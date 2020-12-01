@@ -1,4 +1,4 @@
-package org.hypertrace.semantic.convention.utils.error;
+package org.hypertrace.core.semantic.convention.constants.error;
 
 /**
  * OTel attributes for errors

@@ -12,6 +12,7 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher:enriched-span-constants"))
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-api"))
   implementation(project(":span-normalizer:raw-span-constants"))
+  implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":semantic-convention-utils"))
   implementation(project(":hypertrace-trace-enricher:trace-reader"))
 

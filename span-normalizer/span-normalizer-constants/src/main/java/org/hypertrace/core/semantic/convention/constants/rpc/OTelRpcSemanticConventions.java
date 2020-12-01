@@ -1,4 +1,4 @@
-package org.hypertrace.semantic.convention.utils.rpc;
+package org.hypertrace.core.semantic.convention.constants.rpc;
 
 /**
  * OTel rpc attributes
@@ -6,6 +6,7 @@ package org.hypertrace.semantic.convention.utils.rpc;
 public enum OTelRpcSemanticConventions {
   RPC_SYSTEM("rpc.system"),
   RPC_METHOD("rpc.method"),
+  RPC_STATUS_CODE("rpc.status_code"),
   GRPC_STATUS_CODE("rpc.grpc.status_code"),
   RPC_SYSTEM_VALUE_GRPC("grpc"),
   RPC_SYSTEM_VALUE_JAVA_RMI("java_rmi"),

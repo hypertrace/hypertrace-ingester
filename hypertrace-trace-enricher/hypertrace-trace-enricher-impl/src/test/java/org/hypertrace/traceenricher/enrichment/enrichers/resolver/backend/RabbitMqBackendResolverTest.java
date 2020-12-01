@@ -2,7 +2,6 @@ package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import static org.mockito.Mockito.mock;
 
-import com.google.common.base.Joiner;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
@@ -14,10 +13,7 @@ import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
-import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
