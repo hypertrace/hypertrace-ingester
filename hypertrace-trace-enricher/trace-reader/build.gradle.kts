@@ -14,11 +14,11 @@ dependencies {
   implementation("org.hypertrace.entity.service:entity-data-service-rx-client:0.2.5")
   implementation("org.hypertrace.core.grpcutils:grpc-client-rx-utils:0.3.2")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.3.2")
-  implementation("io.reactivex.rxjava3:rxjava:3.0.6")
+  implementation("io.reactivex.rxjava3:rxjava:3.0.7")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-  testImplementation("org.mockito:mockito-core:3.6.0")
-  testImplementation("org.mockito:mockito-junit-jupiter:3.6.0")
+  testImplementation("org.mockito:mockito-core:3.6.28")
+  testImplementation("org.mockito:mockito-junit-jupiter:3.6.28")
   testRuntimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
 
   tasks.test {

@@ -8,7 +8,7 @@ plugins {
 }
 
 application {
-  mainClassName = "org.hypertrace.core.serviceframework.PlatformServiceLauncher"
+  mainClass.set("org.hypertrace.core.serviceframework.PlatformServiceLauncher")
 }
 
 tasks.test {
@@ -17,7 +17,7 @@ tasks.test {
 
 dependencies {
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
-  implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.1.16")
+  implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.1.19")
   constraints {
     implementation("com.google.guava:guava:30.0-jre") {
       because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415")
@@ -29,7 +29,7 @@ dependencies {
   }
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-  testImplementation("org.mockito:mockito-core:3.6.0")
+  testImplementation("org.mockito:mockito-core:3.6.28")
 }
 
 description = "view creator for Pinot"

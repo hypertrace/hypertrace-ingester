@@ -14,8 +14,8 @@ dependencies {
     implementation("org.hypertrace.core.datamodel:data-model:0.1.9")
     implementation("org.hypertrace.entity.service:entity-service-client:0.1.23")
 
-    implementation("org.apache.commons:commons-lang3:3.10")
+    implementation("org.apache.commons:commons-lang3:3.11")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
-    testImplementation("org.mockito:mockito-core:3.3.3")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
+    testImplementation("org.mockito:mockito-core:3.6.28")
 }
