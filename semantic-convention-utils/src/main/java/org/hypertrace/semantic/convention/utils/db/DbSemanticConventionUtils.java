@@ -2,6 +2,10 @@ package org.hypertrace.semantic.convention.utils.db;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -163,7 +167,19 @@ public class DbSemanticConventionUtils {
     if (SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, SQL_URL));
     }
-    return getBackendURIForOtelFormat(event);
+    Optional<String> backendUrl = getBackendURIForOtelFormat(event);
+    if (backendUrl.isPresent()) {
+      return backendUrl;
+    }
+    if (SpanAttributeUtils.containsAttributeKey(
+        event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
+      String url = SpanAttributeUtils.getStringAttribute(
+          event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
+      if (isValidUrl(url)) {
+        return Optional.of(url);
+      }
+    }
+    return Optional.empty();
   }
 
   /**
@@ -191,5 +207,14 @@ public class DbSemanticConventionUtils {
       return Optional.ofNullable(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_SYSTEM));
     }
     return Optional.empty();
+  }
+
+  public static boolean isValidUrl(String url) {
+    try {
+      new URL(url);
+    } catch (MalformedURLException e) {
+      return false;
+    }
+    return true;
   }
 }
