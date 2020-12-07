@@ -87,7 +87,7 @@ public class HttpSemanticConventionUtils {
           || SpanSemanticConventionUtils.isClientSpanForOCFormat(attributeValueMap)) {
       return getHttpUrlForOtelFormatClientSpan(attributeValueMap);
     } else if (SpanSemanticConventionUtils.isServerSpanForOtelFormat(attributeValueMap)
-          || SpanSemanticConventionUtils.isServerSpanForOtelFormat(attributeValueMap)) {
+          || SpanSemanticConventionUtils.isServerSpanForOCFormat(attributeValueMap)) {
       return getHttpUrlForOtelFormatServerSpan(attributeValueMap);
     }
     return Optional.empty();

@@ -114,7 +114,7 @@ public class DbSemanticConventionUtils {
    * @param event Object encapsulating span data
    * @return check if the event is for a sql backend
    */
-  static boolean isSqlBackend(Event event) {
+  public static boolean isSqlBackend(Event event) {
     if (event.getEventName() != null
         && event.getEventName().startsWith(JDBC_EVENT_PREFIX)
         && SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
