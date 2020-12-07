@@ -7,6 +7,9 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
+import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.core.span.constants.v1.OCAttribute;
+import org.hypertrace.core.span.constants.v1.OCSpanKind;
 
 /**
  * Utility to read span attributes
@@ -67,6 +70,22 @@ public class SpanSemanticConventionUtils {
     if (attributeValueMap.containsKey(OTelSpanSemanticConventions.SPAN_KIND.getValue())) {
       return OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE.getValue().equals(
           attributeValueMap.get(OTelSpanSemanticConventions.SPAN_KIND.getValue()).getValue());
+    }
+    return false;
+  }
+
+  public static boolean isClientSpanForOCFormat(Map<String, AttributeValue> attributeValueMap) {
+    if (attributeValueMap.containsKey(RawSpanConstants.getValue(OCAttribute.OC_ATTRIBUTE_SPAN_KIND))) {
+      return RawSpanConstants.getValue(OCAttribute.OC_ATTRIBUTE_SPAN_KIND).equals(
+          attributeValueMap.get(RawSpanConstants.getValue(OCSpanKind.OC_SPAN_KIND_CLIENT)).getValue());
+    }
+    return false;
+  }
+
+  public static boolean isServerSpanForOCFormat(Map<String, AttributeValue> attributeValueMap) {
+    if (attributeValueMap.containsKey(RawSpanConstants.getValue(OCAttribute.OC_ATTRIBUTE_SPAN_KIND))) {
+      return RawSpanConstants.getValue(OCAttribute.OC_ATTRIBUTE_SPAN_KIND).equals(
+          attributeValueMap.get(RawSpanConstants.getValue(OCSpanKind.OC_SPAN_KIND_SERVER)).getValue());
     }
     return false;
   }
