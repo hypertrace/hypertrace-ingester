@@ -7,6 +7,7 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.semantic.convention.constants.messaging.OtelMessagingSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Envoy;
@@ -97,18 +98,22 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
     Boolean isEntry = null;
     if (attributeMap.containsKey(OTEL_SPAN_KIND)) {
       String spanKindValue = attributeMap.get(OTEL_SPAN_KIND).getValue();
-      if (spanKindValue.equalsIgnoreCase(OTEL_SPAN_KIND_SERVER_VALUE)) {
+      if (spanKindValue.equalsIgnoreCase(OTEL_SPAN_KIND_SERVER_VALUE)
+          || spanKindValue.equalsIgnoreCase(OtelMessagingSemanticConventions.CONSUMER.getValue())) {
         isEntry = true;
-      } else if (spanKindValue.equalsIgnoreCase(OTEL_SPAN_KIND_CLIENT_CLIENT)) {
+      } else if (spanKindValue.equalsIgnoreCase(OTEL_SPAN_KIND_CLIENT_CLIENT)
+          || spanKindValue.equalsIgnoreCase(OtelMessagingSemanticConventions.PRODUCER.getValue())) {
         isEntry = false;
       } else {
         LOGGER.debug("Unrecognized span_kind value: {}. Event: {}.", spanKindValue, event);
       }
     } else if (attributeMap.containsKey(SPAN_KIND_KEY)) {
       String spanKindValue = attributeMap.get(SPAN_KIND_KEY).getValue();
-      if (spanKindValue.equalsIgnoreCase(SERVER_VALUE)) {
+      if (spanKindValue.equalsIgnoreCase(SERVER_VALUE)
+          || spanKindValue.equalsIgnoreCase(OtelMessagingSemanticConventions.CONSUMER.getValue())) {
         isEntry = true;
-      } else if (spanKindValue.equalsIgnoreCase(CLIENT_VALUE)) {
+      } else if (spanKindValue.equalsIgnoreCase(CLIENT_VALUE)
+          || spanKindValue.equalsIgnoreCase(OtelMessagingSemanticConventions.PRODUCER.getValue())) {
         isEntry = false;
       } else {
         LOGGER.debug("Unrecognized span.kind value: {}. Event: {}.", spanKindValue, event);

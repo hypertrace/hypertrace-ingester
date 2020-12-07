@@ -6,6 +6,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.eventfields.rpc.Rpc;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.semantic.convention.constants.messaging.OtelMessagingSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.v1.Envoy;
 import org.hypertrace.core.span.constants.v1.Grpc;
@@ -67,6 +68,28 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
 
     e = createMockEvent();
     attributeValueMap = e.getAttributes().getAttributeMap();
+    attributeValueMap.put(
+        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
+        AttributeValueCreator.create(OtelMessagingSemanticConventions.CONSUMER.getValue()));
+    enricher.enrichEvent(null, e);
+    enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
+    Assertions.assertEquals(
+        Constants.getEnrichedSpanConstant(ENTRY),
+        enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue());
+
+    e = createMockEvent();
+    attributeValueMap = e.getAttributes().getAttributeMap();
+    attributeValueMap.put(
+        SPAN_KIND_KEY,
+        AttributeValueCreator.create(OtelMessagingSemanticConventions.CONSUMER.getValue()));
+    enricher.enrichEvent(null, e);
+    enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
+    Assertions.assertEquals(
+        Constants.getEnrichedSpanConstant(ENTRY),
+        enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue());
+
+    e = createMockEvent();
+    attributeValueMap = e.getAttributes().getAttributeMap();
     attributeValueMap.put(SPAN_KIND_KEY, AttributeValueCreator.create(CLIENT_VALUE));
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
@@ -79,6 +102,28 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
     attributeValueMap.put(
         OTelSpanSemanticConventions.SPAN_KIND.getValue(),
         AttributeValueCreator.create(OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE.getValue()));
+    enricher.enrichEvent(null, e);
+    enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
+    Assertions.assertEquals(
+        enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue(),
+        Constants.getEnrichedSpanConstant(EXIT));
+
+    e = createMockEvent();
+    attributeValueMap = e.getAttributes().getAttributeMap();
+    attributeValueMap.put(
+        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
+        AttributeValueCreator.create(OtelMessagingSemanticConventions.PRODUCER.getValue()));
+    enricher.enrichEvent(null, e);
+    enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
+    Assertions.assertEquals(
+        enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue(),
+        Constants.getEnrichedSpanConstant(EXIT));
+
+    e = createMockEvent();
+    attributeValueMap = e.getAttributes().getAttributeMap();
+    attributeValueMap.put(
+        SPAN_KIND_KEY,
+        AttributeValueCreator.create(OtelMessagingSemanticConventions.PRODUCER.getValue()));
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(

@@ -7,7 +7,9 @@ public enum OtelMessagingSemanticConventions {
   MESSAGING_SYSTEM("messaging.system"),
   MESSAGING_URL("messaging.url"),
   RABBITMQ_MESSAGING_SYSTEM_VALUE("rabbitmq"),
-  RABBITMQ_ROUTING_KEY("messaging.rabbitmq.routing_key");
+  RABBITMQ_ROUTING_KEY("messaging.rabbitmq.routing_key"),
+  PRODUCER("PRODUCER"),
+  CONSUMER("CONSUMER");
 
   private final String value;
 
