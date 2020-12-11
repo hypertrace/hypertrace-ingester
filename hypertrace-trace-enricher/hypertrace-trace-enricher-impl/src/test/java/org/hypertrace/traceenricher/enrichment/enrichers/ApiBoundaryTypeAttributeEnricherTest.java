@@ -145,6 +145,16 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
   }
 
   @Test
+  public void testEnrichEventWithIncompleteAuthorityHeader() {
+    // Try with :port since that seems to be a valid value for some authority headers.
+    addEnrichedAttributeToEvent(innerEntrySpan,
+        RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_AUTHORITY_HEADER),
+        AttributeValueCreator.create(":9000"));
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertNull(EnrichedSpanUtils.getHostHeader(innerEntrySpan));
+  }
+
+  @Test
   public void testEnrichEventWithHostHeader() {
     addEnrichedAttributeToEvent(innerEntrySpan,
         RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_HOST),
