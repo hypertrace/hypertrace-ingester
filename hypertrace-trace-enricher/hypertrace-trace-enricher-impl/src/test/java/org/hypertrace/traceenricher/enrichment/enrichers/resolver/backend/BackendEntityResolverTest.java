@@ -714,7 +714,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                 .setRefType(EventRefType.CHILD_OF).build())).build();
     final Entity backendEntity = backendEntityResolver.resolveEntity(e, structuredTraceGraph).get();
     assertEquals("mysql:3306", backendEntity.getEntityName());
-    assertEquals(4, backendEntity.getIdentifyingAttributesCount());
+    assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     Assertions.assertEquals(BackendType.JDBC.name(),
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
             .getValue().getString());
@@ -725,7 +725,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
         backendEntity.getIdentifyingAttributesMap().get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue()
             .getString());
     assertEquals("mysql",
-        backendEntity.getIdentifyingAttributesMap().get(Constants.getRawSpanConstant(Sql.SQL_DB_TYPE)).getValue().getString());
+        backendEntity.getAttributesMap().get(Constants.getRawSpanConstant(Sql.SQL_DB_TYPE)).getValue().getString());
     assertEquals("jdbc.connection.prepare",
         backendEntity.getAttributesMap().get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT)).getValue().getString());
     assertEquals("62646630336466616266356337306638",
@@ -762,7 +762,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     assertEquals("mysql", idAttrMap.get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST)).getValue().getString());
     assertEquals("3306", idAttrMap.get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT)).getValue().getString());
     assertEquals("JDBC", idAttrMap.get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL)).getValue().getString());
-    assertEquals("mysql", idAttrMap.get(Constants.getRawSpanConstant(Sql.SQL_DB_TYPE)).getValue().getString());
+    assertEquals("mysql", backendEntity.getAttributesMap().get(Constants.getRawSpanConstant(Sql.SQL_DB_TYPE)).getValue().getString());
   }
 
   @Test
