@@ -153,29 +153,29 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
 
   private Optional<String> getSanitizedHostValue(String value) {
     if (StringUtils.isNotBlank(value)) {
-      String host = sanitizeHostValue(value);
-      if (!LOCALHOST.equalsIgnoreCase(host)) {
-        return Optional.of(host);
+      Optional<String> host = sanitizeHostValue(value);
+      if (host.isPresent() && !LOCALHOST.equalsIgnoreCase(host.get())) {
+        return host;
       }
     }
     return Optional.empty();
   }
 
-  private String sanitizeHostValue(String host) {
+  private Optional<String> sanitizeHostValue(String host) {
     if (host.contains(COLON) && !host.startsWith(COLON)) {
-      return COLON_SPLITTER.splitToList(host).get(0);
+      return Optional.ofNullable(COLON_SPLITTER.splitToList(host).get(0));
     }
 
     // the value is a URL, just return the authority part of it.
     try {
       URI uri = new URI(host);
       if (uri.getScheme() != null) {
-        return uri.getHost();
+        return Optional.ofNullable(uri.getHost());
       }
-      return host;
+      return Optional.of(host);
     } catch (URISyntaxException ignore) {
       // ignore
-      return host;
+      return Optional.empty();
     }
   }
 }
