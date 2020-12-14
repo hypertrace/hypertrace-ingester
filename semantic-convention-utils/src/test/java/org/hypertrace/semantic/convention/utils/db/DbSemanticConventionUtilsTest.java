@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.Optional;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
@@ -193,6 +194,46 @@ public class DbSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getSqlURI(e);
     assertTrue(v.isEmpty());
+
+    attributes = SemanticConventionTestUtil.buildAttributes(
+        Map.of(
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("jdbc:mysql://mysql:3306/shop")));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = DbSemanticConventionUtils.getSqlURI(e);
+    assertEquals("jdbc:mysql://mysql:3306/shop", v.get());
+  }
+
+  @Test
+  public void testGetSqlUrlForOtelFormat() {
+    Map<String, AttributeValue> map =
+        Map.of(
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("jdbc:mysql://mysql:3306/shop"));
+    Optional<String> v = DbSemanticConventionUtils.getSqlUrlForOtelFormat(map);
+    assertEquals("jdbc:mysql://mysql:3306/shop", v.get());
+
+    map = Map.of(
+        OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
+        SemanticConventionTestUtil.buildAttributeValue("jdbc:mysql://mysql:3306/shop")
+    );
+    v = DbSemanticConventionUtils.getSqlUrlForOtelFormat(map);
+    assertTrue(v.isEmpty());
+
+    map =
+        Map.of(
+            OTelSpanSemanticConventions.NET_PEER_IP.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("127.0.0.1"),
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("jdbc:mysql://mysql:3306/shop"));
+    v = DbSemanticConventionUtils.getSqlUrlForOtelFormat(map);
+    assertEquals("127.0.0.1", v.get());
   }
 
   @Test

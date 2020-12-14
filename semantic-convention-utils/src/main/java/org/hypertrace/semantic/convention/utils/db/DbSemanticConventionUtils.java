@@ -175,9 +175,23 @@ public class DbSemanticConventionUtils {
         event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
       String url = SpanAttributeUtils.getStringAttribute(
           event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
-      if (isValidUrl(url)) {
-        return Optional.of(url);
-      }
+      return Optional.of(url);
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getSqlUrlForOtelFormat(
+      Map<String, AttributeValue> attributeValueMap) {
+    if (!isSqlTypeBackendForOtelFormat(attributeValueMap)) {
+      return Optional.empty();
+    }
+    Optional<String> backendUrl = getBackendURIForOtelFormat(attributeValueMap);
+    if (backendUrl.isPresent()) {
+      return backendUrl;
+    }
+    if (attributeValueMap.containsKey(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
+      String url = attributeValueMap.get(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue()).getValue();
+      return Optional.of(url);
     }
     return Optional.empty();
   }
@@ -207,14 +221,5 @@ public class DbSemanticConventionUtils {
       return Optional.ofNullable(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_SYSTEM));
     }
     return Optional.empty();
-  }
-
-  public static boolean isValidUrl(String url) {
-    try {
-      new URL(url);
-    } catch (MalformedURLException e) {
-      return false;
-    }
-    return true;
   }
 }
