@@ -2,6 +2,8 @@ package org.hypertrace.semantic.convention.utils.db;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -171,6 +173,9 @@ public class DbSemanticConventionUtils {
         event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
       String url = SpanAttributeUtils.getStringAttribute(
           event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
+      if (!isValidURI(url)) {
+        return Optional.empty();
+      }
       return Optional.of(url);
     }
     return Optional.empty();
@@ -187,6 +192,9 @@ public class DbSemanticConventionUtils {
     }
     if (attributeValueMap.containsKey(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
       String url = attributeValueMap.get(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue()).getValue();
+      if (!isValidURI(url)) {
+        return Optional.empty();
+      }
       return Optional.of(url);
     }
     return Optional.empty();
@@ -217,5 +225,14 @@ public class DbSemanticConventionUtils {
       return Optional.ofNullable(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_SYSTEM));
     }
     return Optional.empty();
+  }
+
+  static boolean isValidURI(String uri) {
+    try {
+      new URI(uri);
+    } catch (URISyntaxException e) {
+      return false;
+    }
+    return true;
   }
 }
