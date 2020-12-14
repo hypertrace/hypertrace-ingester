@@ -87,16 +87,24 @@ public class SpanSemanticConventionUtilsTest {
         RawSpanConstants.getValue(OCAttribute.OC_ATTRIBUTE_SPAN_KIND),
         SemanticConventionTestUtil.buildAttributeValue(RawSpanConstants.getValue(OCSpanKind.OC_SPAN_KIND_SERVER)));
     assertTrue(SpanSemanticConventionUtils.isServerSpanForOCFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isClientSpanForOtelFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isClientSpanForOCFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isServerSpanForOtelFormat(attributeValueMap));
     attributeValueMap = Map.of(
         RawSpanConstants.getValue(OCAttribute.OC_ATTRIBUTE_SPAN_KIND),
         SemanticConventionTestUtil.buildAttributeValue(RawSpanConstants.getValue(OCSpanKind.OC_SPAN_KIND_CLIENT)));
     assertTrue(SpanSemanticConventionUtils.isClientSpanForOCFormat(attributeValueMap));
-
+    assertFalse(SpanSemanticConventionUtils.isClientSpanForOtelFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isServerSpanForOCFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isServerSpanForOtelFormat(attributeValueMap));
     attributeValueMap = Map.of(
         OTelSpanSemanticConventions.SPAN_KIND.getValue(),
         SemanticConventionTestUtil.buildAttributeValue(OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE
             .getValue()));
     assertTrue(SpanSemanticConventionUtils.isServerSpanForOtelFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isClientSpanForOtelFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isServerSpanForOCFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isClientSpanForOtelFormat(attributeValueMap));
     attributeValueMap = Map.of(
         OTelSpanSemanticConventions.SPAN_KIND.getValue(),
         SemanticConventionTestUtil.buildAttributeValue("SERVER"));
@@ -110,5 +118,8 @@ public class SpanSemanticConventionUtilsTest {
         OTelSpanSemanticConventions.SPAN_KIND.getValue(),
         SemanticConventionTestUtil.buildAttributeValue("CLIENT"));
     assertTrue(SpanSemanticConventionUtils.isClientSpanForOtelFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isServerSpanForOtelFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isServerSpanForOCFormat(attributeValueMap));
+    assertFalse(SpanSemanticConventionUtils.isClientSpanForOCFormat(attributeValueMap));
   }
 }
