@@ -37,7 +37,7 @@ dependencies {
   
   implementation("org.hypertrace.entity.service:entity-service-api:0.1.21")
 
-  implementation("org.apache.avro:avro:1.9.2")
+  implementation("org.apache.avro:avro:1.10.1")
   implementation("org.apache.commons:commons-lang3:3.11")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")

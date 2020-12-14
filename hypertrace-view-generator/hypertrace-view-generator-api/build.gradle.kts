@@ -12,6 +12,6 @@ sourceSets {
 }
 
 dependencies {
-  api( "org.apache.avro:avro:1.9.2")
+  api( "org.apache.avro:avro:1.10.1")
 }
 
