@@ -32,12 +32,12 @@ dependencies {
 
   // TODO: migrate in core
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.19")
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.10")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.12")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.18")
   
   implementation("org.hypertrace.entity.service:entity-service-api:0.1.21")
 
-  implementation("org.apache.avro:avro:1.9.2")
+  implementation("org.apache.avro:avro:1.10.1")
   implementation("org.apache.commons:commons-lang3:3.11")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")

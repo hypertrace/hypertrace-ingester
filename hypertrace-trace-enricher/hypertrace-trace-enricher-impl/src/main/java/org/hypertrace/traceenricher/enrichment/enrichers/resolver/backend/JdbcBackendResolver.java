@@ -30,6 +30,10 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
+    if (!DbSemanticConventionUtils.isSqlBackend(event)) {
+      return Optional.empty();
+    }
+
     Optional<String> optionalBackendUriStr = DbSemanticConventionUtils.getSqlURI(event);
 
     // backendUriStr Sample value: "jdbc:mysql://mysql:3306/shop"
@@ -73,7 +77,7 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
           EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
           createAttributeValue(path));
     }
-    entityBuilder.putIdentifyingAttributes(RawSpanConstants.getValue(Sql.SQL_DB_TYPE),
+    entityBuilder.putAttributes(RawSpanConstants.getValue(Sql.SQL_DB_TYPE),
         createAttributeValue(dbType));
     return Optional.of(entityBuilder.build());
   }

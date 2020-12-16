@@ -2,6 +2,8 @@ package org.hypertrace.semantic.convention.utils.db;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +116,7 @@ public class DbSemanticConventionUtils {
    * @param event Object encapsulating span data
    * @return check if the event is for a sql backend
    */
-  static boolean isSqlBackend(Event event) {
+  public static boolean isSqlBackend(Event event) {
     if (event.getEventName() != null
         && event.getEventName().startsWith(JDBC_EVENT_PREFIX)
         && SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
@@ -163,7 +165,39 @@ public class DbSemanticConventionUtils {
     if (SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, SQL_URL));
     }
-    return getBackendURIForOtelFormat(event);
+    Optional<String> backendUrl = getBackendURIForOtelFormat(event);
+    if (backendUrl.isPresent()) {
+      return backendUrl;
+    }
+    if (SpanAttributeUtils.containsAttributeKey(
+        event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
+      String url = SpanAttributeUtils.getStringAttribute(
+          event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
+      if (!isValidURI(url)) {
+        return Optional.empty();
+      }
+      return Optional.of(url);
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getSqlUrlForOtelFormat(
+      Map<String, AttributeValue> attributeValueMap) {
+    if (!isSqlTypeBackendForOtelFormat(attributeValueMap)) {
+      return Optional.empty();
+    }
+    Optional<String> backendUrl = getBackendURIForOtelFormat(attributeValueMap);
+    if (backendUrl.isPresent()) {
+      return backendUrl;
+    }
+    if (attributeValueMap.containsKey(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
+      String url = attributeValueMap.get(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue()).getValue();
+      if (!isValidURI(url)) {
+        return Optional.empty();
+      }
+      return Optional.of(url);
+    }
+    return Optional.empty();
   }
 
   /**
@@ -191,5 +225,14 @@ public class DbSemanticConventionUtils {
       return Optional.ofNullable(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_SYSTEM));
     }
     return Optional.empty();
+  }
+
+  static boolean isValidURI(String uri) {
+    try {
+      new URI(uri);
+    } catch (URISyntaxException e) {
+      return false;
+    }
+    return true;
   }
 }
