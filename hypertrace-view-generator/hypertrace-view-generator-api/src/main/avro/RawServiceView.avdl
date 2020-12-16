@@ -38,5 +38,7 @@ protocol RawServiceViewProtocol {
     union { null, string } transaction_name = null;
 
     union { null, string } api_discovery_state = null;
+
+    array<string> space_ids = [];
   }
 }

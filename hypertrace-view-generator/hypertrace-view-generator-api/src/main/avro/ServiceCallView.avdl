@@ -59,5 +59,8 @@ protocol ServiceCallViewProtocol {
 
     union { null, string } callee_backend_id = null;
     union { null, string } callee_backend_name = null;
+
+    array<string> caller_space_ids = [];
+    array<string> callee_space_ids = [];
   }
 }

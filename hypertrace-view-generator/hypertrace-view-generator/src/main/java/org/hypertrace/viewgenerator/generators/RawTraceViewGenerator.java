@@ -3,15 +3,21 @@ package org.hypertrace.viewgenerator.generators;
 import com.google.common.collect.Lists;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.avro.Schema;
+import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
+import org.hypertrace.traceenricher.enrichedspan.constants.v1.Space;
 import org.hypertrace.viewgenerator.api.RawTraceView;
 
 public class RawTraceViewGenerator extends BaseViewGenerator<RawTraceView> {
@@ -46,6 +52,7 @@ public class RawTraceViewGenerator extends BaseViewGenerator<RawTraceView> {
     builder.setNumSpans(structuredTrace.getEventList().size());
     builder.setNumServices(services.size());
     builder.setServices(new ArrayList<>(services));
+    builder.setSpaceIds(getSpaceIdsFromTrace(structuredTrace));
     return Lists.newArrayList(builder.build());
   }
 
@@ -62,5 +69,14 @@ public class RawTraceViewGenerator extends BaseViewGenerator<RawTraceView> {
   @Override
   public Class<RawTraceView> getViewClass() {
     return RawTraceView.class;
+  }
+
+  private List<String> getSpaceIdsFromTrace(StructuredTrace trace) {
+    return Optional.ofNullable(trace)
+                   .map(StructuredTrace::getAttributes)
+                   .map(Attributes::getAttributeMap)
+                   .map(map -> map.get(EnrichedSpanConstants.getValue(Space.SPACE_IDS)) )
+                   .map(AttributeValue::getValueList)
+                   .orElseGet(Collections::emptyList);
   }
 }

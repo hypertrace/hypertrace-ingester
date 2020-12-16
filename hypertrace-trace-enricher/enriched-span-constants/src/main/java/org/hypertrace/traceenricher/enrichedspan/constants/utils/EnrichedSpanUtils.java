@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +13,6 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.Docker;
 import org.hypertrace.core.span.constants.v1.TracerAttribute;
 import org.hypertrace.entity.constants.v1.ApiAttribute;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
@@ -25,6 +25,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
+import org.hypertrace.traceenricher.enrichedspan.constants.v1.Space;
 
 /**
  * Utility class to easily read named attributes from an enriched span. This is equivalent of
@@ -352,4 +353,12 @@ public class EnrichedSpanUtils {
 
     return Optional.empty();
   }
+
+  public static List<String> getSpaceIds(Event event) {
+    return Optional.ofNullable(
+            SpanAttributeUtils.getAttributeValue(
+                event, EnrichedSpanConstants.getValue(Space.SPACE_IDS)))
+        .map(AttributeValue::getValueList)
+        .orElseGet(Collections::emptyList);
+    }
 }

@@ -289,6 +289,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
 
   private void buildExitSpanView(Event event, ServiceCallView.Builder builder) {
     builder.setCallerService(EnrichedSpanUtils.getServiceName(event));
+    builder.setCallerSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
     String serviceId = EnrichedSpanUtils.getServiceId(event);
     if (serviceId != null) {
       builder.setCallerServiceIdStr(serviceId);
@@ -308,6 +309,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       Event event, ServiceCallView.Builder builder, @Nullable Protocol protocol) {
     builder.setServerEventId(event.getEventId());
     builder.setCalleeService(EnrichedSpanUtils.getServiceName(event));
+    builder.setCalleeSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
     String serviceId = EnrichedSpanUtils.getServiceId(event);
     if (serviceId != null) {
       builder.setCalleeServiceIdStr(serviceId);
@@ -341,6 +343,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
     buildCommonServiceCallView(event, builder);
 
     builder.setServerEventId(event.getEventId());
+    builder.setCalleeSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
     builder.setCalleeService(EnrichedSpanUtils.getServiceName(event));
     String serviceId = EnrichedSpanUtils.getServiceId(event);
     if (serviceId != null) {
