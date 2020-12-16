@@ -357,7 +357,7 @@ public class EnrichedSpanUtils {
   public static List<String> getSpaceIds(Event event) {
     return Optional.ofNullable(
             SpanAttributeUtils.getAttributeValue(
-                event, EnrichedSpanConstants.getValue(Space.SPACE_IDS)))
+                event, EnrichedSpanConstants.SPACE_IDS_ATTRIBUTE))
         .map(AttributeValue::getValueList)
         .orElseGet(Collections::emptyList);
     }

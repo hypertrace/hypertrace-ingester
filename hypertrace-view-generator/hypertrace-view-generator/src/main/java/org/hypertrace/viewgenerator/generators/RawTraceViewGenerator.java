@@ -17,7 +17,6 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
-import org.hypertrace.traceenricher.enrichedspan.constants.v1.Space;
 import org.hypertrace.viewgenerator.api.RawTraceView;
 
 public class RawTraceViewGenerator extends BaseViewGenerator<RawTraceView> {
@@ -73,10 +72,10 @@ public class RawTraceViewGenerator extends BaseViewGenerator<RawTraceView> {
 
   private List<String> getSpaceIdsFromTrace(StructuredTrace trace) {
     return Optional.ofNullable(trace)
-                   .map(StructuredTrace::getAttributes)
-                   .map(Attributes::getAttributeMap)
-                   .map(map -> map.get(EnrichedSpanConstants.getValue(Space.SPACE_IDS)) )
-                   .map(AttributeValue::getValueList)
-                   .orElseGet(Collections::emptyList);
+        .map(StructuredTrace::getAttributes)
+        .map(Attributes::getAttributeMap)
+        .map(map -> map.get(EnrichedSpanConstants.SPACE_IDS_ATTRIBUTE))
+        .map(AttributeValue::getValueList)
+        .orElseGet(Collections::emptyList);
   }
 }

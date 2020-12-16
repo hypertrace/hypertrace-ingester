@@ -93,8 +93,3 @@ enum ErrorMetrics {
     ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS = 3 [(string_value) = "span_count_with_errors"];
     ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS = 4 [(string_value) = "span_count_with_exceptions"];
 }
-
-enum Space {
-    SPACE_UNSPECIFIED = 0 [(string_value) = "UNSPECIFIED"];
-    SPACE_IDS = 1 [(string_value) = "SPACE_IDS"];
-}
