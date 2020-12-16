@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 
+import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -394,5 +395,26 @@ public class EnrichedSpanUtilsTest {
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getResponseSize(e);
     assertTrue(requestSize.isEmpty());
+  }
+
+  @Test
+  public void testGetSpaceIds_empty() {
+    Event e = mock(Event.class);
+
+    List<String> spaceIds = EnrichedSpanUtils.getSpaceIds(e);
+    assertEquals(emptyList(), spaceIds);
+  }
+
+  @Test
+  public void testGetSpaceIds_withData() {
+    List<String> spaceIds = List.of("space1", "space2");
+    Event e = mock(Event.class);
+    when(e.getEnrichedAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(Map.of("SPACE_IDS", AttributeValueCreator.create(spaceIds)))
+                .build());
+
+    assertEquals(spaceIds, EnrichedSpanUtils.getSpaceIds(e));
   }
 }
