@@ -13,6 +13,7 @@ on:
 
 jobs:
   build-on-linux:
+       # Ubuntu-20.04 runner comes with docker 19.03 and OpenJDK 11 and we are using that here. 
     runs-on: ubuntu-20.04
     name: Build and run Docker images
     steps:
