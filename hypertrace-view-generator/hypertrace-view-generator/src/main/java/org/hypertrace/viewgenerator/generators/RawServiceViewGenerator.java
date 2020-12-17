@@ -90,6 +90,9 @@ public class RawServiceViewGenerator extends BaseViewGenerator<RawServiceView> {
         if (EnrichedSpanUtils.isEntrySpan(event)) {
           builder.setNumCalls(1);
         }
+
+        builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
+
         list.add(builder.build());
       }
     }

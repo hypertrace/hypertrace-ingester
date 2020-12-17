@@ -171,6 +171,8 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       builder.setExceptionCount((int) exceptionMetric.getValue().doubleValue());
     }
 
+    builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
+
     return builder;
   }
 

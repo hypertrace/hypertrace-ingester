@@ -57,5 +57,7 @@ protocol BackendEntityViewProtocol {
 
     // api ID that calls this backend
     union { null, string } caller_api_id = null;
+
+    array<string> space_ids = [];
   }
 }

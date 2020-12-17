@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +13,6 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.Docker;
 import org.hypertrace.core.span.constants.v1.TracerAttribute;
 import org.hypertrace.entity.constants.v1.ApiAttribute;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
@@ -27,8 +27,8 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 
 /**
- * Utility class to easily read named attributes from an enriched span. This is equivalent of
- * an enriched span POJO.
+ * Utility class to easily read named attributes from an enriched span. This is equivalent of an
+ * enriched span POJO.
  */
 public class EnrichedSpanUtils {
   private static final String SERVICE_ID_ATTR =
@@ -36,8 +36,7 @@ public class EnrichedSpanUtils {
   private static final String SERVICE_NAME_ATTR =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
 
-  private static final String API_ID_ATTR =
-      EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_ID);
+  private static final String API_ID_ATTR = EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_ID);
   private static final String API_URL_PATTERN_ATTR =
       EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_URL_PATTERN);
   private static final String API_NAME_ATTR =
@@ -78,18 +77,26 @@ public class EnrichedSpanUtils {
   private static final String USER_AGENT =
       RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT);
   private static final String USER_AGENT_UNDERSCORE =
-      RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_UNDERSCORE);
+      RawSpanConstants.getValue(
+          org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_UNDERSCORE);
   private static final String USER_AGENT_DASH =
-      RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH);
+      RawSpanConstants.getValue(
+          org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH);
   private static final String USER_AGENT_REQUEST_HEADER =
-      RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER);
-  private static final String OTEL_HTTP_USER_AGENT = OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue();
+      RawSpanConstants.getValue(
+          org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER);
+  private static final String OTEL_HTTP_USER_AGENT =
+      OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue();
 
   @VisibleForTesting
   static final List<String> USER_AGENT_ATTRIBUTES =
       ImmutableList.of(
-          USER_AGENT, USER_AGENT_UNDERSCORE, USER_AGENT_DASH,
-          USER_AGENT_REQUEST_HEADER, HTTP_USER_AGENT, OTEL_HTTP_USER_AGENT);
+          USER_AGENT,
+          USER_AGENT_UNDERSCORE,
+          USER_AGENT_DASH,
+          USER_AGENT_REQUEST_HEADER,
+          HTTP_USER_AGENT,
+          OTEL_HTTP_USER_AGENT);
 
   @Nullable
   private static String getStringAttribute(Event event, String attributeKey) {
@@ -174,8 +181,8 @@ public class EnrichedSpanUtils {
   }
 
   public static boolean isExternalApi(Event e) {
-    return SpanAttributeUtils.getBooleanAttribute(e,
-        EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_IS_EXTERNAL_API));
+    return SpanAttributeUtils.getBooleanAttribute(
+        e, EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_IS_EXTERNAL_API));
   }
 
   public static String getSpanType(Event event) {
@@ -191,15 +198,10 @@ public class EnrichedSpanUtils {
     return getStringAttribute(event, API_BOUNDARY_TYPE_ATTR);
   }
 
-
-  /**
-   * Find the First Span (Entrance Span) of the Api Trace and return its id
-   */
+  /** Find the First Span (Entrance Span) of the Api Trace and return its id */
   @Nullable
   public static ByteBuffer getApiEntrySpanId(
-      Event event,
-      Map<ByteBuffer, Event> idToEvent,
-      Map<ByteBuffer, ByteBuffer> childToParent) {
+      Event event, Map<ByteBuffer, Event> idToEvent, Map<ByteBuffer, ByteBuffer> childToParent) {
     Event entryApiEvent = getApiEntrySpan(event, idToEvent, childToParent);
     if (entryApiEvent != null) {
       return entryApiEvent.getEventId();
@@ -207,15 +209,13 @@ public class EnrichedSpanUtils {
     return null;
   }
 
-  /**
-   * Helper method to find and entryApiEvent by iterate parent-child chain.
-   */
+  /** Helper method to find and entryApiEvent by iterate parent-child chain. */
   @Nullable
-  public static Event getApiEntrySpan(Event event,
-                                      Map<ByteBuffer, Event> idToEvent,
-                                      Map<ByteBuffer, ByteBuffer> childToParent) {
+  public static Event getApiEntrySpan(
+      Event event, Map<ByteBuffer, Event> idToEvent, Map<ByteBuffer, ByteBuffer> childToParent) {
     String apiBoundary = getApiBoundaryType(event);
-    if (EnrichedSpanConstants.getValue(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY).equals(apiBoundary)) {
+    if (EnrichedSpanConstants.getValue(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY)
+        .equals(apiBoundary)) {
       // if current span itself is an api entry span, return same.
       return event;
     } else {
@@ -223,7 +223,8 @@ public class EnrichedSpanUtils {
       Event parentEvent = idToEvent.get(childToParent.get(event.getEventId()));
       while (parentEvent != null) {
         apiBoundary = getApiBoundaryType(parentEvent);
-        if (EnrichedSpanConstants.getValue(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY).equals(apiBoundary)) {
+        if (EnrichedSpanConstants.getValue(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY)
+            .equals(apiBoundary)) {
           return parentEvent;
         }
         parentEvent = idToEvent.get(childToParent.get(parentEvent.getEventId()));
@@ -351,5 +352,12 @@ public class EnrichedSpanUtils {
     }
 
     return Optional.empty();
+  }
+
+  public static List<String> getSpaceIds(Event event) {
+    return Optional.ofNullable(
+            SpanAttributeUtils.getAttributeValue(event, EnrichedSpanConstants.SPACE_IDS_ATTRIBUTE))
+        .map(AttributeValue::getValueList)
+        .orElseGet(Collections::emptyList);
   }
 }

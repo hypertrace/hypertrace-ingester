@@ -24,5 +24,7 @@ protocol TraceViewProtocol {
     int num_services = 0;
 
     int num_spans = 0;
+
+    array<string> space_ids = [];
   }
 }

@@ -94,5 +94,7 @@ protocol SpanEventViewProtocol {
     union { null, string } api_discovery_state = null;
 
     int exception_count = 0;
+
+    array<string> space_ids = [];
   }
 }
