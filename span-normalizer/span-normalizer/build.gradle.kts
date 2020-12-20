@@ -43,7 +43,7 @@ dependencies {
   implementation("org.hypertrace.core.datamodel:data-model:0.1.12")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.18")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.18")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.13")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.15-SNAPSHOT")
 
 
   // Required for the GRPC clients.
@@ -56,7 +56,7 @@ dependencies {
   }
   implementation("com.typesafe:config:1.4.1")
   implementation("de.javakaffee:kryo-serializers:0.45")
-  implementation("io.confluent:kafka-avro-serializer:5.5.1")
+  implementation("io.confluent:kafka-avro-serializer:6.0.1")
   implementation("org.apache.commons:commons-lang3:3.11")
   implementation("org.apache.httpcomponents:httpclient:4.5.13")
 
@@ -67,5 +67,5 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
   testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.18")
   testImplementation("org.junit-pioneer:junit-pioneer:1.1.0")
-  testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
+  testImplementation("org.apache.kafka:kafka-streams-test-utils:6.0.1-ccs")
 }

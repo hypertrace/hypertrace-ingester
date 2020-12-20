@@ -39,7 +39,7 @@ dependencies {
     implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.18")
     implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.18")
 
-    implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.13")
+    implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.15-SNAPSHOT")
     implementation("com.typesafe:config:1.4.1")
     implementation("de.javakaffee:kryo-serializers:0.45")
     implementation("io.confluent:kafka-avro-serializer:5.5.0")
@@ -51,5 +51,5 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
     testImplementation("org.mockito:mockito-core:3.6.28")
     testImplementation("org.junit-pioneer:junit-pioneer:1.1.0")
-    testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
+    testImplementation("org.apache.kafka:kafka-streams-test-utils:6.0.1-ccs")
 }
