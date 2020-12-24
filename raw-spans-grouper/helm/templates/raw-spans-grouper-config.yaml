@@ -9,28 +9,28 @@ data:
     kafka.streams.config = {
       # Core configs
       application.id = raw-spans-to-structured-traces-grouping-job
-      bootstrap.servers = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.bootstrapServers }}"
-      schema.registry.url = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.schemaRegistryUrl }}"
+      bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.bootstrapServers }}"
+      schema.registry.url = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.schemaRegistryUrl }}"
       value.subject.name.strategy = "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy"
       # Core configs - For applications with state
-      num.stream.threads = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.numStreamThreads }}"
-      commit.interval.ms = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.commitIntervalMs }}"
+      num.stream.threads = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.numStreamThreads }}"
+      commit.interval.ms = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.commitIntervalMs }}"
       group.instance.id = ${?POD_NAME}
       cache.max.bytes.buffering = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.cacheMaxBytesBuffering }}"
       # Common client (prodcuer, consumer, admin) configs
-      receive.buffer.bytes = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.receiveBufferBytes }}"
-      send.buffer.bytes = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.sendBufferBytes }}"
+      receive.buffer.bytes = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.receiveBufferBytes }}"
+      send.buffer.bytes = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.sendBufferBytes }}"
       # Producer configs
-      producer.acks = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.producerAcks }}"
-      producer.batch.size = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.producerBatchSize }}"
-      producer.linger.ms = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.producerLingerMs }}"
-      producer.compression.type = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.producerCompressionType }}"
-      producer.max.request.size = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.producerMaxRequestSize }}"
-      producer.buffer.memory = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.producerBufferMemory }}"
+      producer.acks = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerAcks }}"
+      producer.batch.size = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerBatchSize }}"
+      producer.linger.ms = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerLingerMs }}"
+      producer.compression.type = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerCompressionType }}"
+      producer.max.request.size = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerMaxRequestSize }}"
+      producer.buffer.memory = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerBufferMemory }}"
       # Consumer configs
-      consumer.max.partition.fetch.bytes = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.consumerMaxPartitionFetchBytes }}"
-      consumer.max.poll.records = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.consumerMaxPollRecords }}"
-      consumer.session.timeout.ms = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.consumerSessionTimeoutMs }}"
+      consumer.max.partition.fetch.bytes = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.consumerMaxPartitionFetchBytes }}"
+      consumer.max.poll.records = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.consumerMaxPollRecords }}"
+      consumer.session.timeout.ms = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.consumerSessionTimeoutMs }}"
       # Changelog topic configs
       replication.factor = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.replicationFactor }}"
       topic.cleanup.policy = "delete,compact"
@@ -44,9 +44,9 @@ data:
       default.production.exception.handler = {{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.defaultProductionExceptionHandler }}
       ignore.production.exception.classes = {{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.ignoreProductionExceptionClasses }}
       # Others
-      metrics.recording.level = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.metricsRecordingLevel }}"
-      {{- if .Values.spanNormalizerConfig.extraKafkaStreamsConfig }}
-      {{- range $key,$value := .Values.spanNormalizerConfig.extraKafkaStreamsConfig }}
+      metrics.recording.level = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.metricsRecordingLevel }}"
+      {{- if .Values.rawSpansGrouperConfig.extraKafkaStreamsConfig }}
+      {{- range $key,$value := .Values.rawSpansGrouperConfig.extraKafkaStreamsConfig }}
       {{ $key }} = {{ $value }}
       {{- end }}
       {{- end }}
