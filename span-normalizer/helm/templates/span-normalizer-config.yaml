@@ -8,14 +8,34 @@ data:
   application.conf: |-
     kafka.streams.config {
       application.id = jaeger-spans-to-raw-spans-job
-      metrics.recording.level = "{{ .Values.spanNormalizerConfig.kafka.streams.config.metricsRecordingLevel }}"
-      num.stream.threads = "{{ .Values.spanNormalizerConfig.kafka.streams.config.numStreamThreads }}"
-      producer.max.request.size = 10485760
-      bootstrap.servers = "{{ .Values.spanNormalizerConfig.kafka.streams.config.bootstrapServers }}"
-      auto.offset.reset = "latest"
-      auto.commit.interval.ms = 5000
-      schema.registry.url = "{{ .Values.spanNormalizerConfig.kafka.streams.config.schemaRegistryUrl }}"
+      bootstrap.servers = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.bootstrapServers }}"
+      schema.registry.url = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.schemaRegistryUrl }}"
+      # kafka streams config
+      num.stream.threads = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.numStreamThreads }}"
+      commit.interval.ms = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.commitIntervalMs }}"
+      # Common client (prodcuer, consumer, admin) configs
+      receive.buffer.bytes = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.receiveBufferBytes }}"
+      send.buffer.bytes = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.sendBufferBytes }}"
+      # Producer configs
+      producer.acks = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.producerAcks }}"
+      producer.batch.size = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.producerBatchSize }}"
+      producer.linger.ms = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.producerLingerMs }}"
+      producer.compression.type = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.producerCompressionType }}"
+      producer.max.request.size = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.producerMaxRequestSize }}"
+      producer.buffer.memory = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.producerBufferMemory }}"
+      # Consumer configs
+      consumer.max.partition.fetch.bytes = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.consumerMaxPartitionFetchBytes }}"
+      consumer.max.poll.records = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.consumerMaxPollRecords }}"
+      consumer.session.timeout.ms = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.consumerSessionTimeoutMs }}"
+      # Others
+      metrics.recording.level = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.metricsRecordingLevel }}"
+      {{- if .Values.spanNormalizerConfig.extraKafkaStreamsConfig }}
+      {{- range $key,$value := .Values.spanNormalizerConfig.extraKafkaStreamsConfig }}
+      {{ $key }} = {{ $value }}
+      {{- end }}
+      {{- end }}
     }
+
     {{- if hasKey .Values.spanNormalizerConfig "processor" }}
     processor {
       {{- if hasKey .Values.spanNormalizerConfig.processor "tenantIdTagKey" }}

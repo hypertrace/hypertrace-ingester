@@ -28,7 +28,7 @@ nodeLabels: {}
 # This is defined in resources/configs/span-normalizer/application.conf as service.admin.port
 containerAdminPort: 8099
 
-javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0 -XX:MaxDirectMemorySize=128M"
 
 livenessProbe:
   initialDelaySeconds: 10
@@ -39,16 +39,13 @@ readinessProbe:
   periodSeconds: 5
 
 resources:
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   requests:
-    cpu: 0.2
-    memory: 1536Mi
+    cpu: 0.1
+    memory: 1024Mi
   limits:
-    cpu: 1.0
-    memory: 1536Mi
+    cpu: 0.2
+    memory: 1024Mi
+
 deploymentLabels:
   app: span-normalizer
 
@@ -74,13 +71,32 @@ serviceSelectorLabels:
 ###########
 spanNormalizerConfig:
   name: span-normalizer-config
-  kafka:
-    streams:
-      config:
-        metricsRecordingLevel: INFO
-        numStreamThreads: 2
-        bootstrapServers: "bootstrap:9092"
-        schemaRegistryUrl: "http://schema-registry-service:8081"
+  # Important kafka streams configurations which are used in config template goes here.
+  kafkaStreamsConfig:
+    bootstrapServers: "bootstrap:9092"
+    schemaRegistryUrl: "http://schema-registry-service:8081"
+    #  Core config
+    numStreamThreads: 2 # default = 1
+    commitIntervalMs: 30000 # default = 30000
+    # Common client (prodcuer, consumer, admin) configs
+    receiveBufferBytes: 4194304 # default = 32768 (kafka streams default)
+    sendBufferBytes: 4194304 # default = 131072 (kafka streams default)
+    # Producer configs
+    producerAcks: all # default: 1
+    producerBatchSize: 524288 # default = 16384
+    producerLingerMs: 1000 # default = 100 (kafka streams default)
+    producerCompressionType: "gzip" # default = none
+    producerMaxRequestSize: 1048576 # default = 1048576
+    producerBufferMemory: 134217728 # default = 33554432
+    # Consumer configs
+    consumerMaxPartitionFetchBytes: 8388608 # default = 1048576
+    consumerMaxPollRecords: 1000 # default = 1000 (kafka streams default)
+    consumerSessionTimeoutMs: 10000 # default = 10000
+    # Others
+    metricsRecordingLevel: INFO # default = INFO
+  # All other streams config goes here.
+  # Remove the flower braces and add key: value pair here.
+  extraKafkaStreamsConfig: {}
 
 logConfig:
   name: span-normalizer-log-appender-config
@@ -95,6 +111,7 @@ jmx:
   enabled: true
   port: 7022
   opts: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.port=7022 -Dcom.sun.management.jmxremote.rmi.port=7022 -Djava.rmi.server.hostname=127.0.0.1"
+
 prometheus:
   jmx:
     enabled: true
@@ -115,11 +132,12 @@ kafka-topic-creator:
   kafka:
     topics:
       - name: raw-spans-from-jaeger-spans
-        replicationFactor: 2
+        replicationFactor: 3
         partitions: 8
         configs:
-          - retention.bytes=4294967296
-          - retention.ms=259200000
+          - retention.bytes=8589934592 # default = -1
+          - retention.ms=86400000 # default = 604800000 (7 days)
+          - max.message.bytes=1048588 # default = 1048588
   zookeeper:
     address: zookeeper:2181
   imagePullSecrets: []

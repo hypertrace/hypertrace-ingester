@@ -20,4 +20,6 @@ test-output
 # Local config to handle using Java 8 vs java 11.
 .java-version
 *.tgz
-
+# helm
+charts/
+Chart.lock
