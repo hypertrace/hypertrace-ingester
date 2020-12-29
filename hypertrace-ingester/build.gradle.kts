@@ -29,7 +29,7 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.12")
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.14")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.21")
   implementation("com.typesafe:config:1.4.0")
 
   implementation(project(":span-normalizer:span-normalizer"))

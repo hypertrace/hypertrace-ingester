@@ -17,7 +17,7 @@ tasks.test {
 
 dependencies {
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
-  implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.1.19")
+  implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.1.21")
   constraints {
     implementation("com.google.guava:guava:30.0-jre") {
       because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415")
