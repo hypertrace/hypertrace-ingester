@@ -78,7 +78,7 @@ spanNormalizerConfig:
     #  Core config
     numStreamThreads: 2 # default = 1
     commitIntervalMs: 30000 # default = 30000
-    # Common client (prodcuer, consumer, admin) configs
+    # Common client (producer, consumer, admin) configs
     receiveBufferBytes: 4194304 # default = 32768 (kafka streams default)
     sendBufferBytes: 4194304 # default = 131072 (kafka streams default)
     # Producer configs
