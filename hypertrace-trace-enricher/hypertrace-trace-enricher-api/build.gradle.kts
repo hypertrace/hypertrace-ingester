@@ -14,10 +14,9 @@ dependencies {
   implementation("org.slf4j:slf4j-api:1.7.30")
   implementation("org.apache.commons:commons-lang3:3.11")
   constraints {
-    implementation("com.google.guava:guava:30.0-jre") {
-      because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415")
+    implementation("com.google.guava:guava:30.1-jre") {
+      because("Information Disclosure [Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415] in com.google.guava:guava@29.0-android")
     }
   }
-
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
 }

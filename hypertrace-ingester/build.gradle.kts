@@ -25,12 +25,13 @@ hypertraceDocker {
 }
 
 dependencies {
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.9")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.9")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.8")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.15")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.18")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.18")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.12")
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.21")
   implementation("com.typesafe:config:1.4.0")
+  implementation("org.apache.commons:commons-lang3:3.11")
 
   implementation(project(":span-normalizer:span-normalizer"))
   implementation(project(":raw-spans-grouper:raw-spans-grouper"))
@@ -40,7 +41,7 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
   testImplementation("org.mockito:mockito-core:3.6.0")
   testImplementation("org.junit-pioneer:junit-pioneer:1.0.0")
-  testImplementation("org.apache.kafka:kafka-streams-test-utils:5.5.1-ccs")
+  testImplementation("org.apache.kafka:kafka-streams-test-utils:6.0.1-ccs")
   testImplementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   testImplementation(project(":span-normalizer:span-normalizer-api"))
 }

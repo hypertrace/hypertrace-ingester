@@ -15,6 +15,11 @@ dependencies {
   implementation("org.hypertrace.core.grpcutils:grpc-client-rx-utils:0.3.2")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.3.2")
   implementation("io.reactivex.rxjava3:rxjava:3.0.7")
+  constraints {
+    implementation("com.google.guava:guava:30.1-jre") {
+      because("Information Disclosure [Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415] in com.google.guava:guava@29.0-android")
+    }
+  }
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
   testImplementation("org.mockito:mockito-core:3.6.28")

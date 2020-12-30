@@ -30,7 +30,7 @@ securityContext: {}
 # This is defined in resources/configs/common/application.conf as service.admin.port
 containerAdminPort: 8099
 
-javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=50.0 -XX:MaxDirectMemorySize=128M"
 
 livenessProbe:
   initialDelaySeconds: 10
@@ -47,10 +47,10 @@ resources:
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   requests:
     cpu: 0.2
-    memory: 1536Mi
+    memory: 2Gi
   limits:
     cpu: 1.0
-    memory: 1536Mi
+    memory: 2Gi
 
 deploymentLabels:
   app: raw-spans-grouper
@@ -105,25 +105,40 @@ prometheus:
 ###########
 rawSpansGrouperConfig:
   name: raw-spans-grouper-config
-  kafka:
-    streams:
-      config:
-        metricsRecordingLevel: INFO
-        numStreamThreads: 4
-        bootstrapServers: "bootstrap:9092"
-        schemaRegistryUrl: "http://schema-registry-service:8081"
-        cacheMaxBytesBuffering: 16777216 # 16MB
-        rocksdbBlockCacheSize: 33554432
-        rocksdbWriteBufferSize: 8388608
-        rocksdbMaxWriteBuffers: 2
-        rocksdbCacheIndexAndFilterBlocks: true
-        sessionTimeoutMs: 300000
-        producerMaxRequestSize: 10485760
-        defaultProductionExceptionHandler: "org.hypertrace.core.kafkastreams.framework.exceptionhandlers.IgnoreProductionExceptionHandler"
-        ignoreProductionExceptionClasses: "org.apache.kafka.common.errors.RecordTooLargeException"
-        numStandbyReplicas: 0 # Standby replicas are costly and needed only for applications which are high latency sensitive.
-                              # They will help incase task failovers. Required only on need basis.
-        replicationFactor: 3
+  kafkaStreamsConfig:
+    bootstrapServers: "bootstrap:9092"
+    schemaRegistryUrl: "http://schema-registry-service:8081"
+    #  Core configs
+    numStreamThreads: 4 # default = 1
+    commitIntervalMs: 30000 # default = 30000
+    cacheMaxBytesBuffering: 134217728 # default = 10485760 (10MB)
+    # Common client (prodcuer, consumer, admin) configs
+    receiveBufferBytes: 4194304 # default = 32768 (kafka streams default)
+    sendBufferBytes: 4194304 # default = 131072 (kafka streams default)
+    # Producer configs
+    producerAcks: all # default: 1
+    producerBatchSize: 524288 # default = 16384
+    producerLingerMs: 1000 # default = 100 (kafka streams default)
+    producerCompressionType: "gzip" # default = none
+    producerMaxRequestSize: 2097152 # default = 1048576
+    producerBufferMemory: 134217728 # default = 33554432
+    # Consumer configs
+    consumerMaxPartitionFetchBytes: 8388608 # default = 1048576
+    consumerMaxPollRecords: 1000 # default = 1000 (kafka streams default)
+    consumerSessionTimeoutMs: 300000 # default = 10000
+    # Changelog topic configs
+    replicationFactor: 3
+    # RocksDB state store configs
+    rocksdbBlockCacheSize: 33554432
+    rocksdbWriteBufferSize: 8388608
+    rocksdbMaxWriteBuffers: 2
+    rocksdbCacheIndexAndFilterBlocks: true
+    # Exception handler configs
+    defaultProductionExceptionHandler: "org.hypertrace.core.kafkastreams.framework.exceptionhandlers.IgnoreProductionExceptionHandler"
+    ignoreProductionExceptionClasses: "org.apache.kafka.common.errors.RecordTooLargeException"
+    # Others
+    metricsRecordingLevel: INFO # default = INFO
+
   span:
     groupby:
       internal: 30
@@ -147,8 +162,10 @@ kafka-topic-creator:
         replicationFactor: 3
         partitions: 8
         configs:
-          - retention.bytes=4294967296
-          - retention.ms=259200000
+          - retention.bytes=8589934592 # default = -1
+          - retention.ms=43200000 # default = 604800000 (7 days)
+          - max.message.bytes=10485760 # default = 1048588
+
   zookeeper:
     address: zookeeper:2181
   imagePullSecrets: []
