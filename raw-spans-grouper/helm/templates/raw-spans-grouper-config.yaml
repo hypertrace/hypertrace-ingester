@@ -6,44 +6,50 @@ metadata:
     release: {{ .Release.Name }}
 data:
   application.conf: |-
-
     kafka.streams.config = {
+      # Core configs
       application.id = raw-spans-to-structured-traces-grouping-job
-      group.instance.id = ${?POD_NAME}
-      state.dir = "/var/data/"
-      metrics.recording.level = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.metricsRecordingLevel }}"
-      num.stream.threads = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.numStreamThreads }}"
-      num.standby.replicas = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.numStandbyReplicas }}
-      replication.factor = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.replicationFactor }}
-      producer.max.request.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerMaxRequestSize }}
-      cache.max.bytes.buffering = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.cacheMaxBytesBuffering }}
-      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
-      session.timeout.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.sessionTimeoutMs }}
-      {{- end }}
-      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.commitIntervalMs }}
-      commit.interval.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.commitIntervalMs }}
-      {{- end }}
-      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.producerBatchSize }}
-      producer.batch.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerBatchSize }}
-      {{- end }}
-      {{- if .Values.rawSpansGrouperConfig.kafka.streams.config.producerLingerMs }}
-      producer.linger.ms = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.producerLingerMs }}
-      {{- end }}
-      default.production.exception.handler = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.defaultProductionExceptionHandler }}
-      ignore.production.exception.classes = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.ignoreProductionExceptionClasses }}
-
-      topic.cleanup.policy = "delete,compact"
-      bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.bootstrapServers }}"
-
-      schema.registry.url = "{{ .Values.rawSpansGrouperConfig.kafka.streams.config.schemaRegistryUrl }}"
-      specific.avro.reader = true
-
-      rocksdb.block.cache.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbBlockCacheSize }}
-      rocksdb.write.buffer.size = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbWriteBufferSize }}
-      rocksdb.max.write.buffers = {{ int .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbMaxWriteBuffers }}
-      rocksdb.cache.index.and.filter.blocks = {{ .Values.rawSpansGrouperConfig.kafka.streams.config.rocksdbCacheIndexAndFilterBlocks }}
-
+      bootstrap.servers = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.bootstrapServers }}"
+      schema.registry.url = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.schemaRegistryUrl }}"
       value.subject.name.strategy = "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy"
+      # Core configs - For applications with state
+      num.stream.threads = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.numStreamThreads }}"
+      commit.interval.ms = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.commitIntervalMs }}"
+      group.instance.id = ${?POD_NAME}
+      cache.max.bytes.buffering = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.cacheMaxBytesBuffering }}"
+      # Common client (prodcuer, consumer, admin) configs
+      receive.buffer.bytes = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.receiveBufferBytes }}"
+      send.buffer.bytes = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.sendBufferBytes }}"
+      # Producer configs
+      producer.acks = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerAcks }}"
+      producer.batch.size = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerBatchSize }}"
+      producer.linger.ms = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerLingerMs }}"
+      producer.compression.type = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerCompressionType }}"
+      producer.max.request.size = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerMaxRequestSize }}"
+      producer.buffer.memory = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.producerBufferMemory }}"
+      # Consumer configs
+      consumer.max.partition.fetch.bytes = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.consumerMaxPartitionFetchBytes }}"
+      consumer.max.poll.records = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.consumerMaxPollRecords }}"
+      consumer.session.timeout.ms = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.consumerSessionTimeoutMs }}"
+      # Changelog topic configs
+      replication.factor = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.replicationFactor }}"
+      topic.cleanup.policy = "delete,compact"
+      # RocksDB state store configs
+      state.dir = "/var/data/"
+      rocksdb.block.cache.size = {{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbBlockCacheSize }}
+      rocksdb.write.buffer.size = {{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbWriteBufferSize }}
+      rocksdb.max.write.buffers = {{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbMaxWriteBuffers }}
+      rocksdb.cache.index.and.filter.blocks = {{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbCacheIndexAndFilterBlocks }}
+      # Exception handler configs
+      default.production.exception.handler = {{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.defaultProductionExceptionHandler }}
+      ignore.production.exception.classes = {{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.ignoreProductionExceptionClasses }}
+      # Others
+      metrics.recording.level = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.metricsRecordingLevel }}"
+      {{- if .Values.rawSpansGrouperConfig.extraKafkaStreamsConfig }}
+      {{- range $key,$value := .Values.rawSpansGrouperConfig.extraKafkaStreamsConfig }}
+      {{ $key }} = {{ $value }}
+      {{- end }}
+      {{- end }}
     }
 
     span.groupby.session.window.interval = {{ .Values.rawSpansGrouperConfig.span.groupby.internal }}

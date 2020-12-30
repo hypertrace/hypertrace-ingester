@@ -82,6 +82,8 @@ services:
       default:
         aliases:
           - pinot-controller
+          - pinot-server
+          - pinot-broker
     cpu_shares: 2048
     depends_on:
       kafka-zookeeper:

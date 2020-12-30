@@ -8,10 +8,32 @@ data:
   application.conf: |-
     kafka.streams.config {
       application.id = structured-traces-enrichment-job
-      metrics.recording.level = "{{ .Values.traceEnricherConfig.kafka.streams.config.metricsRecordingLevel }}"
-      num.stream.threads = "{{ .Values.traceEnricherConfig.kafka.streams.config.numStreamThreads }}"
-      bootstrap.servers = "{{ .Values.traceEnricherConfig.kafka.streams.config.bootstrapServers }}"
-      schema.registry.url = "{{ .Values.traceEnricherConfig.kafka.streams.config.schemaRegistryUrl }}"
+      bootstrap.servers = "{{ .Values.traceEnricherConfig.kafkaStreamsConfig.bootstrapServers }}"
+      schema.registry.url = "{{ .Values.traceEnricherConfig.kafkaStreamsConfig.schemaRegistryUrl }}"
+      # kafka streams config
+      num.stream.threads = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.numStreamThreads }}"
+      commit.interval.ms = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.commitIntervalMs }}"
+      # Common client (prodcuer, consumer, admin) configs
+      receive.buffer.bytes = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.receiveBufferBytes }}"
+      send.buffer.bytes = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.sendBufferBytes }}"
+      # Producer configs
+      producer.acks = "{{ .Values.traceEnricherConfig.kafkaStreamsConfig.producerAcks }}"
+      producer.batch.size = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.producerBatchSize }}"
+      producer.linger.ms = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.producerLingerMs }}"
+      producer.compression.type = "{{ .Values.traceEnricherConfig.kafkaStreamsConfig.producerCompressionType }}"
+      producer.max.request.size = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.producerMaxRequestSize }}"
+      producer.buffer.memory = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.producerBufferMemory }}"
+      # Consumer configs
+      consumer.max.partition.fetch.bytes = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.consumerMaxPartitionFetchBytes }}"
+      consumer.max.poll.records = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.consumerMaxPollRecords }}"
+      consumer.session.timeout.ms = "{{ int .Values.traceEnricherConfig.kafkaStreamsConfig.consumerSessionTimeoutMs }}"
+      # Others
+      metrics.recording.level = "{{ .Values.traceEnricherConfig.kafkaStreamsConfig.metricsRecordingLevel }}"
+      {{- if .Values.traceEnricherConfig.extraKafkaStreamsConfig }}
+      {{- range $key,$value := .Values.traceEnricherConfig.extraKafkaStreamsConfig }}
+      {{ $key }} = {{ $value }}
+      {{- end }}
+      {{- end }}
     }
 
     enricher {
