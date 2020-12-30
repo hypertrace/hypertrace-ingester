@@ -31,6 +31,7 @@ dependencies {
   implementation("org.hypertrace.core.datamodel:data-model:0.1.12")
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.21")
   implementation("com.typesafe:config:1.4.0")
+  implementation("org.apache.commons:commons-lang3:3.11")
 
   implementation(project(":span-normalizer:span-normalizer"))
   implementation(project(":raw-spans-grouper:raw-spans-grouper"))
