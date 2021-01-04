@@ -2,11 +2,6 @@
 version: v1.14.1
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
-## from hypertrace-trace-enricher and span-normalizer
-  SNYK-JAVA-IOGRPC-571957:
-    - '*':
-        reason: No replacement available
-        expires: 2021-03-31T00:00:00.000Z
 ## from hypertrace-view-generator
   SNYK-JAVA-COMMONSHTTPCLIENT-30083:
     - '*':
