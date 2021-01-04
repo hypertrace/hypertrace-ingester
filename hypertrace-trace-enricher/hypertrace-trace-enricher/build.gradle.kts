@@ -40,7 +40,7 @@ dependencies {
   implementation("org.hypertrace.entity.service:entity-service-client:0.1.23")
 
   implementation("com.typesafe:config:1.4.1")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.16")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.17")
   constraints {
     implementation("com.google.guava:guava:30.1-jre") {
       because("Information Disclosure [Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415] in com.google.guava:guava@29.0-android")
