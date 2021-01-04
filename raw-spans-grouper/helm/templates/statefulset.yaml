@@ -36,10 +36,8 @@ spec:
       {{- end }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/raw-spans-grouper-config.yaml") . | sha256sum }}
-      {{- if .Values.prometheus.jmx.enabled }}
         prometheus.io/scrape: "true"
-        prometheus.io/port: {{ .Values.prometheus.jmx.port | quote }}
-      {{- end }}
+        prometheus.io/port: {{ .Values.containerAdminPort | quote }}
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -68,11 +66,6 @@ spec:
         - name: log4j-config
           configMap:
             name: {{ .Values.logConfig.name }}
-        {{- if .Values.prometheus.jmx.enabled }}
-        - name: jmx-config
-          configMap:
-            name: {{ .Values.name }}-jmx-config
-        {{- end }}
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -91,11 +84,6 @@ spec:
             - name: admin-port
               containerPort: {{ .Values.containerAdminPort }}
               protocol: TCP
-            {{- if .Values.jmx.enabled }}
-            - name: jmx
-              containerPort: {{ .Values.jmx.port }}
-              protocol: TCP
-            {{- end }}
           env:
             - name: SERVICE_NAME
               value: "{{ .Values.name }}"
@@ -111,7 +99,7 @@ spec:
               value: "/var/{{ .Values.name }}/log/log4j2.properties"
             {{- if .Values.javaOpts }}
             - name: JAVA_TOOL_OPTIONS
-              value: {{ .Values.javaOpts }} {{ if .Values.jmx.enabled }}{{ .Values.jmx.opts }}{{ end }}
+              value: {{ .Values.javaOpts | quote }}
             {{- end }}
           volumeMounts:
             - name: service-config
@@ -134,26 +122,3 @@ spec:
               port: {{ .Values.containerAdminPort }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-        {{- if .Values.prometheus.jmx.enabled }}
-        - name: prometheus-jmx-exporter
-          image: "{{ .Values.prometheus.jmx.image.repository }}:{{ .Values.prometheus.jmx.image.tag }}"
-          imagePullPolicy: "{{ .Values.prometheus.jmx.image.pullPolicy }}"
-          command:
-            - java
-            - -XX:+UnlockExperimentalVMOptions
-            - -XX:+UseCGroupMemoryLimitForHeap
-            - -XX:MaxRAMFraction=1
-            - -XshowSettings:vm
-            - -jar
-            - jmx_prometheus_httpserver.jar
-            - {{ .Values.prometheus.jmx.port | quote }}
-            - /etc/jmx-config/prometheus-raw-spans-grouper.yaml
-          ports:
-            - name: prometheus-jmx
-              containerPort: {{ .Values.prometheus.jmx.port }}
-          resources:
-            {{- toYaml .Values.prometheus.jmx.resources | nindent 12 }}
-          volumeMounts:
-            - name: jmx-config
-              mountPath: /etc/jmx-config
-        {{- end }}
