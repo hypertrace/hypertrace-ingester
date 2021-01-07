@@ -5,6 +5,8 @@ import static org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnriche
 import static org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants.STRUCTURED_TRACES_ENRICHMENT_JOB_CONFIG_KEY;
 
 import com.typesafe.config.Config;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,10 +17,13 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.entity.data.service.client.DefaultEdsClientProvider;
 import org.hypertrace.traceenricher.enrichment.EnrichmentProcessor;
 import org.hypertrace.traceenricher.enrichment.EnrichmentRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StructuredTraceEnrichProcessor implements
     Transformer<String, StructuredTrace, KeyValue<String, StructuredTrace>> {
 
+  private static final Logger logger = LoggerFactory.getLogger(StructuredTraceEnrichProcessor.class);
   private static EnrichmentProcessor processor = null;
 
   @Override
@@ -38,7 +43,11 @@ public class StructuredTraceEnrichProcessor implements
 
   @Override
   public KeyValue<String, StructuredTrace> transform(String key, StructuredTrace value) {
+    Instant start = Instant.now();
     processor.process(value);
+    Instant finish = Instant.now();
+    long timeElapsed = Duration.between(start, finish).toMillis();
+    logger.info("Enrichment process took time:{} for key:{}", timeElapsed, key);
     return new KeyValue<>(null, value);
   }
 

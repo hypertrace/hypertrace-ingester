@@ -2,6 +2,8 @@ package org.hypertrace.traceenricher.enrichment;
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -16,8 +18,13 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
+import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractTraceEnricher implements Enricher {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractTraceEnricher.class);
+
 
   @Override
   public void init(Config enricherConfig, EntityDataServiceClientProvider provider) {
@@ -52,7 +59,12 @@ public abstract class AbstractTraceEnricher implements Enricher {
    * Wrapper to the structure graph factory for testing
    */
   public StructuredTraceGraph buildGraph(StructuredTrace trace) {
-    return StructuredTraceGraph.createGraph(trace);
+    Instant start = Instant.now();
+    StructuredTraceGraph graph = StructuredTraceGraphBuilder.buildGraph(trace);
+    Instant finish = Instant.now();
+    long timeElapsed = Duration.between(start, finish).toMillis();
+    LOG.info("Time taken building structure trace time:{}", timeElapsed);
+    return graph;
   }
 
   @Nullable
