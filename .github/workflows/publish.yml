@@ -45,8 +45,12 @@ jobs:
           ORG_GRADLE_PROJECT_publishApiKey: ${{ secrets.BINTRAY_API_KEY }}
 
   publish-helm-charts:
-    needs: publish-artifacts
     runs-on: ubuntu-20.04
+    container: 
+      image: hypertrace/helm-gcs-packager:0.3.0
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
        # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
       - name: Checkout Repository
@@ -55,10 +59,10 @@ jobs:
           fetch-depth: 0
    
       - name: package and release charts
+        env:
+          HELM_GCS_CREDENTIALS: ${{ secrets.HELM_GCS_CREDENTIALS }}
+          HELM_GCS_REPOSITORY: ${{ secrets.HELM_GCS_REPOSITORY }}
         run: |
            ./.github/workflows/helm.sh package
            ./.github/workflows/helm.sh publish
-        env: 
-          HELM_GCS_CREDENTIALS: ${{ secrets.HELM_GCS_CREDENTIALS }}
-          HELM_GCS_REPOSITORY: ${{ secrets.HELM_GCS_REPOSITORY }}
 
