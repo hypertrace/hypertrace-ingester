@@ -53,7 +53,7 @@ jobs:
           fetch-depth: 0
 
       - name: validate charts
-        uses: hypertrace/github-actions/validate-charts@main
+        run: ./.github/workflows/helm.sh validate
 
   snyk-scan:
     runs-on: ubuntu-20.04

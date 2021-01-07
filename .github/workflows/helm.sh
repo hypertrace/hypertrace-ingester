@@ -22,7 +22,7 @@ case "$subcommand" in
     done
     ;;
   package)
-    CHART_VERSION=$(git describe --abbrev=0)
+    CHART_VERSION=$(echo ${GITHUB_REF} | cut -d/ -f 3)
     for SUB_PROJ_DIR in $SUB_PROJECTS_DIRS; do
       cd $SUB_PROJ_DIR
       echo "*******"
@@ -33,7 +33,7 @@ case "$subcommand" in
     done
     ;;
   publish)
-    CHART_VERSION=$(git describe --abbrev=0)
+    CHART_VERSION=$(echo ${GITHUB_REF} | cut -d/ -f 3)
     export GOOGLE_APPLICATION_CREDENTIALS=${HOME}/helm-gcs-key.json
     echo ${HELM_GCS_CREDENTIALS} > ${GOOGLE_APPLICATION_CREDENTIALS}
     helm repo add helm-gcs ${HELM_GCS_REPOSITORY}

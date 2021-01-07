@@ -55,8 +55,10 @@ jobs:
           fetch-depth: 0
    
       - name: package and release charts
-        uses: hypertrace/github-actions/helm-gcs-publish@main
-        with: 
-          helm-gcs-credentials: ${{ secrets.HELM_GCS_CREDENTIALS }}
-          helm-gcs-repository: ${{ secrets.HELM_GCS_REPOSITORY }}
+        run: |
+           ./.github/workflows/helm.sh package
+           ./.github/workflows/helm.sh publish
+        env: 
+          HELM_GCS_CREDENTIALS: ${{ secrets.HELM_GCS_CREDENTIALS }}
+          HELM_GCS_REPOSITORY: ${{ secrets.HELM_GCS_REPOSITORY }}
 
