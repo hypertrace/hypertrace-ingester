@@ -446,7 +446,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         .ifPresent(userAgent -> httpBuilder.getRequestBuilder().setUserAgent(userAgent));
   }
 
-  private static void setPath(
+  static void setPath(
       Http.Builder httpBuilder, Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
     if (httpBuilder.getRequestBuilder().hasPath()) {
       return;
@@ -469,7 +469,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
   }
 
-  private static Optional<String> getPathFromUrlObject(String urlPath) {
+  static Optional<String> getPathFromUrlObject(String urlPath) {
     try {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
@@ -552,8 +552,6 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
       if (url.toString().equals(urlStr)) {  // absolute URL
         requestBuilder.setScheme(url.getProtocol());
         requestBuilder.setHost(url.getAuthority()); // Use authority so in case the port is specified it adds it to this
-      } else {    // relative URL
-        requestBuilder.setUrl(null); //  unset the URL as we only allow absolute/full URLs in the url field
       }
       setPathFromUrl(requestBuilder, url);
       if (!requestBuilder.hasQueryString()) {
@@ -572,10 +570,21 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
   private void maybeSetHttpUrlForOtelFormat(
       Request.Builder requestBuilder,
       final Map<String, AttributeValue> attributeValueMap) {
-    if (requestBuilder.hasUrl()) {
+    if (requestBuilder.hasUrl() && isAbsoluteUrl(requestBuilder.getUrl())) {
       return;
     }
+    // if requestBuilder.getUrl() is not absolute try building the url from other attributes
     Optional<String> url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(attributeValueMap);
     url.ifPresent(requestBuilder::setUrl);
+  }
+
+  static boolean isAbsoluteUrl(String urlStr) {
+    try {
+      URL url = getNormalizedUrl(urlStr);
+      return url.toString().equals(urlStr);
+    } catch (MalformedURLException e) {
+      // ignore
+    }
+    return false;
   }
 }

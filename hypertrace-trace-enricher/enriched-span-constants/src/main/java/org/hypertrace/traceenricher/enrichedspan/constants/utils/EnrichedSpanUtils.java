@@ -2,6 +2,8 @@ package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -301,11 +303,23 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getFullHttpUrl(Event event) {
-    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-      return Optional.ofNullable(event.getHttp().getRequest().getUrl());
+    if (event.getHttp() != null
+        && event.getHttp().getRequest() != null
+        && event.getHttp().getRequest().getUrl() != null
+        && isAbsoluteUrl(event.getHttp().getRequest().getUrl())) {
+      return Optional.of(event.getHttp().getRequest().getUrl());
     }
-
     return Optional.empty();
+  }
+
+  private static boolean isAbsoluteUrl(String urlStr) {
+    try {
+      URL url = new URL(new URL("http://hypertrace.org"), urlStr);
+      return url.toString().equals(urlStr);
+    } catch (MalformedURLException e) {
+      // ignore
+    }
+    return false;
   }
 
   public static Optional<Integer> getRequestSize(Event event) {

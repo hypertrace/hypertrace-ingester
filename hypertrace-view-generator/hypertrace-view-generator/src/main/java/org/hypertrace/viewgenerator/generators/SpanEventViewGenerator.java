@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.hypertrace.core.datamodel.Entity;
@@ -292,10 +293,18 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        return EnrichedSpanUtils.getFullHttpUrl(event).orElse(event.getHttp().getRequest().getPath());
+        return getHttpUrl(event).orElse(null);
       case PROTOCOL_GRPC:
         return event.getEventName();
     }
     return null;
+  }
+
+  Optional<String> getHttpUrl(Event event) {
+    if (event.getHttp() != null
+        && event.getHttp().getRequest() != null) {
+      return Optional.of(event.getHttp().getRequest().getUrl());
+    }
+    return Optional.empty();
   }
 }

@@ -38,6 +38,8 @@ import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_S
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 import static org.hypertrace.core.spannormalizer.utils.TestUtils.createKeyValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.Maps;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
@@ -46,9 +48,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.apache.http.client.methods.RequestBuilder;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
+import org.hypertrace.core.datamodel.eventfields.http.Request;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.junit.jupiter.api.Assertions;
@@ -589,7 +595,7 @@ public class HttpFieldsGeneratorTest {
     assertEquals("/dispatch/test?a=b&k1=v1", httpBuilder.getRequestBuilder().getUrl());
 
     httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());  // this should unset the url field
-    Assertions.assertNull(httpBuilder.getRequestBuilder().getUrl());
+    Assertions.assertEquals("/dispatch/test?a=b&k1=v1", httpBuilder.getRequestBuilder().getUrl());
   }
 
   @Test
@@ -696,7 +702,7 @@ public class HttpFieldsGeneratorTest {
     eventBuilder.getHttpBuilder().getRequestBuilder().setUrl("/apis/5673/events?a1=v1&a2=v2");
     httpFieldsGenerator.populateOtherFields(eventBuilder, Maps.newHashMap());
 
-    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
+    Assertions.assertEquals("/apis/5673/events?a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
     assertEquals("/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
@@ -836,10 +842,9 @@ public class HttpFieldsGeneratorTest {
     eventBuilder = Event.newBuilder();
     eventBuilder.getHttpBuilder().getRequestBuilder().setUrl("/apis/5673/events?a1=v1&a2=v2");
     map = Maps.newHashMap();
-    map.put(OTelHttpSemanticConventions.HTTP_URL.getValue(), buildAttributeValue(url));
     httpFieldsGenerator.populateOtherFields(eventBuilder, map);
 
-    Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
+    Assertions.assertEquals("/apis/5673/events?a1=v1&a2=v2", eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getScheme());
     Assertions.assertNull(eventBuilder.getHttpBuilder().getRequestBuilder().getHost());
     assertEquals("/apis/5673/events", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
@@ -876,6 +881,41 @@ public class HttpFieldsGeneratorTest {
         "/some-test-path", eventBuilder.getHttpBuilder().getRequestBuilder().getPath());
     assertEquals(
         "some-query-str=v1", eventBuilder.getHttpBuilder().getRequestBuilder().getQueryString());
+
+    // originally set url is a relative url, should be overridden
+    eventBuilder = Event.newBuilder();
+    eventBuilder.getHttpBuilder().getRequestBuilder().setUrl("/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel");
+    map = Maps.newHashMap();
+    map.put(OTelHttpSemanticConventions.HTTP_SCHEME.getValue(), buildAttributeValue("http"));
+    map.put(OTelSpanSemanticConventions.SPAN_KIND.getValue(), buildAttributeValue("server"));
+    map.put(OTelHttpSemanticConventions.HTTP_NET_HOST_NAME.getValue(), buildAttributeValue("example.internal.com"));
+    map.put(OTelHttpSemanticConventions.HTTP_NET_HOST_PORT.getValue(), buildAttributeValue("50850"));
+    map.put(OTelHttpSemanticConventions.HTTP_TARGET.getValue(), buildAttributeValue("/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel"));
+    httpFieldsGenerator.populateOtherFields(eventBuilder, map);
+    assertEquals("http://example.internal.com:50850/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel", eventBuilder.getHttpBuilder().getRequestBuilder().getUrl());
+  }
+
+  @Test
+  public void testIsAbsoluteUrl() {
+    assertTrue(HttpFieldsGenerator.isAbsoluteUrl("http://example.com/abc/xyz"));
+    assertFalse(HttpFieldsGenerator.isAbsoluteUrl("/abc/xyz"));
+  }
+
+  @Test
+  public void testGetPathFromUrl() {
+    Optional<String> path = HttpFieldsGenerator.getPathFromUrlObject(
+        "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel");
+    assertEquals(path.get(), "/api/v1/gatekeeper/check");
+  }
+
+  @Test
+  public void testSetPath() {
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap = new HashMap<>();
+    tagsMap.put(OTelHttpSemanticConventions.HTTP_TARGET.getValue(),
+        createKeyValue("/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel"));
+    Http.Builder builder = Http.newBuilder().setRequestBuilder(Request.newBuilder());
+    HttpFieldsGenerator.setPath(builder, tagsMap);
+    assertEquals(builder.getRequestBuilder().getPath(), "/api/v1/gatekeeper/check");
   }
 
   private static AttributeValue buildAttributeValue(String value) {
