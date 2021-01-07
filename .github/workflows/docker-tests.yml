@@ -5,43 +5,61 @@ on:
       - main
     paths-ignore:
       - '**/*.md'
-      - '**/*.txt'
   pull_request:
+    branches:
+      - main
   # workflow_dispatch will let us manually trigger the workflow from GitHub actions dashboard.
   # See https://docs.github.com/en/free-pro-team@latest/actions/managing-workflow-runs/manually-running-a-workflow 
   workflow_dispatch:
 
 jobs:
   build-on-linux:
-       # Ubuntu-20.04 runner comes with docker 19.03 and OpenJDK 11 and we are using that here. 
+      # Ubuntu-20.04 runner comes with docker 19.03 and OpenJDK 11 and we are using that here. 
     runs-on: ubuntu-20.04
     name: Build and run Docker images
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
         with:
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
           fetch-depth: 0
           submodules: recursive
-      - name: Cache Gradle
-        uses: actions/cache@v1
+
+      - name: create checksum file
+        uses: hypertrace/github-actions/checksum@main
+
+      - name: Cache packages
+        id: cache-packages
+        uses: actions/cache@v2
         with:
           path: ~/.gradle
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle.kts') }}
-          restore-keys: ${{ runner.os }}-gradle
-      - name: Invoke Docker build with Gradle
-        uses: eskatos/gradle-command-action@v1
-        with:
-          arguments: dockerBuildImages
+          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
+          restore-keys: |
+            gradle-packages-${{ runner.os }}-${{ github.job }}
+            gradle-packages-${{ runner.os }}
+
+      - name: Set Production Environment
+        if: github.ref != 'refs/heads/main'
+        run: echo "::set-env name=GITHUB_REF::test"
+
+      - name: Build with Gradle
+        uses: hypertrace/github-actions/gradle@main
+        with: 
+          args: dockerBuildImages
+
       - name: Verify hypertrace image
-        working-directory: ./.github/workflows/hypertrace-ingester
+        working-directory: ./.github/workflows/hypertrace-service
         # Below tests a docker-compose.yml service named 'sut' with a valid HEALTHCHECK instruction:
         run: |
           docker-compose -f docker-compose.yml -f docker-compose-zipkin-example.yml up -d || { ../scripts/inspect.sh ; exit 1 ; }
+
       - name: Waits for some stability
-        working-directory: ./.github/workflows/hypertrace-ingester
+        working-directory: ./.github/workflows/hypertrace-service
         run: |
           sleep 60 # you can decrease it but never increase it
           docker-compose -f docker-compose.yml ps
+          
       - name: Runs tests
-        working-directory: ./.github/workflows/hypertrace-ingester/scripts
+        working-directory: ./.github/workflows/hypertrace-service/scripts
         run: ./tests.sh
