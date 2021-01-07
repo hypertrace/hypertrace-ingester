@@ -1,6 +1,11 @@
 name: e2e test
 on:
-  pull_request:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**/*.md'
+  pull_request_target:
     branches:
       - main
   # workflow_dispatch will let us manually trigger the workflow from GitHub actions dashboard.
