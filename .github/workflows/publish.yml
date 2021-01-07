@@ -1,0 +1,62 @@
+name: Publish artifacts
+on:
+# Will only run when release is published. 
+  release:
+    types: 
+      - created
+  workflow_dispatch:
+
+jobs:
+  publish-artifacts:
+    runs-on: ubuntu-20.04
+    steps:
+      # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
+      - name: Check out code
+        uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0
+
+      - name: create checksum file
+        uses: hypertrace/github-actions/checksum@main
+
+      - name: Cache packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle
+          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
+          restore-keys: |
+            gradle-packages-${{ runner.os }}-${{ github.job }}
+            gradle-packages-${{ runner.os }}
+            
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_READ_USER }}
+          password: ${{ secrets.DOCKERHUB_READ_TOKEN }}
+
+      - name: publish docker image
+        uses: hypertrace/github-actions/gradle@main
+        with: 
+          args: publish dockerPushImages
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_PUBLISH_USER }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_PUBLISH_TOKEN }}
+          ORG_GRADLE_PROJECT_publishUser: ${{ secrets.BINTRAY_USER }}
+          ORG_GRADLE_PROJECT_publishApiKey: ${{ secrets.BINTRAY_API_KEY }}
+
+  publish-helm-charts:
+    needs: publish-artifacts
+    runs-on: ubuntu-20.04
+    steps:
+       # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
+      - name: Checkout Repository
+        uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0
+   
+      - name: package and release charts
+        uses: hypertrace/github-actions/helm-gcs-publish@main
+        with: 
+          helm-gcs-credentials: ${{ secrets.HELM_GCS_CREDENTIALS }}
+          helm-gcs-repository: ${{ secrets.HELM_GCS_REPOSITORY }}
+
