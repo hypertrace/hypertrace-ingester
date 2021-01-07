@@ -1,10 +1,5 @@
 name: e2e test
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '**/*.md'
   pull_request:
     branches:
       - main
@@ -38,10 +33,6 @@ jobs:
           restore-keys: |
             gradle-packages-${{ runner.os }}-${{ github.job }}
             gradle-packages-${{ runner.os }}
-
-      - name: Set Production Environment
-        if: github.ref != 'refs/heads/main'
-        run: echo "::set-env name=GITHUB_REF::test"
 
       - name: Build with Gradle
         uses: hypertrace/github-actions/gradle@main
