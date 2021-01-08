@@ -66,5 +66,3 @@ jobs:
         run: |
            ./.github/workflows/helm.sh package
            ./.github/workflows/helm.sh publish
-        shell: sh
-
