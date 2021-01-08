@@ -1,11 +1,6 @@
 #!/bin/sh
 set -eu
 
-script=$0
-
-SCRIPT_DIR="$( cd "$( dirname "$script" )" >/dev/null 2>&1 && pwd )"
-ROOT_PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
-cd $ROOT_PROJECT_DIR
 SUB_PROJECTS_DIRS=$(find . -iname "helm" | sed 's/\(.*\)\/.*/\1/')
 
 subcommand=$1; shift
@@ -18,7 +13,7 @@ case "$subcommand" in
       helm dependency update ./helm/
       helm lint --strict ./helm/
       helm template ./helm/
-      cd $ROOT_PROJECT_DIR
+      cd ..
     done
     ;;
   package)
@@ -29,7 +24,7 @@ case "$subcommand" in
       echo "building charts for:$(pwd)"
       helm dependency update ./helm/
       helm package --version ${CHART_VERSION} --app-version ${CHART_VERSION} ./helm/
-      cd $ROOT_PROJECT_DIR
+      cd ..
     done
     ;;
   publish)
@@ -43,7 +38,7 @@ case "$subcommand" in
       echo "publishing charts for:$(pwd)"
       CHART_NAME=$(awk '/^name:/ {print $2}' ./helm/Chart.yaml)
       helm gcs push ${CHART_NAME}-${CHART_VERSION}.tgz helm-gcs --public --retry
-      cd $ROOT_PROJECT_DIR
+      cd ..
     done
     ;;
   *)
