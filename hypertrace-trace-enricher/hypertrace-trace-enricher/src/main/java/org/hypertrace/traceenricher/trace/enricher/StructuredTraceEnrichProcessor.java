@@ -44,10 +44,12 @@ public class StructuredTraceEnrichProcessor implements
   @Override
   public KeyValue<String, StructuredTrace> transform(String key, StructuredTrace value) {
     Instant start = Instant.now();
+    logger.info("Structure Trace:{}", value.toString());
     processor.process(value);
     Instant finish = Instant.now();
     long timeElapsed = Duration.between(start, finish).toMillis();
     logger.info("Enrichment process took time:{} for key:{}", timeElapsed, key);
+    logger.info("Enriched Structure Trace:{}", value.toString());
     return new KeyValue<>(null, value);
   }
 
