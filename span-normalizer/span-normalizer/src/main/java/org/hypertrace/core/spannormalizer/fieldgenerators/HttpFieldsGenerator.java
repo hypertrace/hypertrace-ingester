@@ -567,6 +567,10 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     return new URL(new URL(RELATIVE_URL_CONTEXT), url);
   }
 
+  /**
+   * If the requestBuilder already has a url, which is absolute do nothing
+   * if not, try building a url based on otel attributes
+   */
   private void maybeSetHttpUrlForOtelFormat(
       Request.Builder requestBuilder,
       final Map<String, AttributeValue> attributeValueMap) {

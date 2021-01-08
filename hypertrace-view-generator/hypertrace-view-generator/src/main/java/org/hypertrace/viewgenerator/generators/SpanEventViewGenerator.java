@@ -13,6 +13,8 @@ import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.eventfields.http.Http;
+import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
@@ -293,18 +295,12 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        return getHttpUrl(event).orElse(null);
+        return Optional.ofNullable(event.getHttp())
+            .map(Http::getRequest)
+            .map(Request::getUrl).orElse(null);
       case PROTOCOL_GRPC:
         return event.getEventName();
     }
     return null;
-  }
-
-  Optional<String> getHttpUrl(Event event) {
-    if (event.getHttp() != null
-        && event.getHttp().getRequest() != null) {
-      return Optional.of(event.getHttp().getRequest().getUrl());
-    }
-    return Optional.empty();
   }
 }
