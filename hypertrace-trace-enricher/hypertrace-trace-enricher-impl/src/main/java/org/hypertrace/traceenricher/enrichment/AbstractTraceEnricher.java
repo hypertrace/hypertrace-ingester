@@ -17,12 +17,8 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
 import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class AbstractTraceEnricher implements Enricher {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractTraceEnricher.class);
-
 
   @Override
   public void init(Config enricherConfig, EntityDataServiceClientProvider provider) {
