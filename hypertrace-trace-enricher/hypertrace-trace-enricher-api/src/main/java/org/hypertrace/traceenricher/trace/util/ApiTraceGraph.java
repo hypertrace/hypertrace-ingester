@@ -2,8 +2,6 @@ package org.hypertrace.traceenricher.trace.util;
 
 import com.google.common.collect.Sets;
 import java.nio.ByteBuffer;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -180,11 +178,7 @@ public class ApiTraceGraph {
   }
 
   public ApiTraceGraph build() {
-    Instant start = Instant.now();
     StructuredTraceGraph graph = StructuredTraceGraphBuilder.buildGraph(trace);
-    Instant finish = Instant.now();
-    long timeElapsed = Duration.between(start, finish).toMillis();
-    LOGGER.info("Time taken building structure trace time:{}", timeElapsed);
 
     List<ApiNode<Event>> apiNodes = buildApiNodes(graph);
     this.setNodeList(apiNodes);

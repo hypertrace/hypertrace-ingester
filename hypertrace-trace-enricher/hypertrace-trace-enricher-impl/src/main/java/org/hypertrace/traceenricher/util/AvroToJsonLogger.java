@@ -29,12 +29,12 @@ public class AvroToJsonLogger {
   }
 
   public static <T extends SpecificRecordBase> void log(Logger logger, String fmt, T object) {
-    //if (logger.isDebugEnabled()) {
+    if (logger.isDebugEnabled()) {
       try {
-        logger.info(fmt, convertToJsonString(object, object.getSchema()));
+        logger.debug(fmt, convertToJsonString(object, object.getSchema()));
       } catch (IOException e) {
         logger.warn("An exception occured while converting avro to JSON string", e);
       }
-    //}
+    }
   }
 }

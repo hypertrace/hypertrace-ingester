@@ -2,8 +2,6 @@ package org.hypertrace.traceenricher.enrichment;
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -59,12 +57,7 @@ public abstract class AbstractTraceEnricher implements Enricher {
    * Wrapper to the structure graph factory for testing
    */
   public StructuredTraceGraph buildGraph(StructuredTrace trace) {
-    Instant start = Instant.now();
-    StructuredTraceGraph graph = StructuredTraceGraphBuilder.buildGraph(trace);
-    Instant finish = Instant.now();
-    long timeElapsed = Duration.between(start, finish).toMillis();
-    LOG.info("Time taken building structure trace time:{}", timeElapsed);
-    return graph;
+    return StructuredTraceGraphBuilder.buildGraph(trace);
   }
 
   @Nullable
