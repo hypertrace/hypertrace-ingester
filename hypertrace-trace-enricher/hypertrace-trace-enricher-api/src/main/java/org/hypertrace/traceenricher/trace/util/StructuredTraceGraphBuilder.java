@@ -14,7 +14,7 @@ public class StructuredTraceGraphBuilder {
   public static StructuredTraceGraph buildGraph(StructuredTrace trace) {
     // trace doesn't exist
     if (cachedTrace.get() == null) {
-      LOG.info("Building structured trace graph. Reason: no cached trace");
+      LOG.debug("Building structured trace graph. Reason: no cached trace");
       StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
       cachedTrace.set(StructuredTrace.newBuilder(trace).build());
       cachedGraph.set(graph);
@@ -24,7 +24,7 @@ public class StructuredTraceGraphBuilder {
     // is processed and cached are same trace?
     if (!cachedTrace.get().getCustomerId().equals(trace.getCustomerId()) ||
         !cachedTrace.get().getTraceId().equals(trace.getTraceId())) {
-      LOG.info("Building structured trace graph. Reason: cached trace and current trace doesn't not match");
+      LOG.debug("Building structured trace graph. Reason: cached trace and current trace doesn't not match");
       StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
       cachedTrace.set(StructuredTrace.newBuilder(trace).build());
       cachedGraph.set(graph);
@@ -37,7 +37,7 @@ public class StructuredTraceGraphBuilder {
         cachedTrace.get().getEntityEdgeList().size() != trace.getEntityEdgeList().size() ||
         cachedTrace.get().getEntityEventEdgeList().size() != trace.getEntityEventEdgeList().size() ||
         cachedTrace.get().getEventEdgeList().size() != trace.getEventEdgeList().size()) {
-      LOG.info("Building structured trace graph. Reason: cached trace and current trace have different size");
+      LOG.debug("Building structured trace graph. Reason: cached trace and current trace have different size");
       StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
       cachedTrace.set(StructuredTrace.newBuilder(trace).build());
       cachedGraph.set(graph);
