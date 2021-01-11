@@ -32,7 +32,7 @@ public class ApiTraceGraph {
   private static final String UNKNOWN_SPAN_KIND_VALUE =
       EnrichedSpanConstants.getValue(AttributeValue.ATTRIBUTE_VALUE_UNKNOWN);
 
-  private final List<ApiNode<Event>> nodeList;
+  private List<ApiNode<Event>> nodeList;
   private final List<ApiNodeEventEdge> apiNodeEventEdgeList;
   private final StructuredTrace trace;
   private final Map<String, Integer> eventIdToIndexInTrace;
