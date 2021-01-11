@@ -10,8 +10,6 @@ import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
-import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.data.service.client.EdsClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
@@ -69,7 +67,7 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       // 2. Enrich the exit span with the parent span's service entity.
       //    This will enable creating an edge between the exit span and the backend
 
-      StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
+      StructuredTraceGraph graph = buildGraph(trace);
       if (EnrichedSpanUtils.isExitSpan(event) &&
           SpanAttributeUtils.isLeafSpan(graph, event)) {
         String parentSvcName = findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService(event,
