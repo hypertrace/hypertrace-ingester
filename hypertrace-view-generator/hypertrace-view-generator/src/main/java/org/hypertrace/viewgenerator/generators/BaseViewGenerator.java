@@ -23,6 +23,7 @@ import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.viewgenerator.JavaCodeBasedViewGenerator;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
+import org.hypertrace.viewgenerator.generators.ViewGeneratorState.TraceState;
 
 /**
  * Pre-processing for View Generators, for data that are mostly needed by the the view generators
@@ -66,43 +67,17 @@ public abstract class BaseViewGenerator<OUT extends GenericRecord>
   public List<OUT> process(StructuredTrace trace) {
     DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(trace, viewGeneratorArrivalTimer,
         VIEW_GENERATION_ARRIVAL_TIME);
-    Map<String, Entity> entityMap = new HashMap<>();
-    Map<ByteBuffer, Event> eventMap = new HashMap<>();
-    Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds = new HashMap<>();
-    Map<ByteBuffer, ByteBuffer> childToParentEventIds = new HashMap<>();
-
-    for (Entity entity : trace.getEntityList()) {
-      entityMap.put(entity.getEntityId(), entity);
-    }
-    for (Event event : trace.getEventList()) {
-      eventMap.put(event.getEventId(), event);
-    }
-
-    for (Event event : trace.getEventList()) {
-      ByteBuffer childEventId = event.getEventId();
-      List<EventRef> eventRefs = eventMap.get(childEventId).getEventRefList();
-      if (eventRefs != null) {
-        eventRefs.stream()
-            .filter(eventRef -> EventRefType.CHILD_OF == eventRef.getRefType())
-            .forEach(
-                eventRef -> {
-                  ByteBuffer parentEventId = eventRef.getEventId();
-                  if (!parentToChildrenEventIds.containsKey(parentEventId)) {
-                    parentToChildrenEventIds.put(parentEventId, new ArrayList<>());
-                  }
-                  parentToChildrenEventIds.get(parentEventId).add(childEventId);
-                  childToParentEventIds.put(childEventId, parentEventId);
-                });
-      }
-      // expected only 1 childOf relationship
-    }
+    TraceState traceState = ViewGeneratorState.getTraceState(trace);
+    Map<String, Entity> entityMap = traceState.entityMap;
+    Map<ByteBuffer, Event> eventMap = traceState.eventMap;
+    Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds = traceState.parentToChildrenEventIds;
+    Map<ByteBuffer, ByteBuffer> childToParentEventIds = traceState.childToParentEventIds;
 
     return generateView(
         trace,
-        Collections.unmodifiableMap(entityMap),
-        Collections.unmodifiableMap(eventMap),
-        Collections.unmodifiableMap(parentToChildrenEventIds),
-        Collections.unmodifiableMap(childToParentEventIds));
+        entityMap, eventMap,
+        parentToChildrenEventIds,
+        childToParentEventIds);
   }
 
   abstract List<OUT> generateView(

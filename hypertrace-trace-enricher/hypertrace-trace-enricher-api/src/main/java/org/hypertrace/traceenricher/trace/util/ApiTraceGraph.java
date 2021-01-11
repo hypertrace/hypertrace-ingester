@@ -32,16 +32,20 @@ public class ApiTraceGraph {
   private static final String UNKNOWN_SPAN_KIND_VALUE =
       EnrichedSpanConstants.getValue(AttributeValue.ATTRIBUTE_VALUE_UNKNOWN);
 
-  private List<ApiNode<Event>> nodeList;
-  private List<ApiNodeEventEdge> apiNodeEventEdgeList;
-  private StructuredTrace trace;
-  private Map<String, Integer> eventIdToIndexInTrace;
+  private final List<ApiNode<Event>> nodeList;
+  private final List<ApiNodeEventEdge> apiNodeEventEdgeList;
+  private final StructuredTrace trace;
+  private final Map<String, Integer> eventIdToIndexInTrace;
 
   public ApiTraceGraph(StructuredTrace trace) {
     this.trace = trace;
     nodeList = new ArrayList<>();
     apiNodeEventEdgeList = new ArrayList<>();
     eventIdToIndexInTrace = buildEventIdToIndexInTrace(trace);
+  }
+
+  public StructuredTrace getTrace() {
+    return trace;
   }
 
   public List<ApiNode<Event>> getNodeList() {
