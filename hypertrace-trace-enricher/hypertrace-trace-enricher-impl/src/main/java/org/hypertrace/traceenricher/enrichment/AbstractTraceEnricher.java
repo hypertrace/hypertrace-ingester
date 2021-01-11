@@ -16,6 +16,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
+import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
 
 public abstract class AbstractTraceEnricher implements Enricher {
 
@@ -52,7 +53,7 @@ public abstract class AbstractTraceEnricher implements Enricher {
    * Wrapper to the structure graph factory for testing
    */
   public StructuredTraceGraph buildGraph(StructuredTrace trace) {
-    return StructuredTraceGraph.createGraph(trace);
+    return StructuredTraceGraphBuilder.buildGraph(trace);
   }
 
   @Nullable

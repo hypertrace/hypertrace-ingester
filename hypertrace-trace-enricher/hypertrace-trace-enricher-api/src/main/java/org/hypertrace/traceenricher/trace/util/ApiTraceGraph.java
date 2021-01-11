@@ -178,7 +178,7 @@ public class ApiTraceGraph {
   }
 
   public ApiTraceGraph build() {
-    StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
+    StructuredTraceGraph graph = StructuredTraceGraphBuilder.buildGraph(trace);
 
     List<ApiNode<Event>> apiNodes = buildApiNodes(graph);
     this.setNodeList(apiNodes);
