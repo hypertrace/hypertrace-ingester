@@ -64,4 +64,29 @@ public class SpanEventViewGeneratorTest {
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_GRPC)
     );
   }
+
+  @Test
+  public void testGetRequestUrl_fullUrlIsAbsent() {
+    Event event = mock(Event.class);
+    when(event.getHttp()).thenReturn(Http.newBuilder()
+        .setRequest(Request.newBuilder()
+            .setPath("/api/v1/gatekeeper/check")
+            .build()
+        ).build()
+    );
+    Assertions.assertEquals(
+        "/api/v1/gatekeeper/check",
+        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
+  }
+
+  @Test
+  public void testGetRequestUrl_urlAndPathIsAbsent() {
+    Event event = mock(Event.class);
+    when(event.getHttp()).thenReturn(Http.newBuilder()
+        .setRequest(Request.newBuilder()
+            .build()
+        ).build()
+    );
+    Assertions.assertNull(spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
+  }
 }
