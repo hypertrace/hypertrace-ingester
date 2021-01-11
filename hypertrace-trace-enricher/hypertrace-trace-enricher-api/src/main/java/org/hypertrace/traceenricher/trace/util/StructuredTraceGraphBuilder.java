@@ -12,6 +12,7 @@ public class StructuredTraceGraphBuilder {
   private static ThreadLocal<StructuredTrace> cachedTrace = new ThreadLocal<>();
 
   public static StructuredTraceGraph buildGraph(StructuredTrace trace) {
+    // trace doesn't exist
     if (cachedTrace.get() == null) {
       LOG.info("Building structured trace graph. Reason: no cached trace");
       StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
@@ -20,6 +21,7 @@ public class StructuredTraceGraphBuilder {
       return graph;
     }
 
+    // is processed and cached are same trace?
     if (!cachedTrace.get().getCustomerId().equals(trace.getCustomerId()) ||
         !cachedTrace.get().getTraceId().equals(trace.getTraceId())) {
       LOG.info("Building structured trace graph. Reason: cached trace and current trace doesn't not match");
