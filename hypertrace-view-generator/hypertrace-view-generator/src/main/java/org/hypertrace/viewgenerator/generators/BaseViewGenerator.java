@@ -68,10 +68,10 @@ public abstract class BaseViewGenerator<OUT extends GenericRecord>
     DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(trace, viewGeneratorArrivalTimer,
         VIEW_GENERATION_ARRIVAL_TIME);
     TraceState traceState = ViewGeneratorState.getTraceState(trace);
-    Map<String, Entity> entityMap = Collections.unmodifiableMap(traceState.entityMap);
-    Map<ByteBuffer, Event> eventMap = Collections.unmodifiableMap(traceState.eventMap);
-    Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds = Collections.unmodifiableMap(traceState.parentToChildrenEventIds);
-    Map<ByteBuffer, ByteBuffer> childToParentEventIds = Collections.unmodifiableMap(traceState.childToParentEventIds);
+    Map<String, Entity> entityMap = Collections.unmodifiableMap(traceState.getEntityMap());
+    Map<ByteBuffer, Event> eventMap = Collections.unmodifiableMap(traceState.getEventMap());
+    Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds = Collections.unmodifiableMap(traceState.getParentToChildrenEventIds());
+    Map<ByteBuffer, ByteBuffer> childToParentEventIds = Collections.unmodifiableMap(traceState.getChildToParentEventIds());
 
     return generateView(
         trace,

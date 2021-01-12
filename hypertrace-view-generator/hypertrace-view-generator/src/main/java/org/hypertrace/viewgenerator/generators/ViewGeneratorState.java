@@ -27,7 +27,7 @@ public class ViewGeneratorState {
 
   public static TraceState getTraceState(StructuredTrace trace) {
     if (traceStateThreadLocal.get() == null
-        || isDifferentTrace(traceStateThreadLocal.get().trace, trace)) {
+        || isDifferentTrace(traceStateThreadLocal.get().getTrace(), trace)) {
       traceStateThreadLocal.set(new TraceState(trace));
     }
     return traceStateThreadLocal.get();
@@ -40,10 +40,10 @@ public class ViewGeneratorState {
 
   public static class TraceState {
     private final StructuredTrace trace;
-    final Map<String, Entity> entityMap = new HashMap<>();
-    final Map<ByteBuffer, Event> eventMap = new HashMap<>();
-    final Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds = new HashMap<>();
-    final Map<ByteBuffer, ByteBuffer> childToParentEventIds = new HashMap<>();
+    private final Map<String, Entity> entityMap = new HashMap<>();
+    private final Map<ByteBuffer, Event> eventMap = new HashMap<>();
+    private final Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds = new HashMap<>();
+    private final Map<ByteBuffer, ByteBuffer> childToParentEventIds = new HashMap<>();
 
     public TraceState(StructuredTrace trace) {
       this.trace = trace;
@@ -63,15 +63,33 @@ public class ViewGeneratorState {
               .forEach(
                   eventRef -> {
                     ByteBuffer parentEventId = eventRef.getEventId();
-                    if (!parentToChildrenEventIds.containsKey(parentEventId)) {
-                      parentToChildrenEventIds.put(parentEventId, new ArrayList<>());
-                    }
-                    parentToChildrenEventIds.get(parentEventId).add(childEventId);
+                    parentToChildrenEventIds.computeIfAbsent(
+                        parentEventId, v -> new ArrayList<>()).add(childEventId);
                     childToParentEventIds.put(childEventId, parentEventId);
                   });
         }
         // expected only 1 childOf relationship
       }
+    }
+
+    public StructuredTrace getTrace() {
+      return trace;
+    }
+
+    public Map<String, Entity> getEntityMap() {
+      return entityMap;
+    }
+
+    public Map<ByteBuffer, Event> getEventMap() {
+      return eventMap;
+    }
+
+    public Map<ByteBuffer, List<ByteBuffer>> getParentToChildrenEventIds() {
+      return parentToChildrenEventIds;
+    }
+
+    public Map<ByteBuffer, ByteBuffer> getChildToParentEventIds() {
+      return childToParentEventIds;
     }
   }
 }
