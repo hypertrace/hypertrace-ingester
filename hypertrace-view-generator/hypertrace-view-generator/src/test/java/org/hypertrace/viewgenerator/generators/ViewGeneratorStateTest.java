@@ -44,6 +44,9 @@ public class ViewGeneratorStateTest {
     assertNotNull(traceState);
     assertEquals(trace, traceState.getTrace());
 
+    TraceState sameTraceState = ViewGeneratorState.getTraceState(trace);
+    assertEquals(sameTraceState, traceState);
+
     StructuredTrace modifiedTrace = getTestTrace(customerId, traceId1);
     modifiedTrace.setEntityList(Arrays.asList(
         Entity.newBuilder()
@@ -53,13 +56,13 @@ public class ViewGeneratorStateTest {
             .setEntityType("service")
             .build()));
 
-    // same instance should still be returned
-    TraceState sameTraceState = ViewGeneratorState.getTraceState(modifiedTrace);
-    assertEquals(traceState, sameTraceState);
+    // same trace id but different object should result in rebuilding of trace state
+    TraceState differentTraceState1 = ViewGeneratorState.getTraceState(modifiedTrace);
+    assertNotEquals(traceState, differentTraceState1);
 
     StructuredTrace differentTrace = getTestTrace(customerId, traceId2);
-    TraceState differentTraceState = ViewGeneratorState.getTraceState(differentTrace);
-    assertEquals(differentTrace, differentTraceState.getTrace());
+    TraceState differentTraceState2 = ViewGeneratorState.getTraceState(differentTrace);
+    assertEquals(differentTrace, differentTraceState2.getTrace());
   }
 
   @Test
@@ -68,6 +71,9 @@ public class ViewGeneratorStateTest {
     ApiTraceGraph apiTraceGraph = ViewGeneratorState.getApiTraceGraph(trace);
     assertNotNull(apiTraceGraph);
 
+    ApiTraceGraph sameApiTraceGraph = ViewGeneratorState.getApiTraceGraph(trace);
+    assertEquals(sameApiTraceGraph, apiTraceGraph);
+
     StructuredTrace modifiedTrace = getTestTrace(customerId, traceId1);
     modifiedTrace.setEntityList(Arrays.asList(
         Entity.newBuilder()
@@ -77,13 +83,14 @@ public class ViewGeneratorStateTest {
             .setEntityType("service")
             .build()));
 
-    // same instance should still be returned
-    ApiTraceGraph sameApiTraceGraph = ViewGeneratorState.getApiTraceGraph(modifiedTrace);
-    assertEquals(apiTraceGraph, sameApiTraceGraph);
+
+    // same trace id but different object should result in rebuilding of trace state
+    ApiTraceGraph differentApiTraceGraph1 = ViewGeneratorState.getApiTraceGraph(modifiedTrace);
+    assertNotEquals(apiTraceGraph, differentApiTraceGraph1);
 
     StructuredTrace differentTrace = getTestTrace(customerId, traceId2);
-    ApiTraceGraph differentApiTraceGraph = ViewGeneratorState.getApiTraceGraph(differentTrace);
-    assertNotEquals(apiTraceGraph, differentApiTraceGraph);
+    ApiTraceGraph differentApiTraceGraph2 = ViewGeneratorState.getApiTraceGraph(differentTrace);
+    assertNotEquals(apiTraceGraph, differentApiTraceGraph2);
   }
 
   private StructuredTrace getTestTrace(String customerId, ByteBuffer traceId) {
