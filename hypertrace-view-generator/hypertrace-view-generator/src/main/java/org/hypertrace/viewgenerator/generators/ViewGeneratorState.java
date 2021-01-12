@@ -34,8 +34,7 @@ public class ViewGeneratorState {
   }
 
   private static boolean isDifferentTrace(StructuredTrace cached, StructuredTrace trace) {
-    return !cached.getCustomerId().equals(trace.getCustomerId())
-        || !cached.getTraceId().equals(trace.getTraceId());
+    return cached != trace;
   }
 
   public static class TraceState {
