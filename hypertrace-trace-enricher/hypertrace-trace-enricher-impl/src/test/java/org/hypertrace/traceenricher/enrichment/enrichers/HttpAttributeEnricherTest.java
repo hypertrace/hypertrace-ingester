@@ -1,12 +1,5 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -16,6 +9,12 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.when;
 
 public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
@@ -35,7 +34,8 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     when(e.getHttp())
         .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
             Request.newBuilder()
-                .setUrl("http://hypertrace.org/users?action=checkout&age=23&location=").build())
+                .setPath("/users")
+                .setQueryString("action=checkout&age=23&location=").build())
             .build());
 
     enricher.enrichEvent(mockTrace, e);
@@ -63,7 +63,8 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     when(e.getHttp())
         .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
             Request.newBuilder()
-                .setUrl("http://hypertrace.org/users?action=checkout&action=a&age=2&age=3&location=")
+                .setPath("/users")
+                .setQueryString("action=checkout&action=a&age=2&age=3&location=")
                 .build())
             .build());
     enricher.enrichEvent(mockTrace, e);
@@ -95,7 +96,8 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     when(e.getHttp())
         .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
             Request.newBuilder()
-                .setUrl("http://hypertrace.org/users?action=checkout&cat=1dog=2&action=a&age=2&age=3;&location=&area&&")
+                .setPath("/users")
+                .setQueryString("action=checkout&cat=1dog=2&action=a&age=2&age=3;&location=&area&&")
                 .build())
             .build());
     enricher.enrichEvent(mockTrace, e);
@@ -134,7 +136,8 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     when(e.getHttp())
         .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
             Request.newBuilder()
-                .setUrl("http://hypertrace.org/users?action=checkout;age=2")
+                .setPath("/users")
+                .setQueryString("action=checkout;age=2")
                 .build())
             .build());
     enricher.enrichEvent(mockTrace, e);
@@ -151,7 +154,8 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     when(e.getHttp())
         .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
             Request.newBuilder()
-                .setUrl("http://hypertrace.org/users?action=check%20out&location=hello%3Dworld")
+                .setPath("/users")
+                .setQueryString("action=check%20out&location=hello%3Dworld")
                 .build())
             .build());
     enricher.enrichEvent(mockTrace, e);
@@ -174,7 +178,8 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     when(e.getHttp())
         .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
             Request.newBuilder()
-                .setUrl("http://hypertrace.org/users?action=check%!mout&loca%.Ption=hello%3Dworld")
+                .setPath("/users")
+                .setQueryString("action=check%!mout&loca%.Ption=hello%3Dworld")
                 .build())
             .build());
     enricher.enrichEvent(mockTrace, e);
@@ -198,7 +203,8 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     when(e.getHttp())
         .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
             Request.newBuilder()
-                .setUrl("http://hypertrace.org/users?action[]=checkout&age=2&[]=test")
+                .setPath("/users")
+                .setQueryString("action[]=checkout&age=2&[]=test")
                 .build())
             .build());
     enricher.enrichEvent(mockTrace, e);
@@ -224,7 +230,8 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     when(e.getHttp())
         .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
             Request.newBuilder()
-                .setUrl("http://hypertrace.org/users?action%5B%5D%3Dcheckout%26age%3D2%26%5B%5D%3Dtest")
+                .setPath("/users")
+                .setQueryString("action%5B%5D%3Dcheckout%26age%3D2%26%5B%5D%3Dtest")
                 .build())
             .build());
     enricher.enrichEvent(mockTrace, e);
@@ -239,24 +246,11 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
-  public void test_withAnInvalidUrl_shouldSkipEnrichment() {
-    Event e = createMockEvent();
-    Map<String, AttributeValue> avm = e.getAttributes().getAttributeMap();
-    avm.put(
-        Constants.getRawSpanConstant(HTTP_REQUEST_URL),
-        AttributeValue.newBuilder().setValue("/users").build()
-    );
-
-    enricher.enrichEvent(mockTrace, e);
-    assertEquals(0, e.getEnrichedAttributes().getAttributeMap().size());
-  }
-
-  @Test
   public void test_withNoQueryParams_shouldOnlyEnrichPath() {
     Event e = createMockEvent();
     when(e.getHttp())
         .thenReturn(org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder().setRequest(
-            Request.newBuilder().setUrl("http://hypertrace.org/users").build()).build());
+            Request.newBuilder().setPath("/users").build()).build());
 
     enricher.enrichEvent(mockTrace, e);
 

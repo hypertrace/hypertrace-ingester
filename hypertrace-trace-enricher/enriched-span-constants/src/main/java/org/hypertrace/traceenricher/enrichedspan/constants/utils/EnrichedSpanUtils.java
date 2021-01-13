@@ -308,6 +308,22 @@ public class EnrichedSpanUtils {
     return Optional.empty();
   }
 
+  public static Optional<String> getPath(Event event) {
+    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
+      return Optional.ofNullable(event.getHttp().getRequest().getPath());
+    }
+
+    return Optional.empty();
+  }
+
+  public static Optional<String> getQueryString(Event event) {
+    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
+      return Optional.ofNullable(event.getHttp().getRequest().getQueryString());
+    }
+
+    return Optional.empty();
+  }
+
   public static Optional<Integer> getRequestSize(Event event) {
     Protocol protocol = EnrichedSpanUtils.getProtocol(event);
     if (protocol == null) {
