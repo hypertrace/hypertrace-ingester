@@ -1,17 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toList;
-
 import com.google.common.base.Splitter;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.AttributeValue;
@@ -25,64 +14,66 @@ import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+
 public class HttpAttributeEnricher extends AbstractTraceEnricher {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpAttributeEnricher.class);
 
-  private final static String HTTP_REQUEST_PATH_ATTR =
+  private static final String HTTP_REQUEST_PATH_ATTR =
       EnrichedSpanConstants.getValue(Http.HTTP_REQUEST_PATH);
-  private final static String HTTP_REQUEST_QUERY_PARAM_ATTR =
+  private static final String HTTP_REQUEST_QUERY_PARAM_ATTR =
       EnrichedSpanConstants.getValue(Http.HTTP_REQUEST_QUERY_PARAM);
-  private final static String PARAM_ATTR_FORMAT = "%s.%s";
-  private final static String QUERY_PARAM_DELIMITER = "&";
-  private final static String QUERY_PARAM_KEY_VALUE_DELIMITER = "=";
+  private static final String PARAM_ATTR_FORMAT = "%s.%s";
+  private static final String QUERY_PARAM_DELIMITER = "&";
+  private static final String QUERY_PARAM_KEY_VALUE_DELIMITER = "=";
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
-    String url = EnrichedSpanUtils.getFullHttpUrl(event).orElse(null);
-    if (url != null) {
-      URL fullUrl = null;
-      try {
-        fullUrl = new URL(url);
-      } catch (MalformedURLException e) {
-        LOGGER.warn("The url {} is not a valid format url", url);
-      }
 
-      if (fullUrl != null) {
-        String path = fullUrl.getPath();
-        addEnrichedAttribute(event, HTTP_REQUEST_PATH_ATTR, AttributeValueCreator.create(path));
+    EnrichedSpanUtils.getPath(event)
+        .ifPresent(
+            path ->
+                addEnrichedAttribute(
+                    event, HTTP_REQUEST_PATH_ATTR, AttributeValueCreator.create(path)));
 
-        Map<String, List<String>> paramNameToValues = getQueryParamsFromUrl(fullUrl);
-        for (Map.Entry<String, List<String>> queryParamEntry : paramNameToValues.entrySet()) {
-          if (queryParamEntry.getValue().isEmpty()) {
-            continue;
-          }
-          String queryParamAttr = queryParamEntry.getKey();
-          //Getting a single value out of all values(for backward compatibility)
-          String queryParamStringValue = queryParamEntry.getValue().get(0);
-          AttributeValue attributeValue = AttributeValue.newBuilder()
-              .setValue(queryParamStringValue)
-              .setValueList(queryParamEntry.getValue())
-              .build();
-          addEnrichedAttribute(event, queryParamAttr, attributeValue);
+    EnrichedSpanUtils.getQueryString(event).ifPresent(queryString -> {
+      Map<String, List<String>> paramNameToValues = getQueryParamsFromQueryString(queryString);
+      for (Map.Entry<String, List<String>> queryParamEntry : paramNameToValues.entrySet()) {
+        if (queryParamEntry.getValue().isEmpty()) {
+          continue;
         }
+        String queryParamAttr = queryParamEntry.getKey();
+        // Getting a single value out of all values(for backward compatibility)
+        String queryParamStringValue = queryParamEntry.getValue().get(0);
+        AttributeValue attributeValue =
+                AttributeValue.newBuilder()
+                        .setValue(queryParamStringValue)
+                        .setValueList(queryParamEntry.getValue())
+                        .build();
+        addEnrichedAttribute(event, queryParamAttr, attributeValue);
       }
-    }
+    });
   }
 
-  private Map<String, List<String>> getQueryParamsFromUrl(URL url) {
-    if (StringUtils.isEmpty(url.getQuery())) {
-      return Collections.emptyMap();
-    }
-    return Splitter.on(QUERY_PARAM_DELIMITER)
-        .splitToList(url.getQuery())
-        .stream()
-        //split only on first occurrence of delimiter. eg: cat=1dog=2 should be split to cat -> 1dog=2
+  private Map<String, List<String>> getQueryParamsFromQueryString(String queryString) {
+    return Splitter.on(QUERY_PARAM_DELIMITER).splitToList(queryString).stream()
+        // split only on first occurrence of delimiter. eg: cat=1dog=2 should be split to cat ->
+        // 1dog=2
         .map(kv -> kv.split(QUERY_PARAM_KEY_VALUE_DELIMITER, 2))
         .filter(kv -> kv.length == 2 && !StringUtils.isEmpty(kv[0]) && !StringUtils.isEmpty(kv[1]))
-        .map(kv -> Pair.of(
-            String.format(PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, decodeParamKey(kv[0])),
-            decode(kv[1])
-        ))
+        .map(
+            kv ->
+                Pair.of(
+                    String.format(
+                        PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, decodeParamKey(kv[0])),
+                    decode(kv[1])))
         .collect(groupingBy(Pair::getKey, mapping(Pair::getValue, toList())));
   }
 
