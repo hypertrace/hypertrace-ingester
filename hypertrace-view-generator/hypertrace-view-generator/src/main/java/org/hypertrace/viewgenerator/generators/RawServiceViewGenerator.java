@@ -29,8 +29,8 @@ public class RawServiceViewGenerator extends BaseViewGenerator<RawServiceView> {
     List<RawServiceView> list = new ArrayList<>();
 
     // Construct ApiTraceGraph and look at all the head spans within each ApiNode
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(structuredTrace);
-    apiTraceGraph = apiTraceGraph.build();
+    ApiTraceGraph apiTraceGraph = ViewGeneratorState.getApiTraceGraph(structuredTrace);
+
     List<ApiNode<Event>> apiNodes = apiTraceGraph.getNodeList();
     for (ApiNode<Event> apiNode : apiNodes) {
       Event event = apiNode.getHeadEvent();

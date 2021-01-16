@@ -446,7 +446,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         .ifPresent(userAgent -> httpBuilder.getRequestBuilder().setUserAgent(userAgent));
   }
 
-  private static void setPath(
+  static void setPath(
       Http.Builder httpBuilder, Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
     if (httpBuilder.getRequestBuilder().hasPath()) {
       return;
@@ -469,7 +469,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
   }
 
-  private static Optional<String> getPathFromUrlObject(String urlPath) {
+  static Optional<String> getPathFromUrlObject(String urlPath) {
     try {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
@@ -569,13 +569,27 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     return new URL(new URL(RELATIVE_URL_CONTEXT), url);
   }
 
+  /**
+   * If the requestBuilder already has absolute url, do nothing
+   * if not, try building url based on otel attributes and overwrite
+   */
   private void maybeSetHttpUrlForOtelFormat(
       Request.Builder requestBuilder,
       final Map<String, AttributeValue> attributeValueMap) {
-    if (requestBuilder.hasUrl()) {
+    if (requestBuilder.hasUrl() && isAbsoluteUrl(requestBuilder.getUrl())) {
       return;
     }
     Optional<String> url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(attributeValueMap);
     url.ifPresent(requestBuilder::setUrl);
+  }
+
+  static boolean isAbsoluteUrl(String urlStr) {
+    try {
+      URL url = getNormalizedUrl(urlStr);
+      return url.toString().equals(urlStr);
+    } catch (MalformedURLException e) {
+      // ignore
+    }
+    return false;
   }
 }
