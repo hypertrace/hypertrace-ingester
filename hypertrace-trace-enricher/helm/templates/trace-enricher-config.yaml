@@ -68,4 +68,15 @@ data:
           port = 9012
         }
       }
+
+      SpaceEnricher {
+        config.service.config = {
+          host = config-service
+          port = 50101
+        }
+        attribute.service.config = {
+          host = attribute-service
+          port = 9012
+        }
+      }
     }
