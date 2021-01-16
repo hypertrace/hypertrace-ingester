@@ -4,8 +4,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.Weigher;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.grpc.Channel;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.hypertrace.core.grpcutils.client.GrpcClientRequestContextUtil;
@@ -14,8 +14,11 @@ import org.hypertrace.spaces.config.service.v1.GetRulesRequest;
 import org.hypertrace.spaces.config.service.v1.SpaceConfigRule;
 import org.hypertrace.spaces.config.service.v1.SpacesConfigServiceGrpc;
 import org.hypertrace.spaces.config.service.v1.SpacesConfigServiceGrpc.SpacesConfigServiceBlockingStub;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class SpaceRulesCachingClient {
+  private static final Logger LOG = LoggerFactory.getLogger(SpaceRulesCachingClient.class);
 
   private final SpacesConfigServiceBlockingStub configServiceStub;
 
@@ -35,12 +38,10 @@ class SpaceRulesCachingClient {
 
   public List<SpaceConfigRule> getRulesForTenant(String tenantId) {
     try {
-      return cache.getUnchecked(tenantId);
-    } catch (UncheckedExecutionException exception) {
-      if (exception.getCause() instanceof RuntimeException) {
-        throw (RuntimeException) exception.getCause();
-      }
-      throw exception;
+      return cache.get(tenantId);
+    } catch (Exception exception) {
+      LOG.error("Error fetching space config rules", exception);
+      return Collections.emptyList();
     }
   }
 

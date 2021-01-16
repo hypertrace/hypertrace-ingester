@@ -1,7 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.space;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -10,7 +9,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
-import io.grpc.StatusRuntimeException;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -74,11 +72,9 @@ class SpaceRulesCachingClientTest {
   }
 
   @Test
-  void retriesOnError() throws Throwable {
+  void retriesOnError() {
     mockRuleResponse(Maybe.error(new IllegalArgumentException()));
-    assertThrows(
-        StatusRuntimeException.class,
-        () -> this.spaceRulesCachingClient.getRulesForTenant("tenant-id"));
+    assertEquals(List.of(), this.spaceRulesCachingClient.getRulesForTenant("tenant-id"));
 
     List<SpaceConfigRule> rules = List.of(SpaceConfigRule.getDefaultInstance());
     mockRuleResponse(Maybe.just(rules));
