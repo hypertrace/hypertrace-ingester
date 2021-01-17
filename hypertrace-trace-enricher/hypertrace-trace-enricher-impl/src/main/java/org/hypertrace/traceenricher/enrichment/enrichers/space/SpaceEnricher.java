@@ -19,6 +19,11 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 
 public class SpaceEnricher extends AbstractTraceEnricher {
+  private static final String CONFIG_SERVICE_HOST_KEY = "config.service.config.host";
+  private static final String CONFIG_SERVICE_PORT_KEY = "config.service.config.port";
+  private static final String ATTRIBUTE_SERVICE_HOST_KEY = "attribute.service.config.host";
+  private static final String ATTRIBUTE_SERVICE_PORT_KEY = "attribute.service.config.port";
+
   private SpaceRulesCachingClient ruleClient;
   private SpaceRuleEvaluator ruleEvaluator;
 
@@ -28,15 +33,15 @@ public class SpaceEnricher extends AbstractTraceEnricher {
 
     Channel configChannel =
         ManagedChannelBuilder.forAddress(
-                enricherConfig.getString("config.service.config.host"),
-                enricherConfig.getInt("config.service.config.port"))
+                enricherConfig.getString(CONFIG_SERVICE_HOST_KEY),
+                enricherConfig.getInt(CONFIG_SERVICE_PORT_KEY))
             .usePlaintext()
             .build();
 
     Channel attributeChannel =
         ManagedChannelBuilder.forAddress(
-                enricherConfig.getString("attribute.service.config.host"),
-                enricherConfig.getInt("attribute.service.config.port"))
+                enricherConfig.getString(ATTRIBUTE_SERVICE_HOST_KEY),
+                enricherConfig.getInt(ATTRIBUTE_SERVICE_PORT_KEY))
             .usePlaintext()
             .build();
 
