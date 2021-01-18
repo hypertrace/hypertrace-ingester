@@ -16,6 +16,34 @@ containerAdminPort: 8099
 
 nodeLabels: {}
 
+viewCreatorJobConfig:
+  name: view-creator-job-config
+  data:
+    application.conf: |-
+      pinot.retentionTimeValue = 5
+      pinot.retentionTimeUnit = DAYS
+
+allViews:
+  creator:
+    jobName: all-views-creation-job
+    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+    resources:
+      limits:
+        cpu: 1.0
+        memory: 384Mi
+      requests:
+        cpu: 0.1
+        memory: 384Mi
+
+logConfig:
+  name: view-generator-log-config
+  monitorInterval: 30
+  rootLogger:
+    level: INFO
+  appender:
+    rolling:
+      enabled: false
+
 groups:
   - name: group1
     generator:
