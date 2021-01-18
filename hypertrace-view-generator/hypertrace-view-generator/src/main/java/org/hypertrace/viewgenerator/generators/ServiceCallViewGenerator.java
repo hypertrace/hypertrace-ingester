@@ -63,7 +63,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       Map<ByteBuffer, Event> eventMap,
       Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds,
       Map<ByteBuffer, ByteBuffer> childToParentEventIds) {
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(structuredTrace).build();
+    ApiTraceGraph apiTraceGraph = ViewGeneratorState.getApiTraceGraph(structuredTrace);
 
     // Scenario #1: Go through the apiNode edges and create a record for each edge. Should be easy
     // to get to the events
