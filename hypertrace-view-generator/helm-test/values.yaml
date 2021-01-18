@@ -5,10 +5,10 @@ images:
   pullPolicy: IfNotPresent
   creator:
     repository: hypertrace/hypertrace-view-creator
-    tagOverride: ""
+    tagOverride: "0.4.2"
   generator:
     repository: hypertrace/hypertrace-view-generator
-    tagOverride: ""
+    tagOverride: "0.4.2"
 
 imagePullSecrets: []
 

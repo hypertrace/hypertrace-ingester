@@ -21,7 +21,6 @@ type: application
 # A new chart will be created for each new version of the service.
 version: 0.1.0
 
-appVersion: 1.0.0
 dependencies:
   - name: kafka-topic-creator
     repository: "https://storage.googleapis.com/hypertrace-helm-charts"

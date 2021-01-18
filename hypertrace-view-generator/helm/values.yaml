@@ -227,7 +227,7 @@ spanEventView:
         cpu: 0.2
         memory: 512Mi
 
-mergeAllViews: false
+mergeAllViews: true
 
 allViews:
   creator:
