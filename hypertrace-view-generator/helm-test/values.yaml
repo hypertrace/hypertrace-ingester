@@ -1,0 +1,86 @@
+replicaCount: 1
+maxUnavailable: 0
+
+images:
+  pullPolicy: IfNotPresent
+  creator:
+    repository: hypertrace/hypertrace-view-creator
+    tagOverride: ""
+  generator:
+    repository: hypertrace/hypertrace-view-generator
+    tagOverride: ""
+
+imagePullSecrets: []
+
+containerAdminPort: 8099
+
+nodeLabels: {}
+
+groups:
+  - name: group1
+    generator:
+      deploymentName: all-views-generator-group1
+      podLabels:
+        app: all-views-generator-group1
+      deploymentSelectorMatchLabels:
+        app: all-views-generator-group1
+      javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      resources:
+        limits:
+          cpu: 1.0
+          memory: 512Mi
+        requests:
+          cpu: 0.2
+          memory: 320Mi
+    viewGeneratorServiceConfig:
+      name: group1-config
+      viewgenerators:
+        - "view-gen-backend-entity"
+        - "view-gen-raw-service"
+      kafka:
+        streams:
+          config:
+            metricsRecordingLevel: INFO
+            numStreamThreads: 2
+            bootstrapServers: "bootstrap:9092"
+            schemaRegistryUrl: "http://schema-registry-service:8081"
+  - name: group2
+    generator:
+      deploymentName: all-views-generator-group2
+      podLabels:
+        app: all-views-generator-group2
+      deploymentSelectorMatchLabels:
+        app: all-views-generator-group2
+      javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      resources:
+        limits:
+          cpu: 1.0
+          memory: 512Mi
+        requests:
+          cpu: 0.2
+          memory: 320Mi
+    viewGeneratorServiceConfig:
+      name: group2-config
+      viewgenerators:
+        - "view-gen-raw-traces"
+        - "view-gen-service-call"
+        - "view-gen-span-event"
+      kafka:
+        streams:
+          config:
+            metricsRecordingLevel: INFO
+            numStreamThreads: 2
+            bootstrapServers: "bootstrap:9092"
+            schemaRegistryUrl: "http://schema-registry-service:8081"

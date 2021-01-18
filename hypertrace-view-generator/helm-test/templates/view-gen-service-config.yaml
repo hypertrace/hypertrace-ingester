@@ -1,0 +1,21 @@
+{{ $global := . }}
+{{- range $i, $group := .Values.groups }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $group.viewGeneratorServiceConfig.name }}
+  labels:
+    release: {{ $global.Release.Name }}
+data:
+  application.conf: |-
+    view.generators = [{{ include "helm-toolkit.utils.joinListWithComma" $group.viewGeneratorServiceConfig.viewgenerators }}]
+    kafka.streams.config {
+      application.id = "{{ $group.name }}"
+      metrics.recording.level = "{{ $group.viewGeneratorServiceConfig.kafka.streams.config.metricsRecordingLevel }}"
+      num.stream.threads = "{{ $group.viewGeneratorServiceConfig.kafka.streams.config.numStreamThreads }}"
+      bootstrap.servers = "{{ $group.viewGeneratorServiceConfig.kafka.streams.config.bootstrapServers }}"
+      schema.registry.url = "{{ $group.viewGeneratorServiceConfig.kafka.streams.config.schemaRegistryUrl }}"
+    }
+
+{{- end }}
