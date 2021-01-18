@@ -45,13 +45,13 @@ logConfig:
       enabled: false
 
 groups:
-  - name: group1
+  - name: multi-view-generator-group1
     generator:
-      deploymentName: all-views-generator-group1
+      deploymentName: multi-view-generator-group1
       podLabels:
-        app: all-views-generator-group1
+        app: multi-view-generator-group1
       deploymentSelectorMatchLabels:
-        app: all-views-generator-group1
+        app: multi-view-generator-group1
       javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
       livenessProbe:
         initialDelaySeconds: 30
@@ -67,7 +67,7 @@ groups:
           cpu: 0.2
           memory: 320Mi
     viewGeneratorServiceConfig:
-      name: group1-config
+      name: multi-view-generator-group1-config
       viewgenerators:
         - "view-gen-backend-entity"
         - "view-gen-raw-service"
@@ -78,13 +78,13 @@ groups:
             numStreamThreads: 2
             bootstrapServers: "bootstrap:9092"
             schemaRegistryUrl: "http://schema-registry-service:8081"
-  - name: group2
+  - name: multi-view-generator-group2
     generator:
-      deploymentName: all-views-generator-group2
+      deploymentName: multi-view-generator-group2
       podLabels:
-        app: all-views-generator-group2
+        app: multi-view-generator-group2
       deploymentSelectorMatchLabels:
-        app: all-views-generator-group2
+        app: multi-view-generator-group2
       javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
       livenessProbe:
         initialDelaySeconds: 30
@@ -100,7 +100,7 @@ groups:
           cpu: 0.2
           memory: 320Mi
     viewGeneratorServiceConfig:
-      name: group2-config
+      name: multi-view-generator-group2-config
       viewgenerators:
         - "view-gen-raw-traces"
         - "view-gen-service-call"
@@ -112,3 +112,43 @@ groups:
             numStreamThreads: 2
             bootstrapServers: "bootstrap:9092"
             schemaRegistryUrl: "http://schema-registry-service:8081"
+
+kafka-topic-creator:
+  jobName: view-generation-kafka-topics-creator
+  helmHook: pre-install,pre-upgrade
+  kafka:
+    topics:
+      - name: backend-entity-view-events
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+      - name: raw-trace-view-events
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+      - name: raw-service-view-events
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+      - name: service-call-view-events
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+      - name: span-event-view
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+  zookeeper:
+    address: zookeeper:2181
+  imagePullSecrets: []
+  podAnnotations: {}
