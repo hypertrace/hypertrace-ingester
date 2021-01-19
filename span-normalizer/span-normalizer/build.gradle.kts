@@ -47,7 +47,7 @@ dependencies {
 
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.33.0")
+  runtimeOnly("io.grpc:grpc-netty:1.35.0")
   runtimeOnly("io.netty:netty-codec-http2:4.1.53.Final") {
     because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
   }

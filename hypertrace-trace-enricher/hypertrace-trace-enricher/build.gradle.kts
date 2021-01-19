@@ -48,7 +48,7 @@ dependencies {
   }
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty-shaded:1.33.1")
+  runtimeOnly("io.grpc:grpc-netty-shaded:1.35.0")
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
