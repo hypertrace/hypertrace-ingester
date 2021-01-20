@@ -8,8 +8,12 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_G
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_TRIGGER_STORE;
 
 import com.typesafe.config.Config;
+import io.micrometer.core.instrument.Counter;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.Cancellable;
@@ -23,6 +27,7 @@ import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.RawSpans;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +51,9 @@ public class RawSpansGroupingTransformer implements
   private To outputTopic;
   private double dataflowSamplingPercent = -1;
 
+  private static final String RAW_SPANS_COUNTER = "hypertrace.raw.spans.received";
+  private Counter rawSpansCounter;
+
   @Override
   public void init(ProcessorContext context) {
     this.context = context;
@@ -65,10 +73,12 @@ public class RawSpansGroupingTransformer implements
 
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
     restorePunctuators();
+    rawSpansCounter =  PlatformMetricsRegistry.registerCounter(RAW_SPANS_COUNTER, Map.of());
   }
 
   @Override
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
+    rawSpansCounter.increment();
     ValueAndTimestamp<RawSpans> rawSpans = inflightTraceStore.get(key);
     RawSpans agg = rawSpans != null ? rawSpans.value() : RawSpans.newBuilder().build();
     // add the new span

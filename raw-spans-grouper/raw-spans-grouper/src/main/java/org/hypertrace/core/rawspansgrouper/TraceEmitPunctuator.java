@@ -3,6 +3,7 @@ package org.hypertrace.core.rawspansgrouper;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPANS_PER_TRACE_METRIC;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_CREATION_TIME;
 
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
@@ -53,6 +54,9 @@ public class TraceEmitPunctuator implements Punctuator {
   private long groupingWindowTimeoutMs;
   private Cancellable cancellable;
   private static final Object mutex = new Object();
+
+  private static final String TRACES_EMITTER_COUNTER = "hypertrace.traces.emitted";
+  private static Counter traceCounter = PlatformMetricsRegistry.registerCounter(TRACES_EMITTER_COUNTER, Map.of());
 
 
   public TraceEmitPunctuator(TraceIdentity key, ProcessorContext context,
@@ -116,7 +120,7 @@ public class TraceEmitPunctuator implements Punctuator {
             tenantId,
             HexUtils.getHex(traceId),
             rawSpanList.size());
-
+        traceCounter.increment();
         context.forward(null, trace, outputTopicProducer);
       }
     } else {
