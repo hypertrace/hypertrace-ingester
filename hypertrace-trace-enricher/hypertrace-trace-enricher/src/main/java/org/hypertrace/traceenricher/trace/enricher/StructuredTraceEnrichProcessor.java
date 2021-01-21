@@ -35,10 +35,10 @@ public class StructuredTraceEnrichProcessor implements
   private static EnrichmentProcessor processor = null;
 
   private static final String ENRICHED_TRACES_COUNTER = "hypertrace.enriched.traces";
-  private final ConcurrentMap<String, Counter> tenantToEnrichedTraceCounter = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Counter> tenantToEnrichedTraceCounter = new ConcurrentHashMap<>();
 
   private static final String ENRICHED_TRACES_TIMER = "hypertrace.trace.enrichment.latency";
-  private final ConcurrentMap<String, Timer> tenantToEnrichmentTraceTimer = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Timer> tenantToEnrichmentTraceTimer = new ConcurrentHashMap<>();
 
 
   @Override
