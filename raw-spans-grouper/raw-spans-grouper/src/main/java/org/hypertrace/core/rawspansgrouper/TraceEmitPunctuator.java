@@ -13,6 +13,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -55,9 +57,8 @@ public class TraceEmitPunctuator implements Punctuator {
   private Cancellable cancellable;
   private static final Object mutex = new Object();
 
-  private static final String TRACES_EMITTER_COUNTER = "hypertrace.traces.emitted";
-  private static Counter traceCounter = PlatformMetricsRegistry.registerCounter(TRACES_EMITTER_COUNTER, Map.of());
-
+  private static final String TRACES_EMITTER_COUNTER = "hypertrace.emitted.traces";
+  private static final ConcurrentMap<String, Counter> tenantToTraceEmittedCounter = new ConcurrentHashMap<>();
 
   public TraceEmitPunctuator(TraceIdentity key, ProcessorContext context,
       KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>> inflightTraceStore,
@@ -120,7 +121,10 @@ public class TraceEmitPunctuator implements Punctuator {
             tenantId,
             HexUtils.getHex(traceId),
             rawSpanList.size());
-        traceCounter.increment();
+
+        tenantToTraceEmittedCounter.computeIfAbsent(tenantId,
+            k -> PlatformMetricsRegistry.registerCounter(TRACES_EMITTER_COUNTER, Map.of("tenantId", k))).increment();
+
         context.forward(null, trace, outputTopicProducer);
       }
     } else {

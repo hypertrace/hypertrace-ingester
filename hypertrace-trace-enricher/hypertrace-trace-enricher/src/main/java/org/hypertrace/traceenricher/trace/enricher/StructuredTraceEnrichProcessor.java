@@ -5,15 +5,23 @@ import static org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnriche
 import static org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants.STRUCTURED_TRACES_ENRICHMENT_JOB_CONFIG_KEY;
 
 import com.typesafe.config.Config;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.entity.data.service.client.DefaultEdsClientProvider;
 import org.hypertrace.traceenricher.enrichment.EnrichmentProcessor;
 import org.hypertrace.traceenricher.enrichment.EnrichmentRegistry;
@@ -25,6 +33,13 @@ public class StructuredTraceEnrichProcessor implements
 
   private static final Logger logger = LoggerFactory.getLogger(StructuredTraceEnrichProcessor.class);
   private static EnrichmentProcessor processor = null;
+
+  private static final String ENRICHED_TRACES_COUNTER = "hypertrace.enriched.traces";
+  private final ConcurrentMap<String, Counter> tenantToEnrichedTraceCounter = new ConcurrentHashMap<>();
+
+  private static final String ENRICHED_TRACES_TIMER = "hypertrace.trace.enrichment.latency";
+  private final ConcurrentMap<String, Timer> tenantToEnrichmentTraceTimer = new ConcurrentHashMap<>();
+
 
   @Override
   public void init(ProcessorContext context) {
@@ -45,9 +60,14 @@ public class StructuredTraceEnrichProcessor implements
   public KeyValue<String, StructuredTrace> transform(String key, StructuredTrace value) {
     Instant start = Instant.now();
     processor.process(value);
-    Instant finish = Instant.now();
-    long timeElapsed = Duration.between(start, finish).toMillis();
-    logger.debug("Time taken by enrichment process for key:{} is :{}", key, timeElapsed);
+    long timeElapsed = Duration.between(start, Instant.now()).toMillis();
+
+    tenantToEnrichedTraceCounter.computeIfAbsent(value.getCustomerId(),
+        k -> PlatformMetricsRegistry.registerCounter(ENRICHED_TRACES_COUNTER, Map.of("tenantId", k)))
+        .increment();
+    tenantToEnrichmentTraceTimer.computeIfAbsent(value.getCustomerId(),
+        k -> PlatformMetricsRegistry.registerTimer(ENRICHED_TRACES_TIMER, Map.of("tenantId", k)))
+        .record(timeElapsed, TimeUnit.MILLISECONDS);
     return new KeyValue<>(null, value);
   }
 

@@ -24,8 +24,12 @@ public class JaegerSpanToAvroRawSpanTransformer implements
   private static final Logger LOGGER = LoggerFactory
       .getLogger(JaegerSpanToAvroRawSpanTransformer.class);
 
-  private static final String SPANS_COUNTER = "hypertrace.spans.reporter";
+  private static final String SPANS_COUNTER = "hypertrace.reported.spans";
   private final ConcurrentMap<String, Counter> statusToSpansCounter = new ConcurrentHashMap<>();
+
+  private static final String VALID_SPAN_RECEIVED_COUNT = "hypertrace.reported.spans.processed";
+  private final ConcurrentMap<String, Counter> tenantToSpanReceivedCount = new ConcurrentHashMap<>();
+
 
   private JaegerSpanNormalizer converter;
 
@@ -45,12 +49,13 @@ public class JaegerSpanToAvroRawSpanTransformer implements
       RawSpan rawSpan = converter.convert(value);
       if (null != rawSpan) {
         String tenantId = rawSpan.getCustomerId();
+        //these are spans per tenant that we were able to parse / convert, and had tenantId.
+        tenantToSpanReceivedCount.computeIfAbsent(tenantId, tenant -> PlatformMetricsRegistry
+            .registerCounter(VALID_SPAN_RECEIVED_COUNT, Map.of("tenantId", tenantId))).increment();
         // we use the (tenant_id, trace_id) as the key so that raw_span_grouper
         // job can do a groupByKey without having to create a repartition topic
         TraceIdentity traceIdentity = TraceIdentity.newBuilder().setTenantId(tenantId)
             .setTraceId(rawSpan.getTraceId()).build();
-        statusToSpansCounter.computeIfAbsent(tenantId, k ->
-            PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("tenantId", k, "result", "processed"))).increment();
         return new KeyValue<>(traceIdentity, rawSpan);
       }
       statusToSpansCounter.computeIfAbsent("dropped", k ->
