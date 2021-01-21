@@ -152,7 +152,7 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
             tenantId.get(),
             tenant ->
                 PlatformMetricsRegistry.registerTimer(
-                    SPAN_NORMALIZATION_TIME_METRIC, Map.of("tenantid", tenant)))
+                    SPAN_NORMALIZATION_TIME_METRIC, Map.of("tenantId", tenant)))
         .recordCallable(getRawSpanNormalizerCallable(jaegerSpan, tags, tenantId.get()));
   }
 
