@@ -13,6 +13,7 @@ import io.micrometer.core.instrument.Timer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,6 +69,8 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
    * is not given and tenant id isn't driven by span tags. These two configs are mutually exclusive.
    */
   private static final String DEFAULT_TENANT_ID_CONFIG = "processor.defaultTenantId";
+  private static final String TENANT_IDS_TO_EXCLUDE_CONFIG = "processor.excludeTenantIds";
+  private final List<String> tenantIdsToExclude;
 
   private static final String SPAN_NORMALIZATION_TIME_METRIC = "span.normalization.time";
 
@@ -126,6 +129,11 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
     } else {
       this.tenantIdProvider = new DefaultTenantIdProvider(defaultTenantIdValue);
     }
+
+    this.tenantIdsToExclude =
+        config.hasPath(TENANT_IDS_TO_EXCLUDE_CONFIG)
+            ? config.getStringList(TENANT_IDS_TO_EXCLUDE_CONFIG)
+            : Collections.emptyList();
   }
 
   public Timer getSpanNormalizationTimer(String tenantId) {
@@ -139,21 +147,28 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
         jaegerSpan.getTagsList().stream()
             .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
 
-    Optional<String> tenantId = this.tenantIdProvider.getTenantId(tags);
+    Optional<String> maybeTenantId = this.tenantIdProvider.getTenantId(tags);
 
-    if (tenantId.isEmpty()) {
+    if (maybeTenantId.isEmpty()) {
       tenantIdProvider.logWarning(LOG, jaegerSpan);
+      return null;
+    }
+
+    String tenantId = maybeTenantId.get();
+
+    if (this.tenantIdsToExclude.contains(tenantId)) {
+      LOG.info("Dropping span for tenant id : {}", tenantId);
       return null;
     }
 
     // Record the time taken for converting the span, along with the tenant id tag.
     return tenantToSpanNormalizationTimer
         .computeIfAbsent(
-            tenantId.get(),
+            tenantId,
             tenant ->
                 PlatformMetricsRegistry.registerTimer(
                     SPAN_NORMALIZATION_TIME_METRIC, Map.of("tenantId", tenant)))
-        .recordCallable(getRawSpanNormalizerCallable(jaegerSpan, tags, tenantId.get()));
+        .recordCallable(getRawSpanNormalizerCallable(jaegerSpan, tags, tenantId));
   }
 
   @Nonnull
