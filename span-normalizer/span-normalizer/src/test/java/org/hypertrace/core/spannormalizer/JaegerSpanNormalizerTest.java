@@ -133,6 +133,34 @@ public class JaegerSpanNormalizerTest {
   }
 
   @Test
+  public void testServiceNameAddedToEvent_excludeTenantIds() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    String anotherTenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of("tenantIdTagKey", "tenant-key", "excludeTenantIds", List.of(tenantId))));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+    Process process = Process.newBuilder().setServiceName("testService").build();
+    Span span1 =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .build();
+    RawSpan rawSpan1 = normalizer.convert(span1);
+    Assertions.assertNull(rawSpan1);
+
+    Span span2 =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(anotherTenantId).build())
+            .build();
+    RawSpan rawSpan2 = normalizer.convert(span2);
+    Assertions.assertNotNull(rawSpan2);
+  }
+
+  @Test
   public void testServiceNameAddedToEvent() throws Exception {
     String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());

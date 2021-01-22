@@ -69,6 +69,7 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
    * is not given and tenant id isn't driven by span tags. These two configs are mutually exclusive.
    */
   private static final String DEFAULT_TENANT_ID_CONFIG = "processor.defaultTenantId";
+  // list of tenant ids to exclude
   private static final String TENANT_IDS_TO_EXCLUDE_CONFIG = "processor.excludeTenantIds";
   private final List<String> tenantIdsToExclude;
 
@@ -134,6 +135,10 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
         config.hasPath(TENANT_IDS_TO_EXCLUDE_CONFIG)
             ? config.getStringList(TENANT_IDS_TO_EXCLUDE_CONFIG)
             : Collections.emptyList();
+
+    if (!this.tenantIdsToExclude.isEmpty()) {
+      LOG.info("list of tenant ids to exclude : {}", this.tenantIdsToExclude);
+    }
   }
 
   public Timer getSpanNormalizationTimer(String tenantId) {
@@ -157,7 +162,7 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
     String tenantId = maybeTenantId.get();
 
     if (this.tenantIdsToExclude.contains(tenantId)) {
-      LOG.info("Dropping span for tenant id : {}", tenantId);
+      LOG.debug("Dropping span for tenant id : {}", tenantId);
       return null;
     }
 
