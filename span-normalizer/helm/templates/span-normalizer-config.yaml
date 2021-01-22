@@ -42,6 +42,10 @@ data:
       tenantIdTagKey = "{{ .Values.spanNormalizerConfig.processor.tenantIdTagKey }}"
       {{- end }}
 
+      {{- if hasKey .Values.spanNormalizerConfig.processor "excludeTenantIds" }}
+      excludeTenantIds = {{ .Values.spanNormalizerConfig.processor.excludeTenantIds | toJson }}
+      {{- end }}
+
       {{- if hasKey .Values.spanNormalizerConfig.processor "defaultTenantId" }}
       defaultTenantId = "{{ .Values.spanNormalizerConfig.processor.defaultTenantId }}"
       {{- end }}
