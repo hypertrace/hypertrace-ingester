@@ -24,8 +24,12 @@ public class JaegerSpanToAvroRawSpanTransformer implements
   private static final Logger LOGGER = LoggerFactory
       .getLogger(JaegerSpanToAvroRawSpanTransformer.class);
 
-  private static final String VALID_SPAN_RECEIVED_COUNT = "valid.span.received.count";
-  private final ConcurrentMap<String, Counter> tenantToSpanReceivedCount = new ConcurrentHashMap<>();
+  private static final String SPANS_COUNTER = "hypertrace.reported.spans";
+  private static final ConcurrentMap<String, Counter> statusToSpansCounter = new ConcurrentHashMap<>();
+
+  private static final String VALID_SPAN_RECEIVED_COUNT = "hypertrace.reported.spans.processed";
+  private static final ConcurrentMap<String, Counter> tenantToSpanReceivedCount = new ConcurrentHashMap<>();
+
 
   private JaegerSpanNormalizer converter;
 
@@ -39,6 +43,9 @@ public class JaegerSpanToAvroRawSpanTransformer implements
   public KeyValue<TraceIdentity, RawSpan> transform(byte[] key, Span value) {
     try {
       //this is total spans count received. Irrespective of the fact we are able to parse them, or they have tenantId or not.
+      statusToSpansCounter.computeIfAbsent("received", k ->
+          PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k))).increment();
+
       RawSpan rawSpan = converter.convert(value);
       if (null != rawSpan) {
         String tenantId = rawSpan.getCustomerId();
@@ -51,9 +58,13 @@ public class JaegerSpanToAvroRawSpanTransformer implements
             .setTraceId(rawSpan.getTraceId()).build();
         return new KeyValue<>(traceIdentity, rawSpan);
       }
+      statusToSpansCounter.computeIfAbsent("dropped", k ->
+          PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k))).increment();
       return null;
     } catch (Exception e) {
       LOGGER.error("Error converting spans - ", e);
+      statusToSpansCounter.computeIfAbsent("error", k ->
+          PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k))).increment();
       return null;
     }
   }

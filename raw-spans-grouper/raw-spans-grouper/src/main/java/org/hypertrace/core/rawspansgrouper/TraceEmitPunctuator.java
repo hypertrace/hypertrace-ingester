@@ -3,6 +3,7 @@ package org.hypertrace.core.rawspansgrouper;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPANS_PER_TRACE_METRIC;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_CREATION_TIME;
 
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
@@ -12,6 +13,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -54,6 +57,8 @@ public class TraceEmitPunctuator implements Punctuator {
   private Cancellable cancellable;
   private static final Object mutex = new Object();
 
+  private static final String TRACES_EMITTER_COUNTER = "hypertrace.emitted.traces";
+  private static final ConcurrentMap<String, Counter> tenantToTraceEmittedCounter = new ConcurrentHashMap<>();
 
   public TraceEmitPunctuator(TraceIdentity key, ProcessorContext context,
       KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>> inflightTraceStore,
@@ -116,6 +121,9 @@ public class TraceEmitPunctuator implements Punctuator {
             tenantId,
             HexUtils.getHex(traceId),
             rawSpanList.size());
+
+        tenantToTraceEmittedCounter.computeIfAbsent(tenantId,
+            k -> PlatformMetricsRegistry.registerCounter(TRACES_EMITTER_COUNTER, Map.of("tenantId", k))).increment();
 
         context.forward(null, trace, outputTopicProducer);
       }
