@@ -167,6 +167,10 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
         .map(s -> s.split(COMMA))
         .map(a -> Arrays.stream(a).map(this::convertToPair).filter(Objects::nonNull).collect(Collectors.toList()))
         .collect(Collectors.toList());
+
+    if (!this.spanDropCriterion.isEmpty()) {
+      LOG.info("Span drop criterion: {}", this.spanDropCriterion);
+    }
   }
 
   @Nullable
