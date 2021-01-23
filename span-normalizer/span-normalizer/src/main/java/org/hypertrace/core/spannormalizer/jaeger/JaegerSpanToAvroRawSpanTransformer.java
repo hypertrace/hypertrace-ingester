@@ -30,7 +30,6 @@ public class JaegerSpanToAvroRawSpanTransformer implements
   private static final String VALID_SPAN_RECEIVED_COUNT = "hypertrace.reported.spans.processed";
   private static final ConcurrentMap<String, Counter> tenantToSpanReceivedCount = new ConcurrentHashMap<>();
 
-
   private JaegerSpanNormalizer converter;
 
   @Override
