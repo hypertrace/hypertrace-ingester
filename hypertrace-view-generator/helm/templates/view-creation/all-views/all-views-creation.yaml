@@ -1,8 +1,8 @@
-{{- if not .Values.mergeAllViews }}
+{{- if .Values.mergeAllViewsCreation }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Values.spanEventView.creator.jobName }}
+  name: {{ .Values.creator.allViews.jobName }}
   labels:
     release: {{ .Release.Name }}
   annotations:
@@ -19,31 +19,31 @@ spec:
       restartPolicy: OnFailure
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{- toYaml . | nindent 8 }}
+    {{- toYaml . | nindent 8 }}
     {{- end }}
       volumes:
         - name: {{ .Values.viewCreatorJobConfig.name }}
           configMap:
             name: {{ .Values.viewCreatorJobConfig.name }}
-    {{- with .Values.nodeLabels }}
+      {{- with .Values.nodeLabels }}
       nodeSelector:
       {{- toYaml . | nindent 8}}
-    {{- end }}
+      {{- end }}
       containers:
-        - name: {{ .Values.spanEventView.creator.jobName }}
+        - name: {{ .Values.creator.allViews.jobName }}
           image: "{{ include "creatorservice.image" . }}"
           imagePullPolicy: {{ .Values.images.pullPolicy }}
           resources:
-            {{- toYaml .Values.spanEventView.creator.resources | nindent 12 }}
+            {{- toYaml .Values.creator.allViews.resources | nindent 12 }}
           env:
             - name: SERVICE_NAME
-              value: "span-event-view"
+              value: "all-views"
             - name: CLUSTER_NAME
               value: "staging"
             - name: BOOTSTRAP_CONFIG_URI
               value: "file:///app/resources/configs"
             - name: JAVA_TOOL_OPTIONS
-              value: {{ .Values.spanEventView.creator.javaOpts | quote }}
+              value: {{ .Values.creator.allViews.javaOpts | quote }}
           volumeMounts:
             - name: {{ .Values.viewCreatorJobConfig.name }}
               mountPath: /app/resources/configs/common/staging/application.conf
