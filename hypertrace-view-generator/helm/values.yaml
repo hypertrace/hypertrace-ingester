@@ -40,6 +40,8 @@ logConfig:
 ############################################
 # View Creation Jobs                       #
 ############################################
+mergeAllViewsCreation: false
+
 viewCreatorJobConfig:
   name: view-creator-job-config
   data:
@@ -193,29 +195,3 @@ kafka-topic-creator:
     address: zookeeper:2181
   imagePullSecrets: []
   podAnnotations: {}
-
-
-  generator:
-    deploymentName: span-event-view-generator
-    podLabels:
-      app: span-event-view-generator
-    # Careful with deployment selector match labels. You can append labels but not remove them once deployed.
-    # Use the pod labels above for custom pod labels
-    deploymentSelectorMatchLabels:
-      app: span-event-view-generator
-    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
-    livenessProbe:
-      initialDelaySeconds: 30
-      periodSeconds: 10
-    readinessProbe:
-      initialDelaySeconds: 30
-      periodSeconds: 10
-    resources:
-      requests:
-        cpu: 0.1
-        memory: 320Mi
-      limits:
-        cpu: 0.2
-        memory: 512Mi
-
-mergeAllViewsCreation: false

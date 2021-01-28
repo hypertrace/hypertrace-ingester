@@ -25,10 +25,10 @@ spec:
         - name: {{ .Values.viewCreatorJobConfig.name }}
           configMap:
             name: {{ .Values.viewCreatorJobConfig.name }}
-      {{- with .Values.nodeLabels }}
+    {{- with .Values.nodeLabels }}
       nodeSelector:
-      {{- toYaml . | nindent 8}}
-      {{- end }}
+    {{- toYaml . | nindent 8}}
+    {{- end }}
       containers:
         - name: {{ .Values.creator.allViews.jobName }}
           image: "{{ include "creatorservice.image" . }}"
