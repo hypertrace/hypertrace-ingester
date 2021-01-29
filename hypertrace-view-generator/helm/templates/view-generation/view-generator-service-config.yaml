@@ -16,5 +16,8 @@ data:
       num.stream.threads = "{{ $group.viewGeneratorServiceConfig.kafka.streams.config.numStreamThreads }}"
       bootstrap.servers = "{{ $group.viewGeneratorServiceConfig.kafka.streams.config.bootstrapServers }}"
       schema.registry.url = "{{ $group.viewGeneratorServiceConfig.kafka.streams.config.schemaRegistryUrl }}"
+    {{- with $group.viewGeneratorServiceConfig.kafka.streams.config.autoOffsetReset }}
+      auto.offset.reset = "{{ $group.viewGeneratorServiceConfig.kafka.streams.config.autoOffsetReset }}"
+    {{- end }}
     }
 {{- end }}
