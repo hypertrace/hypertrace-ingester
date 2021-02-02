@@ -10,7 +10,6 @@
 ######################################
 # Common across deployments and jobs #
 ######################################
-replicaCount: 1
 maxUnavailable: 0
 
 images:
@@ -40,7 +39,7 @@ logConfig:
 ############################################
 # View Creation Jobs                       #
 ############################################
-mergeAllViewsCreation: false
+mergeAllViewsCreation: true
 
 viewCreatorJobConfig:
   name: view-creator-job-config
@@ -114,10 +113,11 @@ creator:
 ############################################
 # View Generation Deployments              #
 ############################################
-
 viewGeneratorGroups:
-  - name: all-views-generator
+  all-views-generator:
+    enabled: true
     generator:
+      replicaCount: 1
       deploymentName: all-views-generator
       podLabels:
         app: all-views-generator
@@ -133,25 +133,200 @@ viewGeneratorGroups:
       resources:
         limits:
           cpu: 1.0
+          memory: 1.5Gi
+        requests:
+          cpu: 0.5
+          memory: 512Mi
+      serviceConfig:
+        name: all-views-generator-config
+        viewgenerators:
+          - view-gen-backend-entity
+          - view-gen-raw-service
+          - view-gen-raw-traces
+          - view-gen-service-call
+          - view-gen-span-event
+        kafka:
+          streams:
+            config:
+              metricsRecordingLevel: INFO
+              numStreamThreads: 2
+              bootstrapServers: "bootstrap:9092"
+              schemaRegistryUrl: "http://schema-registry-service:8081"
+              autoOffsetReset: "latest"
+  backendEntityView:
+    enabled: false
+    generator:
+      replicaCount: 1
+      deploymentName: backend-entity-view-generator
+      podLabels:
+        app: backend-entity-view-generator
+      deploymentSelectorMatchLabels:
+        app: backend-entity-view-generator
+      javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      resources:
+        limits:
+          cpu: 0.2
           memory: 512Mi
         requests:
-          cpu: 0.2
+          cpu: 0.1
           memory: 320Mi
-    viewGeneratorServiceConfig:
-      name: all-views-generator-config
-      viewgenerators:
-        - view-gen-backend-entity
-        - view-gen-raw-service
-        - view-gen-raw-traces
-        - view-gen-service-call
-        - view-gen-span-event
-      kafka:
-        streams:
-          config:
-            metricsRecordingLevel: INFO
-            numStreamThreads: 2
-            bootstrapServers: "bootstrap:9092"
-            schemaRegistryUrl: "http://schema-registry-service:8081"
+      serviceConfig:
+        name: backend-entity-view-generator-config
+        viewgenerators:
+          - view-gen-backend-entity
+        kafka:
+          streams:
+            config:
+              metricsRecordingLevel: INFO
+              numStreamThreads: 2
+              bootstrapServers: "bootstrap:9092"
+              schemaRegistryUrl: "http://schema-registry-service:8081"
+              autoOffsetReset: "latest"
+  rawServiceView:
+    enabled: false
+    generator:
+      replicaCount: 1
+      deploymentName: raw-service-view-generator
+      podLabels:
+        app: raw-service-view-generator
+      deploymentSelectorMatchLabels:
+        app: raw-service-view-generator
+      javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      resources:
+        limits:
+          cpu: 0.2
+          memory: 512Mi
+        requests:
+          cpu: 0.1
+          memory: 320Mi
+      serviceConfig:
+        name: raw-service-view-generator-config
+        viewgenerators:
+          - view-gen-raw-service
+        kafka:
+          streams:
+            config:
+              metricsRecordingLevel: INFO
+              numStreamThreads: 2
+              bootstrapServers: "bootstrap:9092"
+              schemaRegistryUrl: "http://schema-registry-service:8081"
+              autoOffsetReset: "latest"
+  rawTraceView:
+    enabled: false
+    generator:
+      replicaCount: 1
+      deploymentName: raw-trace-view-generator
+      podLabels:
+        app: raw-trace-view-generator
+      deploymentSelectorMatchLabels:
+        app: raw-trace-view-generator
+      javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      resources:
+        limits:
+          cpu: 0.2
+          memory: 512Mi
+        requests:
+          cpu: 0.1
+          memory: 320Mi
+      serviceConfig:
+        name: raw-trace-view-generator
+        viewgenerators:
+          - view-gen-raw-traces
+        kafka:
+          streams:
+            config:
+              metricsRecordingLevel: INFO
+              numStreamThreads: 2
+              bootstrapServers: "bootstrap:9092"
+              schemaRegistryUrl: "http://schema-registry-service:8081"
+              autoOffsetReset: "latest"
+  serviceCallView:
+    enabled: false
+    generator:
+      replicaCount: 1
+      deploymentName: service-call-view-generator
+      podLabels:
+        app: service-call-view-generator
+      deploymentSelectorMatchLabels:
+        app: service-call-view-generator
+      javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      resources:
+        limits:
+          cpu: 0.2
+          memory: 512Mi
+        requests:
+          cpu: 0.1
+          memory: 320Mi
+      serviceConfig:
+        name: service-call-view-generator-config
+        viewgenerators:
+          - view-gen-service-call
+        kafka:
+          streams:
+            config:
+              metricsRecordingLevel: INFO
+              numStreamThreads: 2
+              bootstrapServers: "bootstrap:9092"
+              schemaRegistryUrl: "http://schema-registry-service:8081"
+              autoOffsetReset: "latest"
+  spanEventView:
+    enabled: false
+    generator:
+      deploymentName: span-event-view-generator
+      podLabels:
+        app: span-event-view-generator
+      deploymentSelectorMatchLabels:
+        app: span-event-view-generator
+      javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      resources:
+        limits:
+          cpu: 0.2
+          memory: 512Mi
+        requests:
+          cpu: 0.1
+          memory: 320Mi
+      serviceConfig:
+        name: span-event-view-generator-config
+        viewgenerators:
+          - view-gen-span-event
+        kafka:
+          streams:
+            config:
+              metricsRecordingLevel: INFO
+              numStreamThreads: 2
+              bootstrapServers: "bootstrap:9092"
+              schemaRegistryUrl: "http://schema-registry-service:8081"
+              autoOffsetReset: "latest"
 
 ############################################
 # Kafka topic creation job                 #

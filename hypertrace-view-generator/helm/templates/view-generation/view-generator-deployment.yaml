@@ -1,5 +1,6 @@
 {{ $global := . }}
 {{- range $k, $group := .Values.viewGeneratorGroups }}
+{{- if $group.enabled}}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -8,7 +9,7 @@ metadata:
   labels:
     release: {{ $global.Release.Name }}
 spec:
-  replicas: {{ $global.Values.replicaCount }}
+  replicas: {{ $group.generator.replicaCount }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -31,7 +32,7 @@ spec:
       volumes:
         - name: view-gen-service-config
           configMap:
-            name: {{ $group.viewGeneratorServiceConfig.name }}
+            name: {{ $group.generator.serviceConfig.name }}
         - name: log4j-config
           configMap:
             name: {{ $global.Values.logConfig.name }}
@@ -73,4 +74,5 @@ spec:
               port: {{ $global.Values.containerAdminPort }}
           resources:
             {{- toYaml $group.generator.resources | nindent 12 }}
+{{- end }}
 {{- end }}
