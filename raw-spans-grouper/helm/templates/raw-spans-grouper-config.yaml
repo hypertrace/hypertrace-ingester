@@ -36,7 +36,9 @@ data:
       topic.cleanup.policy = "delete,compact"
       # RocksDB state store configs
       state.dir = "/var/data/"
-      rocksdb.block.cache.size = {{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbBlockCacheSize }}
+      rocksdb.cache.total.capacity: "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbCacheTotalCapacity }}"
+      rocksdb.cache.write.buffers.ratio: "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbCacheWriteBuffersRatio }}"
+      rocksdb.cache.high.priority.pool.ratio: "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbCacheHighPriorityPoolRatio }}"
       rocksdb.write.buffer.size = {{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbWriteBufferSize }}
       rocksdb.max.write.buffers = {{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbMaxWriteBuffers }}
       rocksdb.cache.index.and.filter.blocks = {{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbCacheIndexAndFilterBlocks }}
