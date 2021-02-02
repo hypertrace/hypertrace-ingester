@@ -12,7 +12,7 @@ data:
   application.conf: |-
     view.generators = [{{ include "helm-toolkit.utils.joinListWithComma" $group.generator.serviceConfig.viewgenerators }}]
     kafka.streams.config {
-      application.id = "{{ $group.name }}"
+      application.id = "{{ $group.generator.serviceConfig.kafka.streams.config.applicationId }}"
       metrics.recording.level = "{{ $group.generator.serviceConfig.kafka.streams.config.metricsRecordingLevel }}"
       num.stream.threads = "{{ $group.generator.serviceConfig.kafka.streams.config.numStreamThreads }}"
       bootstrap.servers = "{{ $group.generator.serviceConfig.kafka.streams.config.bootstrapServers }}"

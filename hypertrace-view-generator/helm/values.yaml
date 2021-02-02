@@ -97,6 +97,7 @@ viewGeneratorGroups:
         kafka:
           streams:
             config:
+              applicationId: "all-views-generator"
               metricsRecordingLevel: INFO
               numStreamThreads: 2
               bootstrapServers: "bootstrap:9092"
@@ -132,6 +133,7 @@ viewGeneratorGroups:
         kafka:
           streams:
             config:
+              applicationId: backend-entity-view-generator
               metricsRecordingLevel: INFO
               numStreamThreads: 2
               bootstrapServers: "bootstrap:9092"
@@ -167,6 +169,7 @@ viewGeneratorGroups:
         kafka:
           streams:
             config:
+              applicationId: raw-service-view-generator
               metricsRecordingLevel: INFO
               numStreamThreads: 2
               bootstrapServers: "bootstrap:9092"
@@ -202,6 +205,7 @@ viewGeneratorGroups:
         kafka:
           streams:
             config:
+              applicationId: raw-trace-view-generator
               metricsRecordingLevel: INFO
               numStreamThreads: 2
               bootstrapServers: "bootstrap:9092"
@@ -237,6 +241,7 @@ viewGeneratorGroups:
         kafka:
           streams:
             config:
+              applicationId: service-call-view-generator
               metricsRecordingLevel: INFO
               numStreamThreads: 2
               bootstrapServers: "bootstrap:9092"
@@ -271,6 +276,7 @@ viewGeneratorGroups:
         kafka:
           streams:
             config:
+              applicationId: span-event-view-generator
               metricsRecordingLevel: INFO
               numStreamThreads: 2
               bootstrapServers: "bootstrap:9092"
