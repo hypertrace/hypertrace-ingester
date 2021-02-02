@@ -1,8 +1,7 @@
-{{- if not .Values.mergeAllViewsCreation }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Values.creator.rawServiceView.jobName }}
+  name: {{ .Values.creator.allViews.jobName }}
   labels:
     release: {{ .Release.Name }}
   annotations:
@@ -19,7 +18,7 @@ spec:
       restartPolicy: OnFailure
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-      {{- toYaml . | nindent 8 }}
+    {{- toYaml . | nindent 8 }}
     {{- end }}
       volumes:
         - name: {{ .Values.viewCreatorJobConfig.name }}
@@ -27,26 +26,25 @@ spec:
             name: {{ .Values.viewCreatorJobConfig.name }}
     {{- with .Values.nodeLabels }}
       nodeSelector:
-      {{- toYaml . | nindent 8}}
+    {{- toYaml . | nindent 8}}
     {{- end }}
       containers:
-        - name: {{ .Values.creator.rawServiceView.jobName }}
+        - name: {{ .Values.creator.allViews.jobName }}
           image: "{{ include "creatorservice.image" . }}"
           imagePullPolicy: {{ .Values.images.pullPolicy }}
           resources:
-            {{- toYaml .Values.creator.rawServiceView.resources | nindent 12 }}
+            {{- toYaml .Values.creator.allViews.resources | nindent 12 }}
           env:
             - name: SERVICE_NAME
-              value: "raw-service-view"
+              value: "all-views"
             - name: CLUSTER_NAME
               value: "staging"
             - name: BOOTSTRAP_CONFIG_URI
               value: "file:///app/resources/configs"
             - name: JAVA_TOOL_OPTIONS
-              value: {{ .Values.creator.rawServiceView.javaOpts | quote }}
+              value: {{ .Values.creator.allViews.javaOpts | quote }}
           volumeMounts:
             - name: {{ .Values.viewCreatorJobConfig.name }}
               mountPath: /app/resources/configs/common/staging/application.conf
               subPath: application.conf
   backoffLimit: 100
-{{- end }}

@@ -39,7 +39,6 @@ logConfig:
 ############################################
 # View Creation Jobs                       #
 ############################################
-mergeAllViewsCreation: true
 
 viewCreatorJobConfig:
   name: view-creator-job-config
@@ -51,56 +50,6 @@ viewCreatorJobConfig:
 creator:
   allViews:
     jobName: all-views-creation-job
-    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
-    resources:
-      limits:
-        cpu: 1.0
-        memory: 384Mi
-      requests:
-        cpu: 0.1
-        memory: 384Mi
-  backendEntityView:
-    jobName: backend-entity-view-creation-job
-    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
-    resources:
-      limits:
-        cpu: 1.0
-        memory: 384Mi
-      requests:
-        cpu: 0.1
-        memory: 384Mi
-  rawServiceView:
-    jobName: raw-service-view-creation-job
-    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
-    resources:
-      limits:
-        cpu: 1.0
-        memory: 384Mi
-      requests:
-        cpu: 0.1
-        memory: 384Mi
-  rawTraceView:
-    jobName: raw-trace-view-creation-job
-    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
-    resources:
-      limits:
-        cpu: 1.0
-        memory: 384Mi
-      requests:
-        cpu: 0.1
-        memory: 384Mi
-  serviceCallView:
-    jobName: service-call-view-creation-job
-    javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
-    resources:
-      limits:
-        cpu: 1.0
-        memory: 384Mi
-      requests:
-        cpu: 0.1
-        memory: 384Mi
-  spanEventView:
-    jobName: span-event-view-creation-job
     javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
     resources:
       limits:
