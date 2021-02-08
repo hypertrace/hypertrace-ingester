@@ -26,7 +26,15 @@ public class MessagingSemanticConventionUtils {
    * @return Routing key for Rabbit mq messaging system
    */
   public static Optional<String> getRabbitMqRoutingKey(Event event) {
+    if (!isRabbitMqBackend(event)) {
+      return Optional.empty();
+    }
     return Optional.ofNullable(SpanAttributeUtils.getFirstAvailableStringAttribute(
         event, RABBITMQ_ROUTING_KEYS));
+  }
+
+  public static boolean isRabbitMqBackend(Event event) {
+    return SpanAttributeUtils.containsAttributeKey(event, RawSpanConstants.getValue(RabbitMq.RABBIT_MQ_ROUTING_KEY))
+        || SpanAttributeUtils.containsAttributeKey(event, OtelMessagingSemanticConventions.RABBITMQ_ROUTING_KEY.getValue());
   }
 }
