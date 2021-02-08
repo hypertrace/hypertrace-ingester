@@ -11,4 +11,5 @@ public class RawSpanGrouperConstants {
   public static final String SPANS_PER_TRACE_METRIC = "spans_per_trace";
   public static final String TRACE_CREATION_TIME = "trace.creation.time";
   public static final String DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY = "dataflow.metriccollection.sampling.percent";
+  public static final String INFLIGHT_TRACE_MAX_SPAN_COUNT = "max.span.count";
 }

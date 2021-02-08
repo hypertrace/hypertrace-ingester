@@ -1,6 +1,7 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
@@ -10,6 +11,9 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_
 import com.typesafe.config.Config;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.Cancellable;
@@ -45,6 +49,7 @@ public class RawSpansGroupingTransformer implements
   private long groupingWindowTimeoutMs;
   private To outputTopic;
   private double dataflowSamplingPercent = -1;
+  private Map<String, Long> maxSpanCountMap = new HashMap<>();
 
   @Override
   public void init(ProcessorContext context) {
@@ -63,6 +68,13 @@ public class RawSpansGroupingTransformer implements
       this.dataflowSamplingPercent = jobConfig.getDouble(DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY);
     }
 
+    if (jobConfig.hasPath(INFLIGHT_TRACE_MAX_SPAN_COUNT)) {
+      Config subConfig = jobConfig.getConfig(INFLIGHT_TRACE_MAX_SPAN_COUNT);
+      subConfig.entrySet().stream().forEach((entry) -> {
+        maxSpanCountMap.put(entry.getKey(), subConfig.getLong(entry.getKey()));
+      });
+    }
+
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
     restorePunctuators();
   }
@@ -71,6 +83,17 @@ public class RawSpansGroupingTransformer implements
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
     ValueAndTimestamp<RawSpans> rawSpans = inflightTraceStore.get(key);
     RawSpans agg = rawSpans != null ? rawSpans.value() : RawSpans.newBuilder().build();
+    if (maxSpanCountMap.containsKey(key.getTenantId()) && agg.getRawSpans().size() > maxSpanCountMap.get(key.getTenantId())) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("Number of spans in tenant_id={}, trace_id={} is {}",
+          key.getTenantId(),
+          HexUtils.getHex(key.getTraceId()),
+          agg.getRawSpans().size());
+        logger.debug("Dropping span [{}] from tenant_id={}, trace_id={}", value, key.getTenantId(), HexUtils.getHex(key.getTraceId()));
+      }
+      return null;
+    }
+
     // add the new span
     agg.getRawSpans().add(value);
 
