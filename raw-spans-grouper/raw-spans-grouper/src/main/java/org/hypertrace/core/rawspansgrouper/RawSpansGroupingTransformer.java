@@ -13,7 +13,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
+import io.micrometer.core.instrument.Counter;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.Cancellable;
@@ -27,6 +30,7 @@ import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.RawSpans;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +54,14 @@ public class RawSpansGroupingTransformer implements
   private To outputTopic;
   private double dataflowSamplingPercent = -1;
   private Map<String, Long> maxSpanCountMap = new HashMap<>();
+
+  // counter for number of spans dropped per tenant
+  private static final String DROPPED_SPANS_COUNTER = "hypertrace.dropped.spans";
+  private static final ConcurrentMap<String, Counter> droppedSpansCounter = new ConcurrentHashMap<>();
+
+  // counter for number of truncated traces per tenant
+  private static final String TRUNCATED_TRACES_COUNTER = "hypertrace.truncated.traces";
+  private static final ConcurrentMap<String, Counter> truncatedTracesCounter = new ConcurrentHashMap<>();
 
   @Override
   public void init(ProcessorContext context) {
@@ -91,11 +103,20 @@ public class RawSpansGroupingTransformer implements
           agg.getRawSpans().size());
         logger.debug("Dropping span [{}] from tenant_id={}, trace_id={}", value, key.getTenantId(), HexUtils.getHex(key.getTraceId()));
       }
+      // increment the counter for dropped spans
+      droppedSpansCounter.computeIfAbsent(key.getTenantId(),
+        k -> PlatformMetricsRegistry.registerCounter(DROPPED_SPANS_COUNTER, Map.of("tenantId", k))).increment();
       return null;
     }
 
     // add the new span
     agg.getRawSpans().add(value);
+
+    // increment the counter when the trace size reaches the max.span.count limit.
+    if (maxSpanCountMap.containsKey(key.getTenantId()) && agg.getRawSpans().size() == maxSpanCountMap.get(key.getTenantId())) {
+      truncatedTracesCounter.computeIfAbsent(key.getTenantId(),
+        k -> PlatformMetricsRegistry.registerCounter(TRUNCATED_TRACES_COUNTER, Map.of("tenantId", k))).increment();
+    }
 
     long currentTimeMs = System.currentTimeMillis();
 
