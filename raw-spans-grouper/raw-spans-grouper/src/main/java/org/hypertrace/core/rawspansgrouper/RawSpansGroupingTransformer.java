@@ -97,11 +97,11 @@ public class RawSpansGroupingTransformer implements
     RawSpans agg = rawSpans != null ? rawSpans.value() : RawSpans.newBuilder().build();
     if (maxSpanCountMap.containsKey(key.getTenantId()) && agg.getRawSpans().size() > maxSpanCountMap.get(key.getTenantId())) {
       if (logger.isDebugEnabled()) {
-        logger.debug("Number of spans in tenant_id={}, trace_id={} is {}",
+        logger.debug("Dropping span [{}] from tenant_id={}, trace_id={} after grouping {} spans",
+          value,
           key.getTenantId(),
           HexUtils.getHex(key.getTraceId()),
           agg.getRawSpans().size());
-        logger.debug("Dropping span [{}] from tenant_id={}, trace_id={}", value, key.getTenantId(), HexUtils.getHex(key.getTraceId()));
       }
       // increment the counter for dropped spans
       droppedSpansCounter.computeIfAbsent(key.getTenantId(),
