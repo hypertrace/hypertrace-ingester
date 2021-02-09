@@ -1,12 +1,14 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_TRIGGER_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
 
 import com.typesafe.config.Config;
 import java.time.Duration;
@@ -56,11 +58,9 @@ public class RawSpansGroupingTransformer implements
   private Map<String, Long> maxSpanCountMap = new HashMap<>();
 
   // counter for number of spans dropped per tenant
-  private static final String DROPPED_SPANS_COUNTER = "hypertrace.dropped.spans";
   private static final ConcurrentMap<String, Counter> droppedSpansCounter = new ConcurrentHashMap<>();
 
   // counter for number of truncated traces per tenant
-  private static final String TRUNCATED_TRACES_COUNTER = "hypertrace.truncated.traces";
   private static final ConcurrentMap<String, Counter> truncatedTracesCounter = new ConcurrentHashMap<>();
 
   @Override
