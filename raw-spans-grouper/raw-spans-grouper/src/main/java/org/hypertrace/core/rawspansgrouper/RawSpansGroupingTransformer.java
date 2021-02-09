@@ -95,7 +95,7 @@ public class RawSpansGroupingTransformer implements
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
     ValueAndTimestamp<RawSpans> rawSpans = inflightTraceStore.get(key);
     RawSpans agg = rawSpans != null ? rawSpans.value() : RawSpans.newBuilder().build();
-    if (maxSpanCountMap.containsKey(key.getTenantId()) && agg.getRawSpans().size() > maxSpanCountMap.get(key.getTenantId())) {
+    if (maxSpanCountMap.containsKey(key.getTenantId()) && agg.getRawSpans().size() >= maxSpanCountMap.get(key.getTenantId())) {
       if (logger.isDebugEnabled()) {
         logger.debug("Dropping span [{}] from tenant_id={}, trace_id={} after grouping {} spans",
           value,

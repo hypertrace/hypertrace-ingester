@@ -80,6 +80,18 @@ public class RawSpansGrouperTest {
         .setCustomerId("tenant1").setEvent(createEvent("event-4", "tenant1")).build();
     RawSpan span5 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
         .setCustomerId("tenant1").setEvent(createEvent("event-5", "tenant1")).build();
+    RawSpan span6 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+      .setCustomerId("tenant1").setEvent(createEvent("event-6", "tenant1")).build();
+    RawSpan span7 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+      .setCustomerId("tenant1").setEvent(createEvent("event-7", "tenant1")).build();
+    RawSpan span8 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+      .setCustomerId("tenant1").setEvent(createEvent("event-8", "tenant1")).build();
+    RawSpan span9 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+      .setCustomerId("tenant1").setEvent(createEvent("event-9", "tenant1")).build();
+    RawSpan span10 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+      .setCustomerId("tenant1").setEvent(createEvent("event-10", "tenant1")).build();
+    RawSpan span11 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+      .setCustomerId("tenant1").setEvent(createEvent("event-11", "tenant1")).build();
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span1);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span4);
@@ -120,6 +132,18 @@ public class RawSpansGrouperTest {
     trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
     assertEquals(ByteBuffer.wrap("event-5".getBytes()), trace.getEventList().get(0).getEventId());
+
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span6);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span7);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span8);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span9);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span10);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span11);
+    td.advanceWallClockTime(Duration.ofSeconds(35));
+
+    // trace should be truncated with 5 spans
+    trace = (StructuredTrace) outputTopic.readValue();
+    assertEquals(5, trace.getEventList().size());
   }
 
   private Event createEvent(String eventId, String tenantId) {
