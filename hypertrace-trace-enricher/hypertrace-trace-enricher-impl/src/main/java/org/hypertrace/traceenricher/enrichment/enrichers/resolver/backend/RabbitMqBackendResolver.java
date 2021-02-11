@@ -17,6 +17,9 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
+    if (!MessagingSemanticConventionUtils.isRabbitMqBackend(event)) {
+      return Optional.empty();
+    }
     Optional<String> routingKey = MessagingSemanticConventionUtils.getRabbitMqRoutingKey(event);
 
     if (routingKey.isEmpty() || StringUtils.isEmpty(routingKey.get())) {

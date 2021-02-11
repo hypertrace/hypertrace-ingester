@@ -91,6 +91,12 @@ traceEnricherConfig:
   # All other streams config goes here.
   # Remove the flower braces and add key: value pair here.
   extraKafkaStreamsConfig: {}
+  entityServiceHost: entity-service
+  entityServicePort: 50061
+  attributeServiceHost: attribute-service
+  attributeServicePort: 9012
+  configServiceHost: config-service
+  configServicePort: 50101
 
 logConfig:
   name: hypertrace-trace-enricher-log-config
