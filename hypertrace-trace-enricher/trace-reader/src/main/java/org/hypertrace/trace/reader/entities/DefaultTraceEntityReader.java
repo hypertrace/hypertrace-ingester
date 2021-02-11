@@ -90,7 +90,6 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
                 .setEntityId(resolvedId)
                 .setEntityType(entityType.getName())
                 .setEntityName(resolvedName)
-                .putAllIdentifyingAttributes(resolvedAttributeMap)
                 .putAllAttributes(resolvedAttributeMap)
                 .build());
   }

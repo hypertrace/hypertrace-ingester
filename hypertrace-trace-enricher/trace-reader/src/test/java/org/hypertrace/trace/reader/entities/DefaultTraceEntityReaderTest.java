@@ -70,11 +70,6 @@ class DefaultTraceEntityReaderTest {
                   Map.of(
                       TEST_ENTITY_ID_ATTRIBUTE_KEY, TEST_ENTITY_ID_ATTRIBUTE_VALUE,
                       TEST_ENTITY_NAME_ATTRIBUTE_KEY, TEST_ENTITY_NAME_ATTRIBUTE_VALUE)))
-          .putAllIdentifyingAttributes(
-              buildAttributesWithKeyValues(
-                  Map.of(
-                      TEST_ENTITY_ID_ATTRIBUTE_KEY, TEST_ENTITY_ID_ATTRIBUTE_VALUE,
-                      TEST_ENTITY_NAME_ATTRIBUTE_KEY, TEST_ENTITY_NAME_ATTRIBUTE_VALUE)))
           .build();
 
   @Mock EntityTypeClient mockTypeClient;
