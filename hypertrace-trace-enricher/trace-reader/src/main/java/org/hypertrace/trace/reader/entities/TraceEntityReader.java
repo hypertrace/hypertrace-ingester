@@ -4,7 +4,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import java.util.Map;
 import org.apache.avro.generic.GenericRecord;
-import org.hypertrace.core.datamodel.Entity;
+import org.hypertrace.entity.data.service.v1.Entity;
 
 public interface TraceEntityReader<T extends GenericRecord, S extends GenericRecord> {
 

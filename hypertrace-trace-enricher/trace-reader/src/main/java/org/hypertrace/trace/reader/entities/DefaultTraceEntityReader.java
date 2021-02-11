@@ -1,7 +1,6 @@
 package org.hypertrace.trace.reader.entities;
 
 import static io.reactivex.rxjava3.core.Maybe.zip;
-import static org.hypertrace.trace.reader.entities.AvroEntityConverter.convertToAvroEntity;
 
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -14,11 +13,11 @@ import org.apache.avro.generic.GenericRecord;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
-import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase;
+import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Value;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.entity.type.service.v2.EntityType;
@@ -48,7 +47,7 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
     return spanTenantContext(span)
         .wrapSingle(() -> this.entityTypeClient.get(entityType))
         .flatMapMaybe(
-            entityTypeDefinition -> this.getOrCreateAvroEntity(entityTypeDefinition, trace, span));
+            entityTypeDefinition -> this.getOrCreateEntity(entityTypeDefinition, trace, span));
   }
 
   @Override
@@ -59,23 +58,20 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
             () ->
                 this.entityTypeClient
                     .getAll()
-                    .flatMapMaybe(entityType -> this.getOrCreateAvroEntity(entityType, trace, span))
+                    .flatMapMaybe(entityType -> this.getOrCreateEntity(entityType, trace, span))
                     .toMap(Entity::getEntityType)
                     .map(Collections::unmodifiableMap));
   }
 
-  private Maybe<Entity> getOrCreateAvroEntity(EntityType entityType, T trace, S span) {
+  private Maybe<Entity> getOrCreateEntity(EntityType entityType, T trace, S span) {
     return this.buildEntity(entityType, trace, span)
         .flatMapSingle(
             entity ->
                 spanTenantContext(span)
-                    .wrapSingle(() -> this.entityDataClient.getOrCreateEntity(entity)))
-        .flatMapSingle(
-            entity -> convertToAvroEntity(traceAttributeReader.getTenantId(span), entity));
+                    .wrapSingle(() -> this.entityDataClient.getOrCreateEntity(entity)));
   }
 
-  private Maybe<org.hypertrace.entity.data.service.v1.Entity> buildEntity(
-      EntityType entityType, T trace, S span) {
+  private Maybe<Entity> buildEntity(EntityType entityType, T trace, S span) {
     Maybe<Map<String, AttributeValue>> attributes =
         this.resolveAllAttributes(entityType.getAttributeScope(), trace, span).cache();
 
@@ -90,7 +86,7 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
         name,
         attributes,
         (resolvedId, resolvedName, resolvedAttributeMap) ->
-            org.hypertrace.entity.data.service.v1.Entity.newBuilder()
+            Entity.newBuilder()
                 .setEntityId(resolvedId)
                 .setEntityType(entityType.getName())
                 .setEntityName(resolvedName)
