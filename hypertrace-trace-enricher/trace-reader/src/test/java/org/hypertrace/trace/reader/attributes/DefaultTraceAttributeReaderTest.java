@@ -26,11 +26,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DefaultTraceAttributeReaderTest {
 
   @Mock CachingAttributeClient mockAttributeClient;
-  private TraceAttributeReader traceAttributeReader;
+  private TraceAttributeReader<StructuredTrace, Event> traceAttributeReader;
 
   @BeforeEach
   void beforeEach() {
-    this.traceAttributeReader = TraceAttributeReader.build(this.mockAttributeClient);
+    this.traceAttributeReader = TraceAttributeReaderFactory.build(this.mockAttributeClient);
   }
 
   @Test
@@ -73,6 +73,7 @@ class DefaultTraceAttributeReaderTest {
             .build();
 
     assertEquals(
-        stringLiteral("attrValue"), this.traceAttributeReader.getTraceValue(trace, "key").blockingGet());
+        stringLiteral("attrValue"),
+        this.traceAttributeReader.getTraceValue(trace, "key").blockingGet());
   }
 }

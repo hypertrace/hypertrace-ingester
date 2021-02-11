@@ -76,14 +76,14 @@ class DefaultTraceEntityReaderTest {
   @Mock EntityTypeClient mockTypeClient;
   @Mock EntityDataClient mockDataClient;
   @Mock CachingAttributeClient mockAttributeClient;
-  @Mock TraceAttributeReader mockAttributeReader;
+  @Mock TraceAttributeReader<StructuredTrace, Event> mockAttributeReader;
 
-  private DefaultTraceEntityReader entityReader;
+  private DefaultTraceEntityReader<StructuredTrace, Event> entityReader;
 
   @BeforeEach
   void beforeEach() {
     this.entityReader =
-        new DefaultTraceEntityReader(
+        new DefaultTraceEntityReader<>(
             this.mockTypeClient,
             this.mockDataClient,
             this.mockAttributeClient,
@@ -94,6 +94,7 @@ class DefaultTraceEntityReaderTest {
   void canReadAnEntity() {
     mockSingleEntityType();
     mockAvailableAttributes();
+    mockCustomerId();
     mockEntityIdWith(stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockEntityNameWith(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockEntityUpsert();
@@ -109,6 +110,7 @@ class DefaultTraceEntityReaderTest {
   void canReadAllEntities() {
     mockAllEntityTypes();
     mockAvailableAttributes();
+    mockCustomerId();
     mockEntityIdWith(stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockEntityNameWith(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockEntityUpsert();
@@ -122,6 +124,7 @@ class DefaultTraceEntityReaderTest {
   void omitsEntityBasedOnMissingAttributes() {
     mockSingleEntityType();
     mockAvailableAttributes();
+    mockCustomerId();
     mockEntityIdWith(LiteralValue.getDefaultInstance());
     mockEntityNameWith(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
@@ -130,6 +133,10 @@ class DefaultTraceEntityReaderTest {
             .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
             .isEmpty()
             .blockingGet());
+  }
+
+  private void mockCustomerId() {
+    when(this.mockAttributeReader.getCustomerId(TEST_SPAN)).thenReturn(TENANT_ID);
   }
 
   private void mockEntityNameWith(LiteralValue value) {

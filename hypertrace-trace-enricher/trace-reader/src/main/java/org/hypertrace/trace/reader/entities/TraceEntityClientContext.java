@@ -4,22 +4,21 @@ import io.grpc.Channel;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
-import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 
-public class TraceEntityReaderBuilder {
+public class TraceEntityClientContext {
   /**
    * Instantiates a new builder which reuses existing clients
    *
    * @param entityTypeClient
    * @param entityDataClient
    * @param attributeClient
-   * @return TraceEntityReaderBuilder
+   * @return {@link TraceEntityClientContext}
    */
-  public static TraceEntityReaderBuilder usingClients(
+  public static TraceEntityClientContext usingClients(
       EntityTypeClient entityTypeClient,
       EntityDataClient entityDataClient,
       CachingAttributeClient attributeClient) {
-    return new TraceEntityReaderBuilder(entityTypeClient, entityDataClient, attributeClient);
+    return new TraceEntityClientContext(entityTypeClient, entityDataClient, attributeClient);
   }
 
   /**
@@ -29,11 +28,11 @@ public class TraceEntityReaderBuilder {
    * @param entityDataChannel
    * @param entityTypeChannel
    * @param attributeChannel
-   * @return TraceEntityReaderBuilder
+   * @return {@link TraceEntityClientContext}
    */
-  public static TraceEntityReaderBuilder usingChannels(
+  public static TraceEntityClientContext usingChannels(
       Channel entityDataChannel, Channel entityTypeChannel, Channel attributeChannel) {
-    return new TraceEntityReaderBuilder(
+    return new TraceEntityClientContext(
         EntityTypeClient.builder(entityTypeChannel).build(),
         EntityDataClient.builder(entityDataChannel).build(),
         CachingAttributeClient.builder(attributeChannel).build());
@@ -43,7 +42,7 @@ public class TraceEntityReaderBuilder {
   private final EntityDataClient entityDataClient;
   private final CachingAttributeClient attributeClient;
 
-  private TraceEntityReaderBuilder(
+  private TraceEntityClientContext(
       EntityTypeClient entityTypeClient,
       EntityDataClient entityDataClient,
       CachingAttributeClient attributeClient) {
@@ -52,11 +51,15 @@ public class TraceEntityReaderBuilder {
     this.attributeClient = attributeClient;
   }
 
-  public TraceEntityReader build() {
-    return new DefaultTraceEntityReader(
-        this.entityTypeClient,
-        this.entityDataClient,
-        this.attributeClient,
-        TraceAttributeReader.build(this.attributeClient));
+  public EntityTypeClient getEntityTypeClient() {
+    return entityTypeClient;
+  }
+
+  public EntityDataClient getEntityDataClient() {
+    return entityDataClient;
+  }
+
+  public CachingAttributeClient getAttributeClient() {
+    return attributeClient;
   }
 }

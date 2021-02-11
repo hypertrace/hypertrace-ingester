@@ -4,33 +4,32 @@ import java.util.Objects;
 import java.util.Optional;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
+import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 
 class TraceValueSource extends AvroBackedValueSource {
 
   private final StructuredTrace trace;
-  private final ValueCoercer valueCoercer;
 
-  TraceValueSource(StructuredTrace trace, ValueCoercer valueCoercer) {
+  TraceValueSource(StructuredTrace trace) {
     this.trace = trace;
-    this.valueCoercer = valueCoercer;
   }
 
   @Override
   public Optional<LiteralValue> getAttribute(String key, AttributeKind attributeKind) {
     return this.getAttributeString(this.trace.getAttributes(), key)
-        .flatMap(stringValue -> this.valueCoercer.toLiteral(stringValue, attributeKind));
+        .flatMap(stringValue -> ValueCoercer.toLiteral(stringValue, attributeKind));
   }
 
   @Override
   public Optional<LiteralValue> getMetric(String key, AttributeKind attributeKind) {
     return this.getMetricDouble(this.trace.getMetrics(), key)
-        .flatMap(doubleValue -> this.valueCoercer.toLiteral(doubleValue, attributeKind));
+        .flatMap(doubleValue -> ValueCoercer.toLiteral(doubleValue, attributeKind));
   }
 
   @Override
-  public Optional<ValueSource> sourceForScope(String scope) {
+  public Optional<ValueSource<StructuredTrace, Event>> sourceForScope(String scope) {
     return TRACE_SCOPE.equals(scope) ? Optional.of(this) : Optional.empty();
   }
 
