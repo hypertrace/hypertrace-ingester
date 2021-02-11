@@ -39,44 +39,44 @@ data:
     enricher {
       DefaultServiceEntityEnricher {
         entity.service.config = {
-          host = entity-service
-          port = 50061
+          host = {{ .Values.traceEnricherConfig.entityServiceHost }}
+          port = {{ .Values.traceEnricherConfig.entityServicePort }}
         }
       }
 
       BackendEntityEnricher {
         entity.service.config = {
-          host = entity-service
-          port = 50061
+          host = {{ .Values.traceEnricherConfig.entityServiceHost }}
+          port = {{ .Values.traceEnricherConfig.entityServicePort }}
         }
       }
 
       EndpointEnricher {
         entity.service.config = {
-          host = entity-service
-          port = 50061
+          host = {{ .Values.traceEnricherConfig.entityServiceHost }}
+          port = {{ .Values.traceEnricherConfig.entityServicePort }}
         }
       }
 
       EntitySpanEnricher {
         entity.service.config = {
-          host = entity-service
-          port = 50061
+          host = {{ .Values.traceEnricherConfig.entityServiceHost }}
+          port = {{ .Values.traceEnricherConfig.entityServicePort }}
         }
         attribute.service.config = {
-          host = attribute-service
-          port = 9012
+          host = {{ .Values.traceEnricherConfig.attributeServiceHost }}
+          port = {{ .Values.traceEnricherConfig.attributeServicePort }}
         }
       }
 
       SpaceEnricher {
         config.service.config = {
-          host = config-service
-          port = 50101
+          host = {{ .Values.traceEnricherConfig.configServiceHost }}
+          port = {{ .Values.traceEnricherConfig.configServicePort }}
         }
         attribute.service.config = {
-          host = attribute-service
-          port = 9012
+          host = {{ .Values.traceEnricherConfig.attributeServiceHost }}
+          port = {{ .Values.traceEnricherConfig.attributeServicePort }}
         }
       }
     }
