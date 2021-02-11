@@ -4,7 +4,6 @@ import static org.hypertrace.trace.reader.attributes.ValueSource.TRACE_SCOPE;
 
 import io.reactivex.rxjava3.core.Single;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
-import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
@@ -14,12 +13,10 @@ class DefaultTraceAttributeReader implements TraceAttributeReader<StructuredTrac
 
   private final CachingAttributeClient attributeClient;
   private final ValueResolver valueResolver;
-  private final AttributeProjectionRegistry projectionRegistry;
 
   DefaultTraceAttributeReader(CachingAttributeClient attributeClient) {
     this.attributeClient = attributeClient;
-    this.projectionRegistry = new AttributeProjectionRegistry();
-    this.valueResolver = ValueResolver.build(this.attributeClient, this.projectionRegistry);
+    this.valueResolver = ValueResolver.build(this.attributeClient);
   }
 
   @Override
