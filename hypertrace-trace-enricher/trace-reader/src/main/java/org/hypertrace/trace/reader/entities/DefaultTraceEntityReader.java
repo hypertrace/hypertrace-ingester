@@ -71,7 +71,7 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
                 spanTenantContext(span)
                     .wrapSingle(() -> this.entityDataClient.getOrCreateEntity(entity)))
         .flatMapSingle(
-            entity -> convertToAvroEntity(traceAttributeReader.getCustomerId(span), entity));
+            entity -> convertToAvroEntity(traceAttributeReader.getTenantId(span), entity));
   }
 
   private Maybe<org.hypertrace.entity.data.service.v1.Entity> buildEntity(
@@ -128,6 +128,6 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
   }
 
   private GrpcRxExecutionContext spanTenantContext(S span) {
-    return GrpcRxExecutionContext.forTenantContext(traceAttributeReader.getCustomerId(span));
+    return GrpcRxExecutionContext.forTenantContext(traceAttributeReader.getTenantId(span));
   }
 }

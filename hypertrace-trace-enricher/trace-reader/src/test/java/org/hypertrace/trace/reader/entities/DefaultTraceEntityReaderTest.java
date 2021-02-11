@@ -136,7 +136,7 @@ class DefaultTraceEntityReaderTest {
   }
 
   private void mockCustomerId() {
-    when(this.mockAttributeReader.getCustomerId(TEST_SPAN)).thenReturn(TENANT_ID);
+    when(this.mockAttributeReader.getTenantId(TEST_SPAN)).thenReturn(TENANT_ID);
   }
 
   private void mockEntityNameWith(LiteralValue value) {

@@ -48,8 +48,12 @@ dependencies {
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.35.0")
-  runtimeOnly("io.netty:netty-codec-http2:4.1.59.Final")
-  runtimeOnly("io.netty:netty-handler-proxy:4.1.59.Final")
+  runtimeOnly("io.netty:netty-codec-http2:4.1.59.Final") {
+    because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
+  }
+  runtimeOnly("io.netty:netty-handler-proxy:4.1.59.Final") {
+    because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
+  }
 
   implementation("com.typesafe:config:1.4.1")
   implementation("de.javakaffee:kryo-serializers:0.45")

@@ -9,9 +9,9 @@ import javax.annotation.Nullable;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 
-public class ValueCoercer {
+public interface ValueCoercer {
 
-  public static Optional<LiteralValue> toLiteral(String stringValue, AttributeKind attributeKind) {
+  static Optional<LiteralValue> toLiteral(String stringValue, AttributeKind attributeKind) {
 
     switch (attributeKind) {
       case TYPE_DOUBLE:
@@ -32,7 +32,7 @@ public class ValueCoercer {
     }
   }
 
-  public static Optional<LiteralValue> toLiteral(Double doubleValue, AttributeKind attributeKind) {
+  static Optional<LiteralValue> toLiteral(Double doubleValue, AttributeKind attributeKind) {
     switch (attributeKind) {
       case TYPE_DOUBLE:
         return Optional.of(doubleLiteral(doubleValue));
@@ -43,6 +43,22 @@ public class ValueCoercer {
       case TYPE_BYTES: // Treat bytes and string the same
         return Optional.of(stringLiteral(doubleValue.toString()));
 
+      default:
+        return Optional.empty();
+    }
+  }
+
+  static Optional<String> convertToString(LiteralValue literalValue) {
+    switch (literalValue.getValueCase()) {
+      case INT_VALUE:
+        return Optional.of(String.valueOf(literalValue.getIntValue()));
+      case STRING_VALUE:
+        return Optional.of(literalValue.getStringValue());
+      case FLOAT_VALUE:
+        return Optional.of(String.valueOf(literalValue.getFloatValue()));
+      case BOOLEAN_VALUE:
+        return Optional.of(String.valueOf(literalValue.getBooleanValue()));
+      case VALUE_NOT_SET:
       default:
         return Optional.empty();
     }

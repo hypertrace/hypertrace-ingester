@@ -9,5 +9,5 @@ public interface TraceAttributeReader<T extends GenericRecord, S extends Generic
 
   Single<LiteralValue> getTraceValue(T trace, String attributeKey);
 
-  String getCustomerId(S span);
+  String getTenantId(S span);
 }

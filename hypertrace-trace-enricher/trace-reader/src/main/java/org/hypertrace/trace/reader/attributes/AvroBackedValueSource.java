@@ -4,12 +4,10 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
-import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
-import org.hypertrace.core.datamodel.StructuredTrace;
 
-abstract class AvroBackedValueSource implements ValueSource<StructuredTrace, Event> {
+abstract class AvroBackedValueSource implements ValueSource {
 
   protected Optional<String> getAttributeString(@Nullable Attributes attributes, String key) {
     return Optional.ofNullable(attributes)

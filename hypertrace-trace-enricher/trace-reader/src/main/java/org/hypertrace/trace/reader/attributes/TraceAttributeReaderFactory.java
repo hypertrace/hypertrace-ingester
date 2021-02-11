@@ -4,8 +4,8 @@ import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClien
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 
-public class TraceAttributeReaderFactory {
-  public static TraceAttributeReader<StructuredTrace, Event> build(
+public interface TraceAttributeReaderFactory {
+  static TraceAttributeReader<StructuredTrace, Event> build(
       CachingAttributeClient attributeClient) {
     return new DefaultTraceAttributeReader(attributeClient);
   }

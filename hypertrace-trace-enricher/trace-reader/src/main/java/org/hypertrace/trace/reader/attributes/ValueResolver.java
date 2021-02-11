@@ -8,7 +8,7 @@ import org.hypertrace.core.attribute.service.v1.LiteralValue;
 
 public interface ValueResolver {
 
-  Single<LiteralValue> resolve(ValueSource<?, ?> valueSource, AttributeMetadata attributeMetadata);
+  Single<LiteralValue> resolve(ValueSource valueSource, AttributeMetadata attributeMetadata);
 
   static ValueResolver build(
       CachingAttributeClient attributeClient, AttributeProjectionRegistry projectionRegistry) {

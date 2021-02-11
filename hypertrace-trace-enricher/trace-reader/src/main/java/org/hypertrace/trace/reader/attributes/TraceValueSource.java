@@ -4,7 +4,6 @@ import java.util.Objects;
 import java.util.Optional;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
-import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 
@@ -29,7 +28,7 @@ class TraceValueSource extends AvroBackedValueSource {
   }
 
   @Override
-  public Optional<ValueSource<StructuredTrace, Event>> sourceForScope(String scope) {
+  public Optional<ValueSource> sourceForScope(String scope) {
     return TRACE_SCOPE.equals(scope) ? Optional.of(this) : Optional.empty();
   }
 

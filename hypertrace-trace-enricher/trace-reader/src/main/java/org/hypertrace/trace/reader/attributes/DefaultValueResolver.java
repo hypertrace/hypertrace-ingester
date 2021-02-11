@@ -30,7 +30,7 @@ class DefaultValueResolver implements ValueResolver {
 
   @Override
   public Single<LiteralValue> resolve(
-      ValueSource<?, ?> valueSource, AttributeMetadata attributeMetadata) {
+      ValueSource valueSource, AttributeMetadata attributeMetadata) {
     if (!attributeMetadata.hasDefinition()) {
       return this.buildError("Attribute definition not set");
     }
@@ -53,12 +53,12 @@ class DefaultValueResolver implements ValueResolver {
   }
 
   private Single<LiteralValue> resolveValue(
-      ValueSource<?, ?> contextValueSource,
+      ValueSource contextValueSource,
       String attributeScope,
       AttributeType attributeType,
       AttributeKind attributeKind,
       String path) {
-    Single<? extends ValueSource<?, ?>> matchingValueSource =
+    Single<ValueSource> matchingValueSource =
         Maybe.fromOptional(contextValueSource.sourceForScope(attributeScope))
             .switchIfEmpty(
                 this.buildError("No value source available supporting scope %s", attributeScope));
@@ -82,8 +82,7 @@ class DefaultValueResolver implements ValueResolver {
     }
   }
 
-  private Single<LiteralValue> resolveProjection(
-      ValueSource<?, ?> valueSource, Projection projection) {
+  private Single<LiteralValue> resolveProjection(ValueSource valueSource, Projection projection) {
     switch (projection.getValueCase()) {
       case ATTRIBUTE_ID:
         return valueSource
@@ -101,7 +100,7 @@ class DefaultValueResolver implements ValueResolver {
   }
 
   private Single<LiteralValue> resolveExpression(
-      ValueSource<?, ?> valueSource, ProjectionExpression expression) {
+      ValueSource valueSource, ProjectionExpression expression) {
 
     Single<AttributeProjection> projectionSingle =
         Maybe.fromOptional(this.attributeProjectionRegistry.getProjection(expression.getOperator()))
@@ -114,7 +113,7 @@ class DefaultValueResolver implements ValueResolver {
   }
 
   private Single<List<LiteralValue>> resolveArgumentList(
-      ValueSource<?, ?> valueSource, List<Projection> arguments) {
+      ValueSource valueSource, List<Projection> arguments) {
     return Observable.fromIterable(arguments)
         .flatMapSingle(argument -> this.resolveProjection(valueSource, argument))
         .collect(Collectors.toList());

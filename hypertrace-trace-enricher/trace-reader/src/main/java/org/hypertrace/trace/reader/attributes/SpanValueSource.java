@@ -32,7 +32,7 @@ class SpanValueSource extends AvroBackedValueSource {
   }
 
   @Override
-  public Optional<ValueSource<StructuredTrace, Event>> sourceForScope(String scope) {
+  public Optional<ValueSource> sourceForScope(String scope) {
     return TRACE_SCOPE.equals(scope)
         ? Optional.of(ValueSourceFactory.forTrace(this.trace))
         : Optional.of(this);

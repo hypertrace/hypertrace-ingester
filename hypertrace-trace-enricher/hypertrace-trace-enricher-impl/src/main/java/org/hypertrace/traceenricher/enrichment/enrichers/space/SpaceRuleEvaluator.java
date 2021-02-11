@@ -7,7 +7,7 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.spaces.config.service.v1.AttributeValueRuleData;
 import org.hypertrace.spaces.config.service.v1.SpaceConfigRule;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
-import org.hypertrace.trace.reader.entities.AttributeValueConverter;
+import org.hypertrace.trace.reader.attributes.ValueCoercer;
 
 class SpaceRuleEvaluator {
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
@@ -36,7 +36,7 @@ class SpaceRuleEvaluator {
             span,
             attributeValueRuleData.getAttributeScope(),
             attributeValueRuleData.getAttributeKey())
-        .mapOptional(AttributeValueConverter::convertToString)
+        .mapOptional(ValueCoercer::convertToString)
         .filter(string -> !string.isEmpty())
         .map(List::of)
         .onErrorComplete()
