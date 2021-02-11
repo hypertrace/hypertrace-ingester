@@ -16,8 +16,8 @@ import org.hypertrace.entity.data.service.v1.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class AvroEntityConverter {
-  private static final Logger LOG = LoggerFactory.getLogger(AvroEntityConverter.class);
+public interface AvroEntityConverter {
+  Logger LOG = LoggerFactory.getLogger(AvroEntityConverter.class);
 
   static Single<Entity> convertToAvroEntity(
       @Nonnull String tenantId, @Nonnull org.hypertrace.entity.data.service.v1.Entity entity) {

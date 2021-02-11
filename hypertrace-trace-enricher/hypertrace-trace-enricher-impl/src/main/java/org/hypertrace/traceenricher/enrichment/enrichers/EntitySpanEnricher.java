@@ -8,14 +8,15 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
 import org.hypertrace.entity.service.client.config.EntityServiceClientConfig;
 import org.hypertrace.trace.reader.entities.TraceEntityReader;
-import org.hypertrace.trace.reader.entities.TraceEntityReaderBuilder;
+import org.hypertrace.trace.reader.entities.TraceEntityClientContext;
+import org.hypertrace.trace.reader.entities.TraceEntityReaderFactory;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EntitySpanEnricher extends AbstractTraceEnricher {
   private static final Logger LOG = LoggerFactory.getLogger(EntitySpanEnricher.class);
-  private TraceEntityReader entityReader;
+  private TraceEntityReader<StructuredTrace, Event> entityReader;
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -40,6 +41,7 @@ public class EntitySpanEnricher extends AbstractTraceEnricher {
             .usePlaintext()
             .build();
     this.entityReader =
-        TraceEntityReaderBuilder.usingChannels(esChannel, esChannel, asChannel).build();
+        TraceEntityReaderFactory.build(
+            TraceEntityClientContext.usingChannels(esChannel, esChannel, asChannel));
   }
 }

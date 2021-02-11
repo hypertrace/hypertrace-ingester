@@ -1,7 +1,6 @@
 package org.hypertrace.trace.reader.entities;
 
 import static io.reactivex.rxjava3.core.Maybe.zip;
-import static org.hypertrace.trace.reader.entities.AvroEntityConverter.convertToAvroEntity;
 
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -10,33 +9,33 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.avro.generic.GenericRecord;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
-import org.hypertrace.core.datamodel.Entity;
-import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase;
+import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Value;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.entity.type.service.v2.EntityType;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 
-class DefaultTraceEntityReader implements TraceEntityReader {
+class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
+    implements TraceEntityReader<T, S> {
 
   private final EntityTypeClient entityTypeClient;
   private final EntityDataClient entityDataClient;
   private final CachingAttributeClient attributeClient;
-  private final TraceAttributeReader traceAttributeReader;
+  private final TraceAttributeReader<T, S> traceAttributeReader;
 
   DefaultTraceEntityReader(
       EntityTypeClient entityTypeClient,
       EntityDataClient entityDataClient,
       CachingAttributeClient attributeClient,
-      TraceAttributeReader traceAttributeReader) {
+      TraceAttributeReader<T, S> traceAttributeReader) {
     this.entityTypeClient = entityTypeClient;
     this.entityDataClient = entityDataClient;
     this.attributeClient = attributeClient;
@@ -44,40 +43,35 @@ class DefaultTraceEntityReader implements TraceEntityReader {
   }
 
   @Override
-  public Maybe<Entity> getAssociatedEntityForSpan(
-      String entityType, StructuredTrace trace, Event span) {
+  public Maybe<Entity> getAssociatedEntityForSpan(String entityType, T trace, S span) {
     return spanTenantContext(span)
         .wrapSingle(() -> this.entityTypeClient.get(entityType))
         .flatMapMaybe(
-            entityTypeDefinition -> this.getOrCreateAvroEntity(entityTypeDefinition, trace, span));
+            entityTypeDefinition -> this.getOrCreateEntity(entityTypeDefinition, trace, span));
   }
 
   @Override
-  public Single<Map<String, Entity>> getAssociatedEntitiesForSpan(
-      StructuredTrace trace, Event span) {
+  public Single<Map<String, Entity>> getAssociatedEntitiesForSpan(T trace, S span) {
 
     return spanTenantContext(span)
         .wrapSingle(
             () ->
                 this.entityTypeClient
                     .getAll()
-                    .flatMapMaybe(entityType -> this.getOrCreateAvroEntity(entityType, trace, span))
+                    .flatMapMaybe(entityType -> this.getOrCreateEntity(entityType, trace, span))
                     .toMap(Entity::getEntityType)
                     .map(Collections::unmodifiableMap));
   }
 
-  private Maybe<Entity> getOrCreateAvroEntity(
-      EntityType entityType, StructuredTrace trace, Event span) {
+  private Maybe<Entity> getOrCreateEntity(EntityType entityType, T trace, S span) {
     return this.buildEntity(entityType, trace, span)
         .flatMapSingle(
             entity ->
                 spanTenantContext(span)
-                    .wrapSingle(() -> this.entityDataClient.getOrCreateEntity(entity)))
-        .flatMapSingle(entity -> convertToAvroEntity(span.getCustomerId(), entity));
+                    .wrapSingle(() -> this.entityDataClient.getOrCreateEntity(entity)));
   }
 
-  private Maybe<org.hypertrace.entity.data.service.v1.Entity> buildEntity(
-      EntityType entityType, StructuredTrace trace, Event span) {
+  private Maybe<Entity> buildEntity(EntityType entityType, T trace, S span) {
     Maybe<Map<String, AttributeValue>> attributes =
         this.resolveAllAttributes(entityType.getAttributeScope(), trace, span).cache();
 
@@ -92,17 +86,15 @@ class DefaultTraceEntityReader implements TraceEntityReader {
         name,
         attributes,
         (resolvedId, resolvedName, resolvedAttributeMap) ->
-            org.hypertrace.entity.data.service.v1.Entity.newBuilder()
+            Entity.newBuilder()
                 .setEntityId(resolvedId)
                 .setEntityType(entityType.getName())
                 .setEntityName(resolvedName)
-                .putAllIdentifyingAttributes(resolvedAttributeMap)
                 .putAllAttributes(resolvedAttributeMap)
                 .build());
   }
 
-  private Maybe<Map<String, AttributeValue>> resolveAllAttributes(
-      String scope, StructuredTrace trace, Event span) {
+  private Maybe<Map<String, AttributeValue>> resolveAllAttributes(String scope, T trace, S span) {
     return spanTenantContext(span)
         .wrapSingle(() -> this.attributeClient.getAllInScope(scope))
         .flattenAsObservable(list -> list)
@@ -113,7 +105,7 @@ class DefaultTraceEntityReader implements TraceEntityReader {
   }
 
   private Maybe<Entry<String, AttributeValue>> resolveAttribute(
-      AttributeMetadata attributeMetadata, StructuredTrace trace, Event span) {
+      AttributeMetadata attributeMetadata, T trace, S span) {
     return this.traceAttributeReader
         .getSpanValue(trace, span, attributeMetadata.getScopeString(), attributeMetadata.getKey())
         .onErrorComplete()
@@ -130,7 +122,7 @@ class DefaultTraceEntityReader implements TraceEntityReader {
         .map(Value::getString);
   }
 
-  private GrpcRxExecutionContext spanTenantContext(Event span) {
-    return GrpcRxExecutionContext.forTenantContext(span.getCustomerId());
+  private GrpcRxExecutionContext spanTenantContext(S span) {
+    return GrpcRxExecutionContext.forTenantContext(traceAttributeReader.getTenantId(span));
   }
 }

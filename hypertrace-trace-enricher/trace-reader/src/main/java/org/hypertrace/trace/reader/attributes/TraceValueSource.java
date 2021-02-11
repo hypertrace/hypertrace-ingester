@@ -10,23 +10,21 @@ import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 class TraceValueSource extends AvroBackedValueSource {
 
   private final StructuredTrace trace;
-  private final ValueCoercer valueCoercer;
 
-  TraceValueSource(StructuredTrace trace, ValueCoercer valueCoercer) {
+  TraceValueSource(StructuredTrace trace) {
     this.trace = trace;
-    this.valueCoercer = valueCoercer;
   }
 
   @Override
   public Optional<LiteralValue> getAttribute(String key, AttributeKind attributeKind) {
     return this.getAttributeString(this.trace.getAttributes(), key)
-        .flatMap(stringValue -> this.valueCoercer.toLiteral(stringValue, attributeKind));
+        .flatMap(stringValue -> ValueCoercer.toLiteral(stringValue, attributeKind));
   }
 
   @Override
   public Optional<LiteralValue> getMetric(String key, AttributeKind attributeKind) {
     return this.getMetricDouble(this.trace.getMetrics(), key)
-        .flatMap(doubleValue -> this.valueCoercer.toLiteral(doubleValue, attributeKind));
+        .flatMap(doubleValue -> ValueCoercer.toLiteral(doubleValue, attributeKind));
   }
 
   @Override

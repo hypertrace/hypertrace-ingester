@@ -60,7 +60,7 @@ class DefaultValueResolverTest {
     assertEquals(
         stringLiteral("attrValue"),
         this.resolver
-            .resolve(ValueSource.forSpan(this.mockStructuredTrace, span), metadata)
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
             .blockingGet());
   }
 
@@ -80,7 +80,7 @@ class DefaultValueResolverTest {
     assertEquals(
         longLiteral(42),
         this.resolver
-            .resolve(ValueSource.forSpan(this.mockStructuredTrace, span), metadata)
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
             .blockingGet());
   }
 
@@ -96,7 +96,8 @@ class DefaultValueResolverTest {
     assertEquals(
         stringLiteral("projection"),
         this.resolver
-            .resolve(ValueSource.forSpan(this.mockStructuredTrace, mock(Event.class)), metadata)
+            .resolve(
+                ValueSourceFactory.forSpan(this.mockStructuredTrace, mock(Event.class)), metadata)
             .blockingGet());
   }
 
@@ -124,7 +125,7 @@ class DefaultValueResolverTest {
     assertEquals(
         longLiteral(42),
         this.resolver
-            .resolve(ValueSource.forSpan(this.mockStructuredTrace, span), projectionMetadata)
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), projectionMetadata)
             .blockingGet());
   }
 
@@ -172,7 +173,7 @@ class DefaultValueResolverTest {
     assertEquals(
         stringLiteral("42coolString"),
         this.resolver
-            .resolve(ValueSource.forSpan(this.mockStructuredTrace, span), projectionMetadata)
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), projectionMetadata)
             .blockingGet());
   }
 
@@ -202,7 +203,7 @@ class DefaultValueResolverTest {
     assertEquals(
         longLiteral(42),
         this.resolver
-            .resolve(ValueSource.forSpan(trace, mock(Event.class)), projectionMetadata)
+            .resolve(ValueSourceFactory.forSpan(trace, mock(Event.class)), projectionMetadata)
             .blockingGet());
   }
 }

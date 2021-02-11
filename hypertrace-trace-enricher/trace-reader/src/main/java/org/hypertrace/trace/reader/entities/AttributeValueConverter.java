@@ -7,8 +7,8 @@ import org.hypertrace.entity.data.service.v1.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class AttributeValueConverter {
-  private static final Logger LOG = LoggerFactory.getLogger(AttributeValueConverter.class);
+interface AttributeValueConverter {
+  Logger LOG = LoggerFactory.getLogger(AttributeValueConverter.class);
 
   static Maybe<AttributeValue> convertToAttributeValue(LiteralValue literalValue) {
     switch (literalValue.getValueCase()) {

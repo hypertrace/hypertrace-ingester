@@ -25,13 +25,11 @@ class TraceValueSourceTest {
 
     assertEquals(
         Optional.of(stringLiteral("traceValue")),
-        new TraceValueSource(trace, DefaultValueCoercer.INSTANCE)
-            .getAttribute("traceKey", AttributeKind.TYPE_STRING));
+        new TraceValueSource(trace).getAttribute("traceKey", AttributeKind.TYPE_STRING));
 
     assertEquals(
         Optional.empty(),
-        new TraceValueSource(trace, DefaultValueCoercer.INSTANCE)
-            .getAttribute("fake", AttributeKind.TYPE_STRING));
+        new TraceValueSource(trace).getAttribute("fake", AttributeKind.TYPE_STRING));
   }
 
   @Test
@@ -43,24 +41,19 @@ class TraceValueSourceTest {
 
     assertEquals(
         Optional.of(doubleLiteral(10.3)),
-        new TraceValueSource(trace, DefaultValueCoercer.INSTANCE)
-            .getMetric("traceKey", AttributeKind.TYPE_DOUBLE));
+        new TraceValueSource(trace).getMetric("traceKey", AttributeKind.TYPE_DOUBLE));
 
     assertEquals(
         Optional.of(longLiteral(10)),
-        new TraceValueSource(trace, DefaultValueCoercer.INSTANCE)
-            .getMetric("traceKey", AttributeKind.TYPE_INT64));
+        new TraceValueSource(trace).getMetric("traceKey", AttributeKind.TYPE_INT64));
 
     assertEquals(
-        Optional.empty(),
-        new TraceValueSource(trace, DefaultValueCoercer.INSTANCE)
-            .getMetric("fake", AttributeKind.TYPE_INT64));
+        Optional.empty(), new TraceValueSource(trace).getMetric("fake", AttributeKind.TYPE_INT64));
   }
 
   @Test
   void canConvertValueSourceBasedOnScope() {
-    TraceValueSource originalSource =
-        new TraceValueSource(mock(StructuredTrace.class), DefaultValueCoercer.INSTANCE);
+    TraceValueSource originalSource = new TraceValueSource(mock(StructuredTrace.class));
     assertEquals(Optional.of(originalSource), originalSource.sourceForScope("TRACE"));
     assertEquals(Optional.empty(), originalSource.sourceForScope("SPAN"));
   }

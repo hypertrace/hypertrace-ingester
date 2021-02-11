@@ -26,12 +26,12 @@ class SpanValueSourceTest {
 
     assertEquals(
         Optional.of(stringLiteral("spanValue")),
-        new SpanValueSource(mock(StructuredTrace.class), span, DefaultValueCoercer.INSTANCE)
+        new SpanValueSource(mock(StructuredTrace.class), span)
             .getAttribute("spanKey", AttributeKind.TYPE_STRING));
 
     assertEquals(
         Optional.empty(),
-        new SpanValueSource(mock(StructuredTrace.class), span, DefaultValueCoercer.INSTANCE)
+        new SpanValueSource(mock(StructuredTrace.class), span)
             .getAttribute("fake", AttributeKind.TYPE_STRING));
   }
 
@@ -45,7 +45,7 @@ class SpanValueSourceTest {
 
     assertEquals(
         Optional.of(stringLiteral("enrichedValue")),
-        new SpanValueSource(mock(StructuredTrace.class), span, DefaultValueCoercer.INSTANCE)
+        new SpanValueSource(mock(StructuredTrace.class), span)
             .getAttribute("spanKey", AttributeKind.TYPE_STRING));
   }
 
@@ -56,27 +56,27 @@ class SpanValueSourceTest {
 
     assertEquals(
         Optional.of(doubleLiteral(10.3)),
-        new SpanValueSource(mock(StructuredTrace.class), span, DefaultValueCoercer.INSTANCE)
+        new SpanValueSource(mock(StructuredTrace.class), span)
             .getMetric("spanKey", AttributeKind.TYPE_DOUBLE));
 
     assertEquals(
         Optional.of(longLiteral(10)),
-        new SpanValueSource(mock(StructuredTrace.class), span, DefaultValueCoercer.INSTANCE)
+        new SpanValueSource(mock(StructuredTrace.class), span)
             .getMetric("spanKey", AttributeKind.TYPE_INT64));
 
     assertEquals(
         Optional.empty(),
-        new SpanValueSource(mock(StructuredTrace.class), span, DefaultValueCoercer.INSTANCE)
+        new SpanValueSource(mock(StructuredTrace.class), span)
             .getMetric("fake", AttributeKind.TYPE_INT64));
   }
 
   @Test
   void canConvertValueSourceBasedOnScope() {
     StructuredTrace mockTrace = mock(StructuredTrace.class);
-    SpanValueSource originalSource =
-        new SpanValueSource(mockTrace, mock(Event.class), DefaultValueCoercer.INSTANCE);
+    SpanValueSource originalSource = new SpanValueSource(mockTrace, mock(Event.class));
     assertEquals(Optional.of(originalSource), originalSource.sourceForScope("OTHER"));
     assertEquals(
-        Optional.of(ValueSource.forTrace(mockTrace)), originalSource.sourceForScope("TRACE"));
+        Optional.of(ValueSourceFactory.forTrace(mockTrace)),
+        originalSource.sourceForScope("TRACE"));
   }
 }

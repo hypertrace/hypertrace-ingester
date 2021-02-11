@@ -6,12 +6,11 @@ import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegis
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 
-interface ValueResolver {
+public interface ValueResolver {
 
   Single<LiteralValue> resolve(ValueSource valueSource, AttributeMetadata attributeMetadata);
 
-  static ValueResolver build(
-      CachingAttributeClient attributeClient, AttributeProjectionRegistry projectionRegistry) {
-    return new DefaultValueResolver(attributeClient, projectionRegistry);
+  static ValueResolver build(CachingAttributeClient attributeClient) {
+    return new DefaultValueResolver(attributeClient, new AttributeProjectionRegistry());
   }
 }

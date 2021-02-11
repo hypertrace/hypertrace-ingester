@@ -1,6 +1,6 @@
 package org.hypertrace.trace.reader.entities;
 
-import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributesWithKeyValues;
+import static org.hypertrace.trace.reader.attributes.EntityUtil.buildAttributesWithKeyValues;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedEventBuilder;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedStructuredTraceBuilder;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
@@ -17,10 +17,10 @@ import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClien
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
-import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
+import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.entity.type.service.v2.EntityType;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
@@ -60,13 +60,12 @@ class DefaultTraceEntityReaderTest {
 
   private static final StructuredTrace TEST_TRACE = defaultedStructuredTraceBuilder().build();
   private static final Event TEST_SPAN = defaultedEventBuilder().setCustomerId(TENANT_ID).build();
-  private static final Entity EXPECTED_AVRO_ENTITY =
+  private static final Entity EXPECTED_ENTITY =
       Entity.newBuilder()
           .setEntityType(TEST_ENTITY_TYPE_NAME)
           .setEntityId(TEST_ENTITY_ID_ATTRIBUTE_VALUE)
           .setEntityName(TEST_ENTITY_NAME_ATTRIBUTE_VALUE)
-          .setCustomerId(TENANT_ID)
-          .setAttributes(
+          .putAllAttributes(
               buildAttributesWithKeyValues(
                   Map.of(
                       TEST_ENTITY_ID_ATTRIBUTE_KEY, TEST_ENTITY_ID_ATTRIBUTE_VALUE,
@@ -76,14 +75,14 @@ class DefaultTraceEntityReaderTest {
   @Mock EntityTypeClient mockTypeClient;
   @Mock EntityDataClient mockDataClient;
   @Mock CachingAttributeClient mockAttributeClient;
-  @Mock TraceAttributeReader mockAttributeReader;
+  @Mock TraceAttributeReader<StructuredTrace, Event> mockAttributeReader;
 
-  private DefaultTraceEntityReader entityReader;
+  private DefaultTraceEntityReader<StructuredTrace, Event> entityReader;
 
   @BeforeEach
   void beforeEach() {
     this.entityReader =
-        new DefaultTraceEntityReader(
+        new DefaultTraceEntityReader<>(
             this.mockTypeClient,
             this.mockDataClient,
             this.mockAttributeClient,
@@ -94,12 +93,13 @@ class DefaultTraceEntityReaderTest {
   void canReadAnEntity() {
     mockSingleEntityType();
     mockAvailableAttributes();
+    mockCustomerId();
     mockEntityIdWith(stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockEntityNameWith(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockEntityUpsert();
 
     assertEquals(
-        EXPECTED_AVRO_ENTITY,
+        EXPECTED_ENTITY,
         this.entityReader
             .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
             .blockingGet());
@@ -109,12 +109,13 @@ class DefaultTraceEntityReaderTest {
   void canReadAllEntities() {
     mockAllEntityTypes();
     mockAvailableAttributes();
+    mockCustomerId();
     mockEntityIdWith(stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockEntityNameWith(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockEntityUpsert();
 
     assertEquals(
-        Map.of(TEST_ENTITY_TYPE_NAME, EXPECTED_AVRO_ENTITY),
+        Map.of(TEST_ENTITY_TYPE_NAME, EXPECTED_ENTITY),
         this.entityReader.getAssociatedEntitiesForSpan(TEST_TRACE, TEST_SPAN).blockingGet());
   }
 
@@ -122,6 +123,7 @@ class DefaultTraceEntityReaderTest {
   void omitsEntityBasedOnMissingAttributes() {
     mockSingleEntityType();
     mockAvailableAttributes();
+    mockCustomerId();
     mockEntityIdWith(LiteralValue.getDefaultInstance());
     mockEntityNameWith(stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
@@ -130,6 +132,10 @@ class DefaultTraceEntityReaderTest {
             .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
             .isEmpty()
             .blockingGet());
+  }
+
+  private void mockCustomerId() {
+    when(this.mockAttributeReader.getTenantId(TEST_SPAN)).thenReturn(TENANT_ID);
   }
 
   private void mockEntityNameWith(LiteralValue value) {
@@ -145,8 +151,7 @@ class DefaultTraceEntityReaderTest {
   }
 
   private void mockEntityUpsert() {
-    when(this.mockDataClient.getOrCreateEntity(
-            any(org.hypertrace.entity.data.service.v1.Entity.class)))
+    when(this.mockDataClient.getOrCreateEntity(any(Entity.class)))
         .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
   }
 

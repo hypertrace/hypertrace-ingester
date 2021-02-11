@@ -12,31 +12,29 @@ class SpanValueSource extends AvroBackedValueSource {
 
   private final StructuredTrace trace;
   private final Event span;
-  private final ValueCoercer valueCoercer;
 
-  SpanValueSource(StructuredTrace trace, Event span, ValueCoercer valueCoercer) {
+  SpanValueSource(StructuredTrace trace, Event span) {
     this.trace = trace;
     this.span = span;
-    this.valueCoercer = valueCoercer;
   }
 
   @Override
   public Optional<LiteralValue> getAttribute(String key, AttributeKind attributeKind) {
     return this.getAttributeString(this.span.getEnrichedAttributes(), key)
         .or(() -> this.getAttributeString(this.span.getAttributes(), key))
-        .flatMap(stringValue -> this.valueCoercer.toLiteral(stringValue, attributeKind));
+        .flatMap(stringValue -> ValueCoercer.toLiteral(stringValue, attributeKind));
   }
 
   @Override
   public Optional<LiteralValue> getMetric(String key, AttributeKind attributeKind) {
     return this.getMetricDouble(this.span.getMetrics(), key)
-        .flatMap(doubleValue -> this.valueCoercer.toLiteral(doubleValue, attributeKind));
+        .flatMap(doubleValue -> ValueCoercer.toLiteral(doubleValue, attributeKind));
   }
 
   @Override
   public Optional<ValueSource> sourceForScope(String scope) {
     return TRACE_SCOPE.equals(scope)
-        ? Optional.of(ValueSource.forTrace(this.trace))
+        ? Optional.of(ValueSourceFactory.forTrace(this.trace))
         : Optional.of(this);
   }
 
