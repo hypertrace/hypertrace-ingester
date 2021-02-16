@@ -1,9 +1,17 @@
 package org.hypertrace.viewgenerator.generators;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
+import org.hypertrace.viewgenerator.api.SpanEventView;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,5 +96,25 @@ public class SpanEventViewGeneratorTest {
         ).build()
     );
     Assertions.assertNull(spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
+  }
+
+  @Test
+  public void testTotalSpanCount() throws IOException {
+    URL resource = Thread.currentThread().getContextClassLoader().
+        getResource("SampleTrace-Hotrod.avro");
+
+    SpecificDatumReader<StructuredTrace> datumReader = new SpecificDatumReader<>(
+        StructuredTrace.getClassSchema());
+    DataFileReader<StructuredTrace> dfrStructuredTrace = new DataFileReader<>(new File(resource.getPath()), datumReader);
+
+    int nRecords = 0;
+    while (dfrStructuredTrace.hasNext()) {
+      StructuredTrace trace = dfrStructuredTrace.next();
+      List<SpanEventView> spanEventViews = new SpanEventViewGenerator().process(trace);
+      spanEventViews.forEach(v -> Assertions.assertTrue(v.getTotalSpanCount() > 0));
+      nRecords++;
+    }
+    dfrStructuredTrace.close();
+    Assertions.assertTrue(nRecords > 0);
   }
 }
