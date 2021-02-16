@@ -2,11 +2,14 @@ package org.hypertrace.viewgenerator.generators;
 
 import static org.hypertrace.core.datamodel.shared.SpanAttributeUtils.getStringAttribute;
 
+import com.google.common.collect.Maps;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.hypertrace.core.datamodel.Entity;
@@ -15,6 +18,7 @@ import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
+import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
@@ -23,6 +27,8 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.viewgenerator.api.SpanEventView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
 
@@ -46,6 +52,9 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
             parentToChildrenEventIds,
             eventMap);
 
+    Map<ByteBuffer, EventInfo> eventInfoMap = buildEventInfoMap(
+        parentToChildrenEventIds, childToParentEventIds, eventMap);
+    LoggerFactory.getLogger("test").info("Hellllooooo!");
     return structuredTrace.getEventList().stream()
         .map(
             event ->
@@ -54,7 +63,8 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
                     structuredTrace.getTraceId(),
                     eventMap,
                     childToParentEventIds,
-                    exitSpanToCalleeApiEntrySpanMap)
+                    exitSpanToCalleeApiEntrySpanMap,
+                    eventInfoMap)
                     .build())
         .collect(Collectors.toList());
   }
@@ -75,28 +85,32 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
   }
 
   private SpanEventView.Builder generateViewBuilder(
-      Event event,
-      ByteBuffer traceId,
-      Map<ByteBuffer, Event> eventMap,
-      Map<ByteBuffer, ByteBuffer> childToParentEventIds,
-      Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap) {
+      final Event event,
+      final ByteBuffer traceId,
+      final Map<ByteBuffer, Event> eventMap,
+      final Map<ByteBuffer, ByteBuffer> childToParentEventIds,
+      final Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap,
+      final Map<ByteBuffer, EventInfo> eventInfoMap) {
 
     SpanEventView.Builder builder = SpanEventView.newBuilder();
 
     builder.setTenantId(event.getCustomerId());
     builder.setSpanId(event.getEventId());
     builder.setEventName(event.getEventName());
+    builder.setApiTraceCount(0);
+    EventInfo eventInfo = eventInfoMap.get(event.getEventId());
 
-    // api_trace_id
-    ByteBuffer apiEntrySpanId =
-        EnrichedSpanUtils.getApiEntrySpanId(event, eventMap, childToParentEventIds);
-
-    builder.setApiTraceId(apiEntrySpanId);
-    if (event.getEventId().equals(apiEntrySpanId)) {
-      // set this count to 1 only if this span is the head of the Api Trace
-      builder.setApiTraceCount(1);
-    } else {
-      builder.setApiTraceCount(0);
+    if (eventInfo != null) {
+      builder.setTotalSpanCount(eventInfo.getTotalEventCount());
+      if (null != eventInfo.getApiTraceId()) {
+        ByteBuffer apiTraceId = eventInfo.getApiTraceId();
+        builder.setApiTraceId(apiTraceId);
+        // set this count to 1 only if this span is the head of the Api Trace
+        if (event.getEventId().equals(apiTraceId)) {
+          builder.setApiTraceCount(1);
+        }
+        builder.setEntryApiId(EnrichedSpanUtils.getApiId(eventMap.get(apiTraceId)));
+      }
     }
 
     // span_type
@@ -124,12 +138,6 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     builder.setApiId(EnrichedSpanUtils.getApiId(event));
     builder.setApiName(EnrichedSpanUtils.getApiName(event));
     builder.setApiDiscoveryState(EnrichedSpanUtils.getApiDiscoveryState(event));
-
-    // entry_api_id
-    Event entryApiSpan = EnrichedSpanUtils.getApiEntrySpan(event, eventMap, childToParentEventIds);
-    if (entryApiSpan != null) {
-      builder.setEntryApiId(EnrichedSpanUtils.getApiId(entryApiSpan));
-    }
 
     // display entity and span names
     builder.setDisplayEntityName(getDisplayEntityName(event, exitSpanToCalleeApiEntrySpanMap));
@@ -302,5 +310,61 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
         return event.getEventName();
     }
     return null;
+  }
+
+  /**
+   * For every event compute EventInfo
+   */
+  Map<ByteBuffer, EventInfo> buildEventInfoMap(
+      final Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds,
+      final Map<ByteBuffer, ByteBuffer> childToParentId,
+      final Map<ByteBuffer, Event> eventMap) {
+    Set<ByteBuffer> rootEventIds = new HashSet<>(eventMap.keySet());
+    rootEventIds.removeAll(childToParentId.keySet());
+    Map<ByteBuffer, EventInfo> eventInfoMap = Maps.newHashMap();
+    rootEventIds.forEach(v -> buildEventInfoMapRecursively(
+        parentToChildrenEventIds, eventMap,
+        eventInfoMap, v, null));
+    return eventInfoMap;
+  }
+
+  EventInfo buildEventInfoMapRecursively(
+      final Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds,
+      final Map<ByteBuffer, Event> eventMap,
+      Map<ByteBuffer, EventInfo> eventInfoMap,
+      ByteBuffer eventId, ByteBuffer lastApiTraceId) {
+    ByteBuffer apiTraceId = EnrichedSpanUtils.isEntryApiBoundary(eventMap.get(eventId))
+        ? eventId : lastApiTraceId;
+
+    int totalEventCount = 1;
+    List<ByteBuffer> childrenIds = parentToChildrenEventIds.get(eventId);
+    if (null != childrenIds) {
+      for (ByteBuffer childEventId : childrenIds) {
+        totalEventCount += buildEventInfoMapRecursively(
+            parentToChildrenEventIds, eventMap,
+            eventInfoMap, childEventId, apiTraceId).getTotalEventCount();
+      }
+    }
+    EventInfo eventInfo = new EventInfo(totalEventCount, apiTraceId);
+    eventInfoMap.put(eventId, eventInfo);
+    return eventInfo;
+  }
+
+  private static class EventInfo {
+    private final int totalEventCount;
+    private final ByteBuffer apiTraceId;
+
+    public EventInfo(int totalEventCount, ByteBuffer apiTraceId) {
+      this.totalEventCount = totalEventCount;
+      this.apiTraceId = apiTraceId;
+    }
+
+    public int getTotalEventCount() {
+      return totalEventCount;
+    }
+
+    public ByteBuffer getApiTraceId() {
+      return apiTraceId;
+    }
   }
 }

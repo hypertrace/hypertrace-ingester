@@ -50,6 +50,9 @@ protocol SpanEventViewProtocol {
     // span id of an entry api span.
     union { null, bytes } api_trace_id = null;
 
+    // child span count
+    union { null, int } total_span_count = null;
+
     // name of the service
     union { null, string } service_name = null;
 
