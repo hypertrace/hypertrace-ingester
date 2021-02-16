@@ -54,7 +54,6 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
 
     Map<ByteBuffer, EventInfo> eventInfoMap = buildEventInfoMap(
         parentToChildrenEventIds, childToParentEventIds, eventMap);
-    LoggerFactory.getLogger("test").info("Hellllooooo!");
     return structuredTrace.getEventList().stream()
         .map(
             event ->
