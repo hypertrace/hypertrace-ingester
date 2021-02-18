@@ -36,7 +36,7 @@ spec:
         - name: log4j-config
           configMap:
             name: {{ $global.Values.logConfig.name }}
-      {{- range $k, $viewgen := $global.serviceConfig.viewgenerators }}
+      {{- range $viewgen := $group.generator.serviceConfig.viewgenerators }}
         - name: {{ $viewgen }}-config
           configMap:
             name: {{ $viewgen }}-config
@@ -66,10 +66,10 @@ spec:
               subPath: application.conf
             - name: view-gen-backend-entity-config
               mountPath: /app/resources/configs/view-gen-backend-entity/common/staging/application.conf
-              sbuPath: application.conf
-          {{ - range $k, $viewgen := $global.serviceConfig.viewgenerators }}
+              subPath: application.conf
+          {{- range $viewgen := $group.generator.serviceConfig.viewgenerators }}
             - name: {{ $viewgen }}-config
-              mountPath: /app/resources/configs/{{ $viewgen }}/common/staging/application.conf
+              mountPath: /app/resources/configs/{{ $viewgen }}/staging/application.conf
               subPath: application.conf
           {{- end }}
             - name: log4j-config
