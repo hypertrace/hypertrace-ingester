@@ -164,7 +164,7 @@ public class ApiTraceGraph {
                   Collectors.toSet());
           Set<ByteBuffer> additionalEvents = Sets.difference(newEventIds, remainingEventIds);
           if (!additionalEvents.isEmpty()) {
-            LOGGER.debug("Unexpected spans are included in ApiNode; additionalSpans: {}",
+            LOGGER.warn("Unexpected spans are included in ApiNode; additionalSpans: {}",
                 additionalEvents.stream().map(HexUtils::getHex).collect(Collectors.toSet()));
           }
 
