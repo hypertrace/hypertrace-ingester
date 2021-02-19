@@ -138,7 +138,7 @@ public class ApiTraceGraph {
 
         apiNodes.add(apiNode);
 
-        // Add the events in ApiNode to the processed events.
+        // Remove the events in ApiNode from remainingEventIds
         apiNode.getEvents().forEach(e -> remainingEventIds.remove(e.getEventId()));
       }
     }
