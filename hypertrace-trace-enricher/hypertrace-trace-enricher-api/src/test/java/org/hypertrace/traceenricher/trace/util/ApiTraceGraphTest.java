@@ -16,7 +16,7 @@ public class ApiTraceGraphTest {
   @Test
   public void testBuild() throws IOException {
     URL resource = Thread.currentThread().getContextClassLoader().
-        getResource("SampleTrace-Hotrod.avro");
+        getResource("StructuredTrace-Hotrod.avro");
 
     SpecificDatumReader<StructuredTrace> datumReader = new SpecificDatumReader<>(
         StructuredTrace.getClassSchema());
