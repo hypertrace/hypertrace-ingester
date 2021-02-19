@@ -134,7 +134,7 @@ public class ApiTraceGraph {
     for (Event event : trace.getEventList()) {
       if (EnrichedSpanUtils.isEntryApiBoundary(event)) {
         // create new ApiNode from the events in the api boundary
-        ApiNode<Event> apiNode = buildApiNode(graph, event, event);
+        ApiNode<Event> apiNode = buildApiNode(graph, event);
 
         apiNodes.add(apiNode);
 
@@ -156,7 +156,7 @@ public class ApiTraceGraph {
         // TODO: What if the root is an internal span?
         if (EnrichedSpanUtils.isExitSpan(event)) {
           // Get all the spans that should be included in this ApiNode and create new node.
-          ApiNode<Event> apiNode = buildApiNode(graph, event, null);
+          ApiNode<Event> apiNode = buildApiNode(graph, event);
 
           // We expect all events to be present in the remaining events here.
           Set<ByteBuffer> newEventIds = apiNode.getEvents().stream().map(Event::getEventId)
@@ -191,9 +191,12 @@ public class ApiTraceGraph {
     return apiNodes;
   }
 
+  /**
+   * Traverse events starting from the {@code rootEvent}
+   * and find out all the api boundary events it leads to
+   */
   private ApiNode<Event> buildApiNode(
-      StructuredTraceGraph graph,
-      Event rootEvent, Event apiEntryEvent) {
+      StructuredTraceGraph graph, Event rootEvent) {
     List<Event> events = new ArrayList<>();
     events.add(rootEvent);
 
@@ -232,7 +235,10 @@ public class ApiTraceGraph {
       }
     }
 
-    return new ApiNode<>(rootEvent, events, apiEntryEvent, exitApiBoundaryEvents);
+    return new ApiNode<>(
+        rootEvent, events,
+        (EnrichedSpanUtils.isEntryApiBoundary(rootEvent) ? rootEvent : null),
+        exitApiBoundaryEvents);
   }
 
   private void buildApiNodeToIndexMap(List<ApiNode<Event>> apiNodes) {
