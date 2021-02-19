@@ -1,7 +1,7 @@
 package org.hypertrace.traceenricher.trace.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,8 +25,8 @@ public class ApiTraceGraphTest {
     StructuredTrace trace = dfrStructuredTrace.next();
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     apiTraceGraph.build();
-    assertTrue(apiTraceGraph.getApiNodeEventEdgeList().size() > 0);
-    assertTrue(apiTraceGraph.getNodeList().size() > 0);
+    assertEquals(12, apiTraceGraph.getApiNodeEventEdgeList().size());
+    assertEquals(13, apiTraceGraph.getNodeList().size());
     assertNotNull(apiTraceGraph.getTrace());
 
     dfrStructuredTrace.close();

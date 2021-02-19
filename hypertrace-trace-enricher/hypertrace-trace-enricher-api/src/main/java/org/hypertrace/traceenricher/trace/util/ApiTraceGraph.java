@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.trace.util;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.ApiNodeEventEdge;
@@ -36,11 +38,10 @@ public class ApiTraceGraph {
   private final StructuredTrace trace;
   private final List<ApiNodeEventEdge> apiNodeEventEdgeList;
   private final Map<String, Integer> eventIdToIndexInTrace;
-
   // map of api node to index in api nodes list, since we want to build edges between api nodes
-  private Map<ApiNode<Event>, Integer> apiNodeToIndex;
-  //map of entry boundary event to api node. each api node has one entry boundary event
-  private Map<Event, ApiNode<Event>> entryBoundaryToApiNode;
+  private final Map<ApiNode<Event>, Integer> apiNodeToIndex;
+  // map of entry boundary event to api node. each api node has one entry boundary event
+  private final Map<Event, ApiNode<Event>> entryBoundaryToApiNode;
   private List<ApiNode<Event>> nodeList;
 
   public ApiTraceGraph(StructuredTrace trace) {
@@ -48,6 +49,8 @@ public class ApiTraceGraph {
     nodeList = new ArrayList<>();
     apiNodeEventEdgeList = new ArrayList<>();
     eventIdToIndexInTrace = buildEventIdToIndexInTrace(trace);
+    apiNodeToIndex = Maps.newHashMap();
+    entryBoundaryToApiNode = Maps.newHashMap();
   }
 
   public StructuredTrace getTrace() {
@@ -233,8 +236,6 @@ public class ApiTraceGraph {
   }
 
   private void buildApiNodeToIndexMap(List<ApiNode<Event>> apiNodes) {
-    entryBoundaryToApiNode = new HashMap<>();
-    apiNodeToIndex = new HashMap<>();
     for (int i = 0; i < apiNodes.size(); i++) {
       ApiNode<Event> apiNode = apiNodes.get(i);
       apiNode.getEntryApiBoundaryEvent().ifPresent(e -> entryBoundaryToApiNode.put(e, apiNode));
