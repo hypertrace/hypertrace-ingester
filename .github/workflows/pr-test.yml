@@ -53,7 +53,7 @@ jobs:
      
       - name: Publish Unit Test Results
         uses: docker://ghcr.io/enricomi/publish-unit-test-result-action:v1.6
-        if: always()
+        if: github.event_name == 'push'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           files: ./**/build/test-results/**/*.xml
