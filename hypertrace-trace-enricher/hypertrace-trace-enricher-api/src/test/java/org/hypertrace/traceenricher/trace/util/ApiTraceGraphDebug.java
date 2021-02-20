@@ -1,8 +1,5 @@
 package org.hypertrace.traceenricher.trace.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -212,9 +209,7 @@ public class ApiTraceGraphDebug {
    Event Id Src: 24ebcce46fa077b9, Tgt: 4301e4bbe15d1507
    ---
    */
-  @Disabled
-  @Test
-  void testDebugApiTraceGraph() throws IOException {
+  void debugApiTraceGraph() throws IOException {
     URL resource = Thread.currentThread().getContextClassLoader().
         getResource("StructuredTrace-Hotrod.avro");
 
@@ -225,9 +220,6 @@ public class ApiTraceGraphDebug {
     StructuredTrace trace = dfrStructuredTrace.next();
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     apiTraceGraph.build();
-    assertEquals(12, apiTraceGraph.getApiNodeEventEdgeList().size());
-    assertEquals(13, apiTraceGraph.getNodeList().size());
-    assertNotNull(apiTraceGraph.getTrace());
     dfrStructuredTrace.close();
 
     AtomicInteger index = new AtomicInteger();
