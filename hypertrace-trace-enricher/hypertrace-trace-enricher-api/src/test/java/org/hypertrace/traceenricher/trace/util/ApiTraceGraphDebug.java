@@ -1,8 +1,5 @@
 package org.hypertrace.traceenricher.trace.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
