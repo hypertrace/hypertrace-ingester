@@ -8,11 +8,14 @@ import org.apache.avro.file.DataFileReader;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 
 /**
  * Meant for debugging / playing around with ApiTraceGraph
+ *
+ * The method {@link ApiTraceGraphDebug#debugApiTraceGraph()} prints important details of
+ * ApiTraceGraph like list of ApiNodes (entry event, boundary events and exit events)
+ * and details of the edges between ApiNode
+ * This is helpful in understanding how we model apis in a Trace {@link StructuredTrace}
  */
 public class ApiTraceGraphDebug {
 
@@ -209,8 +212,6 @@ public class ApiTraceGraphDebug {
    Event Id Src: 24ebcce46fa077b9, Tgt: 4301e4bbe15d1507
    ---
    */
-  @Disabled
-  @Test
   void debugApiTraceGraph() throws IOException {
     URL resource = Thread.currentThread().getContextClassLoader().
         getResource("StructuredTrace-Hotrod.avro");
