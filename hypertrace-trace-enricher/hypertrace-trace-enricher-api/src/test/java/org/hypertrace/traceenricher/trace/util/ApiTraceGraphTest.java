@@ -28,7 +28,6 @@ public class ApiTraceGraphTest {
     assertEquals(12, apiTraceGraph.getApiNodeEventEdgeList().size());
     assertEquals(13, apiTraceGraph.getNodeList().size());
     assertNotNull(apiTraceGraph.getTrace());
-
     dfrStructuredTrace.close();
   }
 }

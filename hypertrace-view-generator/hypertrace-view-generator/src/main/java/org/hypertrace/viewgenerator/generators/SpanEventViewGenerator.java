@@ -95,6 +95,8 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     if (event.getEventId().equals(apiEntrySpanId)) {
       // set this count to 1 only if this span is the head of the Api Trace
       builder.setApiTraceCount(1);
+      builder.setExitCall(Integer.parseInt(SpanAttributeUtils.getStringAttribute(
+          event, EnrichedSpanConstants.API_EXIT_CALL_COUNT_ATTRIBUTE)));
     } else {
       builder.setApiTraceCount(0);
     }
