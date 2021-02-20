@@ -214,7 +214,7 @@ public class ApiTraceGraphDebug {
    */
   @Disabled
   @Test
-  void testDebugApiTraceGraph() throws IOException {
+  void debugApiTraceGraph() throws IOException {
     URL resource = Thread.currentThread().getContextClassLoader().
         getResource("StructuredTrace-Hotrod.avro");
 
@@ -225,9 +225,6 @@ public class ApiTraceGraphDebug {
     StructuredTrace trace = dfrStructuredTrace.next();
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     apiTraceGraph.build();
-    assertEquals(12, apiTraceGraph.getApiNodeEventEdgeList().size());
-    assertEquals(13, apiTraceGraph.getNodeList().size());
-    assertNotNull(apiTraceGraph.getTrace());
     dfrStructuredTrace.close();
 
     AtomicInteger index = new AtomicInteger();
