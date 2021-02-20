@@ -8,11 +8,14 @@ import org.apache.avro.file.DataFileReader;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 
 /**
  * Meant for debugging / playing around with ApiTraceGraph
+ *
+ * The method {@link ApiTraceGraphDebug#debugApiTraceGraph()} prints important details of
+ * ApiTraceGraph like list of ApiNodes (entry event, boundary events and exit events)
+ * and details of the edges between ApiNode
+ * This is helpful in understanding how we build apis from the given trace
  */
 public class ApiTraceGraphDebug {
 
