@@ -15,7 +15,7 @@ import org.hypertrace.core.datamodel.shared.HexUtils;
  * The method {@link ApiTraceGraphDebug#debugApiTraceGraph()} prints important details of
  * ApiTraceGraph like list of ApiNodes (entry event, boundary events and exit events)
  * and details of the edges between ApiNode
- * This is helpful in understanding how we build apis from the given trace
+ * This is helpful in understanding how we model apis in a Trace {@link StructuredTrace}
  */
 public class ApiTraceGraphDebug {
 
