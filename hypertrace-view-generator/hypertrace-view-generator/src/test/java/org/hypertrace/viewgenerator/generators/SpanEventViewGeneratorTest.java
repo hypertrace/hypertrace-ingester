@@ -1,9 +1,21 @@
 package org.hypertrace.viewgenerator.generators;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
+import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
+import org.hypertrace.viewgenerator.api.SpanEventView;
+import org.hypertrace.viewgenerator.generators.ViewGeneratorState.TraceState;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,5 +100,37 @@ public class SpanEventViewGeneratorTest {
         ).build()
     );
     Assertions.assertNull(spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
+  }
+
+  @Test
+  public void testSpanEventViewGenWithTrace() throws IOException {
+    URL resource = Thread.currentThread().getContextClassLoader().
+        getResource("StructuredTrace-Hotrod.avro");
+
+    SpecificDatumReader<StructuredTrace> datumReader = new SpecificDatumReader<>(
+        StructuredTrace.getClassSchema());
+    DataFileReader<StructuredTrace> dfrStructuredTrace = new DataFileReader<>(new File(resource.getPath()), datumReader);
+    StructuredTrace trace = dfrStructuredTrace.next();
+    dfrStructuredTrace.close();
+
+    TraceState traceState = new TraceState(trace);
+    verifyCreateExitSpanToApiEntrySpan(trace, traceState);
+    SpanEventViewGenerator spanEventViewGenerator = new SpanEventViewGenerator();
+    List<SpanEventView> spanEventViews = spanEventViewGenerator.process(trace);
+    Assertions.assertEquals(50, spanEventViews.size());
+  }
+
+  private void verifyCreateExitSpanToApiEntrySpan(
+      StructuredTrace trace, TraceState traceState) {
+    Map<ByteBuffer, Event> exitSpanToApiEntrySpanMap =
+        spanEventViewGenerator.getExitSpanToCalleeApiEntrySpanMap(
+            trace.getEventList(), traceState.getChildToParentEventIds(),
+            traceState.getParentToChildrenEventIds(), traceState.getEventMap());
+
+    // verify for all entries in the map, key is exit span and value is entry api boundary
+    exitSpanToApiEntrySpanMap.forEach((key, value) -> {
+      EnrichedSpanUtils.isExitSpan(traceState.getEventMap().get(key));
+      EnrichedSpanUtils.isEntryApiBoundary(value);
+    });
   }
 }

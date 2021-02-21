@@ -33,6 +33,21 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT);
 
   @Override
+  public String getViewName() {
+    return SpanEventView.class.getName();
+  }
+
+  @Override
+  public Schema getSchema() {
+    return SpanEventView.getClassSchema();
+  }
+
+  @Override
+  public Class<SpanEventView> getViewClass() {
+    return SpanEventView.class;
+  }
+
+  @Override
   List<SpanEventView> generateView(
       StructuredTrace structuredTrace,
       Map<String, Entity> entityMap,
@@ -40,7 +55,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds,
       Map<ByteBuffer, ByteBuffer> childToParentEventIds) {
     Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap =
-        createExitSpanToCalleeApiEntrySpanMap(
+        getExitSpanToCalleeApiEntrySpanMap(
             structuredTrace.getEventList(),
             childToParentEventIds,
             parentToChildrenEventIds,
@@ -59,19 +74,54 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
         .collect(Collectors.toList());
   }
 
-  @Override
-  public String getViewName() {
-    return SpanEventView.class.getName();
+  Map<ByteBuffer, Event> getExitSpanToCalleeApiEntrySpanMap(
+      List<Event> spans,
+      Map<ByteBuffer, ByteBuffer> childToParentEventIds,
+      Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds,
+      Map<ByteBuffer, Event> idToEvent) {
+    Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap = new HashMap<>();
+
+    spans.stream()
+        .filter(EnrichedSpanUtils::isExitApiBoundary) // Only consider Boundary Exit spans
+        .forEach(
+            span -> {
+              Event apiEntrySpanForExitSpan =
+                  getApiEntrySpanForExitSpan(span, parentToChildrenEventIds, idToEvent);
+              // We want to map each exit span in the ancestral path of the exit api boundary span
+              // to the apiEntrySpanForExitSpan.
+              // So we walk back the path until we hit an entry span or there are no more ancestors
+              // in the path.
+              Event currentSpan = span;
+              while (currentSpan != null && !EnrichedSpanUtils.isEntrySpan(currentSpan)) {
+                if (EnrichedSpanUtils.isExitSpan(
+                    currentSpan)) { // Skip internal spans and just map the exit spans.
+                  exitSpanToCalleeApiEntrySpanMap.put(
+                      currentSpan.getEventId(), apiEntrySpanForExitSpan);
+                }
+                currentSpan =
+                    SpanAttributeUtils.getParentSpan(currentSpan, childToParentEventIds, idToEvent);
+              }
+            });
+
+    return exitSpanToCalleeApiEntrySpanMap;
   }
 
-  @Override
-  public Schema getSchema() {
-    return SpanEventView.getClassSchema();
-  }
+  private Event getApiEntrySpanForExitSpan(
+      Event exitSpan,
+      Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds,
+      Map<ByteBuffer, Event> idToEvent) {
+    List<ByteBuffer> children = parentToChildrenEventIds.get(exitSpan.getEventId());
+    if (children == null) {
+      return null;
+    }
 
-  @Override
-  public Class<SpanEventView> getViewClass() {
-    return SpanEventView.class;
+    return children.stream()
+        .map(idToEvent::get)
+        .filter(
+            EnrichedSpanUtils
+                ::isEntryApiBoundary) // TODO: Should we just check if span is ENTRY span
+        .findFirst()
+        .orElse(null);
   }
 
   private SpanEventView.Builder generateViewBuilder(
@@ -179,62 +229,13 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     return builder;
   }
 
-  Map<ByteBuffer, Event> createExitSpanToCalleeApiEntrySpanMap(
-      List<Event> spans,
-      Map<ByteBuffer, ByteBuffer> childToParentEventIds,
-      Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds,
-      Map<ByteBuffer, Event> idToEvent) {
-    Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap = new HashMap<>();
-
-    spans.stream()
-        .filter(EnrichedSpanUtils::isExitApiBoundary) // Only consider Boundary Exit spans
-        .forEach(
-            span -> {
-              Event calleeEntrySpanForExit =
-                  getCalleeEntrySpanForExit(span, parentToChildrenEventIds, idToEvent);
-              // We want to map each exit span in the ancestral path of the exit api boundary span
-              // to the calleeEntrySpanForExit.
-              // So we walk back the path until we hit an entry span or there are no more ancestors
-              // in the path.
-              Event currentSpan = span;
-              while (currentSpan != null && !EnrichedSpanUtils.isEntrySpan(currentSpan)) {
-                if (EnrichedSpanUtils.isExitSpan(
-                    currentSpan)) { // Skip internal spans and just map the exit spans.
-                  exitSpanToCalleeApiEntrySpanMap.put(
-                      currentSpan.getEventId(), calleeEntrySpanForExit);
-                }
-                currentSpan =
-                    SpanAttributeUtils.getParentSpan(currentSpan, childToParentEventIds, idToEvent);
-              }
-            });
-
-    return exitSpanToCalleeApiEntrySpanMap;
-  }
-
-  private Event getCalleeEntrySpanForExit(
-      Event exitSpan,
-      Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds,
-      Map<ByteBuffer, Event> idToEvent) {
-    List<ByteBuffer> children = parentToChildrenEventIds.get(exitSpan.getEventId());
-    if (children == null) {
-      return null;
-    }
-
-    return children.stream()
-        .map(idToEvent::get)
-        .filter(
-            EnrichedSpanUtils
-                ::isEntryApiBoundary) // TODO: Should we just check if span is ENTRY span
-        .findFirst()
-        .orElse(null);
-  }
-
   /**
    * The entity(service or backend) name to be displayed on the UI. For an entry or internal(not
-   * entry or exit) span it will be the same as the span's service_name For an exit span: - if the
-   * span maps to a callee api entry span in exitSpanToCalleeApiEntrySpanMap callee's service name -
-   * otherwise: -- if backend name is set, we return the backend name. -- if the backend name is not
-   * set, we return the span's service name
+   * entry or exit) span it will be the same as the span's service_name.
+   * for an exit span:
+   * - if the span maps to an api entry span in {@code exitSpanToCalleeApiEntrySpanMap} api entry service name
+   * - if backend name is set, we return the backend name
+   * - if the backend name is not set, we return the span's service name
    */
   String getDisplayEntityName(Event span, Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap) {
     if (!EnrichedSpanUtils.isExitSpan(span)) { // Not an EXIT span(ENTRY or INTERNAL)
@@ -242,9 +243,9 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     }
 
     // Exit span with a callee API entry
-    Event calleeApiEntrySpan = exitSpanToCalleeApiEntrySpanMap.get(span.getEventId());
-    if (calleeApiEntrySpan != null) { // Use Callee service name
-      return EnrichedSpanUtils.getServiceName(calleeApiEntrySpan);
+    Event apiEntrySpan = exitSpanToCalleeApiEntrySpanMap.get(span.getEventId());
+    if (apiEntrySpan != null) { // Use Callee service name
+      return EnrichedSpanUtils.getServiceName(apiEntrySpan);
     }
 
     // Backend exit span.
@@ -258,11 +259,13 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
   }
 
   /**
-   * The span name to be displayed on the UI. For an entry span it will be the same as the span's
-   * api_name For an exit span: - if the span maps to a callee api entry span in
-   * exitSpanToCalleeApiEntrySpanMap callee's api name - otherwise: -- if the backend path is set we
-   * return the backend path -- if the backend path is not set we return the span name For an
-   * internal span, it will be the span name.
+   * The span name to be displayed on the UI. For an entry span it will be the same
+   * as the span's api_name
+   * For an exit span:
+   * - if the span maps to a callee api entry span in {@code exitSpanToCalleeApiEntrySpanMap} callee api name
+   * - if the backend path is set we return the backend path
+   * - if the backend path is not set we return the span name
+   * For an internal span, it will be the span name
    */
   String getDisplaySpanName(Event span, Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap) {
     if (EnrichedSpanUtils.isEntrySpan(span)) {
