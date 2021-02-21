@@ -2,19 +2,26 @@ package org.hypertrace.viewgenerator.generators;
 
 import static org.hypertrace.core.datamodel.shared.SpanAttributeUtils.getStringAttribute;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Table.Cell;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
+import org.hypertrace.core.datamodel.ApiNodeEventEdge;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
+import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
@@ -22,6 +29,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
+import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.viewgenerator.api.SpanEventView;
 
 public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
@@ -179,6 +187,36 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
 
     return builder;
+  }
+
+  /**
+   * Compute number of api exit calls for api_node (return it per event)
+   */
+  Map<ByteBuffer, Integer> computeApiExitCallCount(StructuredTrace trace) {
+    // api node index -> exit call count
+    Map<Integer, AtomicInteger> apiNodeExitCallCount = Maps.newHashMap();
+    ApiTraceGraph apiTraceGraph = ViewGeneratorState.getApiTraceGraph(trace);
+
+    // {@link ApiTraceGraph#getApiNodeEventEdgeList()} doesn't consists of edges to backend, so compute them explicitly
+    // this set contains events which are the source of any api_node_edge
+    Set<ByteBuffer> callerExitEvents = Sets.newHashSet();
+    for (Cell<Integer, Integer, ApiNodeEventEdge> cell : apiTraceGraph.getApiNodeEventEdgeTable().cellSet()) {
+      apiNodeExitCallCount.computeIfAbsent(cell.getRowKey(), v -> new AtomicInteger(0)).incrementAndGet();
+      // srcEventIndex won't be null
+      callerExitEvents.add(trace.getEventList().get(cell.getValue().getSrcEventIndex()).getEventId());
+    }
+
+    Map<ByteBuffer, Integer> eventToApiExitCallCount = Maps.newHashMap();
+    for (int index = 0; index < apiTraceGraph.getNodeList().size(); index++) {
+      ApiNode<Event> apiNode = apiTraceGraph.getNodeList().get(index);
+      int exitCallCount = apiNodeExitCallCount.getOrDefault(index, new AtomicInteger(0)).get()
+          + (int) apiTraceGraph.getNodeList().get(index)
+          .getExitApiBoundaryEvents()
+          .stream()
+          .filter(exitEvent -> !callerExitEvents.contains(exitEvent.getEventId())).count();
+      apiNode.getEvents().forEach(e -> eventToApiExitCallCount.put(e.getEventId(), exitCallCount));
+    }
+    return eventToApiExitCallCount;
   }
 
   Map<ByteBuffer, Event> createExitSpanToCalleeApiEntrySpanMap(
