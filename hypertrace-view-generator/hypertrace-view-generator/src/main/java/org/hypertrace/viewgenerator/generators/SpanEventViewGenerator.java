@@ -279,8 +279,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
 
     builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
 
-    // set exit_calls
-    builder.setExitCall(eventToApiExitCall.getOrDefault(event.getEventId(), 0));
+    builder.setApiExitCalls(eventToApiExitCall.getOrDefault(event.getEventId(), 0));
 
     return builder;
   }
