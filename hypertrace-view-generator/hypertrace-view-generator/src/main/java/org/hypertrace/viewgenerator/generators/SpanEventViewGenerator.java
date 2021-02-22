@@ -135,7 +135,13 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
   }
 
   /**
-   * Compute number of api exit calls for api_node (return it per event)
+   * An api_node represents an api call in the trace
+   * It consists of api_entry span and multiple api_exit and internal spans
+   * <p>
+   * This method computes the count of exit calls for any given api (identified by api_entry_span)
+   * This count is a composition of 2 things
+   * 1. link between api_exit_span in api_node to api_entry_span (child of api_exit_span) in another api_node
+   * 2. exit calls to backend from api_exit_span in api_node
    */
   Map<ByteBuffer, Integer> computeApiExitCallCount(StructuredTrace trace) {
     // api_node_index -> api exit call count
