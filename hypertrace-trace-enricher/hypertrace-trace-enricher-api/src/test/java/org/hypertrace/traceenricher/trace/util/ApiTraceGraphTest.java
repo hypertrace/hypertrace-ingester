@@ -55,10 +55,6 @@ public class ApiTraceGraphTest {
     trace.getEventList().forEach(e -> {
       assertTrue(eventToApiNodes.containsKey(e.getEventId()));
       assertEquals(1, eventToApiNodes.get(e.getEventId()).size());
-      // verify {@code apiTraceGraph.getApiNodeIndexForEvent()} is correctly populated
-      assertEquals(
-          eventToApiNodes.get(e.getEventId()).stream().findFirst().get(),
-          apiTraceGraph.getApiNodeIndexForEvent(e.getEventId()));
     });
   }
 }

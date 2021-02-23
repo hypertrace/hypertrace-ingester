@@ -43,8 +43,6 @@ public class ApiTraceGraph {
   // map of entry boundary event to api node. each api node has one entry boundary event
   private final Map<Event, ApiNode<Event>> entryBoundaryToApiNode;
   private final Table<Integer, Integer, Edge> traceEdgeTable;
-  // map from event id to index of ApiNode (which the event belongs to)
-  private final Map<ByteBuffer, Integer> eventIdToApiNodeIndex;
 
   private List<ApiNode<Event>> nodeList;
 
@@ -56,7 +54,6 @@ public class ApiTraceGraph {
     apiNodeToIndex = Maps.newHashMap();
     entryBoundaryToApiNode = Maps.newHashMap();
     traceEdgeTable = buildTraceEdgeTable();
-    eventIdToApiNodeIndex = Maps.newHashMap();
   }
 
   public StructuredTrace getTrace() {
@@ -69,10 +66,6 @@ public class ApiTraceGraph {
 
   public List<ApiNodeEventEdge> getApiNodeEventEdgeList() {
     return apiNodeEventEdgeList;
-  }
-
-  public Integer getApiNodeIndexForEvent(ByteBuffer eventId) {
-    return eventIdToApiNodeIndex.get(eventId);
   }
 
   public void setNodeList(List<ApiNode<Event>> nodeList) {
@@ -146,10 +139,7 @@ public class ApiTraceGraph {
         apiNodes.add(apiNode);
 
         // Remove the events in ApiNode from remainingEventIds
-        apiNode.getEvents().forEach(e -> {
-          remainingEventIds.remove(e.getEventId());
-          eventIdToApiNodeIndex.put(e.getEventId(), apiNodes.size() - 1);
-        });
+        apiNode.getEvents().forEach(e -> remainingEventIds.remove(e.getEventId()));
       }
     }
 
@@ -169,10 +159,9 @@ public class ApiTraceGraph {
           ApiNode<Event> apiNode = buildApiNode(graph, event);
 
           // We expect all events to be present in the remaining events here.
-          Set<ByteBuffer> newEventIds =
-              apiNode.getEvents().stream()
-                  .map(Event::getEventId)
-                  .collect(Collectors.toSet());
+          Set<ByteBuffer> newEventIds = apiNode.getEvents().stream().map(Event::getEventId)
+              .collect(
+                  Collectors.toSet());
           Set<ByteBuffer> additionalEvents = Sets.difference(newEventIds, remainingEventIds);
           if (!additionalEvents.isEmpty()) {
             LOGGER.warn("Unexpected spans are included in ApiNode; additionalSpans: {}",
@@ -180,10 +169,7 @@ public class ApiTraceGraph {
           }
 
           apiNodes.add(apiNode);
-          apiNode.getEvents().forEach(e -> {
-            remainingEventIds.remove(e.getEventId());
-            eventIdToApiNodeIndex.put(e.getEventId(), apiNodes.size() - 1);
-          });
+          apiNode.getEvents().forEach(e -> remainingEventIds.remove(e.getEventId()));
         } else if (!StringUtils.equals(EnrichedSpanUtils.getSpanType(event), UNKNOWN_SPAN_KIND_VALUE)) {
           LOGGER.warn("Non exit root span wasn't picked for ApiNode; traceId: {}, spanId: {}, spanName: {}, serviceName: {}",
               HexUtils.getHex(trace.getTraceId()),

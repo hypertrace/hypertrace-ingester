@@ -1,5 +1,6 @@
 package org.hypertrace.viewgenerator.generators;
 
+import com.google.common.collect.Maps;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -13,6 +14,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
+import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
@@ -151,9 +153,9 @@ public class SpanEventViewGeneratorTest {
     // for events parts of api_node 1, there should be 13 exit calls
     // for events parts of api_node 2, there should be 1 exit calls
     Map<Integer, Integer> apiNodeToExitCallCount = Map.of(0, 12, 1, 13, 2, 1);
-
+    Map<ByteBuffer, Integer> eventToApiNodeIndex = buildEventIdToApiNode(apiTraceGraph);
     eventToApiExitCallCount.forEach((k, v) -> {
-      Integer apiNodeIndex = apiTraceGraph.getApiNodeIndexForEvent(k);
+      Integer apiNodeIndex = eventToApiNodeIndex.get(k);
       if (null != apiNodeIndex)
         assertEquals(apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0), v);
     });
@@ -186,5 +188,15 @@ public class SpanEventViewGeneratorTest {
         .filter(EnrichedSpanUtils::isEntryApiBoundary)
         .filter(v -> serviceName.equals(v.getServiceName()))
         .collect(Collectors.toList());
+  }
+
+  private Map<ByteBuffer, Integer> buildEventIdToApiNode(ApiTraceGraph apiTraceGraph) {
+    Map<ByteBuffer, Integer> map = Maps.newHashMap();
+    for (int index = 0; index < apiTraceGraph.getNodeList().size(); index++) {
+      ApiNode<Event> apiNode = apiTraceGraph.getNodeList().get(index);
+      int finalIndex = index;
+      apiNode.getEvents().forEach(v -> map.put(v.getEventId(), finalIndex));
+    }
+    return map;
   }
 }
