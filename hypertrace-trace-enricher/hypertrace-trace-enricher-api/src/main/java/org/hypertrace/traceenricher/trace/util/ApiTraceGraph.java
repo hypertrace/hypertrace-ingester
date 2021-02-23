@@ -170,7 +170,6 @@ public class ApiTraceGraph {
 
           apiNodes.add(apiNode);
           apiNode.getEvents().forEach(e -> remainingEventIds.remove(e.getEventId()));
-          remainingEventIds.remove(event.getEventId());
         } else if (!StringUtils.equals(EnrichedSpanUtils.getSpanType(event), UNKNOWN_SPAN_KIND_VALUE)) {
           LOGGER.warn("Non exit root span wasn't picked for ApiNode; traceId: {}, spanId: {}, spanName: {}, serviceName: {}",
               HexUtils.getHex(trace.getTraceId()),
