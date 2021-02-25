@@ -64,9 +64,6 @@ spec:
             - name: view-gen-service-config
               mountPath: /app/resources/configs/common/staging/application.conf
               subPath: application.conf
-            - name: view-gen-backend-entity-config
-              mountPath: /app/resources/configs/view-gen-backend-entity/common/staging/application.conf
-              subPath: application.conf
           {{- range $viewgen := $group.generator.serviceConfig.viewgenerators }}
             - name: {{ $viewgen }}-config
               mountPath: /app/resources/configs/{{ $viewgen }}/staging/application.conf
