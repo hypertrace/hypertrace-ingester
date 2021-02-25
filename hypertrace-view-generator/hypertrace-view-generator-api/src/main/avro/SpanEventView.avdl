@@ -96,6 +96,7 @@ protocol SpanEventViewProtocol {
     int exception_count = 0;
 
     array<string> space_ids = [];
-    union { null, int } api_exit_calls = null;
+
+    int api_exit_calls = 0;
   }
 }
