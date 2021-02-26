@@ -71,4 +71,4 @@ jobs:
       - name: validate charts
         uses: hypertrace/github-actions/validate-charts@main
         with: 
-          - chart-path: './hypertrace-ingester/helm', './hypertrace-trace-enricher/helm', './hypertrace-view-generator/helm'
+          - chart-path: ./hypertrace-ingester/helm, ./hypertrace-trace-enricher/helm, ./hypertrace-view-generator/helm
