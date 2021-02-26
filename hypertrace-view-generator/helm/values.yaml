@@ -63,19 +63,19 @@ creator:
 # View Generation Deployments              #
 ############################################
 viewGenIndividualConfigs:
-  backend-entity-view-generator:
+  view-gen-backend-entity:
     inputTopic: "enriched-structured-traces"
     outputTopic: "backend-entity-view-events"
-  raw-service-view-generator:
+  view-gen-raw-service:
     inputTopic: "enriched-structured-traces"
     outputTopic: "raw-service-view-events"
-  raw-traces-view-generator:
+  view-gen-raw-traces:
     inputTopic: "enriched-structured-traces"
     outputTopic: "raw-trace-view-events"
-  service-call-view-generator:
+  view-gen-service-call:
     inputTopic: "enriched-structured-traces"
     outputTopic: "service-call-view-events"
-  span-event-view-generator:
+  view-gen-span-event:
     inputTopic: "enriched-structured-traces"
     outputTopic: "span-event-view"
 
