@@ -11,12 +11,11 @@ import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
-import org.hypertrace.entity.data.service.client.EdsClient;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.servicetype.ServiceType;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.enrichment.clientcache.ClientRegistry;
 import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +37,9 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
   private ServiceEntityFactory factory;
 
   @Override
-  public void init(Config enricherConfig, EntityDataServiceClientProvider provider) {
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {
     LOG.info("Initialize DefaultServiceEntityEnricher with Config: {}", enricherConfig.toString());
-    EdsClient edsClient = provider.createClient(enricherConfig);
-    this.factory = new ServiceEntityFactory(edsClient);
+    this.factory = new ServiceEntityFactory(clientRegistry.getEdsClient());
   }
 
   @Override

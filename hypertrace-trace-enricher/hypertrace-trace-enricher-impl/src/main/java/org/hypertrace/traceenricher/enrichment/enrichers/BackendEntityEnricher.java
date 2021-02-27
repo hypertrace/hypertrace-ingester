@@ -21,6 +21,7 @@ import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.enrichment.clientcache.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache.EntityCacheProvider;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendEntityResolver;
@@ -44,10 +45,10 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
   private BackendEntityResolver backendEntityResolver;
 
   @Override
-  public void init(Config enricherConfig, EntityDataServiceClientProvider provider) {
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {
     LOGGER.info("Initialize BackendEntityEnricher with Config: {}", enricherConfig.toString());
-    this.edsClient = provider.createClient(enricherConfig);
-    this.entityCache = EntityCacheProvider.get(edsClient);
+    this.edsClient = clientRegistry.getEdsClient();
+    this.entityCache = clientRegistry.getEntityCache();
     this.backendEntityResolver = new BackendEntityResolver();
   }
 

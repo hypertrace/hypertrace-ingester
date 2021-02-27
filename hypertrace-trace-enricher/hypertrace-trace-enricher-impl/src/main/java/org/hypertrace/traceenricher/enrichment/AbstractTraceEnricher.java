@@ -16,12 +16,13 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
+import org.hypertrace.traceenricher.enrichment.clientcache.ClientRegistry;
 import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
 
 public abstract class AbstractTraceEnricher implements Enricher {
 
   @Override
-  public void init(Config enricherConfig, EntityDataServiceClientProvider provider) {
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {
   }
 
   @Override
