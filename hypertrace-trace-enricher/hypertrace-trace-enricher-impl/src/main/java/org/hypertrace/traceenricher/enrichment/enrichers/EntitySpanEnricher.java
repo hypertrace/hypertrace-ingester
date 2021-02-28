@@ -5,7 +5,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.trace.reader.entities.TraceEntityReader;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.traceenricher.enrichment.clientcache.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

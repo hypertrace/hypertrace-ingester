@@ -19,17 +19,22 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.entity.data.service.client.EdsCacheClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherTest {
 
   private static final String ENTITY_ID = "entity1";
@@ -40,19 +45,21 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
   private DefaultServiceEntityEnricher enricher;
 
   @Mock
-  private EntityDataServiceClient edsClient;
+  private EdsCacheClient edsClient;
+  @Mock
+  private ClientRegistry clientRegistry;
+  private EntityCache entityCache;
 
   @BeforeEach
   public void setup() {
-    EntityCache.EntityCacheProvider.clear();
-    edsClient = mock(EntityDataServiceClient.class);
     enricher = new DefaultServiceEntityEnricher();
-    enricher.init(getEntityServiceConfig(), createProvider(edsClient));
-  }
+    entityCache = new EntityCache(this.edsClient);
+    when(clientRegistry.getEdsCacheClient())
+        .thenReturn(edsClient);
+    when(clientRegistry.getEntityCache())
+        .thenReturn(entityCache);
 
-  @AfterEach
-  public void teardown() {
-    EntityCache.EntityCacheProvider.clear();
+    enricher.init(getEntityServiceConfig(), clientRegistry);
   }
 
   @Test
@@ -125,9 +132,6 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     org.hypertrace.entity.data.service.v1.Entity service = org.hypertrace.entity.data.service.v1.Entity.newBuilder()
         .setTenantId(TENANT_ID).setEntityType(EntityType.SERVICE.name())
         .setEntityId(ENTITY_ID).build();
-    doReturn(Collections.singletonList(service))
-        .when(edsClient).getEntitiesByName(TENANT_ID, EntityType.SERVICE.name(), null);
-
     Event e1 = createOpenSourceSpan(TENANT_ID, "event1",  null, "ENTRY").build();
     StructuredTrace trace = createStructuredTrace(TENANT_ID, e1);
     enricher.enrichEvent(trace, e1);
@@ -218,7 +222,6 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
 
     StructuredTraceGraph graph = mock(StructuredTraceGraph.class);
     when(graph.getParentEvent(current)).thenReturn(parent2);
-    when(graph.getParentEvent(parent1)).thenReturn(parent1);
     String actual = enricher
         .findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService(current,
             "sampleapp", graph).orElse(null);
@@ -259,7 +262,6 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
 
     StructuredTraceGraph graph = mock(StructuredTraceGraph.class);
     when(graph.getParentEvent(current)).thenReturn(parent2);
-    when(graph.getParentEvent(parent1)).thenReturn(parent1);
     String actual = enricher
         .findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService(current,
             "sampleapp", graph).orElse(null);

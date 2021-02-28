@@ -61,10 +61,6 @@ public class AbstractAttributeEnricherTest {
     return ConfigFactory.parseMap(map);
   }
 
-  EntityDataServiceClientProvider createProvider(EntityDataServiceClient client) {
-    return config -> client;
-  }
-
   Event createMockEvent() {
     Event e = mock(Event.class);
     when(e.getAttributes())

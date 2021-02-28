@@ -12,7 +12,7 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.traceenricher.enrichment.clientcache.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 
 public class SpaceEnricher extends AbstractTraceEnricher {
 

@@ -97,7 +97,7 @@ public class EntityCache {
             }
           });
 
-  private EntityCache(EdsClient edsClient) {
+  public EntityCache(EdsClient edsClient) {
     this.edsClient = edsClient;
   }
 
@@ -115,36 +115,5 @@ public class EntityCache {
 
   public LoadingCache<Pair<String, Map<String, AttributeValue>>, Optional<Entity>> getBackendIdAttrsToEntityCache() {
     return backendIdAttrsToEntityCache;
-  }
-
-  public static class EntityCacheProvider {
-    private static final Object lock = new Object();
-    private static EntityCache INSTANCE = null;
-
-    public static EntityCache get(EdsClient edsClient) {
-      if (INSTANCE == null) {
-        synchronized (lock) {
-          if (INSTANCE == null) {
-            INSTANCE = new EntityCache(edsClient);
-          }
-        }
-      }
-      return INSTANCE;
-    }
-
-    /**
-     * Used in unit tests to clear cache after a test is done.
-     * TODO: Fix this better by passing an EntityCacheProvider to the Enrichers init() method. Can be picked up in
-     * a different PR.
-     */
-    public static void clear() {
-      if (INSTANCE != null) {
-        synchronized (lock) {
-          if (INSTANCE != null) {
-            INSTANCE = null;
-          }
-        }
-      }
-    }
   }
 }

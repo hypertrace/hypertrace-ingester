@@ -15,7 +15,7 @@ import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.servicetype.ServiceType;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.traceenricher.enrichment.clientcache.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,9 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {
     LOG.info("Initialize DefaultServiceEntityEnricher with Config: {}", enricherConfig.toString());
-    this.factory = new ServiceEntityFactory(clientRegistry.getEdsClient());
+    this.factory =
+        new ServiceEntityFactory(
+            clientRegistry.getEdsCacheClient(), clientRegistry.getEntityCache());
   }
 
   @Override

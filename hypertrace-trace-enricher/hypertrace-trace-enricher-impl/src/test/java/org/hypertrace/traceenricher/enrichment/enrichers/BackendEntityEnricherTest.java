@@ -13,6 +13,7 @@ import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
+import org.hypertrace.entity.data.service.client.EdsCacheClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
@@ -21,13 +22,17 @@ import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
   private static final String SERVICE_ID = "service1";
   private static final String EVENT_ID = "event1";
@@ -43,20 +48,20 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT);
 
   private BackendEntityEnricher enricher;
+  private EntityCache entityCache;
 
   @Mock
-  private EntityDataServiceClient edsClient;
+  private EdsCacheClient edsClient;
+  @Mock
+  private ClientRegistry clientRegistry;
 
   @BeforeEach
   public void setup() {
     enricher = new BackendEntityEnricher();
-    edsClient = mock(EntityDataServiceClient.class);
-    enricher.init(getEntityServiceConfig(), createProvider(edsClient));
-  }
-
-  @AfterEach
-  public void teardown() {
-    EntityCache.EntityCacheProvider.clear();
+    entityCache = new EntityCache(edsClient);
+    when(clientRegistry.getEdsCacheClient()).thenReturn(edsClient);
+    when(clientRegistry.getEntityCache()).thenReturn(entityCache);
+    enricher.init(getEntityServiceConfig(), clientRegistry);
   }
 
   @Test

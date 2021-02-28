@@ -10,12 +10,11 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.constants.v1.ApiAttribute;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.traceenricher.enrichment.clientcache.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +43,7 @@ public class EndpointEnricher extends AbstractTraceEnricher {
 
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {
-    this.apiEntityDao = new ApiEntityDao(clientRegistry.getEdsClient());
+    this.apiEntityDao = new ApiEntityDao(clientRegistry.getEdsCacheClient());
   }
 
   @Override

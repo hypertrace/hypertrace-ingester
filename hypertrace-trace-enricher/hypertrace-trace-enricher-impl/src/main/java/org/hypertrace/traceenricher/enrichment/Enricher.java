@@ -5,8 +5,7 @@ import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
-import org.hypertrace.traceenricher.enrichment.clientcache.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 
 public interface Enricher {
 
