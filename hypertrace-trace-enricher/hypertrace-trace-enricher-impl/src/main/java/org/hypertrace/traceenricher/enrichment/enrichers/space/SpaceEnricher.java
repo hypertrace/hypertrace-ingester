@@ -4,53 +4,26 @@ import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanCo
 
 import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
-import io.grpc.Channel;
-import io.grpc.ManagedChannelBuilder;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
-import org.hypertrace.trace.reader.attributes.TraceAttributeReaderFactory;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 
 public class SpaceEnricher extends AbstractTraceEnricher {
-  private static final String CONFIG_SERVICE_HOST_KEY = "config.service.config.host";
-  private static final String CONFIG_SERVICE_PORT_KEY = "config.service.config.port";
-  private static final String ATTRIBUTE_SERVICE_HOST_KEY = "attribute.service.config.host";
-  private static final String ATTRIBUTE_SERVICE_PORT_KEY = "attribute.service.config.port";
 
   private SpaceRulesCachingClient ruleClient;
   private SpaceRuleEvaluator ruleEvaluator;
 
   @Override
-  public void init(Config enricherConfig, EntityDataServiceClientProvider provider) {
-    super.init(enricherConfig, provider);
-
-    Channel configChannel =
-        ManagedChannelBuilder.forAddress(
-                enricherConfig.getString(CONFIG_SERVICE_HOST_KEY),
-                enricherConfig.getInt(CONFIG_SERVICE_PORT_KEY))
-            .usePlaintext()
-            .build();
-
-    Channel attributeChannel =
-        ManagedChannelBuilder.forAddress(
-                enricherConfig.getString(ATTRIBUTE_SERVICE_HOST_KEY),
-                enricherConfig.getInt(ATTRIBUTE_SERVICE_PORT_KEY))
-            .usePlaintext()
-            .build();
-
-    // TODO - we need a way to share caching clients like the attribute reader across enrichers
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {
     this.init(
-        new SpaceRulesCachingClient(configChannel),
-        new SpaceRuleEvaluator(
-            TraceAttributeReaderFactory.build(
-                CachingAttributeClient.builder(attributeChannel).build())));
+        new SpaceRulesCachingClient(clientRegistry.getConfigServiceChannel()),
+        new SpaceRuleEvaluator(clientRegistry.getAttributeReader()));
   }
 
   /**

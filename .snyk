@@ -2,7 +2,6 @@
 version: v1.14.1
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
-## from hypertrace-view-generator
   SNYK-JAVA-COMMONSHTTPCLIENT-30083:
     - '*':
         reason: no available replacement
@@ -31,4 +30,12 @@ ignore:
     - '*':
         reason: no available replacement
         expires: 2021-03-31T00:00:00.000Z
+  SNYK-JAVA-ORGAPACHETHRIFT-1074898:
+    - '*':
+        reason: None Given
+        expires: 2021-03-31T00:00:00.000Z
+  SNYK-JAVA-NETMINIDEV-1078499:
+    - '*':
+        reason: None Given
+        expires: 2021-04-30T00:00:00.000Z
 patch: {}

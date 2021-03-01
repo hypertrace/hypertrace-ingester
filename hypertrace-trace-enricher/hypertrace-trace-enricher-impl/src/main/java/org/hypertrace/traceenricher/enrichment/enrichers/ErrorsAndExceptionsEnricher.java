@@ -41,11 +41,6 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
   private static final Logger LOG = LoggerFactory.getLogger(ErrorsAndExceptionsEnricher.class);
 
   @Override
-  public void init(Config enricherConfig, EntityDataServiceClientProvider provider) {
-    LOG.info("Initializing ErrorsAndExceptionsEnricher with Config: {}", enricherConfig.toString());
-  }
-
-  @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return;

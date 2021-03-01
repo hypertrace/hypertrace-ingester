@@ -18,7 +18,6 @@ import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.entity.v1.servicetype.ServiceType;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
-import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache.EntityCacheProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,9 +37,9 @@ public class ServiceEntityFactory {
   private final EdsClient edsClient;
   private final EntityCache entityCache;
 
-  public ServiceEntityFactory(EdsClient edsClient) {
+  public ServiceEntityFactory(EdsClient edsClient, EntityCache entityCache) {
     this.edsClient = edsClient;
-    this.entityCache = EntityCacheProvider.get(edsClient);
+    this.entityCache = entityCache;
   }
 
   Entity getService(String customerId, String name, String serviceType,

@@ -5,14 +5,14 @@ import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 
 public interface Enricher {
 
   /**
    * Provides the configuration needed for the enricher.
    */
-  void init(Config enricherConfig, EntityDataServiceClientProvider provider);
+  void init(Config enricherConfig, ClientRegistry clientRegistry);
 
   /**
    * Enrich the attributes/metrics for an Entity

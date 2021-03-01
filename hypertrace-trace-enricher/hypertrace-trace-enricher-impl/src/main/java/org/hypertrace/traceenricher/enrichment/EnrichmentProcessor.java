@@ -13,6 +13,7 @@ import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.util.AvroToJsonLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +25,11 @@ public class EnrichmentProcessor {
   private static final Timer enrichmentArrivalTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
   private final List<Enricher> enrichers = new ArrayList<>();
-  public EnrichmentProcessor(List<EnricherInfo> enricherInfoList,
-                             EntityDataServiceClientProvider provider) {
+  public EnrichmentProcessor(List<EnricherInfo> enricherInfoList, ClientRegistry clientRegistry) {
     for (EnricherInfo enricherInfo : enricherInfoList) {
       try {
         Enricher enricher = enricherInfo.getClazz().getDeclaredConstructor().newInstance();
-        enricher.init(enricherInfo.getEnricherConfig(), provider);
+        enricher.init(enricherInfo.getEnricherConfig(), clientRegistry);
         LOG.info("Initialized the enricher: {}", enricherInfo.getClazz().getCanonicalName());
         enrichers.add(enricher);
       } catch (Exception e) {

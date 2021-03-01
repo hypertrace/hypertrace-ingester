@@ -1,16 +1,11 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import com.typesafe.config.Config;
-import io.grpc.Channel;
-import io.grpc.ManagedChannelBuilder;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
-import org.hypertrace.entity.service.client.config.EntityServiceClientConfig;
 import org.hypertrace.trace.reader.entities.TraceEntityReader;
-import org.hypertrace.trace.reader.entities.TraceEntityClientContext;
-import org.hypertrace.trace.reader.entities.TraceEntityReaderFactory;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,20 +23,7 @@ public class EntitySpanEnricher extends AbstractTraceEnricher {
   }
 
   @Override
-  public void init(Config enricherConfig, EntityDataServiceClientProvider provider) {
-    EntityServiceClientConfig esConfig = EntityServiceClientConfig.from(enricherConfig);
-    Channel esChannel =
-        ManagedChannelBuilder.forAddress(esConfig.getHost(), esConfig.getPort())
-            .usePlaintext()
-            .build();
-    Channel asChannel =
-        ManagedChannelBuilder.forAddress(
-                enricherConfig.getString("attribute.service.config.host"),
-                enricherConfig.getInt("attribute.service.config.port"))
-            .usePlaintext()
-            .build();
-    this.entityReader =
-        TraceEntityReaderFactory.build(
-            TraceEntityClientContext.usingChannels(esChannel, esChannel, asChannel));
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {
+    this.entityReader = clientRegistry.getEntityReader();
   }
 }
