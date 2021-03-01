@@ -36,6 +36,11 @@ spec:
         - name: log4j-config
           configMap:
             name: {{ $global.Values.logConfig.name }}
+      {{- range $viewgen := $group.generator.serviceConfig.viewgenerators }}
+        - name: {{ $viewgen }}-config
+          configMap:
+            name: {{ $viewgen }}-config
+      {{- end }}
       {{- with $global.Values.nodeLabels }}
       nodeSelector:
       {{- toYaml . | nindent 8}}
@@ -59,6 +64,11 @@ spec:
             - name: view-gen-service-config
               mountPath: /app/resources/configs/common/staging/application.conf
               subPath: application.conf
+          {{- range $viewgen := $group.generator.serviceConfig.viewgenerators }}
+            - name: {{ $viewgen }}-config
+              mountPath: /app/resources/configs/{{ $viewgen }}/staging/application.conf
+              subPath: application.conf
+          {{- end }}
             - name: log4j-config
               mountPath: /var/{{ $group.generator.deploymentName }}/log
           livenessProbe:
