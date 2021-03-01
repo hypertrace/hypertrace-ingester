@@ -75,7 +75,7 @@ public class StructuredTraceEnrichProcessor implements
 
   @Override
   public void close() {
-    clientRegistry.shutdown();
+    // clientRegistry.shutdown(); TODO restore cleanup once shared static instance removed
   }
 
   private Map<String, Config> getEnricherConfigs(Map<String, Object> properties) {
