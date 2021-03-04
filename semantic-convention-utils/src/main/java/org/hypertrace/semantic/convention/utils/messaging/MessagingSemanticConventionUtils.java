@@ -21,6 +21,7 @@ public class MessagingSemanticConventionUtils {
 
   private static final String MESSAGING_SYSTEM = OtelMessagingSemanticConventions.MESSAGING_SYSTEM.getValue();
   private static final String MESSAGING_URL = OtelMessagingSemanticConventions.MESSAGING_URL.getValue();
+  private static final String RABBITMQ_SYSTEM_VALUE = OtelMessagingSemanticConventions.RABBITMQ_MESSAGING_SYSTEM_VALUE.getValue();
   private static final String KAFKA_SYSTEM_VALUE = OtelMessagingSemanticConventions.KAFKA_MESSAGING_SYSTEM_VALUE.getValue();
   private static final String SQS_SYSTEM_VALUE = OtelMessagingSemanticConventions.AWS_SQS_MESSAGING_SYSTEM_VALUE.getValue();
 
@@ -43,6 +44,11 @@ public class MessagingSemanticConventionUtils {
   }
 
   public static boolean isRabbitMqBackend(Event event) {
+    if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_SYSTEM)) {
+      return RABBITMQ_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
+          event, MESSAGING_SYSTEM, StringUtils.EMPTY));
+    }
+
     return SpanAttributeUtils.containsAttributeKey(event, RawSpanConstants.getValue(RabbitMq.RABBIT_MQ_ROUTING_KEY))
         || SpanAttributeUtils.containsAttributeKey(event, OtelMessagingSemanticConventions.RABBITMQ_ROUTING_KEY.getValue());
   }

@@ -8,6 +8,7 @@ public enum OtelMessagingSemanticConventions {
   MESSAGING_URL("messaging.url"),
   RABBITMQ_MESSAGING_SYSTEM_VALUE("rabbitmq"),
   RABBITMQ_ROUTING_KEY("messaging.rabbitmq.routing_key"),
+  RABIT_MQ_MESSAGING_SYSTEM_VALUE("rabbitmq"),
   KAFKA_MESSAGING_SYSTEM_VALUE("kafka"),
   AWS_SQS_MESSAGING_SYSTEM_VALUE("sqs"),
   PRODUCER("PRODUCER"),
