@@ -58,9 +58,14 @@ public class MessagingSemanticConventionUtils {
       return Optional.empty();
     }
 
-    if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_URL)) {
+    if (SpanAttributeUtils.containsAttributeKey(event, MESSAGING_URL)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL));
     }
+
+    if (!DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event).isEmpty()) {
+      return DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event);
+    }
+
     return DbSemanticConventionUtils.getBackendURIForOtelFormat(event);
   }
 
@@ -81,6 +86,9 @@ public class MessagingSemanticConventionUtils {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL));
     }
 
+    if (!DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event).isEmpty()) {
+      return DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event);
+    }
     return DbSemanticConventionUtils.getBackendURIForOtelFormat(event);
   }
 
