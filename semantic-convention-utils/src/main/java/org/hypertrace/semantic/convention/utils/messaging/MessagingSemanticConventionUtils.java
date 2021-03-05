@@ -1,5 +1,7 @@
 package org.hypertrace.semantic.convention.utils.messaging;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,22 +10,29 @@ import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.Opt;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
+import org.hypertrace.core.semantic.convention.constants.span.OpenTracingSpanSemanticConventions;
 import org.hypertrace.core.span.constants.v1.SpanAttribute;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
 import org.hypertrace.core.semantic.convention.constants.messaging.OtelMessagingSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.RabbitMq;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Utility class to fetch messaging system span attributes
  */
 public class MessagingSemanticConventionUtils {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(MessagingSemanticConventionUtils.class);
+
   private static final String MESSAGING_SYSTEM = OtelMessagingSemanticConventions.MESSAGING_SYSTEM.getValue();
   private static final String MESSAGING_URL = OtelMessagingSemanticConventions.MESSAGING_URL.getValue();
   private static final String RABBITMQ_SYSTEM_VALUE = OtelMessagingSemanticConventions.RABBITMQ_MESSAGING_SYSTEM_VALUE.getValue();
   private static final String KAFKA_SYSTEM_VALUE = OtelMessagingSemanticConventions.KAFKA_MESSAGING_SYSTEM_VALUE.getValue();
   private static final String SQS_SYSTEM_VALUE = OtelMessagingSemanticConventions.AWS_SQS_MESSAGING_SYSTEM_VALUE.getValue();
+  private static final String PEER_SERVICE_NAME = OpenTracingSpanSemanticConventions.PEER_NAME.getValue();
 
   private static final List<String> RABBITMQ_ROUTING_KEYS =
       new ArrayList<>(Arrays.asList(
@@ -62,7 +71,7 @@ public class MessagingSemanticConventionUtils {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL));
     }
 
-    if (!DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event).isEmpty()) {
+    if (DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event).isPresent()) {
       return DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event);
     }
 
@@ -74,6 +83,12 @@ public class MessagingSemanticConventionUtils {
       return KAFKA_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
           event, MESSAGING_SYSTEM, StringUtils.EMPTY));
     }
+
+    if(SpanAttributeUtils.containsAttributeKey(event, PEER_SERVICE_NAME)) {
+      return KAFKA_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
+          event, PEER_SERVICE_NAME, StringUtils.EMPTY));
+    }
+
     return false;
   }
 
@@ -83,10 +98,20 @@ public class MessagingSemanticConventionUtils {
     }
 
     if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_URL)) {
-      return Optional.of(SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL));
+      try{
+        URL backendURL = new URL(Optional.of(SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL)).get());
+        String host = backendURL.getHost();
+        Integer port = backendURL.getPort();
+        return Optional.of(String.format(
+            "%s:%s", host, port));
+      } catch(MalformedURLException e) {
+        LOGGER.warn("Unable to construct backendURI from {}",
+            SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL));
+        return Optional.empty();
+      }
     }
 
-    if (!DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event).isEmpty()) {
+    if (DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event).isPresent()) {
       return DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event);
     }
     return DbSemanticConventionUtils.getBackendURIForOtelFormat(event);
@@ -96,6 +121,11 @@ public class MessagingSemanticConventionUtils {
     if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_SYSTEM)) {
       return SQS_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
           event, MESSAGING_SYSTEM, StringUtils.EMPTY));
+    }
+
+    if(SpanAttributeUtils.containsAttributeKey(event, PEER_SERVICE_NAME)) {
+      return SQS_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
+          event, PEER_SERVICE_NAME, StringUtils.EMPTY));
     }
     return false;
   }

@@ -1,7 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
-import static org.mockito.Mockito.mock;
-
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
@@ -18,41 +18,46 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.mockito.Mockito.mock;
 
-/**
- * Unit Test for {@link KafkaBackendResolver}
- */
-public class KafkaBackendResolverTest {
 
-  private KafkaBackendResolver kafkaBackendResolver;
+public class SqsBackendResolverTest {
+
+  private SqsBackendResolver sqsBackendResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    kafkaBackendResolver = new KafkaBackendResolver();
+    sqsBackendResolver = new SqsBackendResolver();
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
   @Test
-  public void TestBackendEventResolution() {
-    String broker = "kafka-test.hypertrace.com:9092";
-    Entity entity = kafkaBackendResolver.resolveEntity(getKafkaBackendEvent(broker), structuredTraceGraph).get();
-    System.out.println(entity.getEntityName());
-    Assertions.assertEquals(broker, entity.getEntityName());
+  public void TestSqsBackendResolution() {
+    String sqsConnectionString = "https://queue.amazonaws.com/80398EXAMPLE/MyQueue";
+    URL sqsURL;
+    try {
+      sqsURL = new URL(sqsConnectionString);
+      String sqsHost = sqsURL.getHost();
+      Entity entity = sqsBackendResolver.resolveEntity(getSqsBackendEvent(sqsConnectionString), structuredTraceGraph).get();
+      Assertions.assertEquals(sqsHost, entity.getEntityName());
+    } catch(MalformedURLException e) {
+      Assertions.fail("Unable to create URL for given connection string");
+    }
   }
 
-  private Event getKafkaBackendEvent(String broker) {
+  private Event getSqsBackendEvent(String connectionString) {
     Event event =  Event.newBuilder().setCustomerId("customer1")
         .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f9".getBytes()))
         .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824")).setEnrichedAttributes(
             Attributes.newBuilder().setAttributeMap(
                 Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build())).build())
         .setAttributes(Attributes.newBuilder().setAttributeMap(Map
-            .of("messaging.system", AttributeValue.newBuilder().setValue("kafka").build(),
-                "messaging.url", AttributeValue.newBuilder().setValue(broker).build(),
+            .of("messaging.system", AttributeValue.newBuilder().setValue("sqs").build(),
+                "messaging.url", AttributeValue.newBuilder().setValue(connectionString).build(),
                 "span.kind", AttributeValue.newBuilder().setValue("client").build(),
                 "FLAGS", AttributeValue.newBuilder().setValue("0").build())).build())
-        .setEventName("kafka.connection").setStartTimeMillis(1566869077746L)
+        .setEventName("RecieveMessage").setStartTimeMillis(1566869077746L)
         .setEndTimeMillis(1566869077750L).setMetrics(Metrics.newBuilder()
             .setMetricMap(Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build())).build())
         .setEventRefList(Arrays.asList(
