@@ -296,11 +296,9 @@ public class ApiTraceGraph {
   }
 
   private void buildEventIdToIndexInTrace() {
-    // avoid autoboxing by specifying as object
-    Integer count = 0;
+    int count = 0;
     for (Event event : trace.getEventList()) {
-      eventIdToIndexInTrace.put(event.getEventId(), count);
-      count++;
+      eventIdToIndexInTrace.put(event.getEventId(), count++);
     }
   }
 }
