@@ -1,5 +1,5 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 public enum BackendType {
-  UNKNOWN, HTTP, HTTPS, GRPC, REDIS, MONGO, JDBC, RABBIT_MQ, KAFKA, AWS_SQS
+  UNKNOWN, HTTP, HTTPS, GRPC, REDIS, MONGO, JDBC, RABBIT_MQ, KAFKA, SQS
 }

@@ -27,7 +27,11 @@ public class KafkaBackendResolver extends AbstractBackendResolver {
       LOGGER.warn("Unable to infer a kafka backend from event: {}", event);
       return Optional.empty();
     }
-
+    /*
+    todo: should we clean protocol constants for rabbit_mq, mongo?
+    this is not added into enriched spans constants proto as there want be http.url
+    with kafka://bootstrap.9092
+    * */
     Entity.Builder entityBuilder = getBackendEntityBuilder(
         BackendType.KAFKA, backendURI.get(), event);
     return Optional.of(entityBuilder.build());

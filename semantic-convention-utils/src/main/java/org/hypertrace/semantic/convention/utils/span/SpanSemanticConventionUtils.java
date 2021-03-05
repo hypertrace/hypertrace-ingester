@@ -86,26 +86,6 @@ public class SpanSemanticConventionUtils {
    * @param attributeValueMap map of span data and attribute value
    * @return URI based on Open Tracing format
    */
-  public static Optional<String> getURIforOpenTracingFormat(Map<String, AttributeValue> attributeValueMap) {
-    AttributeValue host = attributeValueMap.getOrDefault(
-        OT_PEER_HOSTNAME,
-        attributeValueMap.get(OT_PEER_IP));
-    if (null == host || StringUtils.isBlank(host.getValue())) {
-      return Optional.empty();
-    }
-    if (attributeValueMap.containsKey(OT_PEER_PORT)
-        && !StringUtils.isBlank(attributeValueMap.get(OT_PEER_PORT).getValue())) {
-      return Optional.of(String.format(
-          "%s:%s", host.getValue(),
-          attributeValueMap.get(OT_PEER_PORT).getValue()));
-    }
-    return Optional.of(host.getValue());
-  }
-
-  /**
-   * @param attributeValueMap map of span data and attribute value
-   * @return URI based on Open Tracing format
-   */
   public static boolean isClientSpanForOtelFormat(Map<String, AttributeValue> attributeValueMap) {
     if (attributeValueMap.containsKey(OTelSpanSemanticConventions.SPAN_KIND.getValue())) {
       return OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE.getValue().equalsIgnoreCase(

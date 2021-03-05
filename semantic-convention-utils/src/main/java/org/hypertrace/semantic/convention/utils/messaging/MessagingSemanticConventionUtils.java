@@ -67,26 +67,27 @@ public class MessagingSemanticConventionUtils {
       return Optional.empty();
     }
 
-    if (SpanAttributeUtils.containsAttributeKey(event, MESSAGING_URL)) {
-      return Optional.of(SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL));
+    Optional<String> OtBackendURI = DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event);
+    if (OtBackendURI.isPresent()) {
+      return OtBackendURI;
     }
 
-    if (DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event).isPresent()) {
-      return DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event);
+    if (SpanAttributeUtils.containsAttributeKey(event, MESSAGING_URL)) {
+      return Optional.of(SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL));
     }
 
     return DbSemanticConventionUtils.getBackendURIForOtelFormat(event);
   }
 
   public static boolean isKafkaBackend(Event event) {
-    if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_SYSTEM)) {
-      return KAFKA_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
-          event, MESSAGING_SYSTEM, StringUtils.EMPTY));
-    }
-
     if(SpanAttributeUtils.containsAttributeKey(event, PEER_SERVICE_NAME)) {
       return KAFKA_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
           event, PEER_SERVICE_NAME, StringUtils.EMPTY));
+    }
+
+    if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_SYSTEM)) {
+      return KAFKA_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
+          event, MESSAGING_SYSTEM, StringUtils.EMPTY));
     }
 
     return false;
@@ -97,35 +98,40 @@ public class MessagingSemanticConventionUtils {
       return Optional.empty();
     }
 
-    if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_URL)) {
-      try{
-        URL backendURL = new URL(Optional.of(SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL)).get());
-        String host = backendURL.getHost();
-        Integer port = backendURL.getPort();
-        return Optional.of(String.format(
-            "%s:%s", host, port));
-      } catch(MalformedURLException e) {
-        LOGGER.warn("Unable to construct backendURI from {}",
-            SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL));
-        return Optional.empty();
-      }
+    Optional<String> OtBackendURI = DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event);
+    if (OtBackendURI.isPresent()) {
+      return OtBackendURI;
     }
 
-    if (DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event).isPresent()) {
-      return DbSemanticConventionUtils.getBackendURIForOpenTracingFormat(event);
+    if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_URL)) {
+      return getHostPortFromURL(SpanAttributeUtils.getStringAttribute(event, MESSAGING_URL));
     }
+
     return DbSemanticConventionUtils.getBackendURIForOtelFormat(event);
   }
 
-  public static boolean isSqsBackend(Event event) {
-    if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_SYSTEM)) {
-      return SQS_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
-          event, MESSAGING_SYSTEM, StringUtils.EMPTY));
+  public static Optional<String> getHostPortFromURL(String url) {
+    try{
+      URL backendURL = new URL(url);
+      String host = backendURL.getHost();
+      Integer port = backendURL.getPort();
+      return Optional.of(String.format(
+          "%s:%s", host, port));
+    } catch(MalformedURLException e) {
+      LOGGER.warn("Unable to construct backendURI from {}", url);
+      return Optional.empty();
     }
+  }
 
+  public static boolean isSqsBackend(Event event) {
     if(SpanAttributeUtils.containsAttributeKey(event, PEER_SERVICE_NAME)) {
       return SQS_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
           event, PEER_SERVICE_NAME, StringUtils.EMPTY));
+    }
+
+    if(SpanAttributeUtils.containsAttributeKey(event, MESSAGING_SYSTEM)) {
+      return SQS_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
+          event, MESSAGING_SYSTEM, StringUtils.EMPTY));
     }
     return false;
   }

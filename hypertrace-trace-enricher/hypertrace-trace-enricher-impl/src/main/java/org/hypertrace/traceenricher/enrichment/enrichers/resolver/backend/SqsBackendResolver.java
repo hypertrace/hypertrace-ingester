@@ -27,9 +27,13 @@ public class SqsBackendResolver extends AbstractBackendResolver {
       LOGGER.warn("Unable to infer a SQS backend from event: {}", event);
       return Optional.empty();
     }
-
+    /*
+    todo: should we clean protocol constants for rabbit_mq, mongo?
+    this is not added into enriched spans constants proto as there want be http.url
+    with sqs://xyz:2323.
+    * */
     Entity.Builder entityBuilder = getBackendEntityBuilder(
-        BackendType.AWS_SQS, backendURI.get(), event);
+        BackendType.SQS, backendURI.get(), event);
     return Optional.of(entityBuilder.build());
   }
 }
