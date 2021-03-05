@@ -222,11 +222,10 @@ public class ApiTraceGraphDebug {
 
     StructuredTrace trace = dfrStructuredTrace.next();
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-    apiTraceGraph.build();
     dfrStructuredTrace.close();
 
     AtomicInteger index = new AtomicInteger();
-    apiTraceGraph.getNodeList().forEach(v -> {
+    apiTraceGraph.getApiNodeList().forEach(v -> {
       System.out.printf("Api Node Index %s %n", index.getAndIncrement());
       v.getEntryApiBoundaryEvent().ifPresent(w ->
           System.out.printf("Entry Event id: %s, service_name: %s %n", HexUtils.getHex(w.getEventId()), w.getServiceName()));
@@ -237,7 +236,7 @@ public class ApiTraceGraphDebug {
       System.out.println("---");
     });
     index.setRelease(0);
-    apiTraceGraph.getApiNodeEventEdgeList().forEach(e -> {
+    apiTraceGraph.getApiNodeApiNodeEdgeList().forEach(e -> {
       System.out.printf("Edge Index %s %n", index.getAndIncrement());
       System.out.printf("Api node index Src: %s, Tgt: %s %n", e.getSrcApiNodeIndex(), e.getTgtApiNodeIndex());
       System.out.printf("Event Id Src: %s, Tgt: %s %n",

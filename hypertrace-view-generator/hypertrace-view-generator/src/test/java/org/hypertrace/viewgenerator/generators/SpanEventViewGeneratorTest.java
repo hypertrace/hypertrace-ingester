@@ -142,7 +142,7 @@ public class SpanEventViewGeneratorTest {
 
   private void verifyComputeApiExitCallCount_HotrodTrace(StructuredTrace trace) {
     Map<ByteBuffer, Integer> eventToApiExitCallCount = spanEventViewGenerator.computeApiExitCallCount(trace);
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace).build();
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     // this trace has 12 api nodes
     // api edges
     // 0 -> [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
@@ -192,8 +192,8 @@ public class SpanEventViewGeneratorTest {
 
   private Map<ByteBuffer, Integer> buildEventIdToApiNode(ApiTraceGraph apiTraceGraph) {
     Map<ByteBuffer, Integer> map = Maps.newHashMap();
-    for (int index = 0; index < apiTraceGraph.getNodeList().size(); index++) {
-      ApiNode<Event> apiNode = apiTraceGraph.getNodeList().get(index);
+    for (int index = 0; index < apiTraceGraph.getApiNodeList().size(); index++) {
+      ApiNode<Event> apiNode = apiTraceGraph.getApiNodeList().get(index);
       int finalIndex = index;
       apiNode.getEvents().forEach(v -> map.put(v.getEventId(), finalIndex));
     }

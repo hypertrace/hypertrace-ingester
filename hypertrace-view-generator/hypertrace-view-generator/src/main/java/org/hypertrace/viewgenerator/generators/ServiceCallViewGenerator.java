@@ -98,7 +98,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       ApiTraceGraph apiTraceGraph,
       StructuredTrace structuredTrace,
       List<ServiceCallView> serviceCallViewRecords) {
-    apiTraceGraph.getApiNodeEventEdgeList()
+    apiTraceGraph.getApiNodeApiNodeEdgeList()
         .forEach(
             edge ->
                 serviceCallViewRecords.add(createGenericRecordFromApiNodeEdge(
@@ -238,20 +238,9 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       StructuredTrace structuredTrace,
       List<ServiceCallView> serviceCallViewRecords) {
     int serviceCallViewRecordsCount = serviceCallViewRecords.size();
-    // Compute the Entry API Boundary spans that are the target of an edge.
-    Set<ByteBuffer> calleeEntryEvents =
-        apiTraceGraph.getApiNodeEventEdgeList().stream()
-            .map(edge -> structuredTrace.getEventList().get(edge.getTgtEventIndex()).getEventId())
-            .collect(Collectors.toSet());
-    // process all the entry api events which has no incoming edge in ApiTraceGraph
-    apiTraceGraph.getNodeList().stream()
-      .map(ApiNode::getEntryApiBoundaryEvent)
-      .filter(
-          apiBoundaryEvent ->
-              apiBoundaryEvent.isPresent()
-                  && !calleeEntryEvents.contains(apiBoundaryEvent.get().getEventId()))
-      .forEach(entryEvent ->
-          serviceCallViewRecords.add(getServiceCallFromSingleEntryEvent(structuredTrace, entryEvent.get())));
+
+    apiTraceGraph.getApiEntryBoundaryEventsWithNoIncomingEdge().forEach(
+        entryEvent -> serviceCallViewRecords.add(getServiceCallFromSingleEntryEvent(structuredTrace, entryEvent)));
 
     // Log warning if the trace has multiple root entries. A trace should only ever have one root entry
     if (serviceCallViewRecords.size() - serviceCallViewRecordsCount > 1) {
@@ -280,15 +269,8 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       ApiTraceGraph apiTraceGraph,
       StructuredTrace structuredTrace,
       List<ServiceCallView> serviceCallViewRecords) {
-    // Compute the Exit API Boundary spans that are the source of an edge
-    Set<ByteBuffer> callerExitEvents =
-        apiTraceGraph.getApiNodeEventEdgeList().stream()
-            .map(edge -> structuredTrace.getEventList().get(edge.getSrcEventIndex()).getEventId())
-            .collect(Collectors.toSet());
-    apiTraceGraph.getNodeList().stream()
-        .flatMap(apiNode -> apiNode.getExitApiBoundaryEvents().stream())
-        .filter(exitEvent -> !callerExitEvents.contains(exitEvent.getEventId()))
-        .forEach(exitEvent -> serviceCallViewRecords.add(getServiceCallFromSingleExitEvent(structuredTrace, exitEvent)));
+    apiTraceGraph.getApiExitBoundaryEventsWithNoOutgoingEdge().forEach(
+        exitEvent -> serviceCallViewRecords.add(getServiceCallFromSingleExitEvent(structuredTrace, exitEvent)));
   }
 
   private ServiceCallView getServiceCallFromSingleExitEvent(StructuredTrace trace, Event event) {
@@ -368,7 +350,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       Map<ByteBuffer, Event> eventMap,
       Map<ByteBuffer, ByteBuffer> childToParentEventId,
       List<ServiceCallView> serviceCallViewRecords) {
-    apiTraceGraph.getNodeList().stream()
+    apiTraceGraph.getApiNodeList().stream()
         .filter(
             apiNode -> apiNode.getEntryApiBoundaryEvent().isEmpty()) // No entry api boundary
         .flatMap(apiNode -> apiNode.getExitApiBoundaryEvents().stream())
