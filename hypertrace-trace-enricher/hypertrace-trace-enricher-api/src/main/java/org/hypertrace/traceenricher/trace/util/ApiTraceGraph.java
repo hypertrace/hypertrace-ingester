@@ -197,11 +197,44 @@ public class ApiTraceGraph {
         exitApiBoundaryEvents);
   }
 
-  private void buildApiNodeToIndexMap() {
-    for (int i = 0; i < apiNodeList.size(); i++) {
-      ApiNode<Event> apiNode = apiNodeList.get(i);
-      apiNode.getEntryApiBoundaryEvent().ifPresent(e -> entryBoundaryToApiNode.put(e, apiNode));
-      apiNodeToIndex.put(apiNode, i);
+  private void buildEdge(StructuredTraceGraph graph) {
+    // 1. get all the exit boundary events from an api node
+    // 2. exit boundary events are the only ones which can call a different api node
+    // 3. find all the children of exit boundary events, which will be entry boundary nodes of different api nodes
+    // 4. find all the api nodes based on children of exit boundary events from `entryBoundaryToApiNode`
+    // 5. connect the exit boundary and entry boundary of different api node with an edge
+    for (ApiNode<Event> apiNode : apiNodeList) {
+      //exit boundary events of api node
+      List<Event> exitBoundaryEvents = apiNode.getExitApiBoundaryEvents();
+      for (Event exitBoundaryEvent : exitBoundaryEvents) {
+        List<Event> exitBoundaryEventChildren = graph.getChildrenEvents(exitBoundaryEvent);
+        if (exitBoundaryEventChildren != null) {
+          for (Event exitBoundaryEventChild : exitBoundaryEventChildren) {
+            // if the child of an exit boundary event is entry api boundary type, which should be always!
+            if (EnrichedSpanUtils.isEntryApiBoundary(exitBoundaryEventChild)) {
+              // get the api node exit boundary event is connecting to
+              ApiNode<Event> destinationApiNode = entryBoundaryToApiNode.get(exitBoundaryEventChild);
+
+              Optional<ApiNodeEventEdge> edgeBetweenApiNodes = createEdgeBetweenApiNodes(
+                  apiNode, destinationApiNode, exitBoundaryEvent, exitBoundaryEventChild);
+              edgeBetweenApiNodes.ifPresent(apiNodeEventEdgeList::add);
+            } else {
+              LOGGER.warn("Exit boundary event with eventId: {}, eventName: {}, serviceName: {}," +
+                      " can only have entry boundary event as child. Non-entry child:" +
+                      " childEventId: {}, childEventName: {}, childServiceName: {}." +
+                      " traceId for events: {}",
+                  HexUtils.getHex(exitBoundaryEvent.getEventId()),
+                  exitBoundaryEvent.getEventName(),
+                  exitBoundaryEvent.getServiceName(),
+                  HexUtils.getHex(exitBoundaryEventChild.getEventId()),
+                  exitBoundaryEventChild.getEventName(),
+                  exitBoundaryEventChild.getServiceName(),
+                  HexUtils.getHex(trace.getTraceId())
+              );
+            }
+          }
+        }
+      }
     }
   }
 
@@ -247,44 +280,11 @@ public class ApiTraceGraph {
     return Optional.empty();
   }
 
-  private void buildEdge(StructuredTraceGraph graph) {
-    // 1. get all the exit boundary events from an api node
-    // 2. exit boundary events are the only ones which can call a different api node
-    // 3. find all the children of exit boundary events, which will be entry boundary nodes of different api nodes
-    // 4. find all the api nodes based on children of exit boundary events from `entryBoundaryToApiNode`
-    // 5. connect the exit boundary and entry boundary of different api node with an edge
-    for (ApiNode<Event> apiNode : apiNodeList) {
-      //exit boundary events of api node
-      List<Event> exitBoundaryEvents = apiNode.getExitApiBoundaryEvents();
-      for (Event exitBoundaryEvent : exitBoundaryEvents) {
-        List<Event> exitBoundaryEventChildren = graph.getChildrenEvents(exitBoundaryEvent);
-        if (exitBoundaryEventChildren != null) {
-          for (Event exitBoundaryEventChild : exitBoundaryEventChildren) {
-            // if the child of an exit boundary event is entry api boundary type, which should be always!
-            if (EnrichedSpanUtils.isEntryApiBoundary(exitBoundaryEventChild)) {
-              // get the api node exit boundary event is connecting to
-              ApiNode<Event> destinationApiNode = entryBoundaryToApiNode.get(exitBoundaryEventChild);
-
-              Optional<ApiNodeEventEdge> edgeBetweenApiNodes = createEdgeBetweenApiNodes(
-                  apiNode, destinationApiNode, exitBoundaryEvent, exitBoundaryEventChild);
-              edgeBetweenApiNodes.ifPresent(apiNodeEventEdgeList::add);
-            } else {
-              LOGGER.warn("Exit boundary event with eventId: {}, eventName: {}, serviceName: {}," +
-                      " can only have entry boundary event as child. Non-entry child:" +
-                      " childEventId: {}, childEventName: {}, childServiceName: {}." +
-                      " traceId for events: {}",
-                  HexUtils.getHex(exitBoundaryEvent.getEventId()),
-                  exitBoundaryEvent.getEventName(),
-                  exitBoundaryEvent.getServiceName(),
-                  HexUtils.getHex(exitBoundaryEventChild.getEventId()),
-                  exitBoundaryEventChild.getEventName(),
-                  exitBoundaryEventChild.getServiceName(),
-                  HexUtils.getHex(trace.getTraceId())
-              );
-            }
-          }
-        }
-      }
+  private void buildApiNodeToIndexMap() {
+    for (int i = 0; i < apiNodeList.size(); i++) {
+      ApiNode<Event> apiNode = apiNodeList.get(i);
+      apiNode.getEntryApiBoundaryEvent().ifPresent(e -> entryBoundaryToApiNode.put(e, apiNode));
+      apiNodeToIndex.put(apiNode, i);
     }
   }
 
