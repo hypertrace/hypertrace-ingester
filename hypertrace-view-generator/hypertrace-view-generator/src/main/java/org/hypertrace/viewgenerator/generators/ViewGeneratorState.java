@@ -20,7 +20,7 @@ public class ViewGeneratorState {
   public static ApiTraceGraph getApiTraceGraph(StructuredTrace trace) {
     if (apiTraceGraphThreadLocal.get() == null
         || isDifferentTrace(apiTraceGraphThreadLocal.get().getTrace(), trace)) {
-      apiTraceGraphThreadLocal.set(new ApiTraceGraph(trace).build());
+      apiTraceGraphThreadLocal.set(new ApiTraceGraph(trace));
     }
     return apiTraceGraphThreadLocal.get();
   }

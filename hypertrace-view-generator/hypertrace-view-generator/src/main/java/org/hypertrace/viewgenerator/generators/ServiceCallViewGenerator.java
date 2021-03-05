@@ -244,7 +244,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
             .map(edge -> structuredTrace.getEventList().get(edge.getTgtEventIndex()).getEventId())
             .collect(Collectors.toSet());
     // process all the entry api events which has no incoming edge in ApiTraceGraph
-    apiTraceGraph.getNodeList().stream()
+    apiTraceGraph.getApiNodeList().stream()
       .map(ApiNode::getEntryApiBoundaryEvent)
       .filter(
           apiBoundaryEvent ->
@@ -285,7 +285,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
         apiTraceGraph.getApiNodeEventEdgeList().stream()
             .map(edge -> structuredTrace.getEventList().get(edge.getSrcEventIndex()).getEventId())
             .collect(Collectors.toSet());
-    apiTraceGraph.getNodeList().stream()
+    apiTraceGraph.getApiNodeList().stream()
         .flatMap(apiNode -> apiNode.getExitApiBoundaryEvents().stream())
         .filter(exitEvent -> !callerExitEvents.contains(exitEvent.getEventId()))
         .forEach(exitEvent -> serviceCallViewRecords.add(getServiceCallFromSingleExitEvent(structuredTrace, exitEvent)));
@@ -368,7 +368,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       Map<ByteBuffer, Event> eventMap,
       Map<ByteBuffer, ByteBuffer> childToParentEventId,
       List<ServiceCallView> serviceCallViewRecords) {
-    apiTraceGraph.getNodeList().stream()
+    apiTraceGraph.getApiNodeList().stream()
         .filter(
             apiNode -> apiNode.getEntryApiBoundaryEvent().isEmpty()) // No entry api boundary
         .flatMap(apiNode -> apiNode.getExitApiBoundaryEvents().stream())

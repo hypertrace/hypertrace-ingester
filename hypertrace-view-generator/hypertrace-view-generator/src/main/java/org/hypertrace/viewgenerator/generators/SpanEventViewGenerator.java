@@ -161,8 +161,8 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     // event -> api exit call count for the corresponding api_node
     Map<ByteBuffer, Integer> eventToApiExitCallCount = Maps.newHashMap();
 
-    for (int index = 0; index < apiTraceGraph.getNodeList().size(); index++) {
-      ApiNode<Event> apiNode = apiTraceGraph.getNodeList().get(index);
+    for (int index = 0; index < apiTraceGraph.getApiNodeList().size(); index++) {
+      ApiNode<Event> apiNode = apiTraceGraph.getApiNodeList().get(index);
       // {@link ApiTraceGraph#getApiNodeEventEdgeList()} doesn't consists of edges to backend, so compute them explicitly
       int backendExitCallCountForApiNode = (int) apiNode
           .getExitApiBoundaryEvents().stream()
