@@ -33,7 +33,7 @@ public class ApiTraceGraphTest {
     dfrStructuredTrace.close();
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-    assertEquals(12, apiTraceGraph.getApiNodeApiNodeEdgeList().size());
+    assertEquals(12, apiTraceGraph.getApiNodeEventEdgeList().size());
     assertEquals(13, apiTraceGraph.getApiNodeList().size());
     assertNotNull(apiTraceGraph.getTrace());
     verifyEveryEventPartOfSingleApiNode_HotrodTrace(trace, apiTraceGraph);

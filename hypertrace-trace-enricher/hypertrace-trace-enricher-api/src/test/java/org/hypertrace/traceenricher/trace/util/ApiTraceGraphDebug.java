@@ -236,7 +236,7 @@ public class ApiTraceGraphDebug {
       System.out.println("---");
     });
     index.setRelease(0);
-    apiTraceGraph.getApiNodeApiNodeEdgeList().forEach(e -> {
+    apiTraceGraph.getApiNodeEventEdgeList().forEach(e -> {
       System.out.printf("Edge Index %s %n", index.getAndIncrement());
       System.out.printf("Api node index Src: %s, Tgt: %s %n", e.getSrcApiNodeIndex(), e.getTgtApiNodeIndex());
       System.out.printf("Event Id Src: %s, Tgt: %s %n",

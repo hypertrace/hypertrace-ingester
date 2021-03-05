@@ -95,7 +95,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       ApiTraceGraph apiTraceGraph,
       StructuredTrace structuredTrace,
       List<ServiceCallView> serviceCallViewRecords) {
-    apiTraceGraph.getApiNodeApiNodeEdgeList()
+    apiTraceGraph.getApiNodeEventEdgeList()
         .forEach(
             edge ->
                 serviceCallViewRecords.add(createGenericRecordFromApiNodeEdge(
