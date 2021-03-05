@@ -79,7 +79,7 @@ public class ApiTraceGraph {
     //optimization
     buildApiNodeToIndexMap();
 
-    buildEdge(graph);
+    buildApiNodeEdges(graph);
   }
 
   /**
@@ -197,7 +197,7 @@ public class ApiTraceGraph {
         exitApiBoundaryEvents);
   }
 
-  private void buildEdge(StructuredTraceGraph graph) {
+  private void buildApiNodeEdges(StructuredTraceGraph graph) {
     // 1. get all the exit boundary events from an api node
     // 2. exit boundary events are the only ones which can call a different api node
     // 3. find all the children of exit boundary events, which will be entry boundary nodes of different api nodes
@@ -289,7 +289,6 @@ public class ApiTraceGraph {
   }
 
   private void buildTraceEdgeTable() {
-    Table<Integer, Integer, Edge> traceEdgeTable = HashBasedTable.create();
     for (Edge edge : trace.getEventEdgeList()) {
       traceEdgeTable.put(edge.getSrcIndex(), edge.getTgtIndex(), edge);
     }
