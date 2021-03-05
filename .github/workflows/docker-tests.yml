@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-on-linux:
+  build-and-test-with-mongo:
       # Ubuntu-20.04 runner comes with docker 19.03 and OpenJDK 11 and we are using that here. 
     runs-on: ubuntu-20.04
     name: Build and run Docker images
@@ -55,6 +55,53 @@ jobs:
         run: |
           sleep 60 # you can decrease it but never increase it
           docker-compose -f docker-compose.yml ps
+          
+      - name: Runs tests
+        working-directory: ./.github/workflows/hypertrace-ingester/scripts
+        run: ./tests.sh
+
+  build-and-test-with-postgres:
+        # Ubuntu-20.04 runner comes with docker 19.03 and OpenJDK 11 and we are using that here. 
+    runs-on: ubuntu-20.04
+    name: Build and run Docker images
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: create checksum file
+        uses: hypertrace/github-actions/checksum@main
+
+      - name: Cache packages
+        id: cache-packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle
+          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
+          restore-keys: |
+            gradle-packages-${{ runner.os }}-${{ github.job }}
+            gradle-packages-${{ runner.os }}
+
+      - name: Build with Gradle
+        uses: hypertrace/github-actions/gradle@main
+        with: 
+          args: dockerBuildImages
+
+      - name: Verify hypertrace image
+        working-directory: ./.github/workflows/hypertrace-ingester
+        # Below tests a docker-compose.yml service named 'sut' with a valid HEALTHCHECK instruction:
+        run: |
+          docker-compose -f postgres/docker-compose.yml -f docker-compose-zipkin-example.yml up -d || { ../scripts/inspect.sh ; exit 1 ; }
+
+      - name: Waits for some stability
+        working-directory: ./.github/workflows/hypertrace-ingester
+        run: |
+          sleep 60 # you can decrease it but never increase it
+          docker-compose -f postgres/docker-compose.yml ps
           
       - name: Runs tests
         working-directory: ./.github/workflows/hypertrace-ingester/scripts
