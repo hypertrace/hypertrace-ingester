@@ -3,14 +3,11 @@ package org.hypertrace.viewgenerator.generators;
 import static org.hypertrace.core.datamodel.shared.SpanAttributeUtils.getStringAttribute;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.hypertrace.core.datamodel.ApiNodeEventEdge;
@@ -144,33 +141,14 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
    * 2. exit calls to backend from api_exit_span in api_node
    */
   Map<ByteBuffer, Integer> computeApiExitCallCount(StructuredTrace trace) {
-    // api_node_index -> api exit call count
-    Map<Integer, AtomicInteger> apiNodeExitCallCount = Maps.newHashMap();
     ApiTraceGraph apiTraceGraph = ViewGeneratorState.getApiTraceGraph(trace);
-
-    // this set contains events which are the source of any api_node_edge
-    Set<ByteBuffer> callerExitEvents = Sets.newHashSet();
-    for (ApiNodeEventEdge apiNodeEventEdge : apiTraceGraph.getApiNodeEventEdgeList()) {
-      // there will be at max 1 call between any two api_node
-      apiNodeExitCallCount.computeIfAbsent(
-          apiNodeEventEdge.getSrcApiNodeIndex(), v -> new AtomicInteger(0)).incrementAndGet();
-      // srcEventIndex won't be null
-      callerExitEvents.add(trace.getEventList().get(apiNodeEventEdge.getSrcEventIndex()).getEventId());
-    }
-
     // event -> api exit call count for the corresponding api_node
     Map<ByteBuffer, Integer> eventToApiExitCallCount = Maps.newHashMap();
 
-    for (int index = 0; index < apiTraceGraph.getApiNodeList().size(); index++) {
-      ApiNode<Event> apiNode = apiTraceGraph.getApiNodeList().get(index);
-      // {@link ApiTraceGraph#getApiNodeEventEdgeList()} doesn't consists of edges to backend, so compute them explicitly
-      int backendExitCallCountForApiNode = (int) apiNode
-          .getExitApiBoundaryEvents().stream()
-          .filter(exitEvent -> !callerExitEvents.contains(exitEvent.getEventId())).count();
-
-      int totalExitCallCount =
-          apiNodeExitCallCount.getOrDefault(index, new AtomicInteger(0)).get()
-              + backendExitCallCountForApiNode;
+    for (ApiNode<Event> apiNode : apiTraceGraph.getApiNodeList()) {
+      List<Event> backendExitEvents = apiTraceGraph.getExitBoundaryEventsWithNoOutboundEdgeForApiNode(apiNode);
+      List<ApiNodeEventEdge> edges = apiTraceGraph.getOutboundEdgesForApiNode(apiNode);
+      int totalExitCallCount = backendExitEvents.size() + edges.size();
       apiNode.getEvents().forEach(e -> eventToApiExitCallCount.put(e.getEventId(), totalExitCallCount));
     }
     return eventToApiExitCallCount;
