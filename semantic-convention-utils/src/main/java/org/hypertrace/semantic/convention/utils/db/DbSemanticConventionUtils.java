@@ -208,6 +208,10 @@ public class DbSemanticConventionUtils {
     return SpanSemanticConventionUtils.getURIForOtelFormat(event);
   }
 
+  public static Optional<String> getBackendURIForOpenTracingFormat(Event event) {
+    return SpanSemanticConventionUtils.getURIforOpenTracingFormat(event);
+  }
+
   /**
    * @param attributeValueMap map of attribute key value
    * @return backend uri based on otel format

@@ -20,6 +20,8 @@ public class BackendEntityResolver extends AbstractBackendResolver {
         new MongoBackendResolver(),
         new JdbcBackendResolver(),
         new RabbitMqBackendResolver(),
+        new KafkaBackendResolver(),
+        new SqsBackendResolver(),
         new ClientSpanEndpointResolver()
     );
   }
