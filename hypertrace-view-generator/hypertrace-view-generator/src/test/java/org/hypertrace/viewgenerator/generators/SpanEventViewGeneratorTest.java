@@ -141,7 +141,7 @@ public class SpanEventViewGeneratorTest {
   }
 
   private void verifyComputeApiExitCallCount_HotrodTrace(StructuredTrace trace) {
-    Map<ByteBuffer, Integer> eventToApiExitCallCount = spanEventViewGenerator.computeApiExitCallCount(trace);
+    Map<ByteBuffer, SpanEventViewGenerator.ExitCallBreakup> eventToApiExitCallCount = spanEventViewGenerator.computeApiExitCallCount(trace);
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     // this trace has 12 api nodes
     // api edges
@@ -157,7 +157,7 @@ public class SpanEventViewGeneratorTest {
     eventToApiExitCallCount.forEach((k, v) -> {
       Integer apiNodeIndex = eventToApiNodeIndex.get(k);
       if (null != apiNodeIndex)
-        assertEquals(apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0), v);
+        assertEquals(apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0), v.exitCallCount);
     });
 
     // verify exit call count per service per api_trace
@@ -165,22 +165,22 @@ public class SpanEventViewGeneratorTest {
     // frontend service has 1 api_entry span and that api_node has 12 exit calls [drive: 1, customer: 1, route: 10]
     List<Event> events = getApiEntryEventsForService(trace, "frontend");
     assertEquals(1, events.size());
-    assertEquals(12, eventToApiExitCallCount.get(events.get(0).getEventId()));
+    assertEquals(12, eventToApiExitCallCount.get(events.get(0).getEventId()).exitCallCount);
 
     // customer service has 1 api_entry span and that api_node has 1 exit call to mysql
     events = getApiEntryEventsForService(trace, "customer");
     assertEquals(1, events.size());
-    assertEquals(1, eventToApiExitCallCount.get(events.get(0).getEventId()));
+    assertEquals(1, eventToApiExitCallCount.get(events.get(0).getEventId()).exitCallCount);
 
     // driver service has 1 api_entry span and that api_node has 13 exit call redis
     events = getApiEntryEventsForService(trace, "driver");
     assertEquals(1, events.size());
-    assertEquals(13, eventToApiExitCallCount.get(events.get(0).getEventId()));
+    assertEquals(13, eventToApiExitCallCount.get(events.get(0).getEventId()).exitCallCount);
 
     // route service has 10 api_entry span and all of them have 0 exit calls
     events = getApiEntryEventsForService(trace, "route");
     assertEquals(10, events.size());
-    events.forEach(v -> assertEquals(0, eventToApiExitCallCount.get(v.getEventId())));
+    events.forEach(v -> assertEquals(0, eventToApiExitCallCount.get(v.getEventId()).exitCallCount));
   }
 
   private List<Event> getApiEntryEventsForService(StructuredTrace trace, String serviceName) {
