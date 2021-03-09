@@ -1,16 +1,5 @@
 package org.hypertrace.core.spannormalizer.fieldgenerators;
 
-import io.jaegertracing.api_v2.JaegerSpanInternalModel;
-import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.eventfields.grpc.Grpc;
-import org.hypertrace.core.datamodel.eventfields.rpc.Rpc;
-import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SERVICE;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
@@ -28,6 +17,15 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPO
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA_CONTENT_TYPE;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_STATUS_CODE;
 import static org.hypertrace.core.spannormalizer.utils.TestUtils.createKeyValue;
+
+import io.jaegertracing.api_v2.JaegerSpanInternalModel;
+import java.util.HashMap;
+import java.util.Map;
+import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.eventfields.grpc.Grpc;
+import org.hypertrace.core.datamodel.eventfields.rpc.Rpc;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 class RpcFieldsGeneratorTest {
   @Test
@@ -85,18 +83,67 @@ class RpcFieldsGeneratorTest {
     Assertions.assertEquals("grpc", eventBuilder.getRpcBuilder().getSystem());
     Assertions.assertEquals("package.service", eventBuilder.getRpcBuilder().getService());
     Assertions.assertEquals("GetId", eventBuilder.getRpcBuilder().getMethod());
-    Assertions.assertEquals("testservice:45", eventBuilder.getGrpcBuilder().getRequestBuilder().getRequestMetadataBuilder().getAuthority());
-    Assertions.assertEquals("application/grpc", eventBuilder.getGrpcBuilder().getRequestBuilder().getRequestMetadataBuilder().getContentType());
-    Assertions.assertEquals("/package.service/GetId", eventBuilder.getGrpcBuilder().getRequestBuilder().getRequestMetadataBuilder().getPath());
-    Assertions.assertEquals("grpc-go/1.17.0", eventBuilder.getGrpcBuilder().getRequestBuilder().getRequestMetadataBuilder().getUserAgent());
-    Assertions.assertEquals("198.12.34.1", eventBuilder.getGrpcBuilder().getRequestBuilder().getRequestMetadataBuilder().getXForwardedFor());
-    Assertions.assertEquals("application/grpc", eventBuilder.getGrpcBuilder().getResponseBuilder().getResponseMetadataBuilder().getContentType());
+    Assertions.assertEquals(
+        "testservice:45",
+        eventBuilder
+            .getGrpcBuilder()
+            .getRequestBuilder()
+            .getRequestMetadataBuilder()
+            .getAuthority());
+    Assertions.assertEquals(
+        "application/grpc",
+        eventBuilder
+            .getGrpcBuilder()
+            .getRequestBuilder()
+            .getRequestMetadataBuilder()
+            .getContentType());
+    Assertions.assertEquals(
+        "/package.service/GetId",
+        eventBuilder.getGrpcBuilder().getRequestBuilder().getRequestMetadataBuilder().getPath());
+    Assertions.assertEquals(
+        "grpc-go/1.17.0",
+        eventBuilder
+            .getGrpcBuilder()
+            .getRequestBuilder()
+            .getRequestMetadataBuilder()
+            .getUserAgent());
+    Assertions.assertEquals(
+        "198.12.34.1",
+        eventBuilder
+            .getGrpcBuilder()
+            .getRequestBuilder()
+            .getRequestMetadataBuilder()
+            .getXForwardedFor());
+    Assertions.assertEquals(
+        "application/grpc",
+        eventBuilder
+            .getGrpcBuilder()
+            .getResponseBuilder()
+            .getResponseMetadataBuilder()
+            .getContentType());
 
-    Assertions.assertEquals("identity", eventBuilder.getGrpcBuilder().getRequestBuilder().getMetadata().get("content-encoding"));
-    Assertions.assertEquals("identity", eventBuilder.getGrpcBuilder().getRequestBuilder().getRequestMetadataBuilder().getOtherMetadata().get("content-encoding"));
+    Assertions.assertEquals(
+        "identity",
+        eventBuilder.getGrpcBuilder().getRequestBuilder().getMetadata().get("content-encoding"));
+    Assertions.assertEquals(
+        "identity",
+        eventBuilder
+            .getGrpcBuilder()
+            .getRequestBuilder()
+            .getRequestMetadataBuilder()
+            .getOtherMetadata()
+            .get("content-encoding"));
 
-    Assertions.assertEquals("envoy", eventBuilder.getGrpcBuilder().getResponseBuilder().getMetadata().get("server"));
-    Assertions.assertEquals("envoy", eventBuilder.getGrpcBuilder().getResponseBuilder().getResponseMetadataBuilder().getOtherMetadata().get("server"));
+    Assertions.assertEquals(
+        "envoy", eventBuilder.getGrpcBuilder().getResponseBuilder().getMetadata().get("server"));
+    Assertions.assertEquals(
+        "envoy",
+        eventBuilder
+            .getGrpcBuilder()
+            .getResponseBuilder()
+            .getResponseMetadataBuilder()
+            .getOtherMetadata()
+            .get("server"));
   }
 
   @Test
@@ -139,7 +186,8 @@ class RpcFieldsGeneratorTest {
 
     tagsMap.forEach(
         (key, keyValue) -> {
-          Assertions.assertEquals(false, rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder, tagsMap));
+          Assertions.assertEquals(
+              false, rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder, tagsMap));
         });
   }
 }

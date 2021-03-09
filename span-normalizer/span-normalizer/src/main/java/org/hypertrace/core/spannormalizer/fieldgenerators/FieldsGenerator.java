@@ -1,14 +1,13 @@
 package org.hypertrace.core.spannormalizer.fieldgenerators;
 
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
+import java.util.HashMap;
+import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class FieldsGenerator {
   private static Logger LOGGER = LoggerFactory.getLogger(FieldsGenerator.class);
@@ -48,8 +47,7 @@ public class FieldsGenerator {
    * @param attributeValueMap attribute key value, should be populated before-hand
    */
   public void populateOtherFields(
-      Event.Builder eventBuilder,
-      final Map<String, AttributeValue> attributeValueMap) {
+      Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
     try {
       this.httpFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
       this.sqlFieldsGenerator.populateOtherFields(eventBuilder, attributeValueMap);
@@ -81,8 +79,8 @@ public class FieldsGenerator {
         // If no ProtocolFieldsGenerator to handle that key, try some of the custom conversion code
         // in the various
         // converters eg. HttpFieldsGenerator to handle keys that start with a key - headers, params
-        if (!httpFieldsGenerator.handleStartsWithKeyIfNecessary(key, keyValue, eventBuilder) &&
-            !rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder, tagsMap)) {
+        if (!httpFieldsGenerator.handleStartsWithKeyIfNecessary(key, keyValue, eventBuilder)
+            && !rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder, tagsMap)) {
           // Key cannot be converted to any of the fields, put it in event attributes. This may be a
           // repeated
           // operation for some keys since in JaegerSpanToRawSpanAvroConverter.buildEvent(), we add

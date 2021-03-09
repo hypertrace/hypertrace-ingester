@@ -9,16 +9,15 @@ public class EnricherConfigFactory {
   private static final String ENRICHER_NAMES_CONFIG = "enricher.names";
   public static final String ENRICHER_CONFIG_TEMPLATE = "enricher.%s";
 
-  private EnricherConfigFactory() {
-  }
+  private EnricherConfigFactory() {}
 
   /**
-   * Creates a map of enricher name to enricher configurations
-   * The configuration format matches with {@code}structured-trace-enrichment-jobs.conf{code},
+   * Creates a map of enricher name to enricher configurations The configuration format matches with
+   * {@code}structured-trace-enrichment-jobs.conf{code},
    *
    * @param configs raw configuration
-   * @return map of enricher name to enricher configurations. Returns empty map if there is
-   * any failure, never return null
+   * @return map of enricher name to enricher configurations. Returns empty map if there is any
+   *     failure, never return null
    */
   public static Map<String, Config> createEnricherConfig(Config configs) {
     Map<String, Config> result = new LinkedHashMap<>();
@@ -38,5 +37,4 @@ public class EnricherConfigFactory {
   public static String getEnricherConfigPath(String enricher) {
     return String.format(ENRICHER_CONFIG_TEMPLATE, enricher);
   }
-
 }

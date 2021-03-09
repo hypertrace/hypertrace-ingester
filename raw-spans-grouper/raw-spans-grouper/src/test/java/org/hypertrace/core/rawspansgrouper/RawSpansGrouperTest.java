@@ -37,8 +37,9 @@ public class RawSpansGrouperTest {
     File file = tempDir.resolve("state").toFile();
 
     RawSpansGrouper underTest = new RawSpansGrouper(ConfigClientFactory.getClient());
-    Config config = ConfigFactory.parseURL(
-        getClass().getClassLoader().getResource("configs/raw-spans-grouper/application.conf"));
+    Config config =
+        ConfigFactory.parseURL(
+            getClass().getClassLoader().getResource("configs/raw-spans-grouper/application.conf"));
 
     Map<String, Object> baseProps = underTest.getBaseStreamsConfig();
     Map<String, Object> streamsProps = underTest.getStreamsConfig(config);
@@ -49,8 +50,8 @@ public class RawSpansGrouperTest {
     mergedProps.put(RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG, config);
     mergedProps.put(StreamsConfig.STATE_DIR_CONFIG, file.getAbsolutePath());
 
-    StreamsBuilder streamsBuilder = underTest
-        .buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
+    StreamsBuilder streamsBuilder =
+        underTest.buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
 
     Properties props = new Properties();
     mergedProps.forEach(props::put);
@@ -60,38 +61,86 @@ public class RawSpansGrouperTest {
     Serde<TraceIdentity> traceIdentitySerde = new StreamsConfig(mergedProps).defaultKeySerde();
 
     TopologyTestDriver td = new TopologyTestDriver(streamsBuilder.build(), props);
-    TestInputTopic<TraceIdentity, RawSpan> inputTopic = td
-        .createInputTopic(config.getString(RawSpanGrouperConstants.INPUT_TOPIC_CONFIG_KEY),
-            traceIdentitySerde.serializer(), defaultValueSerde.serializer());
+    TestInputTopic<TraceIdentity, RawSpan> inputTopic =
+        td.createInputTopic(
+            config.getString(RawSpanGrouperConstants.INPUT_TOPIC_CONFIG_KEY),
+            traceIdentitySerde.serializer(),
+            defaultValueSerde.serializer());
 
-    TestOutputTopic outputTopic = td
-        .createOutputTopic(config.getString(RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY),
-            Serdes.String().deserializer(), defaultValueSerde.deserializer());
+    TestOutputTopic outputTopic =
+        td.createOutputTopic(
+            config.getString(RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY),
+            Serdes.String().deserializer(),
+            defaultValueSerde.deserializer());
 
     String tenantId = "tenant1";
 
-    RawSpan span1 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
-        .setCustomerId("tenant1").setEvent(createEvent("event-1", "tenant1")).build();
-    RawSpan span2 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
-        .setCustomerId("tenant1").setEvent(createEvent("event-2", "tenant1")).build();
-    RawSpan span3 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
-        .setCustomerId("tenant1").setEvent(createEvent("event-3", "tenant1")).build();
-    RawSpan span4 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
-        .setCustomerId("tenant1").setEvent(createEvent("event-4", "tenant1")).build();
-    RawSpan span5 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
-        .setCustomerId("tenant1").setEvent(createEvent("event-5", "tenant1")).build();
-    RawSpan span6 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
-      .setCustomerId("tenant1").setEvent(createEvent("event-6", "tenant1")).build();
-    RawSpan span7 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
-      .setCustomerId("tenant1").setEvent(createEvent("event-7", "tenant1")).build();
-    RawSpan span8 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
-      .setCustomerId("tenant1").setEvent(createEvent("event-8", "tenant1")).build();
-    RawSpan span9 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
-      .setCustomerId("tenant1").setEvent(createEvent("event-9", "tenant1")).build();
-    RawSpan span10 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
-      .setCustomerId("tenant1").setEvent(createEvent("event-10", "tenant1")).build();
-    RawSpan span11 = RawSpan.newBuilder().setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
-      .setCustomerId("tenant1").setEvent(createEvent("event-11", "tenant1")).build();
+    RawSpan span1 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-1", "tenant1"))
+            .build();
+    RawSpan span2 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-2", "tenant1"))
+            .build();
+    RawSpan span3 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-3", "tenant1"))
+            .build();
+    RawSpan span4 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-4", "tenant1"))
+            .build();
+    RawSpan span5 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-5", "tenant1"))
+            .build();
+    RawSpan span6 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-6", "tenant1"))
+            .build();
+    RawSpan span7 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-7", "tenant1"))
+            .build();
+    RawSpan span8 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-8", "tenant1"))
+            .build();
+    RawSpan span9 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-9", "tenant1"))
+            .build();
+    RawSpan span10 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-10", "tenant1"))
+            .build();
+    RawSpan span11 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+            .setCustomerId("tenant1")
+            .setEvent(createEvent("event-11", "tenant1"))
+            .build();
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span1);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span4);
@@ -147,13 +196,17 @@ public class RawSpansGrouperTest {
   }
 
   private Event createEvent(String eventId, String tenantId) {
-    return Event.newBuilder().setCustomerId(tenantId)
+    return Event.newBuilder()
+        .setCustomerId(tenantId)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
-        .setStartTimeMillis(System.currentTimeMillis()).build();
+        .setStartTimeMillis(System.currentTimeMillis())
+        .build();
   }
 
   private TraceIdentity createTraceIdentity(String tenantId, String traceId) {
-    return TraceIdentity.newBuilder().setTenantId(tenantId)
-        .setTraceId(ByteBuffer.wrap(traceId.getBytes())).build();
+    return TraceIdentity.newBuilder()
+        .setTenantId(tenantId)
+        .setTraceId(ByteBuffer.wrap(traceId.getBytes()))
+        .build();
   }
 }

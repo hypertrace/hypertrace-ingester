@@ -1,5 +1,9 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Maps;
 import java.io.File;
 import java.io.IOException;
@@ -24,10 +28,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class SpanEventViewGeneratorTest {
   private SpanEventViewGenerator spanEventViewGenerator;
 
@@ -45,31 +45,27 @@ public class SpanEventViewGeneratorTest {
   @Test
   public void test_getRequestUrl_httpProtocol_shouldReturnFullUrl() {
     Event event = mock(Event.class);
-    when(event.getHttp()).thenReturn(Http.newBuilder()
-        .setRequest(Request.newBuilder()
-            .setUrl("http://www.example.com")
-            .build()
-        ).build()
-    );
+    when(event.getHttp())
+        .thenReturn(
+            Http.newBuilder()
+                .setRequest(Request.newBuilder().setUrl("http://www.example.com").build())
+                .build());
     assertEquals(
         "http://www.example.com",
-        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP)
-    );
+        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
   }
 
   @Test
   public void test_getRequestUrl_httpsProtocol_shouldReturnFullUrl() {
     Event event = mock(Event.class);
-    when(event.getHttp()).thenReturn(Http.newBuilder()
-        .setRequest(Request.newBuilder()
-            .setUrl("https://www.example.com")
-            .build()
-        ).build()
-    );
+    when(event.getHttp())
+        .thenReturn(
+            Http.newBuilder()
+                .setRequest(Request.newBuilder().setUrl("https://www.example.com").build())
+                .build());
     assertEquals(
         "https://www.example.com",
-        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTPS)
-    );
+        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTPS));
   }
 
   @Test
@@ -78,19 +74,17 @@ public class SpanEventViewGeneratorTest {
     when(event.getEventName()).thenReturn("Sent.hipstershop.AdService.GetAds");
     assertEquals(
         "Sent.hipstershop.AdService.GetAds",
-        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_GRPC)
-    );
+        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_GRPC));
   }
 
   @Test
   public void testGetRequestUrl_fullUrlIsAbsent() {
     Event event = mock(Event.class);
-    when(event.getHttp()).thenReturn(Http.newBuilder()
-        .setRequest(Request.newBuilder()
-            .setPath("/api/v1/gatekeeper/check")
-            .build()
-        ).build()
-    );
+    when(event.getHttp())
+        .thenReturn(
+            Http.newBuilder()
+                .setRequest(Request.newBuilder().setPath("/api/v1/gatekeeper/check").build())
+                .build());
     assertEquals(
         "/api/v1/gatekeeper/check",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
@@ -99,22 +93,20 @@ public class SpanEventViewGeneratorTest {
   @Test
   public void testGetRequestUrl_urlAndPathIsAbsent() {
     Event event = mock(Event.class);
-    when(event.getHttp()).thenReturn(Http.newBuilder()
-        .setRequest(Request.newBuilder()
-            .build()
-        ).build()
-    );
+    when(event.getHttp())
+        .thenReturn(Http.newBuilder().setRequest(Request.newBuilder().build()).build());
     Assertions.assertNull(spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
   }
 
   @Test
   public void testSpanEventViewGen_HotrodTrace() throws IOException {
-    URL resource = Thread.currentThread().getContextClassLoader().
-        getResource("StructuredTrace-Hotrod.avro");
+    URL resource =
+        Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
 
-    SpecificDatumReader<StructuredTrace> datumReader = new SpecificDatumReader<>(
-        StructuredTrace.getClassSchema());
-    DataFileReader<StructuredTrace> dfrStructuredTrace = new DataFileReader<>(new File(resource.getPath()), datumReader);
+    SpecificDatumReader<StructuredTrace> datumReader =
+        new SpecificDatumReader<>(StructuredTrace.getClassSchema());
+    DataFileReader<StructuredTrace> dfrStructuredTrace =
+        new DataFileReader<>(new File(resource.getPath()), datumReader);
     StructuredTrace trace = dfrStructuredTrace.next();
     dfrStructuredTrace.close();
 
@@ -134,14 +126,16 @@ public class SpanEventViewGeneratorTest {
             traceState.getParentToChildrenEventIds(), traceState.getEventMap());
 
     // verify for all entries in the map, key is exit span and value is entry api boundary
-    exitSpanToApiEntrySpanMap.forEach((key, value) -> {
-      EnrichedSpanUtils.isExitSpan(traceState.getEventMap().get(key));
-      EnrichedSpanUtils.isEntryApiBoundary(value);
-    });
+    exitSpanToApiEntrySpanMap.forEach(
+        (key, value) -> {
+          EnrichedSpanUtils.isExitSpan(traceState.getEventMap().get(key));
+          EnrichedSpanUtils.isEntryApiBoundary(value);
+        });
   }
 
   private void verifyComputeApiExitCallCount_HotrodTrace(StructuredTrace trace) {
-    Map<ByteBuffer, Integer> eventToApiExitCallCount = spanEventViewGenerator.computeApiExitCallCount(trace);
+    Map<ByteBuffer, Integer> eventToApiExitCallCount =
+        spanEventViewGenerator.computeApiExitCallCount(trace);
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     // this trace has 12 api nodes
     // api edges
@@ -154,15 +148,17 @@ public class SpanEventViewGeneratorTest {
     // for events parts of api_node 2, there should be 1 exit calls
     Map<Integer, Integer> apiNodeToExitCallCount = Map.of(0, 12, 1, 13, 2, 1);
     Map<ByteBuffer, Integer> eventToApiNodeIndex = buildEventIdToApiNode(apiTraceGraph);
-    eventToApiExitCallCount.forEach((k, v) -> {
-      Integer apiNodeIndex = eventToApiNodeIndex.get(k);
-      if (null != apiNodeIndex)
-        assertEquals(apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0), v);
-    });
+    eventToApiExitCallCount.forEach(
+        (k, v) -> {
+          Integer apiNodeIndex = eventToApiNodeIndex.get(k);
+          if (null != apiNodeIndex)
+            assertEquals(apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0), v);
+        });
 
     // verify exit call count per service per api_trace
     // this trace has 4 services
-    // frontend service has 1 api_entry span and that api_node has 12 exit calls [drive: 1, customer: 1, route: 10]
+    // frontend service has 1 api_entry span and that api_node has 12 exit calls [drive: 1,
+    // customer: 1, route: 10]
     List<Event> events = getApiEntryEventsForService(trace, "frontend");
     assertEquals(1, events.size());
     assertEquals(12, eventToApiExitCallCount.get(events.get(0).getEventId()));

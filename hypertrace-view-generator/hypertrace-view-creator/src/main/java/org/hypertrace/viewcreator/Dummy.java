@@ -9,6 +9,5 @@ package org.hypertrace.viewcreator;
  */
 public class Dummy {
 
-  public void doNothing() {
-  }
+  public void doNothing() {}
 }

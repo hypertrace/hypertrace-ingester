@@ -32,10 +32,13 @@ public class MongoBackendResolver extends AbstractBackendResolver {
       return Optional.empty();
     }
 
-    final Builder entityBuilder = getBackendEntityBuilder(BackendType.MONGO, backendURI.get(), event);
+    final Builder entityBuilder =
+        getBackendEntityBuilder(BackendType.MONGO, backendURI.get(), event);
     setAttributeIfExist(event, entityBuilder, RAW_MONGO_NAMESPACE);
-    setAttributeForFirstExistingKey(event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoNamespace());
-    setAttributeForFirstExistingKey(event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
+    setAttributeForFirstExistingKey(
+        event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoNamespace());
+    setAttributeForFirstExistingKey(
+        event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
     return Optional.of(entityBuilder.build());
   }
 }

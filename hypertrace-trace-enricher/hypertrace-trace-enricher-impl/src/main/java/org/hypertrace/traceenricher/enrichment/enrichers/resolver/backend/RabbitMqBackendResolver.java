@@ -27,8 +27,7 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
       return Optional.empty();
     }
 
-    Builder entityBuilder = getBackendEntityBuilder(
-        BackendType.RABBIT_MQ, routingKey.get(), event);
+    Builder entityBuilder = getBackendEntityBuilder(BackendType.RABBIT_MQ, routingKey.get(), event);
     return Optional.of(entityBuilder.build());
   }
 }

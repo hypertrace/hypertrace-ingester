@@ -20,18 +20,19 @@ public class OperationNameBasedEndpointDiscoverer {
   private final String serviceId;
   private final ApiEntityDao apiEntityDao;
 
-  private final LoadingCache<String, Entity> patternToApiEntityCache = CacheBuilder
-      .newBuilder()
-      .maximumSize(1000)
-      .expireAfterWrite(5, TimeUnit.MINUTES)
-      .build(new CacheLoader<>() {
-        public Entity load(@Nonnull String pattern) {
-          return getEntityForPattern(pattern);
-        }
-      });
+  private final LoadingCache<String, Entity> patternToApiEntityCache =
+      CacheBuilder.newBuilder()
+          .maximumSize(1000)
+          .expireAfterWrite(5, TimeUnit.MINUTES)
+          .build(
+              new CacheLoader<>() {
+                public Entity load(@Nonnull String pattern) {
+                  return getEntityForPattern(pattern);
+                }
+              });
 
-  public OperationNameBasedEndpointDiscoverer(String customerId, String serviceId,
-                                              ApiEntityDao apiEntityDao) {
+  public OperationNameBasedEndpointDiscoverer(
+      String customerId, String serviceId, ApiEntityDao apiEntityDao) {
     this.customerId = customerId;
     this.serviceId = serviceId;
     this.apiEntityDao = apiEntityDao;
@@ -43,10 +44,7 @@ public class OperationNameBasedEndpointDiscoverer {
   }
 
   private Entity getEntityForPattern(String pattern) {
-    return apiEntityDao.upsertApiEntity(
-        customerId, serviceId,
-        ApiEntityDao.API_TYPE, pattern
-    );
+    return apiEntityDao.upsertApiEntity(customerId, serviceId, ApiEntityDao.API_TYPE, pattern);
   }
 
   @VisibleForTesting

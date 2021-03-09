@@ -21,37 +21,24 @@ import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
 public abstract class AbstractTraceEnricher implements Enricher {
 
   @Override
-  public void init(Config enricherConfig, ClientRegistry clientRegistry) {
-  }
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {}
 
   @Override
-  public void enrichEdge(StructuredTrace trace, Edge edge) {
-
-  }
+  public void enrichEdge(StructuredTrace trace, Edge edge) {}
 
   @Override
-  public void enrichEntity(StructuredTrace trace, Entity entity) {
-
-  }
+  public void enrichEntity(StructuredTrace trace, Entity entity) {}
 
   @Override
-  public void onEnrichEntitiesComplete(StructuredTrace structuredTrace) {
-
-  }
+  public void onEnrichEntitiesComplete(StructuredTrace structuredTrace) {}
 
   @Override
-  public void enrichEvent(StructuredTrace trace, Event event) {
-
-  }
+  public void enrichEvent(StructuredTrace trace, Event event) {}
 
   @Override
-  public void enrichTrace(StructuredTrace trace) {
+  public void enrichTrace(StructuredTrace trace) {}
 
-  }
-
-  /**
-   * Wrapper to the structure graph factory for testing
-   */
+  /** Wrapper to the structure graph factory for testing */
   public StructuredTraceGraph buildGraph(StructuredTrace trace) {
     return StructuredTraceGraphBuilder.buildGraph(trace);
   }
@@ -83,8 +70,9 @@ public abstract class AbstractTraceEnricher implements Enricher {
   }
 
   protected void addEnrichedAttributes(Event event, List<Pair<String, AttributeValue>> attributes) {
-    attributes.forEach(attributePair ->
-        addEnrichedAttribute(event, attributePair.getKey(), attributePair.getValue()));
+    attributes.forEach(
+        attributePair ->
+            addEnrichedAttribute(event, attributePair.getKey(), attributePair.getValue()));
   }
 
   protected void addEnrichedAttributeIfNotNull(Event event, String key, String value) {
@@ -109,5 +97,4 @@ public abstract class AbstractTraceEnricher implements Enricher {
       trace.getEntityList().add(entity);
     }
   }
-
 }

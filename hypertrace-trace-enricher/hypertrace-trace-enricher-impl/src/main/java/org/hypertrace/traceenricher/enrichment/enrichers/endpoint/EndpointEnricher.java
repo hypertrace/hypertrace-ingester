@@ -67,49 +67,65 @@ public class EndpointEnricher extends AbstractTraceEnricher {
     String serviceId = EnrichedSpanUtils.getServiceId(event);
     String customerId = trace.getCustomerId();
     if (serviceId == null) {
-      LOGGER.warn("Could not find serviceId in the span so not enriching it with API."
-              + "tenantId: {}, traceId: {}, span: {}", event.getCustomerId(),
-          HexUtils.getHex(trace.getTraceId()), event);
+      LOGGER.warn(
+          "Could not find serviceId in the span so not enriching it with API."
+              + "tenantId: {}, traceId: {}, span: {}",
+          event.getCustomerId(),
+          HexUtils.getHex(trace.getTraceId()),
+          event);
       return;
     }
 
     Entity apiEntity = null;
     try {
-      apiEntity = getOperationNameBasedEndpointDiscoverer(customerId, serviceId)
-          .getApiEntity(event);
+      apiEntity =
+          getOperationNameBasedEndpointDiscoverer(customerId, serviceId).getApiEntity(event);
     } catch (Exception e) {
-      LOGGER
-          .error("Unable to get apiEntity for tenantId {}, serviceId {} and event {}", customerId,
-              serviceId, event, e);
+      LOGGER.error(
+          "Unable to get apiEntity for tenantId {}, serviceId {} and event {}",
+          customerId,
+          serviceId,
+          event,
+          e);
     }
 
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("tenantId: {}, serviceId: {}, span: {}, apiEntity: {}", customerId, serviceId,
-          event, apiEntity);
+      LOGGER.debug(
+          "tenantId: {}, serviceId: {}, span: {}, apiEntity: {}",
+          customerId,
+          serviceId,
+          event,
+          apiEntity);
     }
 
     if (apiEntity != null) {
-      //API Id
-      addEnrichedAttribute(event, API_ID_ATTR_NAME,
-          AttributeValueCreator.create(apiEntity.getEntityId()));
+      // API Id
+      addEnrichedAttribute(
+          event, API_ID_ATTR_NAME, AttributeValueCreator.create(apiEntity.getEntityId()));
 
-      //API pattern
-      addEnrichedAttribute(event, API_URL_PATTERN_ATTR_NAME,
+      // API pattern
+      addEnrichedAttribute(
+          event,
+          API_URL_PATTERN_ATTR_NAME,
           AttributeValueCreator.create(apiEntity.getEntityName()));
 
-      //API name
-      org.hypertrace.entity.data.service.v1.AttributeValue apiNameValue = apiEntity.getAttributesMap()
-          .get(API_NAME_ATTR_NAME);
+      // API name
+      org.hypertrace.entity.data.service.v1.AttributeValue apiNameValue =
+          apiEntity.getAttributesMap().get(API_NAME_ATTR_NAME);
       if (apiNameValue != null) {
-        addEnrichedAttribute(event, API_NAME_ATTR_NAME,
+        addEnrichedAttribute(
+            event,
+            API_NAME_ATTR_NAME,
             AttributeValueCreator.create(apiNameValue.getValue().getString()));
       }
 
-      //API Discovery
-      org.hypertrace.entity.data.service.v1.AttributeValue apiDiscoveryState = apiEntity.getAttributesMap()
-          .get(API_DISCOVERY_STATE_ATTR);
+      // API Discovery
+      org.hypertrace.entity.data.service.v1.AttributeValue apiDiscoveryState =
+          apiEntity.getAttributesMap().get(API_DISCOVERY_STATE_ATTR);
       if (apiDiscoveryState != null) {
-        addEnrichedAttribute(event, API_DISCOVERY_STATE_ATTR,
+        addEnrichedAttribute(
+            event,
+            API_DISCOVERY_STATE_ATTR,
             AttributeValueCreator.create(apiDiscoveryState.getValue().getString()));
       }
     }
@@ -121,9 +137,9 @@ public class EndpointEnricher extends AbstractTraceEnricher {
   }
 
   private OperationNameBasedEndpointDiscoverer getOperationNameBasedEndpointDiscoverer(
-      String customerId,
-      String serviceId) {
-    serviceIdToEndpointDiscoverer.computeIfAbsent(serviceId,
+      String customerId, String serviceId) {
+    serviceIdToEndpointDiscoverer.computeIfAbsent(
+        serviceId,
         e -> new OperationNameBasedEndpointDiscoverer(customerId, serviceId, apiEntityDao));
     return serviceIdToEndpointDiscoverer.get(serviceId);
   }

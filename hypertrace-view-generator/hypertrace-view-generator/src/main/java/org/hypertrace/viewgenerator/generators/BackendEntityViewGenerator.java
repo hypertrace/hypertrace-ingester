@@ -48,12 +48,12 @@ public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityV
         .map(
             event ->
                 generateViewBuilder(
-                    event,
-                    structuredTrace,
-                    EnrichedSpanUtils.getBackendId(event),
-                    entityMap,
-                    eventMap,
-                    childToParentEventIds)
+                        event,
+                        structuredTrace,
+                        EnrichedSpanUtils.getBackendId(event),
+                        entityMap,
+                        eventMap,
+                        childToParentEventIds)
                     .build())
         .collect(Collectors.toList());
   }

@@ -51,7 +51,8 @@ public class ApiTraceGraph {
   private final Set<Integer> apiExitBoundaryEventIdxWithNoOutgoingEdge;
   // set of exit boundary events of apiNode, with outgoing edge to some apiNode
   private final Set<Integer> apiExitBoundaryEventIdxWithOutgoingEdge;
-  // set of entry boundary events of apiNode, with no incoming edge from other apiNode(they are root events)
+  // set of entry boundary events of apiNode, with no incoming edge from other apiNode(they are root
+  // events)
   private final Set<Integer> apiEntryBoundaryEventIdxWithNoIncomingEdge;
   // set of entry boundary events of apiNode, with incoming edge from other apiNode
   private final Set<Integer> apiEntryBoundaryEventIdxWithIncomingEdge;
@@ -107,23 +108,22 @@ public class ApiTraceGraph {
     return getEventsForIndices(apiEntryBoundaryEventIdxWithIncomingEdge);
   }
 
-  public List<ApiNodeEventEdge> getOutboundEdgesForApiNode(
-      ApiNode<Event> apiNode) {
+  public List<ApiNodeEventEdge> getOutboundEdgesForApiNode(ApiNode<Event> apiNode) {
     int idx = apiNodeToIndex.get(apiNode);
     if (!apiNodeIdxToEdges.containsKey(idx)) {
       return Collections.emptyList();
     }
-    return apiNodeIdxToEdges.get(apiNodeToIndex.get(apiNode))
-        .stream()
+    return apiNodeIdxToEdges.get(apiNodeToIndex.get(apiNode)).stream()
         .map(apiNodeEventEdgeList::get)
         .collect(Collectors.toList());
   }
 
-  public List<Event> getExitBoundaryEventsWithNoOutboundEdgeForApiNode(
-      ApiNode<Event> apiNode) {
+  public List<Event> getExitBoundaryEventsWithNoOutboundEdgeForApiNode(ApiNode<Event> apiNode) {
     return apiNode.getExitApiBoundaryEvents().stream()
-        .filter(v -> apiExitBoundaryEventIdxWithNoOutgoingEdge.contains(
-            eventIdToIndexInTrace.get(v.getEventId())))
+        .filter(
+            v ->
+                apiExitBoundaryEventIdxWithNoOutgoingEdge.contains(
+                    eventIdToIndexInTrace.get(v.getEventId())))
         .collect(Collectors.toList());
   }
 
@@ -132,16 +132,16 @@ public class ApiTraceGraph {
 
     buildApiNodes(graph);
 
-    //optimization
+    // optimization
     buildApiNodeToIndexMap();
 
     buildApiNodeEdges(graph);
   }
 
   /**
-   * The idea is to filter out the events in an API boundary. The ApiNode will contain a head event for the API Trace,
-   * a list of events that fall within the API boundary, the Entry event or null if the head span is not an entry span
-   * and a list of exit events from the API.
+   * The idea is to filter out the events in an API boundary. The ApiNode will contain a head event
+   * for the API Trace, a list of events that fall within the API boundary, the Entry event or null
+   * if the head span is not an entry span and a list of exit events from the API.
    */
   private void buildApiNodes(StructuredTraceGraph graph) {
     Set<ByteBuffer> remainingEventIds = new HashSet<>(graph.getEventMap().keySet());
@@ -154,9 +154,12 @@ public class ApiTraceGraph {
         apiNodeList.add(apiNode);
 
         // Remove the events in ApiNode from remainingEventIds
-        apiNode.getEvents().forEach(e -> {
-          remainingEventIds.remove(e.getEventId());
-        });
+        apiNode
+            .getEvents()
+            .forEach(
+                e -> {
+                  remainingEventIds.remove(e.getEventId());
+                });
       }
     }
 
@@ -176,41 +179,42 @@ public class ApiTraceGraph {
           ApiNode<Event> apiNode = buildApiNode(graph, event);
 
           // We expect all events to be present in the remaining events here.
-          Set<ByteBuffer> newEventIds = apiNode.getEvents().stream().map(Event::getEventId)
-              .collect(
-                  Collectors.toSet());
+          Set<ByteBuffer> newEventIds =
+              apiNode.getEvents().stream().map(Event::getEventId).collect(Collectors.toSet());
           Set<ByteBuffer> additionalEvents = Sets.difference(newEventIds, remainingEventIds);
           if (!additionalEvents.isEmpty()) {
-            LOGGER.warn("Unexpected spans are included in ApiNode; additionalSpans: {}",
+            LOGGER.warn(
+                "Unexpected spans are included in ApiNode; additionalSpans: {}",
                 additionalEvents.stream().map(HexUtils::getHex).collect(Collectors.toSet()));
           }
 
           apiNodeList.add(apiNode);
           apiNode.getEvents().forEach(e -> remainingEventIds.remove(e.getEventId()));
-        } else if (!StringUtils.equals(EnrichedSpanUtils.getSpanType(event), UNKNOWN_SPAN_KIND_VALUE)) {
-          LOGGER.warn("Non exit root span wasn't picked for ApiNode; traceId: {}, spanId: {}, spanName: {}, serviceName: {}",
+        } else if (!StringUtils.equals(
+            EnrichedSpanUtils.getSpanType(event), UNKNOWN_SPAN_KIND_VALUE)) {
+          LOGGER.warn(
+              "Non exit root span wasn't picked for ApiNode; traceId: {}, spanId: {}, spanName: {}, serviceName: {}",
               HexUtils.getHex(trace.getTraceId()),
               HexUtils.getHex(event.getEventId()),
               event.getEventName(),
-              event.getServiceName()
-          );
+              event.getServiceName());
         }
       }
     }
 
     if (!remainingEventIds.isEmpty() && LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Not all spans from trace are included in ApiNodes; traceId: {}, spanIds: {}",
+      LOGGER.debug(
+          "Not all spans from trace are included in ApiNodes; traceId: {}, spanIds: {}",
           HexUtils.getHex(trace.getTraceId()),
           remainingEventIds.stream().map(HexUtils::getHex).collect(Collectors.toSet()));
     }
   }
 
   /**
-   * Traverse events starting from the {@code rootEvent}
-   * and find out all the api boundary events it leads to
+   * Traverse events starting from the {@code rootEvent} and find out all the api boundary events it
+   * leads to
    */
-  private ApiNode<Event> buildApiNode(
-      StructuredTraceGraph graph, Event rootEvent) {
+  private ApiNode<Event> buildApiNode(StructuredTraceGraph graph, Event rootEvent) {
     List<Event> events = new ArrayList<>();
     events.add(rootEvent);
 
@@ -225,7 +229,8 @@ public class ApiTraceGraph {
     while (!q.isEmpty()) {
       Event e = q.remove();
       // This is the main logic of filtering out events which lies in an API boundary.
-      // Rest of the code is just filtering out entities and edges based on the events in API boundary
+      // Rest of the code is just filtering out entities and edges based on the events in API
+      // boundary
 
       // get all the children of `e`
       // 1. if there is a child which is exit boundary, we have hit a corresponding exit boundary.
@@ -239,7 +244,7 @@ public class ApiTraceGraph {
             events.add(child);
             exitApiBoundaryEvents.add(child);
           } else if (EnrichedSpanUtils.isEntryApiBoundary(child)) {
-            //a new api boundary. don't do anything
+            // a new api boundary. don't do anything
           } else {
             q.add(child);
             // an intermediate event. intermediate events are inside API boundary
@@ -250,7 +255,8 @@ public class ApiTraceGraph {
     }
 
     return new ApiNode<>(
-        rootEvent, events,
+        rootEvent,
+        events,
         (EnrichedSpanUtils.isEntryApiBoundary(rootEvent) ? rootEvent : null),
         exitApiBoundaryEvents);
   }
@@ -258,43 +264,50 @@ public class ApiTraceGraph {
   private void buildApiNodeEdges(StructuredTraceGraph graph) {
     // 1. get all the exit boundary events from an api node
     // 2. exit boundary events are the only ones which can call a different api node
-    // 3. find all the children of exit boundary events, which will be entry boundary nodes of different api nodes
-    // 4. find all the api nodes based on children of exit boundary events from `entryBoundaryToApiNode`
+    // 3. find all the children of exit boundary events, which will be entry boundary nodes of
+    // different api nodes
+    // 4. find all the api nodes based on children of exit boundary events from
+    // `entryBoundaryToApiNode`
     // 5. connect the exit boundary and entry boundary of different api node with an edge
     for (ApiNode<Event> apiNode : apiNodeList) {
-      //exit boundary events of api node
+      // exit boundary events of api node
       List<Event> exitBoundaryEvents = apiNode.getExitApiBoundaryEvents();
       for (Event exitBoundaryEvent : exitBoundaryEvents) {
         List<Event> exitBoundaryEventChildren = graph.getChildrenEvents(exitBoundaryEvent);
         if (exitBoundaryEventChildren != null) {
           for (Event exitBoundaryEventChild : exitBoundaryEventChildren) {
-            // if the child of an exit boundary event is entry api boundary type, which should be always!
+            // if the child of an exit boundary event is entry api boundary type, which should be
+            // always!
             if (EnrichedSpanUtils.isEntryApiBoundary(exitBoundaryEventChild)) {
               // get the api node exit boundary event is connecting to
-              ApiNode<Event> destinationApiNode = entryBoundaryToApiNode.get(exitBoundaryEventChild);
+              ApiNode<Event> destinationApiNode =
+                  entryBoundaryToApiNode.get(exitBoundaryEventChild);
 
-              Optional<ApiNodeEventEdge> edgeBetweenApiNodes = createEdgeBetweenApiNodes(
-                  apiNode, destinationApiNode, exitBoundaryEvent, exitBoundaryEventChild);
-              edgeBetweenApiNodes.ifPresent(edge -> {
-                apiNodeEventEdgeList.add(edge);
-                apiExitBoundaryEventIdxWithOutgoingEdge.add(edge.getSrcEventIndex());
-                apiEntryBoundaryEventIdxWithIncomingEdge.add(edge.getTgtEventIndex());
-                apiNodeIdxToEdges.computeIfAbsent(
-                    apiNodeToIndex.get(apiNode), v -> Sets.newHashSet()).add(apiNodeEventEdgeList.size() - 1);
-              });
+              Optional<ApiNodeEventEdge> edgeBetweenApiNodes =
+                  createEdgeBetweenApiNodes(
+                      apiNode, destinationApiNode, exitBoundaryEvent, exitBoundaryEventChild);
+              edgeBetweenApiNodes.ifPresent(
+                  edge -> {
+                    apiNodeEventEdgeList.add(edge);
+                    apiExitBoundaryEventIdxWithOutgoingEdge.add(edge.getSrcEventIndex());
+                    apiEntryBoundaryEventIdxWithIncomingEdge.add(edge.getTgtEventIndex());
+                    apiNodeIdxToEdges
+                        .computeIfAbsent(apiNodeToIndex.get(apiNode), v -> Sets.newHashSet())
+                        .add(apiNodeEventEdgeList.size() - 1);
+                  });
             } else {
-              LOGGER.warn("Exit boundary event with eventId: {}, eventName: {}, serviceName: {}," +
-                      " can only have entry boundary event as child. Non-entry child:" +
-                      " childEventId: {}, childEventName: {}, childServiceName: {}." +
-                      " traceId for events: {}",
+              LOGGER.warn(
+                  "Exit boundary event with eventId: {}, eventName: {}, serviceName: {},"
+                      + " can only have entry boundary event as child. Non-entry child:"
+                      + " childEventId: {}, childEventName: {}, childServiceName: {}."
+                      + " traceId for events: {}",
                   HexUtils.getHex(exitBoundaryEvent.getEventId()),
                   exitBoundaryEvent.getEventName(),
                   exitBoundaryEvent.getServiceName(),
                   HexUtils.getHex(exitBoundaryEventChild.getEventId()),
                   exitBoundaryEventChild.getEventName(),
                   exitBoundaryEventChild.getServiceName(),
-                  HexUtils.getHex(trace.getTraceId())
-              );
+                  HexUtils.getHex(trace.getTraceId()));
             }
           }
         }
@@ -312,33 +325,37 @@ public class ApiTraceGraph {
       Integer srcIndex = apiNodeToIndex.get(srcApiNode);
       Integer targetIndex = apiNodeToIndex.get(destinationApiNode);
 
-      //Get the actual edge from trace connecting exitBoundaryEvent and child
-      Integer srcIndexInTrace = eventIdToIndexInTrace.get(
-          exitBoundaryEventFromSrcApiNode.getEventId());
-      Integer targetIndexInTrace = eventIdToIndexInTrace.get(
-          entryBoundaryEventOfDestinationApiNode.getEventId());
+      // Get the actual edge from trace connecting exitBoundaryEvent and child
+      Integer srcIndexInTrace =
+          eventIdToIndexInTrace.get(exitBoundaryEventFromSrcApiNode.getEventId());
+      Integer targetIndexInTrace =
+          eventIdToIndexInTrace.get(entryBoundaryEventOfDestinationApiNode.getEventId());
 
       Edge edgeInTrace = traceEdgeTable.get(srcIndexInTrace, targetIndexInTrace);
 
       if (null == edgeInTrace) {
-        LOGGER.warn("There should be an edge between src event {} and target event {}",
-            exitBoundaryEventFromSrcApiNode, entryBoundaryEventOfDestinationApiNode);
+        LOGGER.warn(
+            "There should be an edge between src event {} and target event {}",
+            exitBoundaryEventFromSrcApiNode,
+            entryBoundaryEventOfDestinationApiNode);
       } else {
-        ApiNodeEventEdge apiNodeEventEdge = ApiNodeEventEdge.newBuilder()
-            .setSrcApiNodeIndex(srcIndex)
-            .setTgtApiNodeIndex(targetIndex)
-            .setSrcEventIndex(srcIndexInTrace)
-            .setTgtEventIndex(targetIndexInTrace)
-            .setAttributes(edgeInTrace.getAttributes())
-            .setMetrics(edgeInTrace.getMetrics())
-            .setStartTimeMillis(edgeInTrace.getStartTimeMillis())
-            .setEndTimeMillis(edgeInTrace.getEndTimeMillis())
-            .build();
+        ApiNodeEventEdge apiNodeEventEdge =
+            ApiNodeEventEdge.newBuilder()
+                .setSrcApiNodeIndex(srcIndex)
+                .setTgtApiNodeIndex(targetIndex)
+                .setSrcEventIndex(srcIndexInTrace)
+                .setTgtEventIndex(targetIndexInTrace)
+                .setAttributes(edgeInTrace.getAttributes())
+                .setMetrics(edgeInTrace.getMetrics())
+                .setStartTimeMillis(edgeInTrace.getStartTimeMillis())
+                .setEndTimeMillis(edgeInTrace.getEndTimeMillis())
+                .build();
 
         return Optional.of(apiNodeEventEdge);
       }
     } else {
-      LOGGER.warn("Strange! Entry boundary event {} should already have been discovered as an api node",
+      LOGGER.warn(
+          "Strange! Entry boundary event {} should already have been discovered as an api node",
           entryBoundaryEventOfDestinationApiNode);
     }
     return Optional.empty();
@@ -383,8 +400,6 @@ public class ApiTraceGraph {
   }
 
   private List<Event> getEventsForIndices(Set<Integer> set) {
-    return set.stream()
-        .map(v -> trace.getEventList().get(v))
-        .collect(Collectors.toList());
+    return set.stream().map(v -> trace.getEventList().get(v)).collect(Collectors.toList());
   }
 }

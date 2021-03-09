@@ -1,8 +1,6 @@
 package org.hypertrace.core.semantic.convention.constants.rpc;
 
-/**
- * OTel rpc attributes
- */
+/** OTel rpc attributes */
 public enum OTelRpcSemanticConventions {
   RPC_SYSTEM("rpc.system"),
   RPC_METHOD("rpc.method"),
