@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -410,7 +411,7 @@ public class EnrichedSpanUtilsTest {
     Event e = mock(Event.class);
 
     String backend_operation = EnrichedSpanUtils.getBackendOperation(e);
-    assertEquals(null, backend_operation);
+    assertNull(backend_operation);
   }
 
   @Test
