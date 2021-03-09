@@ -20,7 +20,9 @@ import org.hypertrace.entity.data.service.client.EdsClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
+import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
@@ -40,7 +42,8 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
   private static final String BACKEND_HOST_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST);
   List<String> backendOperations = new ArrayList<>(List.of(OTelDbSemanticConventions.DB_OPERATION.getValue(), OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue()));
-
+  private static final String BACKEND_OPERATION_ATTR =
+      EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
   private EdsClient edsClient;
   private EntityCache entityCache;
   private BackendEntityResolver backendEntityResolver;
@@ -75,7 +78,7 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
   public void enrichEvent(StructuredTrace trace, Event event) {
     String backendOperation = SpanAttributeUtils.getFirstAvailableStringAttribute(event, backendOperations);
     if (backendOperation != null) {
-      addEnrichedAttribute(event, "BACKEND_OPERATION_ATTR", AttributeValueCreator.create(backendOperation));
+      addEnrichedAttribute(event, BACKEND_OPERATION_ATTR, AttributeValueCreator.create(backendOperation));
     }
   }
 
