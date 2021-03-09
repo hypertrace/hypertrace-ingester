@@ -41,7 +41,7 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL);
   private static final String BACKEND_HOST_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST);
-  List<String> backendOperations = new ArrayList<>(List.of(OTelDbSemanticConventions.DB_OPERATION.getValue(), OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue()));
+  private final static List<String> BACKEND_OPERATIONS = List.of(OTelDbSemanticConventions.DB_OPERATION.getValue(), OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue());
   private static final String BACKEND_OPERATION_ATTR =
       EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
   private EdsClient edsClient;
@@ -76,7 +76,7 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
-    String backendOperation = SpanAttributeUtils.getFirstAvailableStringAttribute(event, backendOperations);
+    String backendOperation = SpanAttributeUtils.getFirstAvailableStringAttribute(event, BACKEND_OPERATIONS);
     if (backendOperation != null) {
       addEnrichedAttribute(event, BACKEND_OPERATION_ATTR, AttributeValueCreator.create(backendOperation));
     }

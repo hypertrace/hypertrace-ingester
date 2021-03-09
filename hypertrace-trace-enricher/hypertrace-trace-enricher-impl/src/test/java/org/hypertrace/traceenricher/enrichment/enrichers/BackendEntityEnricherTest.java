@@ -105,6 +105,7 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
   public void test_EnrichEvent_validBackendOperationEnrichment() {
     Event e = createApiEntryEvent(EVENT_ID).setEnrichedAttributes(createNewAvroAttributes(Map.of(BACKEND_OPERATION_ATTR, "select"))).build();
     StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+    enricher.enrichEvent(trace,e);
     Assertions.assertEquals("select", EnrichedSpanUtils.getBackendOperation(e));
   }
 
