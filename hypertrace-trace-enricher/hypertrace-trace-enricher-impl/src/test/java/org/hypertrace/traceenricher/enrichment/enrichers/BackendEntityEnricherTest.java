@@ -89,7 +89,7 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
     enricher.enrichEvent(trace,e);
     Assertions.assertEquals(ByteBuffer.wrap(EVENT_ID.getBytes()), e.getEventId());
     Assertions.assertNull(EnrichedSpanUtils.getBackendId(e));
-    Assertions.assertNull(EnrichedSpanUtils.getBackendOperationName(e));
+    Assertions.assertNull(EnrichedSpanUtils.getBackendOperation(e));
   }
 
   @Test

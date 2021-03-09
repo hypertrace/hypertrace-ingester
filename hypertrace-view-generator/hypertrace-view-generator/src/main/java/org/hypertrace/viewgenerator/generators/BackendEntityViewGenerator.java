@@ -122,7 +122,7 @@ public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityV
       builder.setStatus(EnrichedSpanUtils.getStatus(event));
       builder.setStatusMessage(EnrichedSpanUtils.getStatusMessage(event));
       builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
-      builder.setBackendOperation(EnrichedSpanUtils.getBackendOperationName(event));
+      builder.setBackendOperation(EnrichedSpanUtils.getBackendOperation(event));
     } catch (Exception e) {
       LOG.error(String.format("Failed to generate backendEntityView from Event: %s", event), e);
     }

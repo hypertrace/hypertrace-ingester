@@ -63,7 +63,8 @@ public class EnrichedSpanUtils {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL);
   private static final String BACKEND_PATH_ATTR =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH);
-  private static final String BACKEND_OPERATION_ATTR = EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
+  private static final String BACKEND_OPERATION_ATTR =
+      EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
 
   private static final String SPAN_TYPE_ATTR =
       EnrichedSpanConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_SPAN_TYPE);
@@ -155,10 +156,14 @@ public class EnrichedSpanUtils {
     return getStringAttribute(event, BACKEND_PORT_ATTR);
   }
 
-  public static String getBackendPath(Event event) { return getStringAttribute(event, BACKEND_PATH_ATTR); }
+  public static String getBackendPath(Event event) {
+    return getStringAttribute(event, BACKEND_PATH_ATTR);
+  }
 
   @Nullable
-  public static String getBackendOperationName(Event event) {return getStringAttribute(event, BACKEND_OPERATION_ATTR); }
+  public static String getBackendOperation(Event event) {
+    return getStringAttribute(event, BACKEND_OPERATION_ATTR);
+  }
 
   public static String getBackendProtocol(Event event) {
     return getStringAttribute(event, BACKEND_PROTOCOL_ATTR);
