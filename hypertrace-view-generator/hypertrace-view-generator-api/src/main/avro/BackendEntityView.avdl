@@ -60,6 +60,6 @@ protocol BackendEntityViewProtocol {
 
     array<string> space_ids = [];
 
-    union { null, string } operation = null;
+    union { null, string } backend_operation = null;
   }
 }
