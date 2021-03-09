@@ -35,7 +35,6 @@ public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityV
       EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT);
   private static final String ERROR_COUNT_ATTR =
       EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT);
-
   @Override
   List<BackendEntityView> generateView(
       StructuredTrace structuredTrace,
@@ -123,7 +122,7 @@ public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityV
       builder.setStatus(EnrichedSpanUtils.getStatus(event));
       builder.setStatusMessage(EnrichedSpanUtils.getStatusMessage(event));
       builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
-      builder.setBackendOperationName(EnrichedSpanUtils.getBackendOperationName(event));
+      builder.setOperation(EnrichedSpanUtils.getBackendOperationName(event));
     } catch (Exception e) {
       LOG.error(String.format("Failed to generate backendEntityView from Event: %s", event), e);
     }
