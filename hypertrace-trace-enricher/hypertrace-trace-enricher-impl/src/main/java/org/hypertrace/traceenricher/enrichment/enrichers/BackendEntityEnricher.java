@@ -12,6 +12,8 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.messaging.OtelMessagingSemanticConventions;
 import org.hypertrace.entity.constants.v1.ApiAttribute;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.client.EdsClient;
@@ -66,6 +68,15 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
         .filter(pair -> isValidBackendEntity(pair.getLeft(), pair.getRight().get()))
         //decorate event/trace with backend entity attributes
         .forEach(pair -> decorateWithBackendEntity(pair.getRight().get(), pair.getLeft(), trace));
+  }
+
+  @Override
+  public void enrichEvent(StructuredTrace trace, Event event) {
+    List<String> backendOperations = List.of(OTelDbSemanticConventions.DB_OPERATION.getValue(), OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue());
+    String backendOperation = SpanAttributeUtils.getFirstAvailableStringAttribute(event, backendOperations);
+    if (backendOperation != null) {
+      addEnrichedAttribute(event, "BACKEND_OPERATION", AttributeValueCreator.create(backendOperation));
+    }
   }
 
   /**

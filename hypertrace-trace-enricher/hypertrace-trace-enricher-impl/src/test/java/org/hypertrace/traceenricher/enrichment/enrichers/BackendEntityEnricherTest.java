@@ -83,6 +83,16 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
+  public void test_EnrichEvent_backendOperationEvent() {
+    Event e = createApiEntryEvent(EVENT_ID).build();
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+    enricher.enrichEvent(trace,e);
+    Assertions.assertEquals(ByteBuffer.wrap(EVENT_ID.getBytes()), e.getEventId());
+    Assertions.assertNull(EnrichedSpanUtils.getBackendId(e));
+    Assertions.assertNull(EnrichedSpanUtils.getBackendOperationName(e));
+  }
+
+  @Test
   public void test_EnrichTrace_ValidBackend() {
     String backendId = "backend1";
     String backendName = "mongo:27017";
