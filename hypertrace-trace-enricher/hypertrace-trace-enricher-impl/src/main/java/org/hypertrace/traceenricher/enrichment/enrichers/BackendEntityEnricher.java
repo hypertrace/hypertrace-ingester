@@ -80,7 +80,6 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
         .forEach(pair -> decorateWithBackendEntity(pair.getRight().get(), pair.getLeft(), trace));
   }
 
-<<<<<<< HEAD
 //  @Override
 //  public void enrichEvent(StructuredTrace trace, Event event) {
 //    String backendOperation = SpanAttributeUtils.getFirstAvailableStringAttribute(event, BACKEND_OPERATIONS);
@@ -92,9 +91,16 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
   /**
    * Checks if the candidateEntity is indeed a backend Entity
    */
-=======
+
+  @Override
+  public void enrichEvent(StructuredTrace trace, Event event) {
+    String backendOperation = SpanAttributeUtils.getFirstAvailableStringAttribute(event, BACKEND_OPERATIONS);
+    if (backendOperation != null) {
+      addEnrichedAttribute(event, BACKEND_OPERATION_ATTR, AttributeValueCreator.create(backendOperation));
+    }
+  }
+  
   /** Checks if the candidateEntity is indeed a backend Entity */
->>>>>>> 296351d7b6b7b89061cf581f69c7fa0da83f46bf
   private boolean isValidBackendEntity(Event backendSpan, Entity candidateEntity) {
     // Always create backend entity for RabbitMq, Mongo, Redis, Jdbc
     String backendProtocol =
