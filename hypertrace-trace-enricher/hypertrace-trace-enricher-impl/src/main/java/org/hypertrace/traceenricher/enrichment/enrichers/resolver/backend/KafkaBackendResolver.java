@@ -10,7 +10,6 @@ import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class KafkaBackendResolver extends AbstractBackendResolver {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(KafkaBackendResolver.class);
@@ -32,8 +31,8 @@ public class KafkaBackendResolver extends AbstractBackendResolver {
     this is not added into enriched spans constants proto as there want be http.url
     with kafka://bootstrap.9092
     * */
-    Entity.Builder entityBuilder = getBackendEntityBuilder(
-        BackendType.KAFKA, backendURI.get(), event);
+    Entity.Builder entityBuilder =
+        getBackendEntityBuilder(BackendType.KAFKA, backendURI.get(), event);
     return Optional.of(entityBuilder.build());
   }
 }

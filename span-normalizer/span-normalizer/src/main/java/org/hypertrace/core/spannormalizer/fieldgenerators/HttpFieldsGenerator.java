@@ -51,9 +51,9 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
+import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
-import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -232,9 +232,12 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     return fieldGeneratorMap;
   }
 
-  void populateOtherFields(Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
-    // we may need derive url for otel format, populateUrlParts should take care of setting other fields
-    maybeSetHttpUrlForOtelFormat(eventBuilder.getHttpBuilder().getRequestBuilder(), attributeValueMap);
+  void populateOtherFields(
+      Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
+    // we may need derive url for otel format, populateUrlParts should take care of setting other
+    // fields
+    maybeSetHttpUrlForOtelFormat(
+        eventBuilder.getHttpBuilder().getRequestBuilder(), attributeValueMap);
     populateUrlParts(eventBuilder.getHttpBuilder().getRequestBuilder());
   }
 
@@ -281,16 +284,19 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
     // Host Handler
     fieldGeneratorMap.put(
-            RawSpanConstants.getValue(HTTP_HOST),
-            (key, keyValue, builder, tagsMap) -> builder.getRequestBuilder().setHost(keyValue.getVStr()));
+        RawSpanConstants.getValue(HTTP_HOST),
+        (key, keyValue, builder, tagsMap) ->
+            builder.getRequestBuilder().setHost(keyValue.getVStr()));
     fieldGeneratorMap.put(
         OTelHttpSemanticConventions.HTTP_HOST.getValue(),
-        (key, keyValue, builder, tagsMap) -> builder.getRequestBuilder().setHost(keyValue.getVStr()));
+        (key, keyValue, builder, tagsMap) ->
+            builder.getRequestBuilder().setHost(keyValue.getVStr()));
 
     // set scheme if specified
     fieldGeneratorMap.put(
         OTelHttpSemanticConventions.HTTP_SCHEME.getValue(),
-        (key, keyValue, builder, tagsMap) -> builder.getRequestBuilder().setScheme(keyValue.getVStr()));
+        (key, keyValue, builder, tagsMap) ->
+            builder.getRequestBuilder().setScheme(keyValue.getVStr()));
 
     // User Agent handlers
     fieldGeneratorMap.put(
@@ -419,8 +425,10 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     }
 
     FirstMatchingKeyFinder.getStringValueByFirstMatchingKey(
-            tagsMap, FULL_URL_ATTRIBUTES,
-            // even though relative URLs are allowed here, they are eventually unset in populateUrlParts method
+            tagsMap,
+            FULL_URL_ATTRIBUTES,
+            // even though relative URLs are allowed here, they are eventually unset in
+            // populateUrlParts method
             s -> !StringUtils.isBlank(s) && isValidUrl(s))
         .ifPresent(url -> httpBuilder.getRequestBuilder().setUrl(url));
   }
@@ -512,9 +520,8 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
   }
 
   /**
-   * accepts any absolute or relative URL. e.g.
-   * absolute URL: http://hypertrace.org/customer?customer=392
-   * relative URL: /customer?customer=392
+   * accepts any absolute or relative URL. e.g. absolute URL:
+   * http://hypertrace.org/customer?customer=392 relative URL: /customer?customer=392
    */
   private static boolean isValidUrl(String url) {
     try {
@@ -549,11 +556,14 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     String urlStr = requestBuilder.getUrl();
     try {
       URL url = getNormalizedUrl(urlStr);
-      if (url.toString().equals(urlStr)) {  // absolute URL
+      if (url.toString().equals(urlStr)) { // absolute URL
         requestBuilder.setScheme(url.getProtocol());
-        requestBuilder.setHost(url.getAuthority()); // Use authority so in case the port is specified it adds it to this
-      } else {    // relative URL
-        requestBuilder.setUrl(null); //  unset the URL as we only allow absolute/full URLs in the url field
+        requestBuilder.setHost(
+            url.getAuthority()); // Use authority so in case the port is specified it adds it to
+        // this
+      } else { // relative URL
+        requestBuilder.setUrl(
+            null); //  unset the URL as we only allow absolute/full URLs in the url field
       }
       setPathFromUrl(requestBuilder, url);
       if (!requestBuilder.hasQueryString()) {
@@ -570,12 +580,11 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
   }
 
   /**
-   * If the requestBuilder already has absolute url, do nothing
-   * if not, try building url based on otel attributes and overwrite
+   * If the requestBuilder already has absolute url, do nothing if not, try building url based on
+   * otel attributes and overwrite
    */
   private void maybeSetHttpUrlForOtelFormat(
-      Request.Builder requestBuilder,
-      final Map<String, AttributeValue> attributeValueMap) {
+      Request.Builder requestBuilder, final Map<String, AttributeValue> attributeValueMap) {
     if (requestBuilder.hasUrl() && isAbsoluteUrl(requestBuilder.getUrl())) {
       return;
     }

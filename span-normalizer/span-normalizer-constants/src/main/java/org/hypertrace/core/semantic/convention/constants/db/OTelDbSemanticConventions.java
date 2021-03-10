@@ -1,8 +1,6 @@
 package org.hypertrace.core.semantic.convention.constants.db;
 
-/**
- * OTEL specific attributes for database
- */
+/** OTEL specific attributes for database */
 public enum OTelDbSemanticConventions {
   DB_SYSTEM("db.system"),
   DB_CONNECTION_STRING("db.connection_string"),

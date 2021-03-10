@@ -37,10 +37,12 @@ public class RedisBackendResolver extends AbstractBackendResolver {
       return Optional.empty();
     }
 
-    final Builder entityBuilder = getBackendEntityBuilder(BackendType.REDIS, backendURI.get(), event);
+    final Builder entityBuilder =
+        getBackendEntityBuilder(BackendType.REDIS, backendURI.get(), event);
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_COMMAND));
     setAttributeIfExist(event, entityBuilder, RawSpanConstants.getValue(Redis.REDIS_ARGS));
-    setAttributeIfExist(event, entityBuilder, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
+    setAttributeIfExist(
+        event, entityBuilder, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
     return Optional.of(entityBuilder.build());
   }
 }

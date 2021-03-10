@@ -27,7 +27,7 @@ hypertraceDocker {
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
 tasks.run<JavaExec> {
-  jvmArgs = listOf("-Dbootstrap.config.uri=file:${projectDir}/src/main/resources/configs", "-Dservice.name=${project.name}")
+  jvmArgs = listOf("-Dbootstrap.config.uri=file:$projectDir/src/main/resources/configs", "-Dservice.name=${project.name}")
 }
 
 tasks.test {
@@ -44,7 +44,6 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.21")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.21")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.18")
-
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.35.0")

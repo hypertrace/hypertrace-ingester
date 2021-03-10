@@ -13,17 +13,17 @@ public class BackendEntityResolver extends AbstractBackendResolver {
   private final List<AbstractBackendResolver> backendResolvers;
 
   public BackendEntityResolver() {
-    backendResolvers = List.of(
-        new HttpBackendResolver(),
-        new GrpcBackendResolver(),
-        new RedisBackendResolver(),
-        new MongoBackendResolver(),
-        new JdbcBackendResolver(),
-        new RabbitMqBackendResolver(),
-        new KafkaBackendResolver(),
-        new SqsBackendResolver(),
-        new ClientSpanEndpointResolver()
-    );
+    backendResolvers =
+        List.of(
+            new HttpBackendResolver(),
+            new GrpcBackendResolver(),
+            new RedisBackendResolver(),
+            new MongoBackendResolver(),
+            new JdbcBackendResolver(),
+            new RabbitMqBackendResolver(),
+            new KafkaBackendResolver(),
+            new SqsBackendResolver(),
+            new ClientSpanEndpointResolver());
   }
 
   @Override

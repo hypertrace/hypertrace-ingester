@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import java.util.Map;
+import java.util.Optional;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
@@ -14,9 +16,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.UserAgent;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-
-import java.util.Map;
-import java.util.Optional;
 
 public class UserAgentSpanEnricher extends AbstractTraceEnricher {
 
@@ -39,22 +38,29 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
 
     if (mayBeUserAgent.isPresent()) {
       ReadableUserAgent userAgent = userAgentStringParser.parse(mayBeUserAgent.get());
-      addEnrichedAttribute(event,
+      addEnrichedAttribute(
+          event,
           EnrichedSpanConstants.getValue(UserAgent.USER_AGENT_NAME),
           AttributeValueCreator.create(userAgent.getName()));
-      addEnrichedAttribute(event,
+      addEnrichedAttribute(
+          event,
           EnrichedSpanConstants.getValue(UserAgent.USER_AGENT_TYPE),
           AttributeValueCreator.create(userAgent.getType().getName()));
-      addEnrichedAttribute(event,
+      addEnrichedAttribute(
+          event,
           EnrichedSpanConstants.getValue(UserAgent.USER_AGENT_DEVICE_CATEGORY),
           AttributeValueCreator.create(userAgent.getDeviceCategory().getName()));
-      addEnrichedAttribute(event,
+      addEnrichedAttribute(
+          event,
           EnrichedSpanConstants.getValue(UserAgent.USER_AGENT_OS_NAME),
           AttributeValueCreator.create(userAgent.getOperatingSystem().getName()));
-      addEnrichedAttribute(event,
+      addEnrichedAttribute(
+          event,
           EnrichedSpanConstants.getValue(UserAgent.USER_AGENT_OS_VERSION),
-          AttributeValueCreator.create(userAgent.getOperatingSystem().getVersionNumber().toVersionString()));
-      addEnrichedAttribute(event,
+          AttributeValueCreator.create(
+              userAgent.getOperatingSystem().getVersionNumber().toVersionString()));
+      addEnrichedAttribute(
+          event,
           EnrichedSpanConstants.getValue(UserAgent.USER_AGENT_BROWSER_VERSION),
           AttributeValueCreator.create(userAgent.getVersionNumber().toVersionString()));
     }

@@ -20,9 +20,7 @@ import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Enricher to add a service entity to the spans based on the service name in the span.
- */
+/** Enricher to add a service entity to the spans based on the service name in the span. */
 public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceEntityEnricher.class);
@@ -68,42 +66,49 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       //    This will enable creating an edge between the exit span and the backend
 
       StructuredTraceGraph graph = buildGraph(trace);
-      if (EnrichedSpanUtils.isExitSpan(event) &&
-          SpanAttributeUtils.isLeafSpan(graph, event)) {
-        String parentSvcName = findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService(event,
-            serviceName, graph).orElse(null);
+      if (EnrichedSpanUtils.isExitSpan(event) && SpanAttributeUtils.isLeafSpan(graph, event)) {
+        String parentSvcName =
+            findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService(
+                    event, serviceName, graph)
+                .orElse(null);
         serviceName = parentSvcName != null ? parentSvcName : serviceName;
       }
 
       Map<String, String> attributes =
-          Map.of(SPAN_ID_KEY, HexUtils.getHex(event.getEventId()), TRACE_ID_KEY,
+          Map.of(
+              SPAN_ID_KEY,
+              HexUtils.getHex(event.getEventId()),
+              TRACE_ID_KEY,
               HexUtils.getHex(trace.getTraceId()));
       org.hypertrace.entity.data.service.v1.Entity entity =
-          factory.getService(event.getCustomerId(), serviceName,
-              ServiceType.JAEGER_SERVICE.name(), attributes);
+          factory.getService(
+              event.getCustomerId(), serviceName, ServiceType.JAEGER_SERVICE.name(), attributes);
       org.hypertrace.core.datamodel.Entity avroEntity =
           EntityAvroConverter.convertToAvroEntity(entity, false);
       if (avroEntity != null) {
         addEntity(trace, event, avroEntity);
 
-        addEnrichedAttribute(event, SERVICE_ID_ATTR_NAME,
-            AttributeValueCreator.create(avroEntity.getEntityId()));
-        addEnrichedAttribute(event, SERVICE_NAME_ATTR_NAME,
+        addEnrichedAttribute(
+            event, SERVICE_ID_ATTR_NAME, AttributeValueCreator.create(avroEntity.getEntityId()));
+        addEnrichedAttribute(
+            event,
+            SERVICE_NAME_ATTR_NAME,
             AttributeValueCreator.create(avroEntity.getEntityName()));
       }
     }
   }
 
   /**
-   * Iterates through the ancestor hierarchy looking for the first ancestor
-   * that is not an exit span and has a different service name than the current exit span
+   * Iterates through the ancestor hierarchy looking for the first ancestor that is not an exit span
+   * and has a different service name than the current exit span
    */
   @VisibleForTesting
-  Optional<String> findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService(Event event, String svcName,
-                                                                                                  StructuredTraceGraph graph) {
+  Optional<String> findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService(
+      Event event, String svcName, StructuredTraceGraph graph) {
     Event parent = graph.getParentEvent(event);
     String parentSvcName = parent != null ? EnrichedSpanUtils.getServiceName(parent) : null;
-    while ((parent != null && EnrichedSpanUtils.isExitApiBoundary(parent)) || svcName.equals(parentSvcName)) {
+    while ((parent != null && EnrichedSpanUtils.isExitApiBoundary(parent))
+        || svcName.equals(parentSvcName)) {
       parent = graph.getParentEvent(parent);
       parentSvcName = parent != null ? EnrichedSpanUtils.getServiceName(parent) : null;
     }

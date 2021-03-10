@@ -31,7 +31,8 @@ public class JaegerSpanNormalizerTest {
   @BeforeAll
   static void initializeMetricRegistry() {
     // Initialize the metric registry.
-    PlatformMetricsRegistry.initMetricsRegistry("JaegerSpanNormalizerTest",
+    PlatformMetricsRegistry.initMetricsRegistry(
+        "JaegerSpanNormalizerTest",
         ConfigFactory.parseMap(Map.of("reporter.names", List.of("testing"))));
   }
 
@@ -47,7 +48,7 @@ public class JaegerSpanNormalizerTest {
   }
 
   @Test
-  @SetEnvironmentVariable(key = "SERVICE_NAME", value= "span-normalizer")
+  @SetEnvironmentVariable(key = "SERVICE_NAME", value = "span-normalizer")
   public void defaultConfigParseTest() {
     try {
       new SpanNormalizer(ConfigClientFactory.getClient());
@@ -67,17 +68,17 @@ public class JaegerSpanNormalizerTest {
         "output.topic",
         "raw-spans-from-jaeger-spans",
         "kafka.streams.config",
-        Map.of("application.id",
+        Map.of(
+            "application.id",
             "jaeger-spans-to-raw-spans-job",
             "bootstrap.servers",
             "localhost:9092"),
         "schema.registry.config",
-        Map.of("schema.registry.url", "http://localhost:8081")
-    );
+        Map.of("schema.registry.url", "http://localhost:8081"));
   }
 
   @Test
-  @SetEnvironmentVariable(key = "SERVICE_NAME", value= "span-normalizer")
+  @SetEnvironmentVariable(key = "SERVICE_NAME", value = "span-normalizer")
   public void testTenantIdKeyConfiguration() {
     try {
       new SpanNormalizer(ConfigClientFactory.getClient());
@@ -165,8 +166,7 @@ public class JaegerSpanNormalizerTest {
     configs.putAll(
         Map.of(
             "processor",
-            Map.of("tenantIdTagKey", "tenant-key",
-                "spanDropCriterion", List.of("foo:bar,k1:v1"))));
+            Map.of("tenantIdTagKey", "tenant-key", "spanDropCriterion", List.of("foo:bar,k1:v1"))));
     JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span1 =
@@ -196,8 +196,11 @@ public class JaegerSpanNormalizerTest {
     configs.putAll(
         Map.of(
             "processor",
-            Map.of("tenantIdTagKey", "tenant-key",
-                "spanDropCriterion", List.of("foo:bar,k1:v1", "k2:v2"))));
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "spanDropCriterion",
+                List.of("foo:bar,k1:v1", "k2:v2"))));
 
     JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
     Process process = Process.newBuilder().setServiceName("testService").build();
@@ -218,9 +221,7 @@ public class JaegerSpanNormalizerTest {
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
     configs.putAll(
         Map.of(
-            "processor",
-            Map.of("tenantIdTagKey", "tenant-key",
-                "spanDropCriterion", List.of())));
+            "processor", Map.of("tenantIdTagKey", "tenant-key", "spanDropCriterion", List.of())));
 
     JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
     Process process = Process.newBuilder().setServiceName("testService").build();
@@ -239,40 +240,60 @@ public class JaegerSpanNormalizerTest {
   public void testServiceNameAddedToEvent() throws Exception {
     String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(
-        Map.of(
-            "processor",
-            Map.of(
-                "defaultTenantId", tenantId)));
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
     JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span = Span.newBuilder().setProcess(process).build();
     RawSpan rawSpan = normalizer.convert(span);
     Assertions.assertEquals("testService", rawSpan.getEvent().getServiceName());
-    Assertions.assertEquals("testService", rawSpan.getEvent().getAttributes().getAttributeMap().get(
-        RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)).getValue());
+    Assertions.assertEquals(
+        "testService",
+        rawSpan
+            .getEvent()
+            .getAttributes()
+            .getAttributeMap()
+            .get(RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME))
+            .getValue());
 
     /**
-     * the case when `jaegerSpan.getProcess().getServiceName()` is not populated but serviceName is sent for key `jaeger.serviceName`
+     * the case when `jaegerSpan.getProcess().getServiceName()` is not populated but serviceName is
+     * sent for key `jaeger.serviceName`
      */
-    span = Span.newBuilder()
-        .addTags(KeyValue.newBuilder()
-            .setKey(JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY)
-            .setVStr("testService")).build();
+    span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY)
+                    .setVStr("testService"))
+            .build();
     rawSpan = normalizer.convert(span);
     Assertions.assertEquals("testService", rawSpan.getEvent().getServiceName());
-    Assertions.assertEquals("testService", rawSpan.getEvent().getAttributes().getAttributeMap().get(
-        RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)).getValue());
+    Assertions.assertEquals(
+        "testService",
+        rawSpan
+            .getEvent()
+            .getAttributes()
+            .getAttributeMap()
+            .get(RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME))
+            .getValue());
 
     /**
-     * the case when neither `jaegerSpan.getProcess().getServiceName()` nor `jaeger.serviceName` is present in tag map
+     * the case when neither `jaegerSpan.getProcess().getServiceName()` nor `jaeger.serviceName` is
+     * present in tag map
      */
-    span = Span.newBuilder().addTags(KeyValue.newBuilder().setKey("someKey").setVStr("someValue")).build();
+    span =
+        Span.newBuilder()
+            .addTags(KeyValue.newBuilder().setKey("someKey").setVStr("someValue"))
+            .build();
     rawSpan = normalizer.convert(span);
     Assertions.assertNull(rawSpan.getEvent().getServiceName());
     Assertions.assertNotNull(rawSpan.getEvent().getAttributes().getAttributeMap());
-    Assertions.assertNull(rawSpan.getEvent().getAttributes().getAttributeMap().get(
-        RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)));
+    Assertions.assertNull(
+        rawSpan
+            .getEvent()
+            .getAttributes()
+            .getAttributeMap()
+            .get(RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)));
   }
 
   @Test
@@ -286,8 +307,12 @@ public class JaegerSpanNormalizerTest {
 
     RawSpan rawSpan = normalizer.convert(span);
     Assertions.assertNull(rawSpan.getEvent().getServiceName());
-    Assertions.assertNull(rawSpan.getEvent().getAttributes().getAttributeMap().get(
-        RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)));
+    Assertions.assertNull(
+        rawSpan
+            .getEvent()
+            .getAttributes()
+            .getAttributeMap()
+            .get(RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME)));
     Timer timer = normalizer.getSpanNormalizationTimer(tenantId);
     Assertions.assertNotNull(timer);
 
@@ -300,7 +325,6 @@ public class JaegerSpanNormalizerTest {
     AttributeValue attributeValue = AttributeValue.newBuilder().setValue("test-val").build();
     Assertions.assertEquals(
         "{\"value\":{\"string\":\"test-val\"},\"binary_value\":null,\"value_list\":null,\"value_map\":null}",
-        JaegerSpanNormalizer.convertToJsonString(attributeValue, AttributeValue.getClassSchema())
-        );
+        JaegerSpanNormalizer.convertToJsonString(attributeValue, AttributeValue.getClassSchema()));
   }
 }

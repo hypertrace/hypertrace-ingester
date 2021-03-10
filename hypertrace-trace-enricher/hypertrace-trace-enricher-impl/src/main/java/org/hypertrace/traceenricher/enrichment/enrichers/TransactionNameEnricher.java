@@ -13,11 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Finds the transaction name from each trace data.
- * Go through the event list and find the one with the earliest start time and use the api name
- * as transaction name
- * If there's broken span / exit span as the start of the trace,
- * then it will be categorized as "unknown" transaction
+ * Finds the transaction name from each trace data. Go through the event list and find the one with
+ * the earliest start time and use the api name as transaction name If there's broken span / exit
+ * span as the start of the trace, then it will be categorized as "unknown" transaction
  */
 public class TransactionNameEnricher extends AbstractTraceEnricher {
   private static Logger LOGGER = LoggerFactory.getLogger(TransactionNameEnricher.class);
@@ -42,7 +40,8 @@ public class TransactionNameEnricher extends AbstractTraceEnricher {
 
       if (apiName != null) {
         Map<String, AttributeValue> attributes = trace.getAttributes().getAttributeMap();
-        attributes.put(EnrichedSpanConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_NAME),
+        attributes.put(
+            EnrichedSpanConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_NAME),
             AttributeValueCreator.create(apiName));
       }
     }

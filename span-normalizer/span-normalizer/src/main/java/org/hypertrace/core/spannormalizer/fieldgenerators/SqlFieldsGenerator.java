@@ -12,9 +12,9 @@ import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.sql.Sql;
+import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
-import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
 
 public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
   private static final Map<String, FieldGenerator<Sql.Builder>> FIELD_GENERATOR_MAP =
@@ -48,7 +48,6 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
         RawSpanConstants.getValue(SQL_STATE),
         (key, keyValue, builder, tagsMap) -> builder.setSqlstate(keyValue.getVStr()));
 
-
     return fieldGeneratorMap;
   }
 
@@ -62,13 +61,13 @@ public class SqlFieldsGenerator extends ProtocolFieldsGenerator<Sql.Builder> {
     return FIELD_GENERATOR_MAP;
   }
 
-  protected void populateOtherFields(Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
+  protected void populateOtherFields(
+      Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
     maybePopulateSqlUrlForOtelSpan(eventBuilder, attributeValueMap);
   }
 
   protected void maybePopulateSqlUrlForOtelSpan(
-      Event.Builder eventBuilder,
-      final Map<String, AttributeValue> attributeFieldMap) {
+      Event.Builder eventBuilder, final Map<String, AttributeValue> attributeFieldMap) {
     Optional<String> url = DbSemanticConventionUtils.getSqlUrlForOtelFormat(attributeFieldMap);
     url.ifPresent(s -> eventBuilder.getSqlBuilder().setUrl(s));
   }
