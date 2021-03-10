@@ -18,6 +18,8 @@ import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
+import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
+import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.core.span.constants.v1.Sql;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -66,6 +68,10 @@ public class JdbcBackendResolverTest {
                             "sql.query",
                             AttributeValue.newBuilder()
                                 .setValue("insert into audit_message (message, id) values (?, ?)")
+                                .build(),
+                            "db.operation",
+                            AttributeValue.newBuilder()
+                                .setValue("select")
                                 .build(),
                             "k8s.pod_id",
                             AttributeValue.newBuilder()
@@ -148,6 +154,11 @@ public class JdbcBackendResolverTest {
             .get(EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH))
             .getValue()
             .getString());
+    assertEquals(
+        "select",
+        backendEntity
+            .getAttributesMap()
+            .get(EnrichedSpanUtils.getBackendOperation(e)));
   }
 
   @Test
