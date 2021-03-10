@@ -23,12 +23,13 @@ public class ApiTraceGraphTest {
 
   @Test
   public void testApiTraceGraph_HotrodTrace() throws IOException {
-    URL resource = Thread.currentThread().getContextClassLoader().
-        getResource("StructuredTrace-Hotrod.avro");
+    URL resource =
+        Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
 
-    SpecificDatumReader<StructuredTrace> datumReader = new SpecificDatumReader<>(
-        StructuredTrace.getClassSchema());
-    DataFileReader<StructuredTrace> dfrStructuredTrace = new DataFileReader<>(new File(resource.getPath()), datumReader);
+    SpecificDatumReader<StructuredTrace> datumReader =
+        new SpecificDatumReader<>(StructuredTrace.getClassSchema());
+    DataFileReader<StructuredTrace> dfrStructuredTrace =
+        new DataFileReader<>(new File(resource.getPath()), datumReader);
     StructuredTrace trace = dfrStructuredTrace.next();
     dfrStructuredTrace.close();
 
@@ -46,14 +47,22 @@ public class ApiTraceGraphTest {
     for (int index = 0; index < apiTraceGraph.getApiNodeList().size(); index++) {
       ApiNode<Event> apiNode = apiTraceGraph.getApiNodeList().get(index);
       int finalIndex = index;
-      apiNode.getEvents().forEach(v -> eventToApiNodes.computeIfAbsent(
-          v.getEventId(), s -> new HashSet<>()).add(finalIndex));
+      apiNode
+          .getEvents()
+          .forEach(
+              v ->
+                  eventToApiNodes
+                      .computeIfAbsent(v.getEventId(), s -> new HashSet<>())
+                      .add(finalIndex));
     }
 
     // verify every event belongs to exactly 1 api_node
-    trace.getEventList().forEach(e -> {
-      assertTrue(eventToApiNodes.containsKey(e.getEventId()));
-      assertEquals(1, eventToApiNodes.get(e.getEventId()).size());
-    });
+    trace
+        .getEventList()
+        .forEach(
+            e -> {
+              assertTrue(eventToApiNodes.containsKey(e.getEventId()));
+              assertEquals(1, eventToApiNodes.get(e.getEventId()).size());
+            });
   }
 }

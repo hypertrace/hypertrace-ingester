@@ -1,21 +1,17 @@
 package org.hypertrace.viewgenerator.generators;
 
+import io.micrometer.core.instrument.Timer;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-
-import io.micrometer.core.instrument.Timer;
 import org.apache.avro.generic.GenericRecord;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.EventRef;
-import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
@@ -32,8 +28,8 @@ public abstract class BaseViewGenerator<OUT extends GenericRecord>
     implements JavaCodeBasedViewGenerator<StructuredTrace, OUT> {
 
   private static final String VIEW_GENERATION_ARRIVAL_TIME = "view.generation.arrival.time";
-  private static final Timer viewGeneratorArrivalTimer = PlatformMetricsRegistry
-      .registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
+  private static final Timer viewGeneratorArrivalTimer =
+      PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
 
   static final String EMPTY_STRING = "";
 
@@ -65,19 +61,18 @@ public abstract class BaseViewGenerator<OUT extends GenericRecord>
 
   @Override
   public List<OUT> process(StructuredTrace trace) {
-    DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(trace, viewGeneratorArrivalTimer,
-        VIEW_GENERATION_ARRIVAL_TIME);
+    DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(
+        trace, viewGeneratorArrivalTimer, VIEW_GENERATION_ARRIVAL_TIME);
     TraceState traceState = ViewGeneratorState.getTraceState(trace);
     Map<String, Entity> entityMap = Collections.unmodifiableMap(traceState.getEntityMap());
     Map<ByteBuffer, Event> eventMap = Collections.unmodifiableMap(traceState.getEventMap());
-    Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds = Collections.unmodifiableMap(traceState.getParentToChildrenEventIds());
-    Map<ByteBuffer, ByteBuffer> childToParentEventIds = Collections.unmodifiableMap(traceState.getChildToParentEventIds());
+    Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds =
+        Collections.unmodifiableMap(traceState.getParentToChildrenEventIds());
+    Map<ByteBuffer, ByteBuffer> childToParentEventIds =
+        Collections.unmodifiableMap(traceState.getChildToParentEventIds());
 
     return generateView(
-        trace,
-        entityMap, eventMap,
-        parentToChildrenEventIds,
-        childToParentEventIds);
+        trace, entityMap, eventMap, parentToChildrenEventIds, childToParentEventIds);
   }
 
   abstract List<OUT> generateView(

@@ -22,33 +22,39 @@ public class ServiceCallViewGeneratorTest {
 
   @Test
   public void testServiceCallViewGenerator_HotrodTrace() throws IOException {
-    URL resource = Thread.currentThread().getContextClassLoader().
-        getResource("StructuredTrace-Hotrod.avro");
+    URL resource =
+        Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
 
-    SpecificDatumReader<StructuredTrace> datumReader = new SpecificDatumReader<>(
-        StructuredTrace.getClassSchema());
-    DataFileReader<StructuredTrace> dfrStructuredTrace = new DataFileReader<>(new File(resource.getPath()), datumReader);
+    SpecificDatumReader<StructuredTrace> datumReader =
+        new SpecificDatumReader<>(StructuredTrace.getClassSchema());
+    DataFileReader<StructuredTrace> dfrStructuredTrace =
+        new DataFileReader<>(new File(resource.getPath()), datumReader);
     StructuredTrace trace = dfrStructuredTrace.next();
     dfrStructuredTrace.close();
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     ServiceCallViewGenerator serviceCallViewGenerator = new ServiceCallViewGenerator();
     List<ServiceCallView> individuallyComputedServiceCalls = Lists.newArrayList();
-    individuallyComputedServiceCalls.addAll(verifyEdgesCreatedFromApiNodeEdge_HotrodTrace(
-        apiTraceGraph, trace, Lists.newArrayList(), serviceCallViewGenerator));
-    individuallyComputedServiceCalls.addAll(verifyEdgesCreatedFromRootEntryEvent_HotrodTrace(
-        apiTraceGraph, trace, serviceCallViewGenerator));
-    individuallyComputedServiceCalls.addAll(verifyEdgesCreatedFromEdgeFromBackend_HotrodTrace(
-        apiTraceGraph, trace, serviceCallViewGenerator));
-    individuallyComputedServiceCalls.addAll(verifyEdgesCreatedFromEdgeFromNonRootEntryEvent_HotrodTrace(
-        apiTraceGraph, new TraceState(trace), trace, serviceCallViewGenerator));
+    individuallyComputedServiceCalls.addAll(
+        verifyEdgesCreatedFromApiNodeEdge_HotrodTrace(
+            apiTraceGraph, trace, Lists.newArrayList(), serviceCallViewGenerator));
+    individuallyComputedServiceCalls.addAll(
+        verifyEdgesCreatedFromRootEntryEvent_HotrodTrace(
+            apiTraceGraph, trace, serviceCallViewGenerator));
+    individuallyComputedServiceCalls.addAll(
+        verifyEdgesCreatedFromEdgeFromBackend_HotrodTrace(
+            apiTraceGraph, trace, serviceCallViewGenerator));
+    individuallyComputedServiceCalls.addAll(
+        verifyEdgesCreatedFromEdgeFromNonRootEntryEvent_HotrodTrace(
+            apiTraceGraph, new TraceState(trace), trace, serviceCallViewGenerator));
 
     List<ServiceCallView> serviceCallViewRecords = serviceCallViewGenerator.process(trace);
     assertEquals(individuallyComputedServiceCalls, serviceCallViewRecords);
   }
 
   private List<ServiceCallView> verifyEdgesCreatedFromApiNodeEdge_HotrodTrace(
-      ApiTraceGraph apiTraceGraph, StructuredTrace trace,
+      ApiTraceGraph apiTraceGraph,
+      StructuredTrace trace,
       List<ServiceCallView> serviceCallViewRecords,
       ServiceCallViewGenerator serviceCallViewGenerator) {
     serviceCallViewGenerator.createEdgeFromApiNodeEdge(
@@ -59,8 +65,11 @@ public class ServiceCallViewGeneratorTest {
     // frontend -> route, 10
     assertEquals(12, serviceCallViewRecords.size());
     Map<String, AtomicInteger> calleeCount = Maps.newHashMap();
-    serviceCallViewRecords.forEach(v -> calleeCount.computeIfAbsent(
-        v.getCalleeService(), c -> new AtomicInteger(0)).incrementAndGet());
+    serviceCallViewRecords.forEach(
+        v ->
+            calleeCount
+                .computeIfAbsent(v.getCalleeService(), c -> new AtomicInteger(0))
+                .incrementAndGet());
     assertEquals(3, calleeCount.size());
     assertEquals(1, calleeCount.get("customer").get());
     assertEquals(1, calleeCount.get("driver").get());
@@ -69,7 +78,8 @@ public class ServiceCallViewGeneratorTest {
   }
 
   private List<ServiceCallView> verifyEdgesCreatedFromRootEntryEvent_HotrodTrace(
-      ApiTraceGraph apiTraceGraph, StructuredTrace trace,
+      ApiTraceGraph apiTraceGraph,
+      StructuredTrace trace,
       ServiceCallViewGenerator serviceCallViewGenerator) {
     List<ServiceCallView> serviceCallViewRecords = Lists.newArrayList();
     serviceCallViewGenerator.createEdgeFromRootEntryEvent(
@@ -80,17 +90,20 @@ public class ServiceCallViewGeneratorTest {
   }
 
   private List<ServiceCallView> verifyEdgesCreatedFromEdgeFromBackend_HotrodTrace(
-      ApiTraceGraph apiTraceGraph, StructuredTrace trace,
+      ApiTraceGraph apiTraceGraph,
+      StructuredTrace trace,
       ServiceCallViewGenerator serviceCallViewGenerator) {
     List<ServiceCallView> serviceCallViewRecords = Lists.newArrayList();
-    serviceCallViewGenerator.createEdgeFromBackend(
-        apiTraceGraph, trace, serviceCallViewRecords);
+    serviceCallViewGenerator.createEdgeFromBackend(apiTraceGraph, trace, serviceCallViewRecords);
     // in total 14 edges, representing calls to backend
     // customer -> mysql, 1
     // driver -> redis, 13
     Map<String, AtomicInteger> callerCount = Maps.newHashMap();
-    serviceCallViewRecords.forEach(v -> callerCount.computeIfAbsent(
-        v.getCallerService(), c -> new AtomicInteger(0)).incrementAndGet());
+    serviceCallViewRecords.forEach(
+        v ->
+            callerCount
+                .computeIfAbsent(v.getCallerService(), c -> new AtomicInteger(0))
+                .incrementAndGet());
     assertEquals(2, callerCount.size());
     assertEquals(1, callerCount.get("customer").get());
     assertEquals(13, callerCount.get("driver").get());
@@ -98,12 +111,17 @@ public class ServiceCallViewGeneratorTest {
   }
 
   private List<ServiceCallView> verifyEdgesCreatedFromEdgeFromNonRootEntryEvent_HotrodTrace(
-      ApiTraceGraph apiTraceGraph, TraceState traceState,
-      StructuredTrace trace, ServiceCallViewGenerator serviceCallViewGenerator) {
+      ApiTraceGraph apiTraceGraph,
+      TraceState traceState,
+      StructuredTrace trace,
+      ServiceCallViewGenerator serviceCallViewGenerator) {
     List<ServiceCallView> serviceCallViewRecords = Lists.newArrayList();
     serviceCallViewGenerator.createEdgeFromNonRootEntryEvent(
-        apiTraceGraph, trace, traceState.getEventMap(),
-        traceState.getChildToParentEventIds(), serviceCallViewRecords);
+        apiTraceGraph,
+        trace,
+        traceState.getEventMap(),
+        traceState.getChildToParentEventIds(),
+        serviceCallViewRecords);
     assertEquals(0, serviceCallViewRecords.size());
     return serviceCallViewRecords;
   }

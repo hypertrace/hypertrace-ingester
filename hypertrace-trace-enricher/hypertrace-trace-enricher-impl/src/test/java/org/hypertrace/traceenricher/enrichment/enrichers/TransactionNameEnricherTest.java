@@ -26,7 +26,8 @@ public class TransactionNameEnricherTest extends AbstractAttributeEnricherTest {
   private static final Long ROOT_START_TIME = 55555111111L;
   private static final Long CHILD_START_TIME = 55555555555L;
   private static final String API_NAME_VAL = "/login";
-  private static final CommonAttribute TRANSACTION_NAME = CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_NAME;
+  private static final CommonAttribute TRANSACTION_NAME =
+      CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_NAME;
 
   private List<Event> eventList;
   private TransactionNameEnricher target;
@@ -72,13 +73,17 @@ public class TransactionNameEnricherTest extends AbstractAttributeEnricherTest {
   @Test
   public void test_enrichTrace_noApiNameAttribute_returnUnknownTransactionName() {
     target.enrichTrace(structuredTrace);
-    Assertions.assertNull(structuredTrace.getAttributes().getAttributeMap()
-        .get(Constants.getEnrichedSpanConstant(TRANSACTION_NAME)));
+    Assertions.assertNull(
+        structuredTrace
+            .getAttributes()
+            .getAttributeMap()
+            .get(Constants.getEnrichedSpanConstant(TRANSACTION_NAME)));
   }
 
   @Test
   public void test_enrichTrace_validApiNameAttribute_returnValidTransactionName() {
-    rootEventAttributesMap.put(Constants.getEntityConstant(ApiAttribute.API_ATTRIBUTE_NAME),
+    rootEventAttributesMap.put(
+        Constants.getEntityConstant(ApiAttribute.API_ATTRIBUTE_NAME),
         AttributeValueCreator.create(API_NAME_VAL));
     target.enrichTrace(structuredTrace);
     Assertions.assertEquals(getApiNameVal(structuredTrace), API_NAME_VAL);
@@ -88,12 +93,18 @@ public class TransactionNameEnricherTest extends AbstractAttributeEnricherTest {
   public void test_enrichTrace_noEvent_returnUnknownTransactionName() {
     when(structuredTrace.getEventList()).thenReturn(Collections.emptyList());
     target.enrichTrace(structuredTrace);
-    Assertions.assertNull(structuredTrace.getAttributes().getAttributeMap()
-        .get(Constants.getEnrichedSpanConstant(TRANSACTION_NAME)));
+    Assertions.assertNull(
+        structuredTrace
+            .getAttributes()
+            .getAttributeMap()
+            .get(Constants.getEnrichedSpanConstant(TRANSACTION_NAME)));
   }
 
   private String getApiNameVal(StructuredTrace structuredTrace) {
-    return structuredTrace.getAttributes().getAttributeMap().get(
-        Constants.getEnrichedSpanConstant(TRANSACTION_NAME)).getValue();
+    return structuredTrace
+        .getAttributes()
+        .getAttributeMap()
+        .get(Constants.getEnrichedSpanConstant(TRANSACTION_NAME))
+        .getValue();
   }
 }

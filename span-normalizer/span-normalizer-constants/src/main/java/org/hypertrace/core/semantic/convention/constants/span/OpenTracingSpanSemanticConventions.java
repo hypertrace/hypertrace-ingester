@@ -1,8 +1,6 @@
 package org.hypertrace.core.semantic.convention.constants.span;
 
-/**
- * Otel attributes for span
- */
+/** Otel attributes for span */
 public enum OpenTracingSpanSemanticConventions {
   SPAN_KIND("span_kind"),
   SPAN_KIND_SERVER_VALUE("server"),

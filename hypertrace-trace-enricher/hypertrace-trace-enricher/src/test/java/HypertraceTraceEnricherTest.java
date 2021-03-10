@@ -1,7 +1,5 @@
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
-import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,18 +32,23 @@ public class HypertraceTraceEnricherTest {
   @SetEnvironmentVariable(key = "SERVICE_NAME", value = "hypertrace-trace-enricher")
   public void setUp() {
     underTest = new TraceEnricher(ConfigClientFactory.getClient());
-    underTestConfig = ConfigFactory.parseURL(
-        getClass().getClassLoader()
-            .getResource("configs/hypertrace-trace-enricher/application.conf"))
-        .resolve();
+    underTestConfig =
+        ConfigFactory.parseURL(
+                getClass()
+                    .getClassLoader()
+                    .getResource("configs/hypertrace-trace-enricher/application.conf"))
+            .resolve();
   }
 
   @Test
   @SetEnvironmentVariable(key = "SERVICE_NAME", value = "hypertrace-trace-enricher")
   public void testTraceEnricherTopology() {
-    Config config = ConfigFactory.parseURL(
-        getClass().getClassLoader()
-            .getResource("configs/hypertrace-trace-enricher/application.conf")).resolve();
+    Config config =
+        ConfigFactory.parseURL(
+                getClass()
+                    .getClassLoader()
+                    .getResource("configs/hypertrace-trace-enricher/application.conf"))
+            .resolve();
 
     Map<String, Object> baseProps = underTest.getBaseStreamsConfig();
     Map<String, Object> streamsProps = underTest.getStreamsConfig(config);
@@ -53,8 +56,8 @@ public class HypertraceTraceEnricherTest {
     Map<String, Object> mergedProps = baseProps;
     mergedProps.put(underTest.getJobConfigKey(), config);
 
-    StreamsBuilder streamsBuilder = underTest.buildTopology(
-        mergedProps, new StreamsBuilder(), new HashMap<>());
+    StreamsBuilder streamsBuilder =
+        underTest.buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
     Properties props = new Properties();
     mergedProps.forEach(props::put);
 
@@ -65,22 +68,20 @@ public class HypertraceTraceEnricherTest {
 
     // create input topic for HT-model StructuredTrace
     TestInputTopic<String, StructuredTrace> inputTopic =
-        topologyTestDriver
-            .createInputTopic(
-                config.getString(StructuredTraceEnricherConstants.INPUT_TOPIC_CONFIG_KEY),
-                Serdes.String().serializer(),
-                htStructuredTraceSerde.serializer());
+        topologyTestDriver.createInputTopic(
+            config.getString(StructuredTraceEnricherConstants.INPUT_TOPIC_CONFIG_KEY),
+            Serdes.String().serializer(),
+            htStructuredTraceSerde.serializer());
 
     // create output topic for closed-model StructuredTrace
-    TestOutputTopic outputTopic = topologyTestDriver
-        .createOutputTopic(
+    TestOutputTopic outputTopic =
+        topologyTestDriver.createOutputTopic(
             config.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             htStructuredTraceSerde.deserializer());
 
     // create instance of HT-model StructuredTrace
-    StructuredTrace htStructuredTrace =
-        createHTStructuredTrace("customer1", "1234");
+    StructuredTrace htStructuredTrace = createHTStructuredTrace("customer1", "1234");
 
     // Write an input record into input topic
     inputTopic.pipeInput(htStructuredTrace);
@@ -88,8 +89,8 @@ public class HypertraceTraceEnricherTest {
     // Read the output record from output topic
     StructuredTrace structuredTrace = (StructuredTrace) outputTopic.readValue();
 
-    Assertions.assertEquals(HexUtils.getHex("1234".getBytes()),
-        HexUtils.getHex(structuredTrace.getTraceId()));
+    Assertions.assertEquals(
+        HexUtils.getHex("1234".getBytes()), HexUtils.getHex(structuredTrace.getTraceId()));
   }
 
   private org.hypertrace.core.datamodel.StructuredTrace createHTStructuredTrace(

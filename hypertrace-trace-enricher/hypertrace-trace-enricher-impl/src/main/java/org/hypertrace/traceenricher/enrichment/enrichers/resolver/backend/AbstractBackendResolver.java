@@ -16,9 +16,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 
-/**
- * Abstract class with common methods for all the different types of backend resolvers
- */
+/** Abstract class with common methods for all the different types of backend resolvers */
 public abstract class AbstractBackendResolver {
   private static final String COLON = ":";
   private static final Joiner COLON_JOINER = Joiner.on(COLON);
@@ -28,20 +26,23 @@ public abstract class AbstractBackendResolver {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST);
   private static final String BACKEND_PORT_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT);
-  private final static String DEFAULT_PORT = "-1";
+  private static final String DEFAULT_PORT = "-1";
   private static final String SVC_CLUSTER_LOCAL_SUFFIX = ".svc.cluster.local";
 
-  public abstract Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph);
+  public abstract Optional<Entity> resolveEntity(
+      Event event, StructuredTraceGraph structuredTraceGraph);
 
   Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event) {
     String[] hostAndPort = backendURI.split(COLON);
-    String host = hostAndPort[0].replace(SVC_CLUSTER_LOCAL_SUFFIX, "");;
+    String host = hostAndPort[0].replace(SVC_CLUSTER_LOCAL_SUFFIX, "");
+    ;
     String port = (hostAndPort.length == 2) ? hostAndPort[1] : DEFAULT_PORT;
     String entityName = port.equals(DEFAULT_PORT) ? host : COLON_JOINER.join(host, port);
     final Builder entityBuilder =
         org.hypertrace.entity.data.service.v1.Entity.newBuilder()
             .setEntityType(EntityType.BACKEND.name())
-            .setTenantId(event.getCustomerId()).setEntityName(entityName)
+            .setTenantId(event.getCustomerId())
+            .setEntityName(entityName)
             .putIdentifyingAttributes(BACKEND_PROTOCOL_ATTR_NAME, createAttributeValue(type.name()))
             .putIdentifyingAttributes(BACKEND_HOST_ATTR_NAME, createAttributeValue(host))
             .putIdentifyingAttributes(BACKEND_PORT_ATTR_NAME, createAttributeValue(port));

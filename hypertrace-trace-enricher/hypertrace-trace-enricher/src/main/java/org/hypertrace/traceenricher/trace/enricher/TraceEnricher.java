@@ -28,8 +28,8 @@ public class TraceEnricher extends KafkaStreamsApp {
   }
 
   @Override
-
-  public StreamsBuilder buildTopology(Map<String, Object> streamsProperties,
+  public StreamsBuilder buildTopology(
+      Map<String, Object> streamsProperties,
       StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> inputStreams) {
 
@@ -37,11 +37,10 @@ public class TraceEnricher extends KafkaStreamsApp {
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
 
-    KStream<String, StructuredTrace> inputStream = (KStream<String, StructuredTrace>) inputStreams
-        .get(inputTopic);
+    KStream<String, StructuredTrace> inputStream =
+        (KStream<String, StructuredTrace>) inputStreams.get(inputTopic);
     if (inputStream == null) {
-      inputStream = streamsBuilder
-          .stream(inputTopic, Consumed.with(Serdes.String(), null));
+      inputStream = streamsBuilder.stream(inputTopic, Consumed.with(Serdes.String(), null));
       inputStreams.put(inputTopic, inputStream);
     }
 

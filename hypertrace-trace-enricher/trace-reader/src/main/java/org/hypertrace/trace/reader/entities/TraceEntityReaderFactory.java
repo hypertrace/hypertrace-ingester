@@ -5,7 +5,8 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReaderFactory;
 
 public class TraceEntityReaderFactory {
-  public static TraceEntityReader<StructuredTrace, Event> build(TraceEntityClientContext clientContext) {
+  public static TraceEntityReader<StructuredTrace, Event> build(
+      TraceEntityClientContext clientContext) {
     return new DefaultTraceEntityReader<>(
         clientContext.getEntityTypeClient(),
         clientContext.getEntityDataClient(),

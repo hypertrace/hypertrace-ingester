@@ -74,34 +74,36 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
 
     // Scenario #4: Handle non entry roots
     createEdgeFromNonRootEntryEvent(
-        apiTraceGraph, structuredTrace, eventMap,
-        childToParentEventId, serviceCallViewRecords);
+        apiTraceGraph, structuredTrace, eventMap, childToParentEventId, serviceCallViewRecords);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace(
           "Generated ServiceCalls for the structuredTrace: {}. serviceCalls: {}",
-          structuredTrace, serviceCallViewRecords);
+          structuredTrace,
+          serviceCallViewRecords);
     }
 
     return serviceCallViewRecords;
   }
 
   /**
-   * Go through the apiNode edges and create a record for each edge. Should be easy
-   * to get to the events since the ApiNodeEventEdge has both the indices in the
-   * ApiNode list and Events list in the trace
+   * Go through the apiNode edges and create a record for each edge. Should be easy to get to the
+   * events since the ApiNodeEventEdge has both the indices in the ApiNode list and Events list in
+   * the trace
    */
   void createEdgeFromApiNodeEdge(
       ApiTraceGraph apiTraceGraph,
       StructuredTrace structuredTrace,
       List<ServiceCallView> serviceCallViewRecords) {
-    apiTraceGraph.getApiNodeEventEdgeList()
+    apiTraceGraph
+        .getApiNodeEventEdgeList()
         .forEach(
             edge ->
-                serviceCallViewRecords.add(createGenericRecordFromApiNodeEdge(
-                    structuredTrace,
-                    structuredTrace.getEventList().get(edge.getSrcEventIndex()),
-                    structuredTrace.getEventList().get(edge.getTgtEventIndex()))));
+                serviceCallViewRecords.add(
+                    createGenericRecordFromApiNodeEdge(
+                        structuredTrace,
+                        structuredTrace.getEventList().get(edge.getSrcEventIndex()),
+                        structuredTrace.getEventList().get(edge.getTgtEventIndex()))));
   }
 
   /**
@@ -116,25 +118,25 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
     int exceptionCount =
         (int)
             (getMetricValue(
-                source,
-                EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT),
-                0.0d)
+                    source,
+                    EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT),
+                    0.0d)
                 + getMetricValue(
-                target,
-                EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT),
-                0.0d));
+                    target,
+                    EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT),
+                    0.0d));
 
     // Edge error count: 1 if either source or target has an error, 0 otherwise
     int errorCount =
         getServiceCallViewErrorCount(
             getMetricValue(
-                source,
-                EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT),
-                0.0d)
+                    source,
+                    EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT),
+                    0.0d)
                 + getMetricValue(
-                target,
-                EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT),
-                0.0d));
+                    target,
+                    EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT),
+                    0.0d));
 
     Protocol protocol = EnrichedSpanUtils.getProtocol(target);
     // Set the server side attributes.
@@ -169,8 +171,9 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
 
     // If this is a HTTP request, parse the http response status code.
     if (protocol == Protocol.PROTOCOL_HTTP || protocol == Protocol.PROTOCOL_HTTPS) {
-      Optional<Request> httpRequest = Optional.ofNullable(event.getHttp())
-          .map(org.hypertrace.core.datamodel.eventfields.http.Http::getRequest);
+      Optional<Request> httpRequest =
+          Optional.ofNullable(event.getHttp())
+              .map(org.hypertrace.core.datamodel.eventfields.http.Http::getRequest);
       // Set request related attributes.
       builder.setRequestUrl(httpRequest.map(Request::getUrl).orElse(null));
       builder.setRequestMethod(httpRequest.map(Request::getMethod).orElse(null));
@@ -224,11 +227,11 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
   }
 
   /**
-   * Handle root entry events. Ideally there should only be one root entry.
-   * Root entry spans are those entry api boundary spans that are not the
-   * target of any {@link org.hypertrace.core.datamodel.ApiNodeEventEdge}
-   * i.e Root entry spans = All Entry API Boundary Spans set - Set of Entry API Boundary spans
-   * that are the target of an edge({@code calleeEntryEvents} computed below)
+   * Handle root entry events. Ideally there should only be one root entry. Root entry spans are
+   * those entry api boundary spans that are not the target of any {@link
+   * org.hypertrace.core.datamodel.ApiNodeEventEdge} i.e Root entry spans = All Entry API Boundary
+   * Spans set - Set of Entry API Boundary spans that are the target of an edge({@code
+   * calleeEntryEvents} computed below)
    */
   void createEdgeFromRootEntryEvent(
       ApiTraceGraph apiTraceGraph,
@@ -236,10 +239,15 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       List<ServiceCallView> serviceCallViewRecords) {
     int serviceCallViewRecordsCount = serviceCallViewRecords.size();
 
-    apiTraceGraph.getApiEntryBoundaryEventsWithNoIncomingEdge().forEach(
-        entryEvent -> serviceCallViewRecords.add(getServiceCallFromSingleEntryEvent(structuredTrace, entryEvent)));
+    apiTraceGraph
+        .getApiEntryBoundaryEventsWithNoIncomingEdge()
+        .forEach(
+            entryEvent ->
+                serviceCallViewRecords.add(
+                    getServiceCallFromSingleEntryEvent(structuredTrace, entryEvent)));
 
-    // Log warning if the trace has multiple root entries. A trace should only ever have one root entry
+    // Log warning if the trace has multiple root entries. A trace should only ever have one root
+    // entry
     if (serviceCallViewRecords.size() - serviceCallViewRecordsCount > 1) {
       LOG.warn(
           "Multiple root entries for trace: {}", HexUtils.getHex(structuredTrace.getTraceId()));
@@ -257,17 +265,21 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
   }
 
   /**
-   * Scenario #3:Handle backends
-   * Backends are exit api boundaries that are not the source of any {@link org.hypertrace.core.datamodel.ApiNodeEventEdge}
-   * i.e Backends spans = All Exit Api Boundary spans set - Set of Exit API Boundaries that are the
-   * source of an edge({@code callerExitEvents} computed below)
+   * Scenario #3:Handle backends Backends are exit api boundaries that are not the source of any
+   * {@link org.hypertrace.core.datamodel.ApiNodeEventEdge} i.e Backends spans = All Exit Api
+   * Boundary spans set - Set of Exit API Boundaries that are the source of an edge({@code
+   * callerExitEvents} computed below)
    */
   void createEdgeFromBackend(
       ApiTraceGraph apiTraceGraph,
       StructuredTrace structuredTrace,
       List<ServiceCallView> serviceCallViewRecords) {
-    apiTraceGraph.getApiExitBoundaryEventsWithNoOutgoingEdge().forEach(
-        exitEvent -> serviceCallViewRecords.add(getServiceCallFromSingleExitEvent(structuredTrace, exitEvent)));
+    apiTraceGraph
+        .getApiExitBoundaryEventsWithNoOutgoingEdge()
+        .forEach(
+            exitEvent ->
+                serviceCallViewRecords.add(
+                    getServiceCallFromSingleExitEvent(structuredTrace, exitEvent)));
   }
 
   private ServiceCallView getServiceCallFromSingleExitEvent(StructuredTrace trace, Event event) {
@@ -335,11 +347,10 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
   }
 
   /**
-   * Handle API Nodes without an entry boundary span but with an exit/exits boundaries.
-   * For this scenario we want to create a ServiceCallView record for the root ancestors of
-   * each of the exits. We will be careful not to double
-   * count cases where trace is broken and there are spans with a parent span ID but not
-   * corresponding parent span object in the trace (broken trace)
+   * Handle API Nodes without an entry boundary span but with an exit/exits boundaries. For this
+   * scenario we want to create a ServiceCallView record for the root ancestors of each of the
+   * exits. We will be careful not to double count cases where trace is broken and there are spans
+   * with a parent span ID but not corresponding parent span object in the trace (broken trace)
    */
   void createEdgeFromNonRootEntryEvent(
       ApiTraceGraph apiTraceGraph,
@@ -348,8 +359,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       Map<ByteBuffer, ByteBuffer> childToParentEventId,
       List<ServiceCallView> serviceCallViewRecords) {
     apiTraceGraph.getApiNodeList().stream()
-        .filter(
-            apiNode -> apiNode.getEntryApiBoundaryEvent().isEmpty()) // No entry api boundary
+        .filter(apiNode -> apiNode.getEntryApiBoundaryEvent().isEmpty()) // No entry api boundary
         .flatMap(apiNode -> apiNode.getExitApiBoundaryEvents().stream())
         .map(exitEvent -> getRootAncestor(exitEvent, childToParentEventId, eventMap))
         .distinct() // Make sure that we create a record for each root that makes multiple
@@ -360,7 +370,10 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
                     .getEventRefList()
                     .isEmpty()) // Real roots and not broken spans with a parent span Id whose
         // corresponding span object is not part of the trace.
-        .forEach(rootEvent -> serviceCallViewRecords.add(createViewForNonEntryRootSpan(structuredTrace, rootEvent)));
+        .forEach(
+            rootEvent ->
+                serviceCallViewRecords.add(
+                    createViewForNonEntryRootSpan(structuredTrace, rootEvent)));
   }
 
   private Event getRootAncestor(

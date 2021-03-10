@@ -10,12 +10,10 @@ import org.apache.kafka.common.serialization.Serializer;
 public class JaegerSpanSerde implements Serde<Span> {
 
   @Override
-  public void configure(Map<String, ?> configs, boolean isKey) {
-  }
+  public void configure(Map<String, ?> configs, boolean isKey) {}
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 
   @Override
   public Serializer<Span> serializer() {

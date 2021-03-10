@@ -27,7 +27,8 @@ public class HttpBackendResolver extends AbstractBackendResolver {
     Protocol protocol = EnrichedSpanUtils.getProtocol(event);
 
     if (protocol == Protocol.PROTOCOL_HTTP || protocol == Protocol.PROTOCOL_HTTPS) {
-      Optional<Request> httpRequest = Optional.ofNullable(event.getHttp())
+      Optional<Request> httpRequest =
+          Optional.ofNullable(event.getHttp())
               .map(org.hypertrace.core.datamodel.eventfields.http.Http::getRequest);
       String backend = httpRequest.map(Request::getHost).orElse(null);
       String path = httpRequest.map(Request::getPath).orElse(null);
@@ -38,15 +39,18 @@ public class HttpBackendResolver extends AbstractBackendResolver {
         return Optional.empty();
       }
 
-      BackendType type = (protocol == Protocol.PROTOCOL_HTTPS) ? BackendType.HTTPS : BackendType.HTTP;
+      BackendType type =
+          (protocol == Protocol.PROTOCOL_HTTPS) ? BackendType.HTTPS : BackendType.HTTP;
       final Builder entityBuilder = getBackendEntityBuilder(type, backend, event);
       if (StringUtils.isNotEmpty(path)) {
         entityBuilder.putAttributes(
             EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
             createAttributeValue(path));
       }
-      setAttributeForFirstExistingKey(event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpMethod());
-      setAttributeForFirstExistingKey(event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpRequestMethod());
+      setAttributeForFirstExistingKey(
+          event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpMethod());
+      setAttributeForFirstExistingKey(
+          event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpRequestMethod());
       return Optional.of(entityBuilder.build());
     }
     return Optional.empty();
