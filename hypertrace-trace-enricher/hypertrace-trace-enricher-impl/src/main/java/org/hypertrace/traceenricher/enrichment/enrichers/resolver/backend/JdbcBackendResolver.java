@@ -5,6 +5,7 @@ import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValu
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.RateLimiter;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -86,14 +88,16 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
     entityBuilder.putAttributes(
         RawSpanConstants.getValue(Sql.SQL_DB_TYPE), createAttributeValue(dbType));
 
-    String jdbcOperationAttributeKey =
+    Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
+    String jdbcMethodAttributeKey =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
-    AttributeValue operation =
-        SpanAttributeUtils.getAttributeValue(event, jdbcOperationAttributeKey);
-
-    return Optional.of(
-        new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));
+            event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
+    if (jdbcMethodAttributeKey != null) {
+      AttributeValue operation =
+          SpanAttributeUtils.getAttributeValue(event, jdbcMethodAttributeKey);
+      enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+    }
+    return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
 
   private String getDbType(String scheme) {

@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
 import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +13,7 @@ import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -46,12 +48,15 @@ public class MongoBackendResolver extends AbstractBackendResolver {
     setAttributeForFirstExistingKey(
         event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
 
-    String mongoOperationAttributeKey =
+    Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
+    String mongoMethodAttributeKey =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
-    AttributeValue operation =
-        SpanAttributeUtils.getAttributeValue(event, mongoOperationAttributeKey);
-    return Optional.of(
-        new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));
+            event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
+    if (mongoMethodAttributeKey != null) {
+      AttributeValue operation =
+          SpanAttributeUtils.getAttributeValue(event, mongoMethodAttributeKey);
+      enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+    }
+    return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
 }

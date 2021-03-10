@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -9,6 +10,7 @@ import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.semantic.convention.utils.messaging.MessagingSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -41,13 +43,15 @@ public class KafkaBackendResolver extends AbstractBackendResolver {
     Entity.Builder entityBuilder =
         getBackendEntityBuilder(BackendType.KAFKA, backendURI.get(), event);
 
-    String kafkaOperationAttributeKey =
+    Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
+    String kafkaMethodAttributeKey =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
-    AttributeValue operation =
-        SpanAttributeUtils.getAttributeValue(event, kafkaOperationAttributeKey);
-
-    return Optional.of(
-        new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));
+            event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
+    if (kafkaMethodAttributeKey != null) {
+      AttributeValue operation =
+          SpanAttributeUtils.getAttributeValue(event, kafkaMethodAttributeKey);
+      enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+    }
+    return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
 }

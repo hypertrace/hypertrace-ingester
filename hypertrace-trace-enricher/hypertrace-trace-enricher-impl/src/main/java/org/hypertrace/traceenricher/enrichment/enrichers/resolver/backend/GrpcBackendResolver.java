@@ -2,6 +2,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -42,14 +43,16 @@ public class GrpcBackendResolver extends AbstractBackendResolver {
       setAttributeForFirstExistingKey(
           event, entityBuilder, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
 
+      Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
       String grpcMethodAttributeKey =
           SpanAttributeUtils.getFirstAvailableStringAttribute(
               event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
-      AttributeValue operation =
-          SpanAttributeUtils.getAttributeValue(event, grpcMethodAttributeKey);
-
-      return Optional.of(
-          new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));
+      if (grpcMethodAttributeKey != null) {
+        AttributeValue operation =
+            SpanAttributeUtils.getAttributeValue(event, grpcMethodAttributeKey);
+        enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+      }
+      return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
     }
     return Optional.empty();
   }

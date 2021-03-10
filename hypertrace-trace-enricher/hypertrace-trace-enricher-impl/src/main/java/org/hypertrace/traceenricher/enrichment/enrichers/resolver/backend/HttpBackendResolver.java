@@ -5,6 +5,7 @@ import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirs
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -60,6 +61,7 @@ public class HttpBackendResolver extends AbstractBackendResolver {
       setAttributeForFirstExistingKey(
           event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpRequestMethod());
 
+      Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
       String httpMethodAttributeKey =
           SpanAttributeUtils.getFirstAvailableStringAttribute(
               event,
@@ -67,11 +69,12 @@ public class HttpBackendResolver extends AbstractBackendResolver {
                   Iterables.concat(
                       HttpSemanticConventionUtils.getAttributeKeysForHttpMethod(),
                       HttpSemanticConventionUtils.getAttributeKeysForHttpMethod())));
-      AttributeValue operation =
-          SpanAttributeUtils.getAttributeValue(event, httpMethodAttributeKey);
-
-      return Optional.of(
-          new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));
+      if (httpMethodAttributeKey != null) {
+        AttributeValue operation =
+            SpanAttributeUtils.getAttributeValue(event, httpMethodAttributeKey);
+        enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+      }
+      return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
     }
     return Optional.empty();
   }
