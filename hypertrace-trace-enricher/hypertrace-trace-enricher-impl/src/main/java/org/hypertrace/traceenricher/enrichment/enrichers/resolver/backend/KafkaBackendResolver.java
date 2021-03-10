@@ -1,7 +1,5 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
-import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
-
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -42,15 +40,12 @@ public class KafkaBackendResolver extends AbstractBackendResolver {
     * */
     Entity.Builder entityBuilder =
         getBackendEntityBuilder(BackendType.KAFKA, backendURI.get(), event);
-    setAttributeForFirstExistingKey(
-        event,
-        entityBuilder,
-        MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
 
-    String attributeKey =
+    String kafkaOperationAttributeKey =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
-    AttributeValue operation = SpanAttributeUtils.getAttributeValue(event, attributeKey);
+    AttributeValue operation =
+        SpanAttributeUtils.getAttributeValue(event, kafkaOperationAttributeKey);
 
     return Optional.of(
         new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));

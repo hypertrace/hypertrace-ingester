@@ -36,17 +36,17 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
+public class BackendResolverTest extends AbstractAttributeEnricherTest {
   private static final String MONGO_URL = "mongo:27017";
   private static final String SERVICE_NAME_ATTR =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
 
-  private BackendEntityResolver backendEntityResolver;
+  private BackendResolver backendResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    backendEntityResolver = new BackendEntityResolver();
+    backendResolver = new BackendResolver();
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -114,8 +114,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                     .build())
             .build();
 
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -228,8 +227,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                     .build())
             .build();
 
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("dataservice:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -334,8 +332,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                     .build())
             .build();
 
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("dataservice:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -441,8 +438,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                     .build())
             .build();
 
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -557,7 +553,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                     .build())
             .build();
 
-    Entity backendEntity = backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("dataservice:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -675,8 +671,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                     .build())
             .build();
 
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -777,8 +772,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("redis-cart:6379", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -875,8 +869,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                         .build()))
             .build();
 
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("redis-cart:6379", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -968,8 +961,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("mongo:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -1066,8 +1058,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("mongo:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -1168,8 +1159,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("mongodb0:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -1287,8 +1277,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("productcatalogservice:3550", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -1389,8 +1378,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity =
-        backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("mysql:3306", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     Assertions.assertEquals(
@@ -1491,7 +1479,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    Entity backendEntity = backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     Map<String, org.hypertrace.entity.data.service.v1.AttributeValue> idAttrMap =
         backendEntity.getIdentifyingAttributesMap();
     assertEquals(
@@ -1590,7 +1578,7 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
             .build();
 
     when(structuredTraceGraph.getParentEvent(e)).thenReturn(parentEvent);
-    Entity backendEntity = backendEntityResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals(
         "redis",
         backendEntity
@@ -1672,6 +1660,6 @@ public class BackendEntityResolverTest extends AbstractAttributeEnricherTest {
     // Since the event serviceName is same as parentServiceName, no new service entity should be
     // created.
     when(structuredTraceGraph.getParentEvent(e)).thenReturn(parentEvent);
-    Assertions.assertTrue(backendEntityResolver.resolve(e, structuredTraceGraph).isEmpty());
+    Assertions.assertTrue(backendResolver.resolve(e, structuredTraceGraph).isEmpty());
   }
 }

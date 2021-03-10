@@ -8,10 +8,10 @@ import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 /**
  * Composite backend entity resolver which tries to resolve the backend entity using other resolvers
  */
-public class BackendEntityResolver extends AbstractBackendResolver {
+public class BackendResolver extends AbstractBackendResolver {
   private final List<AbstractBackendResolver> backendResolvers;
 
-  public BackendEntityResolver() {
+  public BackendResolver() {
     backendResolvers =
         List.of(
             new HttpBackendResolver(),

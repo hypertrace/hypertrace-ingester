@@ -1,6 +1,5 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
-import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
 import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeIfExist;
 
 import java.util.Map;
@@ -51,12 +50,11 @@ public class RedisBackendResolver extends AbstractBackendResolver {
     setAttributeIfExist(
         event, entityBuilder, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
 
-    setAttributeForFirstExistingKey(
-        event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForDBOperation());
-    String attributeKey =
+    String redisOperationAttributeKey =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, DbSemanticConventionUtils.getAttributeKeysForDBOperation());
-    AttributeValue operation = SpanAttributeUtils.getAttributeValue(event, attributeKey);
+            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    AttributeValue operation =
+        SpanAttributeUtils.getAttributeValue(event, redisOperationAttributeKey);
     return Optional.of(
         new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));
   }

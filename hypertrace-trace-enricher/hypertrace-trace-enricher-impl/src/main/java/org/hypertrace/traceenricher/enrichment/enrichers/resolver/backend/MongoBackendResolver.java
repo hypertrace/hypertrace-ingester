@@ -46,10 +46,11 @@ public class MongoBackendResolver extends AbstractBackendResolver {
     setAttributeForFirstExistingKey(
         event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
 
-    String attributeKey =
+    String mongoOperationAttributeKey =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
-    AttributeValue operation = SpanAttributeUtils.getAttributeValue(event, attributeKey);
+    AttributeValue operation =
+        SpanAttributeUtils.getAttributeValue(event, mongoOperationAttributeKey);
     return Optional.of(
         new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));
   }

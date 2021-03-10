@@ -34,7 +34,6 @@ public abstract class AbstractBackendResolver {
   Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event) {
     String[] hostAndPort = backendURI.split(COLON);
     String host = hostAndPort[0].replace(SVC_CLUSTER_LOCAL_SUFFIX, "");
-    ;
     String port = (hostAndPort.length == 2) ? hostAndPort[1] : DEFAULT_PORT;
     String entityName = port.equals(DEFAULT_PORT) ? host : COLON_JOINER.join(host, port);
     final Builder entityBuilder =

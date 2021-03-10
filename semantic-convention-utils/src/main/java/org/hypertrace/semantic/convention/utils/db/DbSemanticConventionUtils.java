@@ -97,7 +97,7 @@ public class DbSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_NAMESPACE, OTEL_MONGO_COLLECTION));
   }
 
-  public static List<String> getAttributeKeysForDBOperation() {
+  public static List<String> getAttributeKeysForDbOperation() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_DB_OPERATION));
   }
 

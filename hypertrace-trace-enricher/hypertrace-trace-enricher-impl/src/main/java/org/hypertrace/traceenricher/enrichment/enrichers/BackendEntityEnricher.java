@@ -23,8 +23,8 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendEntityResolver;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendResolver;
 import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,14 +41,14 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST);
   private EdsClient edsClient;
   private EntityCache entityCache;
-  private BackendEntityResolver backendEntityResolver;
+  private BackendResolver backendResolver;
 
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {
     LOGGER.info("Initialize BackendEntityEnricher with Config: {}", enricherConfig.toString());
     this.edsClient = clientRegistry.getEdsCacheClient();
     this.entityCache = clientRegistry.getEntityCache();
-    this.backendEntityResolver = new BackendEntityResolver();
+    this.backendResolver = new BackendResolver();
   }
 
   // At trace level, based on the next span to identify if a backend entity is actually a service
@@ -63,23 +63,13 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
                 EnrichedSpanUtils.isExitSpan(event)
                     && SpanAttributeUtils.isLeafSpan(structuredTraceGraph, event))
         // resolve backend entity
-        .map(event -> Pair.of(event, backendEntityResolver.resolve(event, structuredTraceGraph)))
+        .map(event -> Pair.of(event, backendResolver.resolve(event, structuredTraceGraph)))
         .filter(pair -> pair.getRight().isPresent())
         // check if backend entity is valid
         .filter(pair -> isValidBackendEntity(pair.getLeft(), pair.getRight().get()))
         // decorate event/trace with backend entity attributes
         .forEach(pair -> decorateWithBackendEntity(pair.getRight().get(), pair.getLeft(), trace));
   }
-
-  //  @Override
-  //  public void enrichEvent(StructuredTrace trace, Event event) {
-  //    String backendOperation = SpanAttributeUtils.getFirstAvailableStringAttribute(event,
-  // BACKEND_OPERATIONS);
-  //    if (backendOperation != null) {
-  //      addEnrichedAttribute(event, BACKEND_OPERATION_ATTR,
-  // AttributeValueCreator.create(backendOperation));
-  //    }
-  //  }
 
   /** Checks if the candidateEntity is indeed a backend Entity */
   private boolean isValidBackendEntity(Event backendSpan, BackendInfo candidateInfo) {

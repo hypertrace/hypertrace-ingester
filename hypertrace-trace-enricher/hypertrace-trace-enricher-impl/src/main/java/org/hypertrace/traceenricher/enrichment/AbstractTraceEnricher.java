@@ -73,10 +73,11 @@ public abstract class AbstractTraceEnricher implements Enricher {
   protected void addEnrichedAttributes(
       Event event,
       List<Pair<String, AttributeValue>> attributes,
-      Map<String, AttributeValue> stringAttributeValueMap) {
+      Map<String, AttributeValue> attributeToEnrich) {
     attributes.forEach(
         attributePair ->
             addEnrichedAttribute(event, attributePair.getKey(), attributePair.getValue()));
+    attributeToEnrich.forEach((key, value) -> addEnrichedAttribute(event, key, value));
   }
 
   protected void addEnrichedAttributeIfNotNull(Event event, String key, String value) {

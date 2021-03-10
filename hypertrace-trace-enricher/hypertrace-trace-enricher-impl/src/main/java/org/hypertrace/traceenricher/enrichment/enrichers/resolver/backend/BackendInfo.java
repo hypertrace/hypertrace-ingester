@@ -22,4 +22,9 @@ public class BackendInfo {
   public Map<String, AttributeValue> getAttributes() {
     return attributes;
   }
+
+  @Override
+  public String toString() {
+    return "BackendInfo{" + "entity=" + entity + ", attributes=" + attributes + '}';
+  }
 }

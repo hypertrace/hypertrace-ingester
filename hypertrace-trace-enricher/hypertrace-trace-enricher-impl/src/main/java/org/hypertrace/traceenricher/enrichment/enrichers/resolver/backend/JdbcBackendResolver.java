@@ -1,7 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValue;
-import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
 
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.RateLimiter;
@@ -87,13 +86,11 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
     entityBuilder.putAttributes(
         RawSpanConstants.getValue(Sql.SQL_DB_TYPE), createAttributeValue(dbType));
 
-    setAttributeForFirstExistingKey(
-        event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForDBOperation());
-
-    String attributeKey =
+    String jdbcOperationAttributeKey =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, DbSemanticConventionUtils.getAttributeKeysForDBOperation());
-    AttributeValue operation = SpanAttributeUtils.getAttributeValue(event, attributeKey);
+            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    AttributeValue operation =
+        SpanAttributeUtils.getAttributeValue(event, jdbcOperationAttributeKey);
 
     return Optional.of(
         new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));

@@ -42,10 +42,11 @@ public class GrpcBackendResolver extends AbstractBackendResolver {
       setAttributeForFirstExistingKey(
           event, entityBuilder, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
 
-      String attributeKey =
+      String grpcMethodAttributeKey =
           SpanAttributeUtils.getFirstAvailableStringAttribute(
               event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
-      AttributeValue operation = SpanAttributeUtils.getAttributeValue(event, attributeKey);
+      AttributeValue operation =
+          SpanAttributeUtils.getAttributeValue(event, grpcMethodAttributeKey);
 
       return Optional.of(
           new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));

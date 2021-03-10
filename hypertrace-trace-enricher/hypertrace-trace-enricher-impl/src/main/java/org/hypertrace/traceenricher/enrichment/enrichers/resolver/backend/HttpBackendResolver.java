@@ -1,7 +1,10 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValue;
+import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -52,10 +55,20 @@ public class HttpBackendResolver extends AbstractBackendResolver {
             EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
             createAttributeValue(path));
       }
-      String attributeKey =
+      setAttributeForFirstExistingKey(
+          event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpMethod());
+      setAttributeForFirstExistingKey(
+          event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpRequestMethod());
+
+      String httpMethodAttributeKey =
           SpanAttributeUtils.getFirstAvailableStringAttribute(
-              event, HttpSemanticConventionUtils.getAttributeKeysForHttpMethod());
-      AttributeValue operation = SpanAttributeUtils.getAttributeValue(event, attributeKey);
+              event,
+              ImmutableList.copyOf(
+                  Iterables.concat(
+                      HttpSemanticConventionUtils.getAttributeKeysForHttpMethod(),
+                      HttpSemanticConventionUtils.getAttributeKeysForHttpMethod())));
+      AttributeValue operation =
+          SpanAttributeUtils.getAttributeValue(event, httpMethodAttributeKey);
 
       return Optional.of(
           new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));
