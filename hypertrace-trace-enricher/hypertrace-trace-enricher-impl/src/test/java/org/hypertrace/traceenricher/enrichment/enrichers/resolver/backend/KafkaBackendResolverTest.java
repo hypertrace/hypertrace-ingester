@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import java.nio.ByteBuffer;
@@ -13,6 +14,7 @@ import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,12 +35,12 @@ public class KafkaBackendResolverTest {
   @Test
   public void TestOtelBackendEventResolution() {
     String broker = "kafka-test.hypertrace.com:9092";
-    Entity entity =
-        kafkaBackendResolver
-            .resolve(getOtelKafkaBackendEvent(broker), structuredTraceGraph)
-            .get()
-            .getEntity();
+    BackendInfo backendInfo =
+        kafkaBackendResolver.resolve(getOtelKafkaBackendEvent(broker), structuredTraceGraph).get();
+    Entity entity = backendInfo.getEntity();
     Assertions.assertEquals(broker, entity.getEntityName());
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("receive")), attributes);
   }
 
   @Test
@@ -69,10 +71,15 @@ public class KafkaBackendResolverTest {
                     .setAttributeMap(
                         Map.of(
                             "messaging.system",
-                                AttributeValue.newBuilder().setValue("kafka").build(),
-                            "messaging.url", AttributeValue.newBuilder().setValue(broker).build(),
-                            "span.kind", AttributeValue.newBuilder().setValue("client").build(),
-                            "FLAGS", AttributeValue.newBuilder().setValue("0").build()))
+                            AttributeValue.newBuilder().setValue("kafka").build(),
+                            "messaging.url",
+                            AttributeValue.newBuilder().setValue(broker).build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "messaging.operation",
+                            AttributeValue.newBuilder().setValue("receive").build(),
+                            "FLAGS",
+                            AttributeValue.newBuilder().setValue("0").build()))
                     .build())
             .setEventName("kafka.connection")
             .setStartTimeMillis(1566869077746L)

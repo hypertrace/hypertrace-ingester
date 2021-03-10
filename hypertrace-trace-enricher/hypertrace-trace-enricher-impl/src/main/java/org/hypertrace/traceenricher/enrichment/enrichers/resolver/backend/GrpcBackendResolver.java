@@ -10,6 +10,7 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
@@ -44,13 +45,11 @@ public class GrpcBackendResolver extends AbstractBackendResolver {
           event, entityBuilder, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
 
       Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-      String grpcMethodAttributeKey =
+      String grpcOperation =
           SpanAttributeUtils.getFirstAvailableStringAttribute(
               event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
-      if (grpcMethodAttributeKey != null) {
-        AttributeValue operation =
-            SpanAttributeUtils.getAttributeValue(event, grpcMethodAttributeKey);
-        enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+      if (grpcOperation != null) {
+        enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(grpcOperation));
       }
       return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
     }

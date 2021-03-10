@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import java.net.MalformedURLException;
@@ -15,6 +16,7 @@ import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,12 +40,15 @@ public class SqsBackendResolverTest {
     try {
       sqsURL = new URL(sqsConnectionString);
       String sqsHost = sqsURL.getHost();
-      Entity entity =
+      BackendInfo backendInfo =
           sqsBackendResolver
               .resolve(getOtelSqsBackendEvent(sqsConnectionString), structuredTraceGraph)
-              .get()
-              .getEntity();
+              .get();
+      Entity entity = backendInfo.getEntity();
       Assertions.assertEquals(sqsHost, entity.getEntityName());
+      Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+      assertEquals(
+          Map.of("BACKEND_OPERATION", AttributeValueCreator.create("receive")), attributes);
     } catch (MalformedURLException e) {
       Assertions.fail("Unable to create URL for given connection string");
     }
@@ -52,12 +57,9 @@ public class SqsBackendResolverTest {
   @Test
   public void TestOTBackendEventResolution() {
     String sqsHost = "sqs.ap-south-1.amazonaws.com";
-    Entity entity =
-        sqsBackendResolver
-            .resolve(getOTSqsBackendEvent(sqsHost), structuredTraceGraph)
-            .get()
-            .getEntity();
-    Assertions.assertEquals(sqsHost, entity.getEntityName());
+    BackendInfo entity =
+        sqsBackendResolver.resolve(getOTSqsBackendEvent(sqsHost), structuredTraceGraph).get();
+    Assertions.assertEquals(sqsHost, entity.getEntity().getEntityName());
   }
 
   private Event getOtelSqsBackendEvent(String connectionString) {
@@ -75,11 +77,16 @@ public class SqsBackendResolverTest {
                 Attributes.newBuilder()
                     .setAttributeMap(
                         Map.of(
-                            "messaging.system", AttributeValue.newBuilder().setValue("sqs").build(),
+                            "messaging.system",
+                            AttributeValue.newBuilder().setValue("sqs").build(),
                             "messaging.url",
-                                AttributeValue.newBuilder().setValue(connectionString).build(),
-                            "span.kind", AttributeValue.newBuilder().setValue("client").build(),
-                            "FLAGS", AttributeValue.newBuilder().setValue("0").build()))
+                            AttributeValue.newBuilder().setValue(connectionString).build(),
+                            "messaging.operation",
+                            AttributeValue.newBuilder().setValue("receive").build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "FLAGS",
+                            AttributeValue.newBuilder().setValue("0").build()))
                     .build())
             .setEventName("RecieveMessage")
             .setStartTimeMillis(1566869077746L)

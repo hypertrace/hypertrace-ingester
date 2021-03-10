@@ -10,12 +10,12 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
-import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -53,13 +53,11 @@ public class RedisBackendResolver extends AbstractBackendResolver {
         event, entityBuilder, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String redisMethodAttributeKey =
+    String redisOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
-    if (redisMethodAttributeKey != null) {
-      AttributeValue operation =
-          SpanAttributeUtils.getAttributeValue(event, redisMethodAttributeKey);
-      enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    if (redisOperation != null) {
+      enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(redisOperation));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }

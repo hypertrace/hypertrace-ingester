@@ -11,9 +11,9 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
-import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -49,13 +49,11 @@ public class MongoBackendResolver extends AbstractBackendResolver {
         event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String mongoMethodAttributeKey =
+    String mongoOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
-    if (mongoMethodAttributeKey != null) {
-      AttributeValue operation =
-          SpanAttributeUtils.getAttributeValue(event, mongoMethodAttributeKey);
-      enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+            event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
+    if (mongoOperation != null) {
+      enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(mongoOperation));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }

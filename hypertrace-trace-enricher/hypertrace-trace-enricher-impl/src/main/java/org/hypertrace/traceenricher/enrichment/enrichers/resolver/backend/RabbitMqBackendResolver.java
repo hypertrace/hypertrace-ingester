@@ -8,9 +8,9 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.semantic.convention.utils.messaging.MessagingSemanticConventionUtils;
-import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -38,13 +38,12 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
     Builder entityBuilder = getBackendEntityBuilder(BackendType.RABBIT_MQ, routingKey.get(), event);
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String rabbitmqMethodAttributeKey =
+    String rabbitmqOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
-    if (rabbitmqMethodAttributeKey != null) {
-      AttributeValue operation =
-          SpanAttributeUtils.getAttributeValue(event, rabbitmqMethodAttributeKey);
-      enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+            event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
+    if (rabbitmqOperation != null) {
+      enrichedAttributes.put(
+          BACKEND_OPERATION_ATTR, AttributeValueCreator.create(rabbitmqOperation));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }

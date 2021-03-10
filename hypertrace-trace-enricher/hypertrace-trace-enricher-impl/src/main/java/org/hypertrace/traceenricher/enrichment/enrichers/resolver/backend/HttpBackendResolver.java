@@ -14,6 +14,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
@@ -62,17 +63,15 @@ public class HttpBackendResolver extends AbstractBackendResolver {
           event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpRequestMethod());
 
       Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-      String httpMethodAttributeKey =
+      String httpOperation =
           SpanAttributeUtils.getFirstAvailableStringAttribute(
               event,
               ImmutableList.copyOf(
                   Iterables.concat(
                       HttpSemanticConventionUtils.getAttributeKeysForHttpMethod(),
                       HttpSemanticConventionUtils.getAttributeKeysForHttpMethod())));
-      if (httpMethodAttributeKey != null) {
-        AttributeValue operation =
-            SpanAttributeUtils.getAttributeValue(event, httpMethodAttributeKey);
-        enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+      if (httpOperation != null) {
+        enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(httpOperation));
       }
       return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
     }

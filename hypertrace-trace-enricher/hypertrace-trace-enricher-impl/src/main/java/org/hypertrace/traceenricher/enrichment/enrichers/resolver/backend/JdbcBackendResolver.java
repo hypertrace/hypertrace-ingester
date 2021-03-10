@@ -14,13 +14,13 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Sql;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
-import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -89,13 +89,11 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
         RawSpanConstants.getValue(Sql.SQL_DB_TYPE), createAttributeValue(dbType));
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String jdbcMethodAttributeKey =
+    String jdbcOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
-    if (jdbcMethodAttributeKey != null) {
-      AttributeValue operation =
-          SpanAttributeUtils.getAttributeValue(event, jdbcMethodAttributeKey);
-      enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    if (jdbcOperation != null) {
+      enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(jdbcOperation));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }

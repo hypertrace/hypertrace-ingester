@@ -8,9 +8,9 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.semantic.convention.utils.messaging.MessagingSemanticConventionUtils;
-import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
@@ -44,13 +44,11 @@ public class KafkaBackendResolver extends AbstractBackendResolver {
         getBackendEntityBuilder(BackendType.KAFKA, backendURI.get(), event);
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String kafkaMethodAttributeKey =
+    String kafkaOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
-    if (kafkaMethodAttributeKey != null) {
-      AttributeValue operation =
-          SpanAttributeUtils.getAttributeValue(event, kafkaMethodAttributeKey);
-      enrichedAttributes.put(BACKEND_OPERATION_ATTR, operation);
+            event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
+    if (kafkaOperation != null) {
+      enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(kafkaOperation));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }

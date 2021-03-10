@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import java.nio.ByteBuffer;
@@ -13,6 +14,7 @@ import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,12 +35,12 @@ public class RabbitMqBackendResolverTest {
   @Test
   public void testEventResolution() {
     String routingKey = "routingkey";
-    Entity entity =
-        rabbitMqBackendResolver
-            .resolve(getRabbitMqEvent(routingKey), structuredTraceGraph)
-            .get()
-            .getEntity();
+    BackendInfo backendInfo =
+        rabbitMqBackendResolver.resolve(getRabbitMqEvent(routingKey), structuredTraceGraph).get();
+    Entity entity = backendInfo.getEntity();
     Assertions.assertEquals(routingKey, entity.getEntityName());
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("receive")), attributes);
   }
 
   private Event getRabbitMqEvent(String routingKey) {
@@ -64,6 +66,8 @@ public class RabbitMqBackendResolverTest {
                                 .build(),
                             "span.kind",
                             AttributeValue.newBuilder().setValue("client").build(),
+                            "messaging.operation",
+                            AttributeValue.newBuilder().setValue("receive").build(),
                             "k8s.pod_id",
                             AttributeValue.newBuilder()
                                 .setValue("55636196-c840-11e9-a417-42010a8a0064")

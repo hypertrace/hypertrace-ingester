@@ -16,10 +16,9 @@ import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
-import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
-import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.core.span.constants.v1.Sql;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -70,9 +69,7 @@ public class JdbcBackendResolverTest {
                                 .setValue("insert into audit_message (message, id) values (?, ?)")
                                 .build(),
                             "db.operation",
-                            AttributeValue.newBuilder()
-                                .setValue("select")
-                                .build(),
+                            AttributeValue.newBuilder().setValue("select").build(),
                             "k8s.pod_id",
                             AttributeValue.newBuilder()
                                 .setValue("55636196-c840-11e9-a417-42010a8a0064")
@@ -101,8 +98,8 @@ public class JdbcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity =
-        jdbcBackendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    final Entity backendEntity = backendInfo.getEntity();
     assertEquals("dbhost:9001", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     Assertions.assertEquals(
@@ -154,11 +151,9 @@ public class JdbcBackendResolverTest {
             .get(EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH))
             .getValue()
             .getString());
-    assertEquals(
-        "select",
-        backendEntity
-            .getAttributesMap()
-            .get(EnrichedSpanUtils.getBackendOperation(e)));
+
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")), attributes);
   }
 
   @Test

@@ -18,6 +18,7 @@ import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.v1.Grpc;
@@ -846,6 +847,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                             AttributeValue.newBuilder().setValue("client").build(),
                             "k8s.pod_id",
                             buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
+                            "db.operation",
+                            AttributeValue.newBuilder().setValue("select").build(),
                             "docker.container_id",
                             buildAttributeValue(
                                 "ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
@@ -868,8 +871,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-
-    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    BackendInfo backendInfo = backendResolver.resolve(e, structuredTraceGraph).get();
+    final Entity backendEntity = backendInfo.getEntity();
     assertEquals("redis-cart:6379", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -907,6 +910,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
             .getValue()
             .getString(),
         "62646630336466616266356337306638");
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")), attributes);
   }
 
   @Test
@@ -1354,6 +1359,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                             AttributeValue.newBuilder()
                                 .setValue("55636196-c840-11e9-a417-42010a8a0064")
                                 .build(),
+                            "db.operation",
+                            AttributeValue.newBuilder().setValue("select").build(),
                             "docker.container_id",
                             AttributeValue.newBuilder()
                                 .setValue(
@@ -1378,7 +1385,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    BackendInfo backendInfo = backendResolver.resolve(e, structuredTraceGraph).get();
+    final Entity backendEntity = backendInfo.getEntity();
     assertEquals("mysql:3306", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     Assertions.assertEquals(
@@ -1423,6 +1431,9 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
             .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID))
             .getValue()
             .getString());
+
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")), attributes);
   }
 
   @Test
