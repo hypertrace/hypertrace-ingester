@@ -1,6 +1,14 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.base.Splitter;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.AttributeValue;
@@ -13,15 +21,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toList;
 
 public class HttpAttributeEnricher extends AbstractTraceEnricher {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpAttributeEnricher.class);
@@ -43,23 +42,26 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
                 addEnrichedAttribute(
                     event, HTTP_REQUEST_PATH_ATTR, AttributeValueCreator.create(path)));
 
-    EnrichedSpanUtils.getQueryString(event).ifPresent(queryString -> {
-      Map<String, List<String>> paramNameToValues = getQueryParamsFromQueryString(queryString);
-      for (Map.Entry<String, List<String>> queryParamEntry : paramNameToValues.entrySet()) {
-        if (queryParamEntry.getValue().isEmpty()) {
-          continue;
-        }
-        String queryParamAttr = queryParamEntry.getKey();
-        // Getting a single value out of all values(for backward compatibility)
-        String queryParamStringValue = queryParamEntry.getValue().get(0);
-        AttributeValue attributeValue =
-                AttributeValue.newBuilder()
+    EnrichedSpanUtils.getQueryString(event)
+        .ifPresent(
+            queryString -> {
+              Map<String, List<String>> paramNameToValues =
+                  getQueryParamsFromQueryString(queryString);
+              for (Map.Entry<String, List<String>> queryParamEntry : paramNameToValues.entrySet()) {
+                if (queryParamEntry.getValue().isEmpty()) {
+                  continue;
+                }
+                String queryParamAttr = queryParamEntry.getKey();
+                // Getting a single value out of all values(for backward compatibility)
+                String queryParamStringValue = queryParamEntry.getValue().get(0);
+                AttributeValue attributeValue =
+                    AttributeValue.newBuilder()
                         .setValue(queryParamStringValue)
                         .setValueList(queryParamEntry.getValue())
                         .build();
-        addEnrichedAttribute(event, queryParamAttr, attributeValue);
-      }
-    });
+                addEnrichedAttribute(event, queryParamAttr, attributeValue);
+              }
+            });
   }
 
   private Map<String, List<String>> getQueryParamsFromQueryString(String queryString) {
@@ -92,7 +94,7 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
       return URLDecoder.decode(input, StandardCharsets.UTF_8);
     } catch (IllegalArgumentException e) {
       LOGGER.error("Cannot decode the input {}", input, e);
-      //Falling back to original input if it can't be decoded
+      // Falling back to original input if it can't be decoded
       return input;
     }
   }

@@ -22,9 +22,10 @@ public class StructuredTraceGraphBuilder {
     }
 
     // is processed and cached are same trace?
-    if (!cachedTrace.get().getCustomerId().equals(trace.getCustomerId()) ||
-        !cachedTrace.get().getTraceId().equals(trace.getTraceId())) {
-      LOG.debug("Building structured trace graph. Reason: cached trace and current trace doesn't not match");
+    if (!cachedTrace.get().getCustomerId().equals(trace.getCustomerId())
+        || !cachedTrace.get().getTraceId().equals(trace.getTraceId())) {
+      LOG.debug(
+          "Building structured trace graph. Reason: cached trace and current trace doesn't not match");
       StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
       cachedTrace.set(StructuredTrace.newBuilder(trace).build());
       cachedGraph.set(graph);
@@ -32,12 +33,14 @@ public class StructuredTraceGraphBuilder {
     }
 
     // trace internally changed
-    if(cachedTrace.get().getEntityList().size()  != trace.getEntityList().size() ||
-        cachedTrace.get().getEventList().size() != trace.getEventList().size() ||
-        cachedTrace.get().getEntityEdgeList().size() != trace.getEntityEdgeList().size() ||
-        cachedTrace.get().getEntityEventEdgeList().size() != trace.getEntityEventEdgeList().size() ||
-        cachedTrace.get().getEventEdgeList().size() != trace.getEventEdgeList().size()) {
-      LOG.debug("Building structured trace graph. Reason: cached trace and current trace have different size");
+    if (cachedTrace.get().getEntityList().size() != trace.getEntityList().size()
+        || cachedTrace.get().getEventList().size() != trace.getEventList().size()
+        || cachedTrace.get().getEntityEdgeList().size() != trace.getEntityEdgeList().size()
+        || cachedTrace.get().getEntityEventEdgeList().size()
+            != trace.getEntityEventEdgeList().size()
+        || cachedTrace.get().getEventEdgeList().size() != trace.getEventEdgeList().size()) {
+      LOG.debug(
+          "Building structured trace graph. Reason: cached trace and current trace have different size");
       StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
       cachedTrace.set(StructuredTrace.newBuilder(trace).build());
       cachedGraph.set(graph);

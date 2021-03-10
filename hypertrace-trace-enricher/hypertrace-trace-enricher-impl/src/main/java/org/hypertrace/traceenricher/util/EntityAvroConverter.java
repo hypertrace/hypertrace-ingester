@@ -19,25 +19,28 @@ public class EntityAvroConverter {
   private static final Logger LOG = LoggerFactory.getLogger(EntityAvroConverter.class);
 
   @Nullable
-  public static Entity convertToAvroEntity(@Nullable org.hypertrace.entity.data.service.v1.Entity entity,
-                                           boolean includeAttributes) {
+  public static Entity convertToAvroEntity(
+      @Nullable org.hypertrace.entity.data.service.v1.Entity entity, boolean includeAttributes) {
     if (entity == null) {
       return null;
     }
 
-    if (Strings.isNullOrEmpty(entity.getEntityId()) || Strings.isNullOrEmpty(entity.getEntityType())) {
+    if (Strings.isNullOrEmpty(entity.getEntityId())
+        || Strings.isNullOrEmpty(entity.getEntityType())) {
       LOG.warn("Invalid entity: {}", entity);
       return null;
     }
 
-    Entity.Builder builder = Entity.newBuilder().setEntityType(entity.getEntityType())
-        .setEntityId(entity.getEntityId())
-        .setCustomerId(entity.getTenantId())
-        .setEntityName(entity.getEntityName());
+    Entity.Builder builder =
+        Entity.newBuilder()
+            .setEntityType(entity.getEntityType())
+            .setEntityId(entity.getEntityId())
+            .setCustomerId(entity.getTenantId())
+            .setEntityName(entity.getEntityName());
 
     if (includeAttributes) {
-      builder.setAttributes(Attributes.newBuilder().setAttributeMap(
-          getAvroAttributeMap(entity)).build());
+      builder.setAttributes(
+          Attributes.newBuilder().setAttributeMap(getAvroAttributeMap(entity)).build());
     }
     return builder.build();
   }
@@ -51,24 +54,34 @@ public class EntityAvroConverter {
         entity.getAttributesMap().entrySet()) {
       org.hypertrace.entity.data.service.v1.AttributeValue value = entry.getValue();
       AttributeValue result = null;
-      if (value.getTypeCase() == org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase.VALUE) {
+      if (value.getTypeCase()
+          == org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase.VALUE) {
         if (value.getValue().getTypeCase() == TypeCase.BYTES) {
-          result = AttributeValue.newBuilder().setBinaryValue(value.getValue().getBytes().asReadOnlyByteBuffer()).build();
+          result =
+              AttributeValue.newBuilder()
+                  .setBinaryValue(value.getValue().getBytes().asReadOnlyByteBuffer())
+                  .build();
         } else {
           Optional<String> valueStr = convertValueToString(value.getValue());
           if (valueStr.isPresent()) {
             result = AttributeValue.newBuilder().setValue(valueStr.get()).build();
           }
         }
-      } else if (value.getTypeCase() == org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase.VALUE_LIST) {
-        org.hypertrace.entity.data.service.v1.AttributeValueList attributeValueList = value.getValueList();
+      } else if (value.getTypeCase()
+          == org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase.VALUE_LIST) {
+        org.hypertrace.entity.data.service.v1.AttributeValueList attributeValueList =
+            value.getValueList();
         List<String> avroValuesStringList = new ArrayList<>();
-        for (org.hypertrace.entity.data.service.v1.AttributeValue attributeValue : attributeValueList.getValuesList()) {
-          if (attributeValue.getTypeCase() == org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase.VALUE) {
+        for (org.hypertrace.entity.data.service.v1.AttributeValue attributeValue :
+            attributeValueList.getValuesList()) {
+          if (attributeValue.getTypeCase()
+              == org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase.VALUE) {
             Optional<String> valueStr = convertValueToString(attributeValue.getValue());
             valueStr.ifPresent(avroValuesStringList::add);
           } else {
-            LOG.warn("Unsupported entity attribute type of list of lists or list of maps: {}", attributeValue);
+            LOG.warn(
+                "Unsupported entity attribute type of list of lists or list of maps: {}",
+                attributeValue);
           }
         }
         // Only add the list if it's not empty
@@ -88,7 +101,8 @@ public class EntityAvroConverter {
     return attributeMap;
   }
 
-  private static Optional<String> convertValueToString(org.hypertrace.entity.data.service.v1.Value value) {
+  private static Optional<String> convertValueToString(
+      org.hypertrace.entity.data.service.v1.Value value) {
     switch (value.getTypeCase()) {
       case STRING:
         return Optional.of(value.getString());

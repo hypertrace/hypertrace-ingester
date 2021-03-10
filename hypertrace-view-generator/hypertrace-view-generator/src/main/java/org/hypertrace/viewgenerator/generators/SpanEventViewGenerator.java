@@ -74,12 +74,12 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
         .map(
             event ->
                 generateViewBuilder(
-                    event,
-                    structuredTrace.getTraceId(),
-                    eventMap,
-                    childToParentEventIds,
-                    exitSpanToCalleeApiEntrySpanMap,
-                    eventToApiExitCall)
+                        event,
+                        structuredTrace.getTraceId(),
+                        eventMap,
+                        childToParentEventIds,
+                        exitSpanToCalleeApiEntrySpanMap,
+                        eventToApiExitCall)
                     .build())
         .collect(Collectors.toList());
   }
@@ -135,13 +135,13 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
   }
 
   /**
-   * An api_node represents an api call in the trace
-   * It consists of api_entry span and multiple api_exit and internal spans
-   * <p>
-   * This method computes the count of exit calls for any given api (identified by api_entry_span)
-   * This count is a composition of 2 things
-   * 1. link between api_exit_span in api_node to api_entry_span (child of api_exit_span) in another api_node
-   * 2. exit calls to backend from api_exit_span in api_node
+   * An api_node represents an api call in the trace It consists of api_entry span and multiple
+   * api_exit and internal spans
+   *
+   * <p>This method computes the count of exit calls for any given api (identified by
+   * api_entry_span) This count is a composition of 2 things 1. link between api_exit_span in
+   * api_node to api_entry_span (child of api_exit_span) in another api_node 2. exit calls to
+   * backend from api_exit_span in api_node
    */
   Map<ByteBuffer, ExitCallBreakup> computeApiExitCallCount(StructuredTrace trace) {
     ApiTraceGraph apiTraceGraph = ViewGeneratorState.getApiTraceGraph(trace);
@@ -149,12 +149,14 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     Map<ByteBuffer, ExitCallBreakup> eventToExitInfo = Maps.newHashMap();
 
     for (ApiNode<Event> apiNode : apiTraceGraph.getApiNodeList()) {
-      List<Event> backendExitEvents = apiTraceGraph.getExitBoundaryEventsWithNoOutboundEdgeForApiNode(apiNode);
+      List<Event> backendExitEvents =
+          apiTraceGraph.getExitBoundaryEventsWithNoOutboundEdgeForApiNode(apiNode);
       List<ApiNodeEventEdge> edges = apiTraceGraph.getOutboundEdgesForApiNode(apiNode);
       int totalExitCallCount = backendExitEvents.size() + edges.size();
       ExitCallBreakup exitCallBreakup = new ExitCallBreakup(totalExitCallCount);
       edges.forEach(edge -> exitCallBreakup.handleApiNodeEdge(trace, edge));
-      backendExitEvents.forEach(backendExitEvent -> exitCallBreakup.handleBackend(backendExitEvent));
+      backendExitEvents.forEach(
+          backendExitEvent -> exitCallBreakup.handleBackend(backendExitEvent));
       apiNode.getEvents().forEach(e -> eventToExitInfo.put(e.getEventId(), exitCallBreakup));
     }
     return eventToExitInfo;
@@ -174,10 +176,11 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     public void handleApiNodeEdge(StructuredTrace trace, ApiNodeEventEdge edge) {
       Event event = trace.getEventList().get(edge.getTgtEventIndex());
       if (EnrichedSpanUtils.containsServiceId(event)) {
-        calleeIdToName.put(EnrichedSpanUtils.getServiceId(event), EnrichedSpanUtils.getServiceName(event));
-        calleeIdToExitCallCount.computeIfAbsent(
-            EnrichedSpanUtils.getServiceId(event),
-            v -> new AtomicInteger(0)).incrementAndGet();
+        calleeIdToName.put(
+            EnrichedSpanUtils.getServiceId(event), EnrichedSpanUtils.getServiceName(event));
+        calleeIdToExitCallCount
+            .computeIfAbsent(EnrichedSpanUtils.getServiceId(event), v -> new AtomicInteger(0))
+            .incrementAndGet();
       }
     }
 
@@ -186,10 +189,11 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
           .getEnrichedAttributes()
           .getAttributeMap()
           .containsKey(EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_ID))) {
-        calleeIdToName.put(EnrichedSpanUtils.getBackendId(exitEvent), EnrichedSpanUtils.getBackendName(exitEvent));
-        calleeIdToExitCallCount.computeIfAbsent(
-            EnrichedSpanUtils.getBackendId(exitEvent),
-            v -> new AtomicInteger(0)).incrementAndGet();
+        calleeIdToName.put(
+            EnrichedSpanUtils.getBackendId(exitEvent), EnrichedSpanUtils.getBackendName(exitEvent));
+        calleeIdToExitCallCount
+            .computeIfAbsent(EnrichedSpanUtils.getBackendId(exitEvent), v -> new AtomicInteger(0))
+            .incrementAndGet();
       }
     }
   }
@@ -297,20 +301,18 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
 
     builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
 
-    builder.setApiExitCalls(eventToApiExitCall.getOrDefault(
-        event.getEventId(),
-        new ExitCallBreakup(0)).exitCallCount);
+    builder.setApiExitCalls(
+        eventToApiExitCall.getOrDefault(event.getEventId(), new ExitCallBreakup(0)).exitCallCount);
 
     return builder;
   }
 
   /**
    * The entity(service or backend) name to be displayed on the UI. For an entry or internal(not
-   * entry or exit) span it will be the same as the span's service_name.
-   * for an exit span:
-   * - if the span maps to an api entry span in {@code exitSpanToCalleeApiEntrySpanMap} api entry service name
-   * - if backend name is set, we return the backend name
-   * - if the backend name is not set, we return the span's service name
+   * entry or exit) span it will be the same as the span's service_name. for an exit span: - if the
+   * span maps to an api entry span in {@code exitSpanToCalleeApiEntrySpanMap} api entry service
+   * name - if backend name is set, we return the backend name - if the backend name is not set, we
+   * return the span's service name
    */
   String getDisplayEntityName(Event span, Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap) {
     if (!EnrichedSpanUtils.isExitSpan(span)) { // Not an EXIT span(ENTRY or INTERNAL)
@@ -334,13 +336,11 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
   }
 
   /**
-   * The span name to be displayed on the UI. For an entry span it will be the same
-   * as the span's api_name
-   * For an exit span:
-   * - if the span maps to a callee api entry span in {@code exitSpanToCalleeApiEntrySpanMap} callee api name
-   * - if the backend path is set we return the backend path
-   * - if the backend path is not set we return the span name
-   * For an internal span, it will be the span name
+   * The span name to be displayed on the UI. For an entry span it will be the same as the span's
+   * api_name For an exit span: - if the span maps to a callee api entry span in {@code
+   * exitSpanToCalleeApiEntrySpanMap} callee api name - if the backend path is set we return the
+   * backend path - if the backend path is not set we return the span name For an internal span, it
+   * will be the span name
    */
   String getDisplaySpanName(Event span, Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap) {
     if (EnrichedSpanUtils.isEntrySpan(span)) {
@@ -373,8 +373,11 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        return EnrichedSpanUtils.getFullHttpUrl(event).orElse(
-                Optional.ofNullable(event.getHttp()).map(Http::getRequest).map(Request::getPath)
+        return EnrichedSpanUtils.getFullHttpUrl(event)
+            .orElse(
+                Optional.ofNullable(event.getHttp())
+                    .map(Http::getRequest)
+                    .map(Request::getPath)
                     .orElse(null));
       case PROTOCOL_GRPC:
         return event.getEventName();

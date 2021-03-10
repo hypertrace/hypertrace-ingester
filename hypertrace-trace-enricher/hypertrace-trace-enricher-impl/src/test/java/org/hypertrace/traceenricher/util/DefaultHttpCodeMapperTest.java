@@ -30,17 +30,21 @@ public class DefaultHttpCodeMapperTest {
 
   @Test
   public void test_getState_successCode_shouldGetSuccess() {
-    assertEquals(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_SUCCESS),
+    assertEquals(
+        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_SUCCESS),
         HttpCodeMapper.getState("200"));
-    assertEquals(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_SUCCESS),
+    assertEquals(
+        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_SUCCESS),
         HttpCodeMapper.getState("300"));
   }
 
   @Test
   public void test_getState_failCode_shouldGetFail() {
-    assertEquals(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL),
+    assertEquals(
+        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL),
         HttpCodeMapper.getState("400"));
-    assertEquals(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL),
+    assertEquals(
+        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL),
         HttpCodeMapper.getState("500"));
   }
 }

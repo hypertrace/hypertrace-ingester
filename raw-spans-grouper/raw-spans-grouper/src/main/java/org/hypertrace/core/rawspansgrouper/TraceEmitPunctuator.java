@@ -58,13 +58,17 @@ public class TraceEmitPunctuator implements Punctuator {
   private static final Object mutex = new Object();
 
   private static final String TRACES_EMITTER_COUNTER = "hypertrace.emitted.traces";
-  private static final ConcurrentMap<String, Counter> tenantToTraceEmittedCounter = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Counter> tenantToTraceEmittedCounter =
+      new ConcurrentHashMap<>();
 
-  public TraceEmitPunctuator(TraceIdentity key, ProcessorContext context,
+  public TraceEmitPunctuator(
+      TraceIdentity key,
+      ProcessorContext context,
       KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>> inflightTraceStore,
       KeyValueStore<TraceIdentity, Long> traceEmitTriggerStore,
       To outputTopicProducer,
-      long groupingWindowTimeoutMs, double dataflowSamplingPercent) {
+      long groupingWindowTimeoutMs,
+      double dataflowSamplingPercent) {
     this.key = key;
     this.context = context;
     this.inflightTraceStore = inflightTraceStore;
@@ -78,9 +82,7 @@ public class TraceEmitPunctuator implements Punctuator {
     this.cancellable = cancellable;
   }
 
-  /**
-   * @param timestamp correspond to current system time
-   */
+  /** @param timestamp correspond to current system time */
   @Override
   public void punctuate(long timestamp) {
     // always cancel the punctuator else it will get re-scheduled automatically
@@ -89,10 +91,12 @@ public class TraceEmitPunctuator implements Punctuator {
     Long emitTs = traceEmitTriggerStore.get(key);
     if (null == emitTs) {
       /*
-        todo - debug why this happens .
-        Typically seen when punctuators are created via {@link RawSpansGroupingTransformer.restorePunctuators}
-       */
-      logger.warn("emitTs for tenant_id=[{}], trace_id=[{}] is missing.", key.getTenantId(),
+       todo - debug why this happens .
+       Typically seen when punctuators are created via {@link RawSpansGroupingTransformer.restorePunctuators}
+      */
+      logger.warn(
+          "emitTs for tenant_id=[{}], trace_id=[{}] is missing.",
+          key.getTenantId(),
           HexUtils.getHex(key.getTraceId()));
       return;
     }
@@ -100,7 +104,8 @@ public class TraceEmitPunctuator implements Punctuator {
     if (emitTs <= timestamp) {
       // we can emit this trace so just delete the entry for this 'key'
       traceEmitTriggerStore.delete(key);
-      // Implies that no new spans for the trace have arrived within the last 'groupingWindowTimeoutMs' interval
+      // Implies that no new spans for the trace have arrived within the last
+      // 'groupingWindowTimeoutMs' interval
       // so the trace can be finalized and emitted
       ValueAndTimestamp<RawSpans> agg = inflightTraceStore.delete(key);
       ByteBuffer traceId;
@@ -113,17 +118,23 @@ public class TraceEmitPunctuator implements Punctuator {
         List<RawSpan> rawSpanList = agg.value().getRawSpans();
         recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
         Timestamps timestamps = trackEndToEndLatencyTimestamps(timestamp, agg);
-        StructuredTrace trace = StructuredTraceBuilder
-            .buildStructuredTraceFromRawSpans(rawSpanList, traceId, tenantId,
-                timestamps);
+        StructuredTrace trace =
+            StructuredTraceBuilder.buildStructuredTraceFromRawSpans(
+                rawSpanList, traceId, tenantId, timestamps);
 
-        logger.debug("Emit tenant_id=[{}], trace_id=[{}], spans_count=[{}]",
+        logger.debug(
+            "Emit tenant_id=[{}], trace_id=[{}], spans_count=[{}]",
             tenantId,
             HexUtils.getHex(traceId),
             rawSpanList.size());
 
-        tenantToTraceEmittedCounter.computeIfAbsent(tenantId,
-            k -> PlatformMetricsRegistry.registerCounter(TRACES_EMITTER_COUNTER, Map.of("tenantId", k))).increment();
+        tenantToTraceEmittedCounter
+            .computeIfAbsent(
+                tenantId,
+                k ->
+                    PlatformMetricsRegistry.registerCounter(
+                        TRACES_EMITTER_COUNTER, Map.of("tenantId", k)))
+            .increment();
 
         context.forward(null, trace, outputTopicProducer);
       }
@@ -131,45 +142,45 @@ public class TraceEmitPunctuator implements Punctuator {
       // implies spans for the trace have arrived within the last 'sessionTimeoutMs' interval
       // so the session inactivity window is extended from the last timestamp
       if (logger.isDebugEnabled()) {
-        logger.debug("Re-scheduling emit trigger for tenant_id=[{}], trace_id=[{}] to [{}]",
-            key.getTenantId(), HexUtils.getHex(key.getTraceId()),
+        logger.debug(
+            "Re-scheduling emit trigger for tenant_id=[{}], trace_id=[{}] to [{}]",
+            key.getTenantId(),
+            HexUtils.getHex(key.getTraceId()),
             Instant.ofEpochMilli(emitTs + groupingWindowTimeoutMs));
       }
       long newEmitTs = emitTs + groupingWindowTimeoutMs;
       // if current timestamp is ahead of newEmitTs then just add a grace of 100ms and fire it
       long duration = Math.max(100, newEmitTs - timestamp);
-      cancellable = context
-          .schedule(Duration.ofMillis(duration), PunctuationType.WALL_CLOCK_TIME, this);
+      cancellable =
+          context.schedule(Duration.ofMillis(duration), PunctuationType.WALL_CLOCK_TIME, this);
     }
   }
 
-  private Timestamps trackEndToEndLatencyTimestamps(long timestamp,
-      ValueAndTimestamp<RawSpans> agg) {
+  private Timestamps trackEndToEndLatencyTimestamps(
+      long timestamp, ValueAndTimestamp<RawSpans> agg) {
     Timestamps timestamps = null;
     if (!agg.value().getRawSpans().isEmpty() && Math.random() * 100 <= dataflowSamplingPercent) {
       long currentTime = timestamp;
       long firstSpanArrivalTime = agg.value().getRawSpans().get(0).getReceivedTimeMillis();
-      spansGrouperArrivalLagTimer
-          .record(currentTime - firstSpanArrivalTime, TimeUnit.MILLISECONDS);
+      spansGrouperArrivalLagTimer.record(currentTime - firstSpanArrivalTime, TimeUnit.MILLISECONDS);
       Map<String, TimestampRecord> records = new HashMap<>();
-      records.put(DataflowMetricUtils.SPAN_ARRIVAL_TIME,
-          new TimestampRecord(DataflowMetricUtils.SPAN_ARRIVAL_TIME,
-              firstSpanArrivalTime));
-      records
-          .put(TRACE_CREATION_TIME,
-              new TimestampRecord(TRACE_CREATION_TIME, currentTime));
+      records.put(
+          DataflowMetricUtils.SPAN_ARRIVAL_TIME,
+          new TimestampRecord(DataflowMetricUtils.SPAN_ARRIVAL_TIME, firstSpanArrivalTime));
+      records.put(TRACE_CREATION_TIME, new TimestampRecord(TRACE_CREATION_TIME, currentTime));
       timestamps = new Timestamps(records);
     }
     return timestamps;
   }
 
   private void recordSpansPerTrace(double count, Iterable<Tag> tags) {
-    DistributionSummary summary = DistributionSummary
-        .builder(SPANS_PER_TRACE_METRIC).tags(tags)
-        .publishPercentiles(.5, .90, .99)
-        .register(PlatformMetricsRegistry.getMeterRegistry());
+    DistributionSummary summary =
+        DistributionSummary.builder(SPANS_PER_TRACE_METRIC)
+            .tags(tags)
+            .publishPercentiles(.5, .90, .99)
+            .register(PlatformMetricsRegistry.getMeterRegistry());
     // For a given name + tags the same Meter object is used and will be shared across StreamThreads
-    synchronized (mutex){
+    synchronized (mutex) {
       summary.record(count);
     }
   }

@@ -16,27 +16,28 @@ import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
 import org.junit.jupiter.api.Test;
 
-/**
- * Unit test for {@link RpcSemanticConventionUtils}
- */
+/** Unit test for {@link RpcSemanticConventionUtils} */
 class RpcSemanticConventionUtilsTest {
 
   @Test
   public void testIsRpcTypeGrpcForOTelFormat() {
     Event e = mock(Event.class);
     // otel format
-    Attributes attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue(OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue())));
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue(
+                    OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue())));
     when(e.getAttributes()).thenReturn(attributes);
     boolean v = RpcSemanticConventionUtils.isRpcTypeGrpcForOTelFormat(e);
     assertTrue(v);
 
-    attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue("other")));
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("other")));
     when(e.getAttributes()).thenReturn(attributes);
     v = RpcSemanticConventionUtils.isRpcTypeGrpcForOTelFormat(e);
     assertFalse(v);
@@ -46,18 +47,18 @@ class RpcSemanticConventionUtilsTest {
   void getGrpcURI() {
     Event e = mock(Event.class);
 
-    Attributes attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            RawSpanConstants.getValue(Grpc.GRPC_HOST_PORT),
-            SemanticConventionTestUtil.buildAttributeValue("webhost:9011")));
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                RawSpanConstants.getValue(Grpc.GRPC_HOST_PORT),
+                SemanticConventionTestUtil.buildAttributeValue("webhost:9011")));
     when(e.getAttributes()).thenReturn(attributes);
     Optional<String> v = RpcSemanticConventionUtils.getGrpcURI(e);
     assertEquals("webhost:9011", v.get());
 
-    attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            "span.kind",
-            SemanticConventionTestUtil.buildAttributeValue("client")));
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of("span.kind", SemanticConventionTestUtil.buildAttributeValue("client")));
     when(e.getAttributes()).thenReturn(attributes);
     v = RpcSemanticConventionUtils.getGrpcURI(e);
     assertTrue(v.isEmpty());

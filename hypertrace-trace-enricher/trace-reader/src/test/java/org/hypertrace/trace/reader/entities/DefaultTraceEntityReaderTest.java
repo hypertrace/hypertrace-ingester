@@ -1,8 +1,8 @@
 package org.hypertrace.trace.reader.entities;
 
-import static org.hypertrace.trace.reader.attributes.EntityUtil.buildAttributesWithKeyValues;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedEventBuilder;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedStructuredTraceBuilder;
+import static org.hypertrace.trace.reader.attributes.EntityUtil.buildAttributesWithKeyValues;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

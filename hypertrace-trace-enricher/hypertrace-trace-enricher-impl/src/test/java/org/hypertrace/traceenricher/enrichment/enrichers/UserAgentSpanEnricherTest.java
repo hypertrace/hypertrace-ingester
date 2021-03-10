@@ -1,5 +1,9 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.grpc.Grpc;
@@ -13,11 +17,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.UserAgent;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
 
 public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
 
@@ -106,8 +105,6 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
       assertEquals(1, e.getEnrichedAttributes().getAttributeMap().size());
     }
 
-
-
     // no request present for http
     {
       Event e = createMockEvent();
@@ -123,9 +120,11 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
       Event e = createMockEvent();
       mockProtocol(e, Protocol.PROTOCOL_GRPC);
       when(e.getGrpc())
-          .thenReturn(Grpc.newBuilder().setRequest(
-              org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder().build()
-          ).build());
+          .thenReturn(
+              Grpc.newBuilder()
+                  .setRequest(
+                      org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder().build())
+                  .build());
       enricher.enrichEvent(null, e);
       // Verify no enriched attributes are added
       assertEquals(1, e.getEnrichedAttributes().getAttributeMap().size());
@@ -136,12 +135,13 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
       Event e = createMockEvent();
       mockProtocol(e, Protocol.PROTOCOL_GRPC);
       when(e.getGrpc())
-          .thenReturn(Grpc.newBuilder().setRequest(
-              org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder()
-                  .setRequestMetadata(
-                      RequestMetadata.newBuilder().build()
-                  ).build()
-          ).build());
+          .thenReturn(
+              Grpc.newBuilder()
+                  .setRequest(
+                      org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder()
+                          .setRequestMetadata(RequestMetadata.newBuilder().build())
+                          .build())
+                  .build());
       enricher.enrichEvent(null, e);
       // Verify no enriched attributes are added
       assertEquals(1, e.getEnrichedAttributes().getAttributeMap().size());
@@ -152,12 +152,13 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
       Event e = createMockEvent();
       mockProtocol(e, Protocol.PROTOCOL_GRPC);
       when(e.getGrpc())
-          .thenReturn(Grpc.newBuilder().setRequest(
-              org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder()
-                  .setRequestMetadata(
-                      RequestMetadata.newBuilder().setUserAgent("").build()
-                  ).build()
-          ).build());
+          .thenReturn(
+              Grpc.newBuilder()
+                  .setRequest(
+                      org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder()
+                          .setRequestMetadata(RequestMetadata.newBuilder().setUserAgent("").build())
+                          .build())
+                  .build());
       enricher.enrichEvent(null, e);
       // Verify no enriched attributes are added
       assertEquals(1, e.getEnrichedAttributes().getAttributeMap().size());
@@ -213,12 +214,13 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
     Event e = createMockEvent();
     when(e.getGrpc())
         .thenReturn(
-            Grpc.newBuilder().setRequest(
-                org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder().setRequestMetadata(
-                    RequestMetadata.newBuilder().setUserAgent(userAgent).build()
-                ).build()
-            ).build()
-        );
+            Grpc.newBuilder()
+                .setRequest(
+                    org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder()
+                        .setRequestMetadata(
+                            RequestMetadata.newBuilder().setUserAgent(userAgent).build())
+                        .build())
+                .build());
     mockProtocol(e, Protocol.PROTOCOL_GRPC);
     enricher.enrichEvent(null, e);
 
@@ -423,10 +425,7 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
     when(e.getHttp())
         .thenReturn(
             Http.newBuilder()
-                .setRequest(
-                    Request.newBuilder()
-                        .setUserAgent(userAgent)
-                        .build())
+                .setRequest(Request.newBuilder().setUserAgent(userAgent).build())
                 .build());
     mockProtocol(e, Protocol.PROTOCOL_HTTP);
     enricher.enrichEvent(null, e);
@@ -455,9 +454,13 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   private void mockProtocol(Event event, Protocol protocol) {
-    event.getEnrichedAttributes().getAttributeMap()
-        .put(Constants.getEnrichedSpanConstant(CommonAttribute.COMMON_ATTRIBUTE_PROTOCOL),
-            AttributeValue.newBuilder().setValue(Constants.getEnrichedSpanConstant(protocol)).build()
-        );
+    event
+        .getEnrichedAttributes()
+        .getAttributeMap()
+        .put(
+            Constants.getEnrichedSpanConstant(CommonAttribute.COMMON_ATTRIBUTE_PROTOCOL),
+            AttributeValue.newBuilder()
+                .setValue(Constants.getEnrichedSpanConstant(protocol))
+                .build());
   }
 }

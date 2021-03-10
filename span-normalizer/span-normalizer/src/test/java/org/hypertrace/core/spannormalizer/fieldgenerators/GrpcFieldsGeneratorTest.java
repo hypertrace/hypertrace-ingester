@@ -26,10 +26,10 @@ import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.grpc.Grpc;
-import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -284,16 +284,31 @@ public class GrpcFieldsGeneratorTest {
     GrpcFieldsGenerator grpcFieldsGenerator = new GrpcFieldsGenerator();
     Event.Builder eventBuilder = Event.newBuilder();
     Map<String, AttributeValue> map = Maps.newHashMap();
-    map.put(OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
-        AttributeValue.newBuilder().setValue(OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue()).build());
-    map.put(OTelSpanSemanticConventions.NET_PEER_IP.getValue(), AttributeValue.newBuilder().setValue(("172.0.1.17")).build());
-    map.put(OTelSpanSemanticConventions.NET_PEER_NAME.getValue(), AttributeValue.newBuilder().setValue("example.com").build());
-    map.put(OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), AttributeValue.newBuilder().setValue("2705").build());
-    map.put(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue(), AttributeValue.newBuilder().setValue("resource not found").build());
-    map.put(OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue(), AttributeValue.newBuilder().setValue("NPE").build());
+    map.put(
+        OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+        AttributeValue.newBuilder()
+            .setValue(OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue())
+            .build());
+    map.put(
+        OTelSpanSemanticConventions.NET_PEER_IP.getValue(),
+        AttributeValue.newBuilder().setValue(("172.0.1.17")).build());
+    map.put(
+        OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+        AttributeValue.newBuilder().setValue("example.com").build());
+    map.put(
+        OTelSpanSemanticConventions.NET_PEER_PORT.getValue(),
+        AttributeValue.newBuilder().setValue("2705").build());
+    map.put(
+        OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue(),
+        AttributeValue.newBuilder().setValue("resource not found").build());
+    map.put(
+        OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue(),
+        AttributeValue.newBuilder().setValue("NPE").build());
     grpcFieldsGenerator.populateOtherFields(eventBuilder, map);
-    assertEquals("example.com:2705", eventBuilder.getGrpcBuilder().getRequestBuilder().getHostPort());
-    assertEquals("resource not found", eventBuilder.getGrpcBuilder().getResponseBuilder().getErrorMessage());
+    assertEquals(
+        "example.com:2705", eventBuilder.getGrpcBuilder().getRequestBuilder().getHostPort());
+    assertEquals(
+        "resource not found", eventBuilder.getGrpcBuilder().getResponseBuilder().getErrorMessage());
     assertEquals("NPE", eventBuilder.getGrpcBuilder().getResponseBuilder().getErrorName());
   }
 }

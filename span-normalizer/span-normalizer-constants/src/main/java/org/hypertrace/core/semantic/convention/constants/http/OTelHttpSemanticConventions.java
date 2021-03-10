@@ -1,8 +1,6 @@
 package org.hypertrace.core.semantic.convention.constants.http;
 
-/**
- * OTel specific attributes for Http
- */
+/** OTel specific attributes for Http */
 public enum OTelHttpSemanticConventions {
   HTTP_METHOD("http.method"),
   HTTP_STATUS_CODE("http.status_code"),

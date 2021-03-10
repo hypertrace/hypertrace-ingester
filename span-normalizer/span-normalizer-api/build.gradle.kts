@@ -1,4 +1,9 @@
-import com.google.protobuf.gradle.*
+import com.google.protobuf.gradle.generateProtoTasks
+import com.google.protobuf.gradle.id
+import com.google.protobuf.gradle.ofSourceSet
+import com.google.protobuf.gradle.plugins
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
 
 plugins {
   `java-library`
@@ -52,5 +57,5 @@ sourceSets {
 }
 dependencies {
   api("com.google.api.grpc:proto-google-common-protos:1.12.0")
-  api( "org.apache.avro:avro:1.10.1")
+  api("org.apache.avro:avro:1.10.1")
 }

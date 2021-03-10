@@ -23,23 +23,25 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.traceenricher.enrichment.EnrichmentProcessor;
 import org.hypertrace.traceenricher.enrichment.EnrichmentRegistry;
-import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.clients.DefaultClientRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StructuredTraceEnrichProcessor implements
-    Transformer<String, StructuredTrace, KeyValue<String, StructuredTrace>> {
+public class StructuredTraceEnrichProcessor
+    implements Transformer<String, StructuredTrace, KeyValue<String, StructuredTrace>> {
 
-  private static final Logger logger = LoggerFactory.getLogger(StructuredTraceEnrichProcessor.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(StructuredTraceEnrichProcessor.class);
   private static EnrichmentProcessor processor = null;
   private DefaultClientRegistry clientRegistry;
 
   private static final String ENRICHED_TRACES_COUNTER = "hypertrace.enriched.traces";
-  private static final ConcurrentMap<String, Counter> tenantToEnrichedTraceCounter = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Counter> tenantToEnrichedTraceCounter =
+      new ConcurrentHashMap<>();
 
   private static final String ENRICHED_TRACES_TIMER = "hypertrace.trace.enrichment.latency";
-  private static final ConcurrentMap<String, Timer> tenantToEnrichmentTraceTimer = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Timer> tenantToEnrichmentTraceTimer =
+      new ConcurrentHashMap<>();
 
   @Override
   public void init(ProcessorContext context) {
@@ -64,11 +66,18 @@ public class StructuredTraceEnrichProcessor implements
     processor.process(value);
     long timeElapsed = Duration.between(start, Instant.now()).toMillis();
 
-    tenantToEnrichedTraceCounter.computeIfAbsent(value.getCustomerId(),
-        k -> PlatformMetricsRegistry.registerCounter(ENRICHED_TRACES_COUNTER, Map.of("tenantId", k)))
+    tenantToEnrichedTraceCounter
+        .computeIfAbsent(
+            value.getCustomerId(),
+            k ->
+                PlatformMetricsRegistry.registerCounter(
+                    ENRICHED_TRACES_COUNTER, Map.of("tenantId", k)))
         .increment();
-    tenantToEnrichmentTraceTimer.computeIfAbsent(value.getCustomerId(),
-        k -> PlatformMetricsRegistry.registerTimer(ENRICHED_TRACES_TIMER, Map.of("tenantId", k)))
+    tenantToEnrichmentTraceTimer
+        .computeIfAbsent(
+            value.getCustomerId(),
+            k ->
+                PlatformMetricsRegistry.registerTimer(ENRICHED_TRACES_TIMER, Map.of("tenantId", k)))
         .record(timeElapsed, TimeUnit.MILLISECONDS);
     return new KeyValue<>(null, value);
   }
@@ -89,7 +98,7 @@ public class StructuredTraceEnrichProcessor implements
     return enricherConfigs;
   }
 
-  private Config getClientsConfig(Map<String, Object> properties){
+  private Config getClientsConfig(Map<String, Object> properties) {
     Config jobConfig = (Config) properties.get(STRUCTURED_TRACES_ENRICHMENT_JOB_CONFIG_KEY);
     return jobConfig.getConfig(ENRICHER_CLIENTS_CONFIG_KEY);
   }

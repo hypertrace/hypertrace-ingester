@@ -6,6 +6,7 @@ plugins {
   id("org.hypertrace.jacoco-report-plugin") version "0.1.1" apply false
   id("org.hypertrace.publish-plugin") version "0.3.3" apply false
   id("org.hypertrace.avro-plugin") version "0.2.4" apply false
+  id("org.hypertrace.code-style-plugin") version "1.0.2" apply false
 }
 
 subprojects {
@@ -21,6 +22,8 @@ subprojects {
     configure<JavaPluginExtension> {
       sourceCompatibility = JavaVersion.VERSION_11
       targetCompatibility = JavaVersion.VERSION_11
+
+      apply(plugin = "org.hypertrace.code-style-plugin")
     }
   }
 }

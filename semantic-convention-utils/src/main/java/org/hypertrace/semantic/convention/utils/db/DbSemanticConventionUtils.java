@@ -19,37 +19,46 @@ import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.core.span.constants.v1.Sql;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
-/**
- * Utility class to fetch database span attributes
- */
+/** Utility class to fetch database span attributes */
 public class DbSemanticConventionUtils {
 
   // db related OTEL attributes
   private static final String OTEL_DB_SYSTEM = OTelDbSemanticConventions.DB_SYSTEM.getValue();
-  private static final String OTEL_DB_CONNECTION_STRING = OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue();
+  private static final String OTEL_DB_CONNECTION_STRING =
+      OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue();
   private static final String OTEL_DB_OPERATION = OTelDbSemanticConventions.DB_OPERATION.getValue();
 
   // mongo specific attributes
-  private static final String OTEL_MONGO_DB_SYSTEM_VALUE = OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue();
+  private static final String OTEL_MONGO_DB_SYSTEM_VALUE =
+      OTelDbSemanticConventions.MONGODB_DB_SYSTEM_VALUE.getValue();
   private static final String OTHER_MONGO_ADDRESS = RawSpanConstants.getValue(Mongo.MONGO_ADDRESS);
   private static final String OTHER_MONGO_URL = RawSpanConstants.getValue(Mongo.MONGO_URL);
-  private static final String OTHER_MONGO_OPERATION = RawSpanConstants.getValue(Mongo.MONGO_OPERATION);
-  private static final String OTHER_MONGO_NAMESPACE = RawSpanConstants.getValue(Mongo.MONGO_NAMESPACE);
-  private static final String OTEL_MONGO_COLLECTION = OTelDbSemanticConventions.MONGODB_COLLECTION.getValue();
+  private static final String OTHER_MONGO_OPERATION =
+      RawSpanConstants.getValue(Mongo.MONGO_OPERATION);
+  private static final String OTHER_MONGO_NAMESPACE =
+      RawSpanConstants.getValue(Mongo.MONGO_NAMESPACE);
+  private static final String OTEL_MONGO_COLLECTION =
+      OTelDbSemanticConventions.MONGODB_COLLECTION.getValue();
 
   // redis specific attributes
-  private static final String OTHER_REDIS_CONNECTION = RawSpanConstants.getValue(Redis.REDIS_CONNECTION);
-  private static final String OTEL_REDIS_DB_SYSTEM_VALUE = OTelDbSemanticConventions.REDIS_DB_SYSTEM_VALUE.getValue();
+  private static final String OTHER_REDIS_CONNECTION =
+      RawSpanConstants.getValue(Redis.REDIS_CONNECTION);
+  private static final String OTEL_REDIS_DB_SYSTEM_VALUE =
+      OTelDbSemanticConventions.REDIS_DB_SYSTEM_VALUE.getValue();
 
   // sql specific attributes
-  private static final String[] OTEL_SQL_DB_SYSTEM_VALUES =
-      {
-          OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.ORACLE_DB_SYSTEM_VALUE.getValue(),
-          OTelDbSemanticConventions.MSSQL_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.DB2_DB_SYSTEM_VALUE.getValue(),
-          OTelDbSemanticConventions.POSTGRESQL_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.REDSHIFT_DB_SYSTEM_VALUE.getValue(),
-          OTelDbSemanticConventions.HIVE_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.CLOUDSCAPE_DB_SYSTEM_VALUE.getValue(),
-          OTelDbSemanticConventions.HSQLDB_DB_SYSTEM_VALUE.getValue(), OTelDbSemanticConventions.OTHER_SQL_DB_SYSTEM_VALUE.getValue()
-      };
+  private static final String[] OTEL_SQL_DB_SYSTEM_VALUES = {
+    OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue(),
+        OTelDbSemanticConventions.ORACLE_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.MSSQL_DB_SYSTEM_VALUE.getValue(),
+        OTelDbSemanticConventions.DB2_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.POSTGRESQL_DB_SYSTEM_VALUE.getValue(),
+        OTelDbSemanticConventions.REDSHIFT_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.HIVE_DB_SYSTEM_VALUE.getValue(),
+        OTelDbSemanticConventions.CLOUDSCAPE_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.HSQLDB_DB_SYSTEM_VALUE.getValue(),
+        OTelDbSemanticConventions.OTHER_SQL_DB_SYSTEM_VALUE.getValue()
+  };
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final String SQL_URL = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
 
@@ -60,8 +69,9 @@ public class DbSemanticConventionUtils {
   public static boolean isMongoBackend(Event event) {
     return SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_ADDRESS)
         || SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_URL)
-        || OTEL_MONGO_DB_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
-            event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
+        || OTEL_MONGO_DB_SYSTEM_VALUE.equals(
+            SpanAttributeUtils.getStringAttributeWithDefault(
+                event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
   }
 
   /**
@@ -77,16 +87,12 @@ public class DbSemanticConventionUtils {
     return getBackendURIForOtelFormat(event);
   }
 
-  /**
-   * @return attribute keys representing mongo operation
-   */
+  /** @return attribute keys representing mongo operation */
   public static List<String> getAttributeKeysForMongoOperation() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_OPERATION, OTEL_DB_OPERATION));
   }
 
-  /**
-   * @return attribute keys representing mongo namespace
-   */
+  /** @return attribute keys representing mongo namespace */
   public static List<String> getAttributeKeysForMongoNamespace() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_NAMESPACE, OTEL_MONGO_COLLECTION));
   }
@@ -97,8 +103,9 @@ public class DbSemanticConventionUtils {
    */
   public static boolean isRedisBackend(Event event) {
     return SpanAttributeUtils.containsAttributeKey(event, OTHER_REDIS_CONNECTION)
-        || OTEL_REDIS_DB_SYSTEM_VALUE.equals(SpanAttributeUtils.getStringAttributeWithDefault(
-            event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
+        || OTEL_REDIS_DB_SYSTEM_VALUE.equals(
+            SpanAttributeUtils.getStringAttributeWithDefault(
+                event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
   }
 
   /**
@@ -131,10 +138,8 @@ public class DbSemanticConventionUtils {
    */
   public static boolean isSqlTypeBackendForOtelFormat(Event event) {
     if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_SYSTEM)) {
-      return Arrays
-          .stream(OTEL_SQL_DB_SYSTEM_VALUES)
-          .anyMatch(v -> v.equals(
-              SpanAttributeUtils.getStringAttribute(event, OTEL_DB_SYSTEM)));
+      return Arrays.stream(OTEL_SQL_DB_SYSTEM_VALUES)
+          .anyMatch(v -> v.equals(SpanAttributeUtils.getStringAttribute(event, OTEL_DB_SYSTEM)));
     }
     return false;
   }
@@ -146,10 +151,8 @@ public class DbSemanticConventionUtils {
   public static boolean isSqlTypeBackendForOtelFormat(
       Map<String, AttributeValue> attributeValueMap) {
     if (attributeValueMap.containsKey(OTEL_DB_SYSTEM)) {
-      return Arrays
-          .stream(OTEL_SQL_DB_SYSTEM_VALUES)
-          .anyMatch(v -> v.equals(
-              attributeValueMap.get(OTEL_DB_SYSTEM).getValue()));
+      return Arrays.stream(OTEL_SQL_DB_SYSTEM_VALUES)
+          .anyMatch(v -> v.equals(attributeValueMap.get(OTEL_DB_SYSTEM).getValue()));
     }
     return false;
   }
@@ -171,8 +174,9 @@ public class DbSemanticConventionUtils {
     }
     if (SpanAttributeUtils.containsAttributeKey(
         event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
-      String url = SpanAttributeUtils.getStringAttribute(
-          event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
+      String url =
+          SpanAttributeUtils.getStringAttribute(
+              event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
       if (!isValidURI(url)) {
         return Optional.empty();
       }
@@ -191,7 +195,10 @@ public class DbSemanticConventionUtils {
       return backendUrl;
     }
     if (attributeValueMap.containsKey(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
-      String url = attributeValueMap.get(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue()).getValue();
+      String url =
+          attributeValueMap
+              .get(OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())
+              .getValue();
       if (!isValidURI(url)) {
         return Optional.empty();
       }
@@ -208,11 +215,16 @@ public class DbSemanticConventionUtils {
     return SpanSemanticConventionUtils.getURIForOtelFormat(event);
   }
 
+  public static Optional<String> getBackendURIForOpenTracingFormat(Event event) {
+    return SpanSemanticConventionUtils.getURIforOpenTracingFormat(event);
+  }
+
   /**
    * @param attributeValueMap map of attribute key value
    * @return backend uri based on otel format
    */
-  public static Optional<String> getBackendURIForOtelFormat(Map<String, AttributeValue> attributeValueMap) {
+  public static Optional<String> getBackendURIForOtelFormat(
+      Map<String, AttributeValue> attributeValueMap) {
     return SpanSemanticConventionUtils.getURIForOtelFormat(attributeValueMap);
   }
 

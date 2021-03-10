@@ -62,8 +62,9 @@ public class ViewGeneratorState {
               .forEach(
                   eventRef -> {
                     ByteBuffer parentEventId = eventRef.getEventId();
-                    parentToChildrenEventIds.computeIfAbsent(
-                        parentEventId, v -> new ArrayList<>()).add(childEventId);
+                    parentToChildrenEventIds
+                        .computeIfAbsent(parentEventId, v -> new ArrayList<>())
+                        .add(childEventId);
                     childToParentEventIds.put(childEventId, parentEventId);
                   });
         }

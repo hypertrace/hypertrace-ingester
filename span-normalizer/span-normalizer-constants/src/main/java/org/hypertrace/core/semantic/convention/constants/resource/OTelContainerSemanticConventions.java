@@ -1,8 +1,6 @@
 package org.hypertrace.core.semantic.convention.constants.resource;
 
-/**
- * Open telemetry container semantic conventions
- */
+/** Open telemetry container semantic conventions */
 public enum OTelContainerSemanticConventions {
   CONTAINER_NAME("container.name"),
   CONTAINER_ID("container.id");

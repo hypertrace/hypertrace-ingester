@@ -42,8 +42,7 @@ public class EnrichmentRegistryTest {
 
   @Test
   public void classNotEnricherSubclassFailure() {
-    class TestEnricher {
-    }
+    class TestEnricher {}
 
     String enricher = "TestEnricher";
     Config config = mock(Config.class);
@@ -58,8 +57,7 @@ public class EnrichmentRegistryTest {
 
   @Test
   public void dependencyNotFoundFailure() {
-    abstract class TestEnricher1 extends AbstractTraceEnricher {
-    }
+    abstract class TestEnricher1 extends AbstractTraceEnricher {}
 
     String enricher1 = "TestEnricher";
     Config config1 = mock(Config.class);
@@ -74,8 +72,7 @@ public class EnrichmentRegistryTest {
     registry.registerEnrichers(enricherConfigs);
     Assertions.assertEquals(registry.getOrderedRegisteredEnrichers().size(), 0);
 
-    abstract class TestEnricher2 extends AbstractTraceEnricher {
-    }
+    abstract class TestEnricher2 extends AbstractTraceEnricher {}
 
     String enricher2 = "TestEnricher2";
     Config config2 = mock(Config.class);
@@ -93,10 +90,8 @@ public class EnrichmentRegistryTest {
 
   @Test
   public void cyclicDependencyFailure() {
-    abstract class TestEnricher1 extends AbstractTraceEnricher {
-    }
-    abstract class TestEnricher2 extends AbstractTraceEnricher {
-    }
+    abstract class TestEnricher1 extends AbstractTraceEnricher {}
+    abstract class TestEnricher2 extends AbstractTraceEnricher {}
 
     String enricher1 = "TestEnricher1";
     Config config1 = mock(Config.class);
@@ -121,8 +116,7 @@ public class EnrichmentRegistryTest {
 
   @Test
   public void enricherNoDependency() {
-    abstract class TestEnricher extends AbstractTraceEnricher {
-    }
+    abstract class TestEnricher extends AbstractTraceEnricher {}
 
     String enricher = "TestEnricher";
     Config config = mock(Config.class);
@@ -142,12 +136,9 @@ public class EnrichmentRegistryTest {
 
   @Test
   public void enricherWithDependencies() {
-    abstract class TestEnricher1 extends AbstractTraceEnricher {
-    }
-    abstract class TestEnricher2 extends AbstractTraceEnricher {
-    }
-    abstract class TestEnricher3 extends AbstractTraceEnricher {
-    }
+    abstract class TestEnricher1 extends AbstractTraceEnricher {}
+    abstract class TestEnricher2 extends AbstractTraceEnricher {}
+    abstract class TestEnricher3 extends AbstractTraceEnricher {}
 
     // TestEnricher1 depends on TestEnricher2 depends on TestEnricher3
     String enricher1 = "TestEnricher1";
@@ -190,8 +181,7 @@ public class EnrichmentRegistryTest {
     Assertions.assertEquals(enrichers.get(2), enricherInfo1);
 
     // Add testEnricher4 that depends on TestEnricher2
-    abstract class TestEnricher4 extends AbstractTraceEnricher {
-    }
+    abstract class TestEnricher4 extends AbstractTraceEnricher {}
     String enricher4 = "TestEnricher4";
     Config config4 = mock(Config.class);
     when(config4.getString(ENRICHER_CLASS_CONFIG_PATH)).thenReturn(TestEnricher4.class.getName());
@@ -212,8 +202,7 @@ public class EnrichmentRegistryTest {
     Assertions.assertEquals(enrichers.get(3), enricherInfo4);
 
     // Add testEnricher5 that depends on TestEnricher2 and TestEnricher3
-    abstract class TestEnricher5 extends AbstractTraceEnricher {
-    }
+    abstract class TestEnricher5 extends AbstractTraceEnricher {}
     String enricher5 = "TestEnricher5";
     Config config5 = mock(Config.class);
     when(config5.getString(ENRICHER_CLASS_CONFIG_PATH)).thenReturn(TestEnricher5.class.getName());
@@ -227,7 +216,8 @@ public class EnrichmentRegistryTest {
     Assertions.assertEquals(enrichers.size(), 5);
 
     EnricherInfo enricherInfo5 =
-        new EnricherInfo(enricher5, TestEnricher5.class, Arrays.asList(enricherInfo2, enricherInfo3), config5);
+        new EnricherInfo(
+            enricher5, TestEnricher5.class, Arrays.asList(enricherInfo2, enricherInfo3), config5);
     Assertions.assertEquals(enrichers.get(0), enricherInfo3);
     Assertions.assertEquals(enrichers.get(1), enricherInfo2);
     Assertions.assertEquals(enrichers.get(2), enricherInfo1);
@@ -237,10 +227,10 @@ public class EnrichmentRegistryTest {
 
   @Test
   public void testEnricherTopologicalOrder() {
-    //Load enricher config from file
+    // Load enricher config from file
     String configFileName = "enricher.conf";
-    String configFilePath = Thread.currentThread().getContextClassLoader()
-        .getResource(configFileName).getPath();
+    String configFilePath =
+        Thread.currentThread().getContextClassLoader().getResource(configFileName).getPath();
     Config fileConfig = ConfigFactory.parseFile(new File(configFilePath));
     Config configs = ConfigFactory.load(fileConfig);
     List<String> enrichers = configs.getStringList("enricher.names");
@@ -250,22 +240,26 @@ public class EnrichmentRegistryTest {
       enricherConfigs.put(enricher, enricherConfig);
     }
 
-    //Create enrichment register
+    // Create enrichment register
     EnrichmentRegistry registry = new EnrichmentRegistry();
     registry.registerEnrichers(enricherConfigs);
 
-    //Topologically sort and verify
+    // Topologically sort and verify
     List<EnricherInfo> sortedEnrichers = registry.getOrderedRegisteredEnrichers();
     enricherConfigs.forEach((s, config) -> System.out.println("s=" + s));
     sortedEnrichers.forEach(e -> System.out.println(e.getName()));
     Assertions.assertEquals(enricherConfigs.size(), sortedEnrichers.size());
-    sortedEnrichers.forEach(enricher ->
-        enricher.getDependencies().forEach(dependencyEnricher ->
-            Assertions.assertTrue(
-                sortedEnrichers.indexOf(dependencyEnricher) < sortedEnrichers.indexOf(enricher),
-                String.format("%s should be before %s", dependencyEnricher.getName(), enricher.getName())
-            )
-        )
-    );
+    sortedEnrichers.forEach(
+        enricher ->
+            enricher
+                .getDependencies()
+                .forEach(
+                    dependencyEnricher ->
+                        Assertions.assertTrue(
+                            sortedEnrichers.indexOf(dependencyEnricher)
+                                < sortedEnrichers.indexOf(enricher),
+                            String.format(
+                                "%s should be before %s",
+                                dependencyEnricher.getName(), enricher.getName()))));
   }
 }

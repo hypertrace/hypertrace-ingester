@@ -17,9 +17,9 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
   /**
    * Checks if the exit span's jaeger_svcname is different from its parent span's jaeger_svcname and
    * proceeds to register a backend for the exit span's jaeger_svcname
-   * <p>
-   * If the service names are same currently that case isn't handled as we need a way to figure out
-   * the destination endpoint
+   *
+   * <p>If the service names are same currently that case isn't handled as we need a way to figure
+   * out the destination endpoint
    */
   @Override
   public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
@@ -32,8 +32,8 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
           LOGGER.debug(
               "Detected exit span whose service name is different from its parent span service name. Will be creating a backend based on exit span service name = [{}]",
               serviceName);
-          final Builder backendBuilder = getBackendEntityBuilder(BackendType.UNKNOWN, serviceName,
-              event);
+          final Builder backendBuilder =
+              getBackendEntityBuilder(BackendType.UNKNOWN, serviceName, event);
           return Optional.of(backendBuilder.build());
         }
       }

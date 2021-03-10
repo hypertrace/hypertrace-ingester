@@ -19,9 +19,11 @@ import org.junit.jupiter.api.Test;
 
 public class ViewGeneratorStateTest {
 
-  ByteBuffer span1 = ByteBuffer.wrap(("span-1".getBytes())), span2 = ByteBuffer.wrap(("span-2".getBytes()));
+  ByteBuffer span1 = ByteBuffer.wrap(("span-1".getBytes())),
+      span2 = ByteBuffer.wrap(("span-2".getBytes()));
   String customerId = "customer-1";
-  ByteBuffer traceId1 = ByteBuffer.wrap(("trace-1".getBytes())), traceId2 = ByteBuffer.wrap(("trace-2".getBytes()));
+  ByteBuffer traceId1 = ByteBuffer.wrap(("trace-1".getBytes())),
+      traceId2 = ByteBuffer.wrap(("trace-2".getBytes()));
 
   @Test
   public void testTraceState() {
@@ -48,13 +50,14 @@ public class ViewGeneratorStateTest {
     assertEquals(sameTraceState, traceState);
 
     StructuredTrace modifiedTrace = getTestTrace(customerId, traceId1);
-    modifiedTrace.setEntityList(Arrays.asList(
-        Entity.newBuilder()
-            .setCustomerId(customerId)
-            .setEntityId("entity-2")
-            .setEntityName("entity-2")
-            .setEntityType("service")
-            .build()));
+    modifiedTrace.setEntityList(
+        Arrays.asList(
+            Entity.newBuilder()
+                .setCustomerId(customerId)
+                .setEntityId("entity-2")
+                .setEntityName("entity-2")
+                .setEntityType("service")
+                .build()));
 
     // same trace id but different object should result in rebuilding of trace state
     TraceState differentTraceState1 = ViewGeneratorState.getTraceState(modifiedTrace);
@@ -75,14 +78,14 @@ public class ViewGeneratorStateTest {
     assertEquals(sameApiTraceGraph, apiTraceGraph);
 
     StructuredTrace modifiedTrace = getTestTrace(customerId, traceId1);
-    modifiedTrace.setEntityList(Arrays.asList(
-        Entity.newBuilder()
-            .setCustomerId(customerId)
-            .setEntityId("entity-2")
-            .setEntityName("entity-2")
-            .setEntityType("service")
-            .build()));
-
+    modifiedTrace.setEntityList(
+        Arrays.asList(
+            Entity.newBuilder()
+                .setCustomerId(customerId)
+                .setEntityId("entity-2")
+                .setEntityName("entity-2")
+                .setEntityType("service")
+                .build()));
 
     // same trace id but different object should result in rebuilding of trace state
     ApiTraceGraph differentApiTraceGraph1 = ViewGeneratorState.getApiTraceGraph(modifiedTrace);
@@ -99,32 +102,33 @@ public class ViewGeneratorStateTest {
         .setTraceId(traceId)
         .setStartTimeMillis(20)
         .setEndTimeMillis(30)
-        .setEntityList(Arrays.asList(
-            Entity.newBuilder()
-                .setCustomerId(customerId)
-                .setEntityId("entity-1")
-                .setEntityName("entity-1")
-                .setEntityType("service")
-                .build()))
-        .setEventList(Arrays.asList(
-            Event.newBuilder()
-                .setCustomerId(customerId)
-                .setEventId(ByteBuffer.wrap(("span-1".getBytes())))
-                .setEventName("span-1")
-                .build(),
-            Event.newBuilder()
-                .setCustomerId(customerId)
-                .setEventId(ByteBuffer.wrap(("span-2".getBytes())))
-                .setEventName("span-2")
-                .setEventRefList(Arrays.asList(
-                    EventRef.newBuilder()
-                        .setTraceId(traceId)
-                        .setRefType(EventRefType.CHILD_OF)
-                        .setEventId(ByteBuffer.wrap(("span-1".getBytes())))
-                        .build()
-                ))
-                .build()
-        ))
+        .setEntityList(
+            Arrays.asList(
+                Entity.newBuilder()
+                    .setCustomerId(customerId)
+                    .setEntityId("entity-1")
+                    .setEntityName("entity-1")
+                    .setEntityType("service")
+                    .build()))
+        .setEventList(
+            Arrays.asList(
+                Event.newBuilder()
+                    .setCustomerId(customerId)
+                    .setEventId(ByteBuffer.wrap(("span-1".getBytes())))
+                    .setEventName("span-1")
+                    .build(),
+                Event.newBuilder()
+                    .setCustomerId(customerId)
+                    .setEventId(ByteBuffer.wrap(("span-2".getBytes())))
+                    .setEventName("span-2")
+                    .setEventRefList(
+                        Arrays.asList(
+                            EventRef.newBuilder()
+                                .setTraceId(traceId)
+                                .setRefType(EventRefType.CHILD_OF)
+                                .setEventId(ByteBuffer.wrap(("span-1".getBytes())))
+                                .build()))
+                    .build()))
         .setEntityEdgeList(Collections.EMPTY_LIST)
         .setEntityEventEdgeList(Collections.EMPTY_LIST)
         .setEventEdgeList(Collections.EMPTY_LIST)

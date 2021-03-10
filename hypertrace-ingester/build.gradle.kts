@@ -52,8 +52,8 @@ tasks.run<JavaExec> {
 }
 
 tasks.processResources {
-  dependsOn("copyServiceConfigs");
-  dependsOn("createCopySpecForSubJob");
+  dependsOn("copyServiceConfigs")
+  dependsOn("createCopySpecForSubJob")
 }
 
 tasks.register<Copy>("copyServiceConfigs") {
@@ -67,9 +67,9 @@ tasks.register<Copy>("copyServiceConfigs") {
 
 fun createCopySpec(projectName: String, serviceName: String, srcFolder: String, configFolder: String): CopySpec {
   return copySpec {
-    from("../${projectName}/${serviceName}/src/${srcFolder}/resources/configs/${configFolder}") {
+    from("../$projectName/$serviceName/src/$srcFolder/resources/configs/$configFolder") {
       include("application.conf")
-      into("${serviceName}")
+      into("$serviceName")
     }
   }
 }
@@ -82,7 +82,7 @@ tasks.register<Copy>("createCopySpecForSubJob") {
 
 fun createCopySpecForSubJob(projectName: String, serviceName: String, srcFolder: String): CopySpec {
   return copySpec {
-    from("../${projectName}/${serviceName}/src/${srcFolder}/resources/configs/") {
+    from("../$projectName/$serviceName/src/$srcFolder/resources/configs/") {
     }
   }
 }
@@ -92,8 +92,8 @@ tasks.test {
   /**
    * Copy config for respective kafka streams topology under resource
    */
-  dependsOn("copyServiceConfigsTest");
-  dependsOn("createCopySpecForSubJobTest");
+  dependsOn("copyServiceConfigsTest")
+  dependsOn("createCopySpecForSubJobTest")
 }
 
 tasks.register<Copy>("copyServiceConfigsTest") {
