@@ -25,29 +25,40 @@ public class OperationNameBasedEndpointDiscovererTest {
 
   @Test
   public void whenCacheIsEmptyExpectCacheToLoadAndReturnEntity() throws Exception {
-    Entity entity = Entity.newBuilder().setEntityId("entity-id").setEntityName("entity-name")
-        .build();
-    when(dao.upsertApiEntity("tenant-1", "service-1", ApiEntityDao.API_TYPE,
-        "Driver::getCustomers")).thenReturn(entity);
-    Event event = Event.newBuilder().setEventId(ByteBuffer.wrap("event-id".getBytes()))
-        .setEventName("Driver::getCustomers").setCustomerId("tenant-1").build();
+    Entity entity =
+        Entity.newBuilder().setEntityId("entity-id").setEntityName("entity-name").build();
+    when(dao.upsertApiEntity(
+            "tenant-1", "service-1", ApiEntityDao.API_TYPE, "Driver::getCustomers"))
+        .thenReturn(entity);
+    Event event =
+        Event.newBuilder()
+            .setEventId(ByteBuffer.wrap("event-id".getBytes()))
+            .setEventName("Driver::getCustomers")
+            .setCustomerId("tenant-1")
+            .build();
     Entity expected = underTest.getApiEntity(event);
     assertEquals(expected, underTest.getPatternToApiEntityCache().get(event.getEventName()));
   }
 
   @Test
   public void whenCacheIsNotEmptyExpectCacheToReturnCachedEntity() throws Exception {
-    Entity entity = Entity.newBuilder().setEntityId("entity-id").setEntityName("entity-name")
-        .build();
-    when(dao.upsertApiEntity("tenant-1", "service-1", ApiEntityDao.API_TYPE,
-        "Driver::getCustomers")).thenReturn(entity);
-    Event event = Event.newBuilder().setEventId(ByteBuffer.wrap("event-id".getBytes()))
-        .setEventName("Driver::getCustomers").setCustomerId("tenant-1").build();
+    Entity entity =
+        Entity.newBuilder().setEntityId("entity-id").setEntityName("entity-name").build();
+    when(dao.upsertApiEntity(
+            "tenant-1", "service-1", ApiEntityDao.API_TYPE, "Driver::getCustomers"))
+        .thenReturn(entity);
+    Event event =
+        Event.newBuilder()
+            .setEventId(ByteBuffer.wrap("event-id".getBytes()))
+            .setEventName("Driver::getCustomers")
+            .setCustomerId("tenant-1")
+            .build();
     Entity expected = underTest.getApiEntity(event);
 
     // query again
     underTest.getApiEntity(event);
-    // make sure cache didn't trigger a load again. dao should have been called only once during setup above
+    // make sure cache didn't trigger a load again. dao should have been called only once during
+    // setup above
     verify(dao, times(1))
         .upsertApiEntity("tenant-1", "service-1", ApiEntityDao.API_TYPE, event.getEventName());
   }

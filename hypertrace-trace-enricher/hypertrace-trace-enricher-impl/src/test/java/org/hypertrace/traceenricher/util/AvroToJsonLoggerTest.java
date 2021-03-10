@@ -27,7 +27,9 @@ public class AvroToJsonLoggerTest {
     AvroToJsonLogger.log(logger, "Testing logging {}", attributeValue);
     AvroToJsonLogger.log(logger, "Testing logging {}", attributeValue);
 
-    verify(logger, times(2)).debug(fmt,
-        "{\"value\":{\"string\":\"test-val\"},\"binary_value\":null,\"value_list\":null,\"value_map\":null}");
+    verify(logger, times(2))
+        .debug(
+            fmt,
+            "{\"value\":{\"string\":\"test-val\"},\"binary_value\":null,\"value_list\":null,\"value_map\":null}");
   }
 }

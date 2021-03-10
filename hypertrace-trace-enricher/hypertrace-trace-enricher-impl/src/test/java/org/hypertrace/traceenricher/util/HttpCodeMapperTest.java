@@ -18,10 +18,16 @@ public class HttpCodeMapperTest {
     Assertions.assertEquals(null, HttpCodeMapper.getMessage(null));
 
     // Verify state.
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS), HttpCodeMapper.getState("202"));
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS), HttpCodeMapper.getState("302"));
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL), HttpCodeMapper.getState("401"));
-    Assertions.assertEquals(EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL), HttpCodeMapper.getState("500"));
+    Assertions.assertEquals(
+        EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS),
+        HttpCodeMapper.getState("202"));
+    Assertions.assertEquals(
+        EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_SUCCESS),
+        HttpCodeMapper.getState("302"));
+    Assertions.assertEquals(
+        EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL), HttpCodeMapper.getState("401"));
+    Assertions.assertEquals(
+        EnrichedSpanConstants.getValue(ApiStatus.API_STATUS_FAIL), HttpCodeMapper.getState("500"));
     Assertions.assertEquals(null, HttpCodeMapper.getState(null));
   }
 }

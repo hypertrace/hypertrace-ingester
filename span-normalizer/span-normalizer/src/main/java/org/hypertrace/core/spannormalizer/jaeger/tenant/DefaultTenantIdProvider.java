@@ -30,8 +30,7 @@ public class DefaultTenantIdProvider implements TenantIdProvider {
   @Override
   public void logWarning(Logger logger, JaegerSpanInternalModel.Span span) {
     if (LOG_LIMITER.tryAcquire()) {
-      logger.warn(
-          "Dropping span without tenant id. defaultTenantId: {}", defaultTenantId);
+      logger.warn("Dropping span without tenant id. defaultTenantId: {}", defaultTenantId);
     }
   }
 }

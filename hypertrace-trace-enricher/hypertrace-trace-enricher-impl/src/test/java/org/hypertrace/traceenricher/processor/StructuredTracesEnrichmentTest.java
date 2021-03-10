@@ -47,17 +47,18 @@ public class StructuredTracesEnrichmentTest {
   private static final String TENANT_ID = "__default";
 
   private EnrichmentProcessor enrichmentProcessor;
-  @Mock
-  private EdsCacheClient edsClient;
-  @Mock
-  private ClientRegistry clientRegistry;
+  @Mock private EdsCacheClient edsClient;
+  @Mock private ClientRegistry clientRegistry;
   private EntityCache entityCache;
 
   @BeforeEach
   public void setup() {
     // Clear any stale entries in the entities cache.
-    String configFilePath = Thread.currentThread().getContextClassLoader()
-        .getResource(ENRICHER_CONFIG_FILE_NAME).getPath();
+    String configFilePath =
+        Thread.currentThread()
+            .getContextClassLoader()
+            .getResource(ENRICHER_CONFIG_FILE_NAME)
+            .getPath();
     if (configFilePath == null) {
       throw new RuntimeException(
           "Cannot find enricher config file" + ENRICHER_CONFIG_FILE_NAME + "in the classpath");
@@ -67,37 +68,39 @@ public class StructuredTracesEnrichmentTest {
     Config configs = ConfigFactory.load(fileConfig);
     // Not passing the Entity Data Service configuration, unless the container id
     // in the span data in inside EDS
-    when(clientRegistry.getEdsCacheClient())
-        .thenReturn(edsClient);
+    when(clientRegistry.getEdsCacheClient()).thenReturn(edsClient);
     entityCache = new EntityCache(edsClient);
-    when(clientRegistry.getEntityCache())
-        .thenReturn(entityCache);
+    when(clientRegistry.getEntityCache()).thenReturn(entityCache);
 
     enrichmentProcessor = createEnricherProcessor(configs);
     mockGetServiceEntityMethod();
   }
 
   private void mockGetServiceEntityMethod() {
-    String[] serviceNames = new String[]{"api_01", "api_02", "api_03"};
+    String[] serviceNames = new String[] {"api_01", "api_02", "api_03"};
     for (String serviceName : serviceNames) {
       org.hypertrace.entity.data.service.v1.AttributeValue value =
           org.hypertrace.entity.data.service.v1.AttributeValue.newBuilder()
-              .setValue(Value.newBuilder().setString(serviceName)).build();
+              .setValue(Value.newBuilder().setString(serviceName))
+              .build();
       org.hypertrace.entity.data.service.v1.Entity serviceEntity =
           org.hypertrace.entity.data.service.v1.Entity.newBuilder()
               .setTenantId(TENANT_ID)
               .setEntityName(serviceName)
               .setEntityId(serviceName + "-id")
               .setEntityType(EntityType.SERVICE.name())
-              .putIdentifyingAttributes(EntityConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_FQN), value)
+              .putIdentifyingAttributes(
+                  EntityConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_FQN), value)
               .build();
       when(edsClient.getEntitiesByName(TENANT_ID, EntityType.SERVICE.name(), serviceName))
           .thenReturn(Collections.singletonList(serviceEntity));
 
-      ByTypeAndIdentifyingAttributes request = ByTypeAndIdentifyingAttributes.newBuilder()
-          .setEntityType(EntityType.SERVICE.name())
-          .putIdentifyingAttributes(EntityConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_FQN), value)
-          .build();
+      ByTypeAndIdentifyingAttributes request =
+          ByTypeAndIdentifyingAttributes.newBuilder()
+              .setEntityType(EntityType.SERVICE.name())
+              .putIdentifyingAttributes(
+                  EntityConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_FQN), value)
+              .build();
 
       doReturn(serviceEntity).when(edsClient).upsert(serviceEntity);
       doReturn(serviceEntity).when(edsClient).getByTypeAndIdentifyingAttributes(TENANT_ID, request);
@@ -114,19 +117,23 @@ public class StructuredTracesEnrichmentTest {
 
   @Test
   public void testTraceMissingDownstreamEntrySpans() throws IOException, URISyntaxException {
-    String schemaStr = readStructuredTraceSchema("missing-downstream-entry-spans/structured-trace-schema.json");
+    String schemaStr =
+        readStructuredTraceSchema("missing-downstream-entry-spans/structured-trace-schema.json");
     Schema schema = (new Schema.Parser()).parse(schemaStr);
 
     StructuredTrace structuredTrace =
-        readInStructuredTraceFromJson("missing-downstream-entry-spans/before-enrichment.json", schema);
+        readInStructuredTraceFromJson(
+            "missing-downstream-entry-spans/before-enrichment.json", schema);
     StructuredTrace expectedEnrichedStructuredTrace =
-        readInStructuredTraceFromJson("missing-downstream-entry-spans/after-enrichment.json", schema);
+        readInStructuredTraceFromJson(
+            "missing-downstream-entry-spans/after-enrichment.json", schema);
     enrichmentProcessor.process(structuredTrace);
     Assertions.assertEquals(6, structuredTrace.getEventList().size());
     Assertions.assertEquals(expectedEnrichedStructuredTrace, structuredTrace);
   }
 
-  private static StructuredTrace readInStructuredTraceFromJson(String traceFileName, Schema schema) throws IOException {
+  private static StructuredTrace readInStructuredTraceFromJson(String traceFileName, Schema schema)
+      throws IOException {
     URL resource = Thread.currentThread().getContextClassLoader().getResource(traceFileName);
     if (resource == null) {
       throw new RuntimeException("Cannot find " + traceFileName + " in the classpath");

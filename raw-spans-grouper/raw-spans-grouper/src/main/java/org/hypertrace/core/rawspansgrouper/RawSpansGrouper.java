@@ -14,7 +14,6 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Named;
 import org.apache.kafka.streams.kstream.Produced;
@@ -34,37 +33,45 @@ import org.slf4j.LoggerFactory;
 
 public class RawSpansGrouper extends KafkaStreamsApp {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(RawSpansGrouper.class);
+  private static final Logger logger = LoggerFactory.getLogger(RawSpansGrouper.class);
 
   public RawSpansGrouper(ConfigClient configClient) {
     super(configClient);
   }
 
-  public StreamsBuilder buildTopology(Map<String, Object> properties, StreamsBuilder streamsBuilder,
+  public StreamsBuilder buildTopology(
+      Map<String, Object> properties,
+      StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> inputStreams) {
     Config jobConfig = getJobConfig(properties);
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
 
-    KStream<TraceIdentity, RawSpan> inputStream = (KStream<TraceIdentity, RawSpan>) inputStreams.get(inputTopic);
+    KStream<TraceIdentity, RawSpan> inputStream =
+        (KStream<TraceIdentity, RawSpan>) inputStreams.get(inputTopic);
     if (inputStream == null) {
-      inputStream = streamsBuilder
-          // read the input topic
-          .stream(inputTopic);
+      inputStream =
+          streamsBuilder
+              // read the input topic
+              .stream(inputTopic);
       inputStreams.put(inputTopic, inputStream);
     }
 
     // Retrieve the default value serde defined in config and use it
     Serde valueSerde = defaultValueSerde(properties);
-    StoreBuilder<KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>>> traceStoreBuilder = Stores
-        .keyValueStoreBuilder(Stores.persistentKeyValueStore(INFLIGHT_TRACE_STORE),
-            (Serde<TraceIdentity>)null,
-            new ValueAndTimestampSerde<>(valueSerde)).withCachingEnabled();
+    StoreBuilder<KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>>> traceStoreBuilder =
+        Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(INFLIGHT_TRACE_STORE),
+                (Serde<TraceIdentity>) null,
+                new ValueAndTimestampSerde<>(valueSerde))
+            .withCachingEnabled();
 
-    StoreBuilder<KeyValueStore<TraceIdentity, Long>> traceEmitTriggerStoreBuilder = Stores
-        .keyValueStoreBuilder(Stores.persistentKeyValueStore(TRACE_EMIT_TRIGGER_STORE),
-            (Serde<TraceIdentity>)null, Serdes.Long()).withCachingEnabled();
+    StoreBuilder<KeyValueStore<TraceIdentity, Long>> traceEmitTriggerStoreBuilder =
+        Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(TRACE_EMIT_TRIGGER_STORE),
+                (Serde<TraceIdentity>) null,
+                Serdes.Long())
+            .withCachingEnabled();
 
     streamsBuilder.addStateStore(traceStoreBuilder);
     streamsBuilder.addStateStore(traceEmitTriggerStoreBuilder);
@@ -73,8 +80,10 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     outputTopicProducer = outputTopicProducer.withName(OUTPUT_TOPIC_PRODUCER);
 
     inputStream
-        .transform(RawSpansGroupingTransformer::new,
-            Named.as(RawSpansGroupingTransformer.class.getSimpleName()), INFLIGHT_TRACE_STORE,
+        .transform(
+            RawSpansGroupingTransformer::new,
+            Named.as(RawSpansGroupingTransformer.class.getSimpleName()),
+            INFLIGHT_TRACE_STORE,
             TRACE_EMIT_TRIGGER_STORE)
         .to(outputTopic, outputTopicProducer);
 

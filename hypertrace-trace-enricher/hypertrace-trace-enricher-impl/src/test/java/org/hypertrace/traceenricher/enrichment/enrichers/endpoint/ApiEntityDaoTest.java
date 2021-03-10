@@ -28,17 +28,25 @@ public class ApiEntityDaoTest {
 
   @Test
   public void whenParamsAreNullThenExpectNullPointerException() {
-    Assertions.assertThrows(NullPointerException.class, () -> {
-      underTest.upsertApiEntity(null, "service-1", "OPERATION_NAME", "Driver:;getCustomers");
-    });
-    Assertions.assertThrows(NullPointerException.class, () -> {
-      underTest.upsertApiEntity("tenant-1", null, "OPERATION_NAME", "Driver:;getCustomers");
-    });
-    Assertions.assertThrows(NullPointerException.class, () -> {
-      underTest.upsertApiEntity("tenant-1", "service-1", null, "Driver:;getCustomers");
-    });
-    Assertions.assertThrows(NullPointerException.class, () -> {
-      underTest.upsertApiEntity("tenant-1", "service-1", "OPERATION_NAME", null);
-    });
+    Assertions.assertThrows(
+        NullPointerException.class,
+        () -> {
+          underTest.upsertApiEntity(null, "service-1", "OPERATION_NAME", "Driver:;getCustomers");
+        });
+    Assertions.assertThrows(
+        NullPointerException.class,
+        () -> {
+          underTest.upsertApiEntity("tenant-1", null, "OPERATION_NAME", "Driver:;getCustomers");
+        });
+    Assertions.assertThrows(
+        NullPointerException.class,
+        () -> {
+          underTest.upsertApiEntity("tenant-1", "service-1", null, "Driver:;getCustomers");
+        });
+    Assertions.assertThrows(
+        NullPointerException.class,
+        () -> {
+          underTest.upsertApiEntity("tenant-1", "service-1", "OPERATION_NAME", null);
+        });
   }
 }

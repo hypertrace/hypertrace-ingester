@@ -51,10 +51,8 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
   private BackendEntityEnricher enricher;
   private EntityCache entityCache;
 
-  @Mock
-  private EdsCacheClient edsClient;
-  @Mock
-  private ClientRegistry clientRegistry;
+  @Mock private EdsCacheClient edsClient;
+  @Mock private ClientRegistry clientRegistry;
 
   @BeforeEach
   public void setup() {
@@ -112,31 +110,31 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
     String backendId = "backend1";
     String backendName = "mongo:27017";
     String eventName = "mongo exit";
-    Map<String, String> identifyingAttributes = Map.of(
-        BACKEND_PROTOCOL_ATTR_NAME, BackendType.MONGO.name(),
-        BACKEND_HOST_ATTR_NAME, "mongo",
-        BACKEND_PORT_ATTR_NAME, "27017"
-    );
-    Map<String, String> attributes = Map.of(
-        "FROM_EVENT", eventName,
-        "FROM_EVENT_ID", HexUtils.getHex(ByteBuffer.wrap(EVENT_ID.getBytes()))
-    );
-    Entity backendEntity = createEntity(
-        EntityType.BACKEND,
-        backendName,
-        identifyingAttributes,
-        attributes,
-        TENANT_ID);
+    Map<String, String> identifyingAttributes =
+        Map.of(
+            BACKEND_PROTOCOL_ATTR_NAME, BackendType.MONGO.name(),
+            BACKEND_HOST_ATTR_NAME, "mongo",
+            BACKEND_PORT_ATTR_NAME, "27017");
+    Map<String, String> attributes =
+        Map.of(
+            "FROM_EVENT",
+            eventName,
+            "FROM_EVENT_ID",
+            HexUtils.getHex(ByteBuffer.wrap(EVENT_ID.getBytes())));
+    Entity backendEntity =
+        createEntity(EntityType.BACKEND, backendName, identifyingAttributes, attributes, TENANT_ID);
 
-    when(edsClient.upsert(eq(backendEntity))).thenReturn(
-        Entity.newBuilder(backendEntity)
-            .setEntityId(backendId)
-            .putAllAttributes(createEdsAttributes(identifyingAttributes))
-            .build()
-    );
+    when(edsClient.upsert(eq(backendEntity)))
+        .thenReturn(
+            Entity.newBuilder(backendEntity)
+                .setEntityId(backendId)
+                .putAllAttributes(createEdsAttributes(identifyingAttributes))
+                .build());
 
     Event e = createApiExitEvent(EVENT_ID).setEventName("mongo exit").build();
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(Mongo.MONGO_URL), createAvroAttribute("mongo:27017"));
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(Mongo.MONGO_URL), createAvroAttribute("mongo:27017"));
     StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
     enricher.enrichTrace(trace);
     Assertions.assertEquals(ByteBuffer.wrap(EVENT_ID.getBytes()), e.getEventId());
@@ -145,7 +143,8 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   private Event.Builder createApiEntryEvent(String eventId) {
-    return Event.newBuilder().setCustomerId(TENANT_ID)
+    return Event.newBuilder()
+        .setCustomerId(TENANT_ID)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
         .setEntityIdList(Collections.singletonList(SERVICE_ID))
         .setEnrichedAttributes(createNewAvroAttributes(Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY")))
@@ -153,7 +152,8 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   private Event.Builder createApiExitEvent(String eventId) {
-    return Event.newBuilder().setCustomerId(TENANT_ID)
+    return Event.newBuilder()
+        .setCustomerId(TENANT_ID)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
         .setEntityIdList(Collections.singletonList(SERVICE_ID))
         .setEnrichedAttributes(createNewAvroAttributes(Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT")))
@@ -161,7 +161,10 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   private org.hypertrace.entity.data.service.v1.Entity createEntity(
-      EntityType entityType, String name, Map<String, String> identifyingAttributes, Map<String, String> attributes,
+      EntityType entityType,
+      String name,
+      Map<String, String> identifyingAttributes,
+      Map<String, String> attributes,
       String tenantId) {
     return org.hypertrace.entity.data.service.v1.Entity.newBuilder()
         .setEntityType(entityType.name())

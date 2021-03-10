@@ -21,9 +21,7 @@ import org.hypertrace.traceenricher.trace.enricher.TraceEnricher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Hypertrace ingestion pipeline
- */
+/** Hypertrace ingestion pipeline */
 public class HypertraceIngester extends KafkaStreamsApp {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HypertraceIngester.class);
@@ -58,7 +56,8 @@ public class HypertraceIngester extends KafkaStreamsApp {
   }
 
   @Override
-  public StreamsBuilder buildTopology(Map<String, Object> properties,
+  public StreamsBuilder buildTopology(
+      Map<String, Object> properties,
       StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> inputStreams) {
 
@@ -69,13 +68,13 @@ public class HypertraceIngester extends KafkaStreamsApp {
 
       // create an instance and retains is reference to be used later in other methods
       KafkaStreamsApp subTopology = getSubTopologyInstance(subTopologyName);
-      jobNameToSubTopology
-          .put(subTopologyName, Pair.of(subTopology.getJobConfigKey(), subTopology));
+      jobNameToSubTopology.put(
+          subTopologyName, Pair.of(subTopology.getJobConfigKey(), subTopology));
 
       // need to use its own copy as input/output topics are different
       Config subTopologyJobConfig = getSubJobConfig(subTopologyName);
-      Map<String, Object> flattenSubTopologyConfig = subTopology
-          .getStreamsConfig(subTopologyJobConfig);
+      Map<String, Object> flattenSubTopologyConfig =
+          subTopology.getStreamsConfig(subTopologyJobConfig);
       flattenSubTopologyConfig.put(subTopology.getJobConfigKey(), subTopologyJobConfig);
 
       // add specific job properties
@@ -83,8 +82,8 @@ public class HypertraceIngester extends KafkaStreamsApp {
       streamsBuilder = subTopology.buildTopology(properties, streamsBuilder, inputStreams);
 
       // retain per job key and its topology
-      jobNameToSubTopology
-          .put(subTopologyName, Pair.of(subTopology.getJobConfigKey(), subTopology));
+      jobNameToSubTopology.put(
+          subTopologyName, Pair.of(subTopology.getJobConfigKey(), subTopology));
     }
 
     return streamsBuilder;
@@ -120,11 +119,11 @@ public class HypertraceIngester extends KafkaStreamsApp {
   }
 
   private Config getSubJobConfig(String jobName) {
-    return configClient.getConfig(jobName,
+    return configClient.getConfig(
+        jobName,
         ConfigUtils.getEnvironmentProperty("cluster.name"),
         ConfigUtils.getEnvironmentProperty("pod.name"),
-        ConfigUtils.getEnvironmentProperty("container.name")
-    );
+        ConfigUtils.getEnvironmentProperty("container.name"));
   }
 
   private Config getJobConfig(Map<String, Object> properties) {
@@ -132,10 +131,11 @@ public class HypertraceIngester extends KafkaStreamsApp {
   }
 
   private void addProperties(Map<String, Object> baseProps, Map<String, Object> props) {
-    props.forEach((k, v) -> {
-      if (!baseProps.containsKey(k)) {
-        baseProps.put(k, v);
-      }
-    });
+    props.forEach(
+        (k, v) -> {
+          if (!baseProps.containsKey(k)) {
+            baseProps.put(k, v);
+          }
+        });
   }
 }

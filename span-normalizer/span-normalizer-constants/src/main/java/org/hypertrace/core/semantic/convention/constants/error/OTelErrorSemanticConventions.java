@@ -1,8 +1,6 @@
 package org.hypertrace.core.semantic.convention.constants.error;
 
-/**
- * OTel attributes for errors
- */
+/** OTel attributes for errors */
 public enum OTelErrorSemanticConventions {
   EXCEPTION_TYPE("exception.type"),
   EXCEPTION_MESSAGE("exception.message"),

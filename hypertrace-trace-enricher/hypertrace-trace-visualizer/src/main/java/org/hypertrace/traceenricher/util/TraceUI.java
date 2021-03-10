@@ -22,9 +22,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * TraceUI converts a trace into a desired JSON format to be consumed by D3
- * It outputs the trace JSON files in /tmp/ directory. The trace json file names will
- * be `trace-id-in-hex`.json
+ * TraceUI converts a trace into a desired JSON format to be consumed by D3 It outputs the trace
+ * JSON files in /tmp/ directory. The trace json file names will be `trace-id-in-hex`.json
  */
 public class TraceUI {
   private final StructuredTrace trace;
@@ -108,18 +107,21 @@ public class TraceUI {
 
   private static Set<Event> findRootEvents(StructuredTrace trace) {
     Set<Event> roots = new HashSet<>();
-    Map<ByteBuffer, Event> eventMap = trace.getEventList().stream().collect(
-        Collectors.toMap(Event::getEventId, span -> span, (e1, e2) -> e1));
+    Map<ByteBuffer, Event> eventMap =
+        trace.getEventList().stream()
+            .collect(Collectors.toMap(Event::getEventId, span -> span, (e1, e2) -> e1));
     for (Event e : trace.getEventList()) {
       if (e.getEventRefList().isEmpty()) {
         roots.add(e);
       } else {
         // Check if there are any spans whose parent is missing in the trace (broken trace case).
-        e.getEventRefList().forEach(r -> {
-          if (!eventMap.containsKey(r.getEventId())) {
-            roots.add(e);
-          }
-        });
+        e.getEventRefList()
+            .forEach(
+                r -> {
+                  if (!eventMap.containsKey(r.getEventId())) {
+                    roots.add(e);
+                  }
+                });
       }
     }
     return roots;
@@ -132,9 +134,11 @@ public class TraceUI {
         writer.write("\n");
       }
 
-      System.out.println("Written the JSON representation of trace "
-          + HexUtils.getHex(trace.getTraceId()) + " to file: "
-          + file.toPath().toAbsolutePath().toString());
+      System.out.println(
+          "Written the JSON representation of trace "
+              + HexUtils.getHex(trace.getTraceId())
+              + " to file: "
+              + file.toPath().toAbsolutePath().toString());
     } catch (IOException e) {
       e.printStackTrace();
     }

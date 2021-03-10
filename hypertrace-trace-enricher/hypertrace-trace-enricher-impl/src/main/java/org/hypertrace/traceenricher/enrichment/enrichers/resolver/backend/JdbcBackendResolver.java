@@ -77,8 +77,8 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
           EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
           createAttributeValue(path));
     }
-    entityBuilder.putAttributes(RawSpanConstants.getValue(Sql.SQL_DB_TYPE),
-        createAttributeValue(dbType));
+    entityBuilder.putAttributes(
+        RawSpanConstants.getValue(Sql.SQL_DB_TYPE), createAttributeValue(dbType));
     return Optional.of(entityBuilder.build());
   }
 

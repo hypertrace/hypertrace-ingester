@@ -19,8 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ApiEntityDao {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(
-      ApiEntityDao.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(ApiEntityDao.class);
 
   private static final String DISCOVERED_FROM = "OPERATION_NAME";
   private static final String DISCOVERED_STATE = "DISCOVERED";
@@ -46,9 +45,7 @@ public class ApiEntityDao {
     edsClient = client;
   }
 
-  public Entity upsertApiEntity(
-      String tenantId, String serviceId,
-      String apiType, String apiName) {
+  public Entity upsertApiEntity(String tenantId, String serviceId, String apiType, String apiName) {
 
     Preconditions.checkNotNull(tenantId, "tenantId can't be empty");
     Preconditions.checkNotNull(serviceId, "serviceId can't be empty");
@@ -57,16 +54,17 @@ public class ApiEntityDao {
 
     String pattern = apiName;
 
-    Entity.Builder entityBuilder = Entity.newBuilder()
-        .setTenantId(tenantId)
-        .setEntityType(EntityType.API.name())
-        .setEntityName(pattern)
-        .putIdentifyingAttributes(API_URL_PATTERN_ATTR, createAttributeValue(pattern))
-        .putIdentifyingAttributes(SERVICE_ID_ATTR, createAttributeValue(serviceId))
-        .putIdentifyingAttributes(API_TYPE_ATTR, createAttributeValue(apiType))
-        .putAttributes(API_DISCOVERY_FROM_ATTR, createAttributeValue(DISCOVERED_FROM))
-        .putAttributes(API_DISCOVERY_STATE_ATTR, createAttributeValue(DISCOVERED_STATE))
-        .putAttributes(API_NAME_ATTR, createAttributeValue(apiName));
+    Entity.Builder entityBuilder =
+        Entity.newBuilder()
+            .setTenantId(tenantId)
+            .setEntityType(EntityType.API.name())
+            .setEntityName(pattern)
+            .putIdentifyingAttributes(API_URL_PATTERN_ATTR, createAttributeValue(pattern))
+            .putIdentifyingAttributes(SERVICE_ID_ATTR, createAttributeValue(serviceId))
+            .putIdentifyingAttributes(API_TYPE_ATTR, createAttributeValue(apiType))
+            .putAttributes(API_DISCOVERY_FROM_ATTR, createAttributeValue(DISCOVERED_FROM))
+            .putAttributes(API_DISCOVERY_STATE_ATTR, createAttributeValue(DISCOVERED_STATE))
+            .putAttributes(API_NAME_ATTR, createAttributeValue(apiName));
 
     Entity entity = entityBuilder.build();
     LOGGER.info("Upserting Api entity: [{}]", TextFormat.shortDebugString(entity));
@@ -74,7 +72,8 @@ public class ApiEntityDao {
   }
 
   private AttributeValue createAttributeValue(String value) {
-    return AttributeValue.newBuilder().setValue(Value.newBuilder().setString(value).build())
+    return AttributeValue.newBuilder()
+        .setValue(Value.newBuilder().setString(value).build())
         .build();
   }
 }
