@@ -35,8 +35,9 @@ public class KafkaBackendResolverTest {
     String broker = "kafka-test.hypertrace.com:9092";
     Entity entity =
         kafkaBackendResolver
-            .resolveEntity(getOtelKafkaBackendEvent(broker), structuredTraceGraph)
-            .get();
+            .resolve(getOtelKafkaBackendEvent(broker), structuredTraceGraph)
+            .get()
+            .getEntity();
     Assertions.assertEquals(broker, entity.getEntityName());
   }
 
@@ -46,8 +47,9 @@ public class KafkaBackendResolverTest {
     String brokerPort = "9092";
     Entity entity =
         kafkaBackendResolver
-            .resolveEntity(getOTKafkaBackendEvent(brokerHost, brokerPort), structuredTraceGraph)
-            .get();
+            .resolve(getOTKafkaBackendEvent(brokerHost, brokerPort), structuredTraceGraph)
+            .get()
+            .getEntity();
     Assertions.assertEquals(String.format("%s:%s", brokerHost, brokerPort), entity.getEntityName());
   }
 

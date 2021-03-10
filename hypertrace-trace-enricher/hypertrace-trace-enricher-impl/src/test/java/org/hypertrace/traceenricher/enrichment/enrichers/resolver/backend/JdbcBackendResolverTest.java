@@ -95,7 +95,8 @@ public class JdbcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity = jdbcBackendResolver.resolveEntity(e, structuredTraceGraph).get();
+    final Entity backendEntity =
+        jdbcBackendResolver.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("dbhost:9001", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     Assertions.assertEquals(
@@ -200,7 +201,7 @@ public class JdbcBackendResolverTest {
                         .build()))
             .build();
 
-    Entity backendEntity = jdbcBackendResolver.resolveEntity(e, structuredTraceGraph).get();
+    Entity backendEntity = jdbcBackendResolver.resolve(e, structuredTraceGraph).get().getEntity();
 
     assertEquals("127.0.0.1:3306", backendEntity.getEntityName());
     assertEquals(

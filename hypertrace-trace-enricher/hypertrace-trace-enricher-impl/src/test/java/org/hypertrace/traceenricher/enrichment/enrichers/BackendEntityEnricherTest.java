@@ -2,11 +2,10 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
+
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
-import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
@@ -81,29 +80,32 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
     Assertions.assertNull(EnrichedSpanUtils.getBackendId(e));
   }
 
-  @Test
-  public void test_EnrichEvent_test_enrichEvent_missingBackendOperationEvent() {
-    Event e = createApiEntryEvent(EVENT_ID).build();
-    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
-    enricher.enrichEvent(trace,e);
-    Assertions.assertNull(EnrichedSpanUtils.getBackendOperation(e));
-  }
+  //  @Test
+  //  public void test_EnrichEvent_test_enrichEvent_missingBackendOperationEvent() {
+  //    Event e = createApiEntryEvent(EVENT_ID).build();
+  //    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+  //    enricher.enrichEvent(trace,e);
+  //    Assertions.assertNull(EnrichedSpanUtils.getBackendOperation(e));
+  //  }
 
-  @Test
-  public void test_EnrichEvent_validDBBackendOperation() {
-    Event e = createApiEntryEvent(EVENT_ID).setAttributes(createNewAvroAttributes(Map.of("db.operation", "select"))).build();
-    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
-    enricher.enrichEvent(trace,e);
-    Assertions.assertEquals("select", EnrichedSpanUtils.getBackendOperation(e));
-  }
-
-  @Test
-  public void test_EnrichEvent_validMessagingBackendOperation() {
-    Event e = createApiEntryEvent(EVENT_ID).setAttributes(createNewAvroAttributes(Map.of("messaging.operation", "receive"))).build();
-    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
-    enricher.enrichEvent(trace,e);
-    Assertions.assertEquals("receive", EnrichedSpanUtils.getBackendOperation(e));
-  }
+  //  @Test
+  //  public void test_EnrichEvent_validDBBackendOperation() {
+  //    Event e =
+  // createApiEntryEvent(EVENT_ID).setAttributes(createNewAvroAttributes(Map.of("db.operation",
+  // "select"))).build();
+  //    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+  //    enricher.enrichEvent(trace,e);
+  //    Assertions.assertEquals("select", EnrichedSpanUtils.getBackendOperation(e));
+  //  }
+  //
+  //  @Test
+  //  public void test_EnrichEvent_validMessagingBackendOperation() {
+  //    Event e =
+  // createApiEntryEvent(EVENT_ID).setAttributes(createNewAvroAttributes(Map.of("messaging.operation", "receive"))).build();
+  //    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+  //    enricher.enrichEvent(trace,e);
+  //    Assertions.assertEquals("receive", EnrichedSpanUtils.getBackendOperation(e));
+  //  }
 
   @Test
   public void test_EnrichTrace_ValidBackend() {

@@ -40,8 +40,9 @@ public class SqsBackendResolverTest {
       String sqsHost = sqsURL.getHost();
       Entity entity =
           sqsBackendResolver
-              .resolveEntity(getOtelSqsBackendEvent(sqsConnectionString), structuredTraceGraph)
-              .get();
+              .resolve(getOtelSqsBackendEvent(sqsConnectionString), structuredTraceGraph)
+              .get()
+              .getEntity();
       Assertions.assertEquals(sqsHost, entity.getEntityName());
     } catch (MalformedURLException e) {
       Assertions.fail("Unable to create URL for given connection string");
@@ -52,7 +53,10 @@ public class SqsBackendResolverTest {
   public void TestOTBackendEventResolution() {
     String sqsHost = "sqs.ap-south-1.amazonaws.com";
     Entity entity =
-        sqsBackendResolver.resolveEntity(getOTSqsBackendEvent(sqsHost), structuredTraceGraph).get();
+        sqsBackendResolver
+            .resolve(getOTSqsBackendEvent(sqsHost), structuredTraceGraph)
+            .get()
+            .getEntity();
     Assertions.assertEquals(sqsHost, entity.getEntityName());
   }
 

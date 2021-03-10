@@ -35,6 +35,7 @@ public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityV
       EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT);
   private static final String ERROR_COUNT_ATTR =
       EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT);
+
   @Override
   List<BackendEntityView> generateView(
       StructuredTrace structuredTrace,

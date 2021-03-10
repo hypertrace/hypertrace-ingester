@@ -35,8 +35,9 @@ public class RabbitMqBackendResolverTest {
     String routingKey = "routingkey";
     Entity entity =
         rabbitMqBackendResolver
-            .resolveEntity(getRabbitMqEvent(routingKey), structuredTraceGraph)
-            .get();
+            .resolve(getRabbitMqEvent(routingKey), structuredTraceGraph)
+            .get()
+            .getEntity();
     Assertions.assertEquals(routingKey, entity.getEntityName());
   }
 

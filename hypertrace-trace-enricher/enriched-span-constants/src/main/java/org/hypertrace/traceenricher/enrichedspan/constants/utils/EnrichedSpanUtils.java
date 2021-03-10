@@ -27,7 +27,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 
-
 /**
  * Utility class to easily read named attributes from an enriched span. This is equivalent of an
  * enriched span POJO.

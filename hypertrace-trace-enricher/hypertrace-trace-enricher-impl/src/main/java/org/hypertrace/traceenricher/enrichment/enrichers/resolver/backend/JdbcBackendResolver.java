@@ -1,22 +1,27 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValue;
+import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
 
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.RateLimiter;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Sql;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
-import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
+import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
+import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,9 +32,11 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final RateLimiter INVALID_BACKEND_URL_LIMITER = RateLimiter.create(1 / 60d);
   private static final Splitter COLON_SPLITTER = Splitter.on(":");
+  private static final String BACKEND_OPERATION_ATTR =
+      EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
 
   @Override
-  public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
+  public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
     if (!DbSemanticConventionUtils.isSqlBackend(event)) {
       return Optional.empty();
     }
@@ -79,7 +86,17 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
     }
     entityBuilder.putAttributes(
         RawSpanConstants.getValue(Sql.SQL_DB_TYPE), createAttributeValue(dbType));
-    return Optional.of(entityBuilder.build());
+
+    setAttributeForFirstExistingKey(
+        event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForDBOperation());
+
+    String attributeKey =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, DbSemanticConventionUtils.getAttributeKeysForDBOperation());
+    AttributeValue operation = SpanAttributeUtils.getAttributeValue(event, attributeKey);
+
+    return Optional.of(
+        new BackendInfo(entityBuilder.build(), Map.of(BACKEND_OPERATION_ATTR, operation)));
   }
 
   private String getDbType(String scheme) {

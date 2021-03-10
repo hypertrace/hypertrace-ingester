@@ -8,11 +8,12 @@ public class BackendInfo {
   Entity entity;
   Map<String, AttributeValue> attributes;
 
-  public BackendInfo(Entity entity,
-      Map<String, AttributeValue> attributes) {
+  public BackendInfo(Entity entity, Map<String, AttributeValue> attributes) {
     this.entity = entity;
     this.attributes = attributes;
   }
+
+  public BackendInfo(Entity build) {}
 
   public Entity getEntity() {
     return entity;

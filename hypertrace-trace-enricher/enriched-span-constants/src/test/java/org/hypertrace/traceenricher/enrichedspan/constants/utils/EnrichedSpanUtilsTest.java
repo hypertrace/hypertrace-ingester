@@ -392,13 +392,12 @@ public class EnrichedSpanUtilsTest {
   @Test
   public void testGetBackendOperation_withData() {
     Event e = mock(Event.class);
-    when(e.getEnrichedAttributes()).thenReturn(
-        Attributes.newBuilder()
-            .setAttributeMap(
-                Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select"))
-            )
-            .build()
-    );
+    when(e.getEnrichedAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")))
+                .build());
     assertEquals("select", EnrichedSpanUtils.getBackendOperation(e));
   }
 

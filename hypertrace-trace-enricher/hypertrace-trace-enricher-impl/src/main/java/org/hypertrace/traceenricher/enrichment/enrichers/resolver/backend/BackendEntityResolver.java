@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.entity.data.service.v1.Entity;
 
 /**
  * Composite backend entity resolver which tries to resolve the backend entity using other resolvers
