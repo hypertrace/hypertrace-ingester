@@ -27,11 +27,11 @@ public class BackendEntityResolver extends AbstractBackendResolver {
   }
 
   @Override
-  public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
+  public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
     for (AbstractBackendResolver backendResolver : backendResolvers) {
-      Optional<Entity> entity = backendResolver.resolveEntity(event, structuredTraceGraph);
-      if (entity.isPresent()) {
-        return entity;
+      Optional<BackendInfo> backendInfo = backendResolver.resolve(event, structuredTraceGraph);
+      if (backendInfo.isPresent()) {
+        return backendInfo;
       }
     }
     return Optional.empty();

@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -82,7 +83,8 @@ public abstract class AbstractTraceEnricher implements Enricher {
     enrichedAttributes.getAttributeMap().put(key, value);
   }
 
-  protected void addEnrichedAttributes(Event event, List<Pair<String, AttributeValue>> attributes) {
+  protected void addEnrichedAttributes(Event event, List<Pair<String, AttributeValue>> attributes,
+      Map<String, AttributeValue> stringAttributeValueMap) {
     attributes.forEach(attributePair ->
         addEnrichedAttribute(event, attributePair.getKey(), attributePair.getValue()));
   }

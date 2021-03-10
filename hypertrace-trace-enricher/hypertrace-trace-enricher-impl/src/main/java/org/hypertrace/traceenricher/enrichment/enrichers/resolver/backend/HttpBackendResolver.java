@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
+import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -47,6 +48,8 @@ public class HttpBackendResolver extends AbstractBackendResolver {
       }
       setAttributeForFirstExistingKey(event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpMethod());
       setAttributeForFirstExistingKey(event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpRequestMethod());
+
+      String attributeKey = SpanAttributeUtils.getFirstAvailableStringAttribute()
       return Optional.of(entityBuilder.build());
     }
     return Optional.empty();

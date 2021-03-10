@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import com.typesafe.config.Config;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -27,6 +28,7 @@ import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendEntityResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
 import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,13 +76,13 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
         .forEach(pair -> decorateWithBackendEntity(pair.getRight().get(), pair.getLeft(), trace));
   }
 
-  @Override
-  public void enrichEvent(StructuredTrace trace, Event event) {
-    String backendOperation = SpanAttributeUtils.getFirstAvailableStringAttribute(event, BACKEND_OPERATIONS);
-    if (backendOperation != null) {
-      addEnrichedAttribute(event, BACKEND_OPERATION_ATTR, AttributeValueCreator.create(backendOperation));
-    }
-  }
+//  @Override
+//  public void enrichEvent(StructuredTrace trace, Event event) {
+//    String backendOperation = SpanAttributeUtils.getFirstAvailableStringAttribute(event, BACKEND_OPERATIONS);
+//    if (backendOperation != null) {
+//      addEnrichedAttribute(event, BACKEND_OPERATION_ATTR, AttributeValueCreator.create(backendOperation));
+//    }
+//  }
 
   /**
    * Checks if the candidateEntity is indeed a backend Entity
@@ -126,10 +128,10 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
     // if it couldn't find a child that's not a service
   }
 
-  private void decorateWithBackendEntity(Entity backendEntity, Event event, StructuredTrace trace) {
+  private void decorateWithBackendEntity(BackendInfo backendEntity, Event event, StructuredTrace trace) {
     LOGGER.debug("Trying to load or create backend entity: {}, corresponding event: {}",
         backendEntity, event);
-    Entity backend = createBackendIfMissing(backendEntity);
+    Entity backend = createBackendIfMissing(backendEntity.getEntity());
     if (backend == null) {
       LOGGER.warn("Failed to upsert backend entity: {}", backendEntity);
       return;
@@ -141,8 +143,9 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
       return;
     }
 
+    Map<String, org.hypertrace.core.datamodel.AttributeValue> attributes = backendEntity.getAttributes();
     addEntity(trace, event, avroEntity);
-    addEnrichedAttributes(event, getAttributesToEnrich(backend));
+    addEnrichedAttributes(event, getAttributesToEnrich(backend), attributes);
   }
 
   private List<Pair<String, org.hypertrace.core.datamodel.AttributeValue>> getAttributesToEnrich(

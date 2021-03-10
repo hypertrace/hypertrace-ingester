@@ -31,7 +31,7 @@ public abstract class AbstractBackendResolver {
   private final static String DEFAULT_PORT = "-1";
   private static final String SVC_CLUSTER_LOCAL_SUFFIX = ".svc.cluster.local";
 
-  public abstract Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph);
+  public abstract Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph);
 
   Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event) {
     String[] hostAndPort = backendURI.split(COLON);
