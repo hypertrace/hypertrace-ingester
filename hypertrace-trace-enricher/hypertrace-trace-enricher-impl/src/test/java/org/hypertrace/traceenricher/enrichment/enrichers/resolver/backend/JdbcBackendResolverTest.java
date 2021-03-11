@@ -264,8 +264,8 @@ public class JdbcBackendResolverTest {
                             buildAttributeValue("mysql"),
                             "span.kind",
                             buildAttributeValue("client"),
-                            "db.operation",
-                            AttributeValue.newBuilder().setValue("select").build(),
+                            OTelDbSemanticConventions.DB_STATEMENT.getValue(),
+                            buildAttributeValue("SELECT * from example.user"),
                             "k8s.pod_id",
                             buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
                             "docker.container_id",
@@ -337,6 +337,6 @@ public class JdbcBackendResolverTest {
             .getString());
 
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
-    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")), attributes);
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("SELECT")), attributes);
   }
 }
