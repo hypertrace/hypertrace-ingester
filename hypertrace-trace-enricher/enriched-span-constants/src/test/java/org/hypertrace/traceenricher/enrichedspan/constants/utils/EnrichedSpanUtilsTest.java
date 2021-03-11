@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -378,6 +379,26 @@ public class EnrichedSpanUtilsTest {
 
     List<String> spaceIds = EnrichedSpanUtils.getSpaceIds(e);
     assertEquals(emptyList(), spaceIds);
+  }
+
+  @Test
+  public void testGetBackendOperation_empty() {
+    Event e = mock(Event.class);
+
+    String backend_operation = EnrichedSpanUtils.getBackendOperation(e);
+    assertNull(backend_operation);
+  }
+
+  @Test
+  public void testGetBackendOperation_withData() {
+    Event e = mock(Event.class);
+    when(e.getEnrichedAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")))
+                .build());
+    assertEquals("select", EnrichedSpanUtils.getBackendOperation(e));
   }
 
   @Test

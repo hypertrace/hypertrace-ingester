@@ -19,6 +19,7 @@ import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
+import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
@@ -43,6 +44,8 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST);
   private static final String BACKEND_PORT_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT);
+  private static String BACKEND_OPERATION_ATTR =
+      EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
 
   private BackendEntityEnricher enricher;
   private EntityCache entityCache;
@@ -75,6 +78,14 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
     enricher.enrichTrace(trace);
     Assertions.assertEquals(ByteBuffer.wrap(EVENT_ID.getBytes()), e.getEventId());
     Assertions.assertNull(EnrichedSpanUtils.getBackendId(e));
+  }
+
+  @Test
+  public void test_EnrichEvent_test_enrichEvent_missingBackendOperationEvent() {
+    Event e = createApiEntryEvent(EVENT_ID).build();
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+    enricher.enrichEvent(trace, e);
+    Assertions.assertNull(EnrichedSpanUtils.getBackendOperation(e));
   }
 
   @Test

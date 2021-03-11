@@ -1,5 +1,7 @@
 package org.hypertrace.semantic.convention.utils.messaging;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -35,6 +37,8 @@ public class MessagingSemanticConventionUtils {
       OtelMessagingSemanticConventions.AWS_SQS_MESSAGING_SYSTEM_VALUE.getValue();
   private static final String PEER_SERVICE_NAME =
       OpenTracingSpanSemanticConventions.PEER_NAME.getValue();
+  private static final String MESSAGING_OPERATION =
+      OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue();
 
   private static final List<String> RABBITMQ_ROUTING_KEYS =
       new ArrayList<>(
@@ -99,6 +103,10 @@ public class MessagingSemanticConventionUtils {
     }
 
     return false;
+  }
+
+  public static List<String> getAttributeKeysForMessagingOperation() {
+    return Lists.newArrayList(Sets.newHashSet(MESSAGING_OPERATION));
   }
 
   public static Optional<String> getSqsBackendURI(Event event) {
