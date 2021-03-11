@@ -3,8 +3,6 @@ package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValue;
 import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
@@ -63,13 +60,7 @@ public class HttpBackendResolver extends AbstractBackendResolver {
           event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpRequestMethod());
 
       Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-      String httpOperation =
-          SpanAttributeUtils.getFirstAvailableStringAttribute(
-              event,
-              ImmutableList.copyOf(
-                  Iterables.concat(
-                      HttpSemanticConventionUtils.getAttributeKeysForHttpMethod(),
-                      HttpSemanticConventionUtils.getAttributeKeysForHttpMethod())));
+      String httpOperation = httpRequest.map(Request::getMethod).orElse(null);
       if (httpOperation != null) {
         enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(httpOperation));
       }

@@ -80,32 +80,13 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
     Assertions.assertNull(EnrichedSpanUtils.getBackendId(e));
   }
 
-  //  @Test
-  //  public void test_EnrichEvent_test_enrichEvent_missingBackendOperationEvent() {
-  //    Event e = createApiEntryEvent(EVENT_ID).build();
-  //    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
-  //    enricher.enrichEvent(trace,e);
-  //    Assertions.assertNull(EnrichedSpanUtils.getBackendOperation(e));
-  //  }
-
-  //  @Test
-  //  public void test_EnrichEvent_validDBBackendOperation() {
-  //    Event e =
-  // createApiEntryEvent(EVENT_ID).setAttributes(createNewAvroAttributes(Map.of("db.operation",
-  // "select"))).build();
-  //    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
-  //    enricher.enrichEvent(trace,e);
-  //    Assertions.assertEquals("select", EnrichedSpanUtils.getBackendOperation(e));
-  //  }
-  //
-  //  @Test
-  //  public void test_EnrichEvent_validMessagingBackendOperation() {
-  //    Event e =
-  // createApiEntryEvent(EVENT_ID).setAttributes(createNewAvroAttributes(Map.of("messaging.operation", "receive"))).build();
-  //    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
-  //    enricher.enrichEvent(trace,e);
-  //    Assertions.assertEquals("receive", EnrichedSpanUtils.getBackendOperation(e));
-  //  }
+  @Test
+  public void test_EnrichEvent_test_enrichEvent_missingBackendOperationEvent() {
+    Event e = createApiEntryEvent(EVENT_ID).build();
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+    enricher.enrichEvent(trace, e);
+    Assertions.assertNull(EnrichedSpanUtils.getBackendOperation(e));
+  }
 
   @Test
   public void test_EnrichTrace_ValidBackend() {
