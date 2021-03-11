@@ -98,5 +98,7 @@ protocol SpanEventViewProtocol {
     array<string> space_ids = [];
 
     int api_exit_calls = 0;
+
+    map<int> api_exit_services = {};
   }
 }
