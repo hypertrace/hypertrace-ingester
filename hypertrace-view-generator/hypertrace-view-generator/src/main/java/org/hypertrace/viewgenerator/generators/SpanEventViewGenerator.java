@@ -217,18 +217,18 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       return exitCallCount;
     }
 
-    Map<String, Integer> getServiceNameToExitCalls() {
-      Map<String, Integer> serviceNameToExitCalls =
+    Map<String, Integer> getCalleeNameToExitCalls() {
+      Map<String, Integer> calleeNameToExitCalls =
           calleeIdToCallCount.entrySet().stream()
               .collect(
                   Collectors.toMap(k -> calleeIdToName.get(k.getKey()), v -> v.getValue().get()));
       if (unknownServiceExits > 0) {
-        serviceNameToExitCalls.put(UNKNOWN_SERVICE, unknownServiceExits);
+        calleeNameToExitCalls.put(UNKNOWN_SERVICE, unknownServiceExits);
       }
       if (unknownBackendExits > 0) {
-        serviceNameToExitCalls.put(UNKNOWN_BACKEND, unknownBackendExits);
+        calleeNameToExitCalls.put(UNKNOWN_BACKEND, unknownBackendExits);
       }
-      return serviceNameToExitCalls;
+      return calleeNameToExitCalls;
     }
   }
 
@@ -257,7 +257,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       builder.setApiExitServices(
           eventToApiExitCall
               .getOrDefault(event.getEventId(), new ApiExitCallInfo())
-              .getServiceNameToExitCalls());
+              .getCalleeNameToExitCalls());
     } else {
       builder.setApiTraceCount(0);
     }

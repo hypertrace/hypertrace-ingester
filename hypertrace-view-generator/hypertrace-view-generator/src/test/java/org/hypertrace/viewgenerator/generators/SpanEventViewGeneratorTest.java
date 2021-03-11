@@ -169,7 +169,7 @@ public class SpanEventViewGeneratorTest {
                 apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0), v.getExitCallCount());
             assertEquals(
                 apiNodeToExitServices.getOrDefault(apiNodeIndex, Maps.newHashMap()),
-                v.getServiceNameToExitCalls());
+                v.getCalleeNameToExitCalls());
           }
         });
 
