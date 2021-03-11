@@ -157,6 +157,88 @@ public class JdbcBackendResolverTest {
   }
 
   @Test
+  public void testBackendOperationWithSqlQuery() {
+    Event e =
+        Event.newBuilder()
+            .setCustomerId("__default")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "sql.url",
+                            AttributeValue.newBuilder()
+                                .setValue("jdbc:hsqldb:hsql://dbhost:9001/webgoat")
+                                .build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "sql.query",
+                            AttributeValue.newBuilder()
+                                .setValue("insert into audit_message (message, id) values (?, ?)")
+                                .build()))
+                    .build())
+            .setEventName("jdbc.connection.prepare")
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("insert")), attributes);
+  }
+
+  @Test
+  public void testBackendOperationWithDbStatement() {
+    Event e =
+        Event.newBuilder()
+            .setCustomerId("__default")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "sql.url",
+                            AttributeValue.newBuilder()
+                                .setValue("jdbc:hsqldb:hsql://dbhost:9001/webgoat")
+                                .build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "db.statement",
+                            AttributeValue.newBuilder()
+                                .setValue("insert into audit_message (message, id) values (?, ?)")
+                                .build()))
+                    .build())
+            .setEventName("jdbc.connection.prepare")
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("insert")), attributes);
+  }
+
+  @Test
   public void testWithOtelFormatUrl() {
     Event e =
         Event.newBuilder()
@@ -182,8 +264,8 @@ public class JdbcBackendResolverTest {
                             buildAttributeValue("mysql"),
                             "span.kind",
                             buildAttributeValue("client"),
-                            OTelDbSemanticConventions.DB_STATEMENT.getValue(),
-                            buildAttributeValue("SELECT * from example.user"),
+                            "db.operation",
+                            AttributeValue.newBuilder().setValue("select").build(),
                             "k8s.pod_id",
                             buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
                             "docker.container_id",
@@ -207,7 +289,8 @@ public class JdbcBackendResolverTest {
                         .build()))
             .build();
 
-    Entity backendEntity = jdbcBackendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    final Entity backendEntity = backendInfo.getEntity();
 
     assertEquals("127.0.0.1:3306", backendEntity.getEntityName());
     assertEquals(
@@ -252,5 +335,8 @@ public class JdbcBackendResolverTest {
             .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID))
             .getValue()
             .getString());
+
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")), attributes);
   }
 }

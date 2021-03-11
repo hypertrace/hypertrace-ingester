@@ -27,6 +27,7 @@ public class DbSemanticConventionUtils {
   private static final String OTEL_DB_CONNECTION_STRING =
       OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue();
   private static final String OTEL_DB_OPERATION = OTelDbSemanticConventions.DB_OPERATION.getValue();
+  private static final String OTEL_DB_STATEMENT = OTelDbSemanticConventions.DB_STATEMENT.getValue();
 
   // mongo specific attributes
   private static final String OTEL_MONGO_DB_SYSTEM_VALUE =
@@ -49,15 +50,15 @@ public class DbSemanticConventionUtils {
   // sql specific attributes
   private static final String[] OTEL_SQL_DB_SYSTEM_VALUES = {
     OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.ORACLE_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.ORACLE_DB_SYSTEM_VALUE.getValue(),
     OTelDbSemanticConventions.MSSQL_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.DB2_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.DB2_DB_SYSTEM_VALUE.getValue(),
     OTelDbSemanticConventions.POSTGRESQL_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.REDSHIFT_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.REDSHIFT_DB_SYSTEM_VALUE.getValue(),
     OTelDbSemanticConventions.HIVE_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.CLOUDSCAPE_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.CLOUDSCAPE_DB_SYSTEM_VALUE.getValue(),
     OTelDbSemanticConventions.HSQLDB_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.OTHER_SQL_DB_SYSTEM_VALUE.getValue()
+    OTelDbSemanticConventions.OTHER_SQL_DB_SYSTEM_VALUE.getValue()
   };
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final String SQL_URL = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
@@ -99,6 +100,28 @@ public class DbSemanticConventionUtils {
 
   public static List<String> getAttributeKeysForDbOperation() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_DB_OPERATION));
+  }
+
+  public static List<String> getAttributeKeysForDbStatement() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_STATEMENT));
+  }
+
+  public static String getDbOperation(Event event) {
+    String dbOperation =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    String sqlQuery =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(Sql.SQL_QUERY)));
+    String dbStatement =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, DbSemanticConventionUtils.getAttributeKeysForDbStatement());
+
+    if (dbOperation != null) {
+      return dbOperation;
+    } else if (sqlQuery != null) {
+      return StringUtils.substringBefore(sqlQuery, " ");
+    } else return StringUtils.substringBefore(dbStatement, " ");
   }
 
   /**

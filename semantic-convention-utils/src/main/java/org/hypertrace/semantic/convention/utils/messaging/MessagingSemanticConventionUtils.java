@@ -39,6 +39,8 @@ public class MessagingSemanticConventionUtils {
       OpenTracingSpanSemanticConventions.PEER_NAME.getValue();
   private static final String MESSAGING_OPERATION =
       OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue();
+  private static final String RABBITMQ_COMMAND_VALUE =
+      OtelMessagingSemanticConventions.RABBITMQ_COMMAND.getValue();
 
   private static final List<String> RABBITMQ_ROUTING_KEYS =
       new ArrayList<>(
@@ -107,6 +109,28 @@ public class MessagingSemanticConventionUtils {
 
   public static List<String> getAttributeKeysForMessagingOperation() {
     return Lists.newArrayList(Sets.newHashSet(MESSAGING_OPERATION));
+  }
+
+  public static List<String> getAttributeKeysForRabbitmqCommand() {
+    return Lists.newArrayList(Sets.newHashSet(RABBITMQ_COMMAND_VALUE));
+  }
+
+  public static String getMessagingOperation(Event event) {
+    return SpanAttributeUtils.getFirstAvailableStringAttribute(
+        event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
+  }
+
+  public static String getRabbitmqOperation(Event event) {
+    String messagingOperation =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
+    String rabbitmqCommand =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, MessagingSemanticConventionUtils.getAttributeKeysForRabbitmqCommand());
+
+    if (messagingOperation != null) {
+      return messagingOperation;
+    } else return rabbitmqCommand;
   }
 
   public static Optional<String> getSqsBackendURI(Event event) {

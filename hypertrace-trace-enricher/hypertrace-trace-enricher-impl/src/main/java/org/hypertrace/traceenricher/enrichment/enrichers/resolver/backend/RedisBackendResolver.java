@@ -8,7 +8,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
@@ -53,9 +52,7 @@ public class RedisBackendResolver extends AbstractBackendResolver {
         event, entityBuilder, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String redisOperation =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    String redisOperation = DbSemanticConventionUtils.getDbOperation(event);
     if (redisOperation != null) {
       enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(redisOperation));
     }

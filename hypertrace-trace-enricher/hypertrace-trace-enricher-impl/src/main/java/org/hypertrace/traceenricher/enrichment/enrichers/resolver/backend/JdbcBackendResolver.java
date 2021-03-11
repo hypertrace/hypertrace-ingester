@@ -89,11 +89,14 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
         RawSpanConstants.getValue(Sql.SQL_DB_TYPE), createAttributeValue(dbType));
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String jdbcOperation =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    String jdbcOperation = DbSemanticConventionUtils.getDbOperation(event);
     if (jdbcOperation != null) {
       enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(jdbcOperation));
+    } else {
+      String sqlOperation =
+          SpanAttributeUtils.getFirstAvailableStringAttribute(
+              event, List.of(RawSpanConstants.getValue(Sql.SQL_QUERY)));
+      enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(sqlOperation));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
