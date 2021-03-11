@@ -13,8 +13,6 @@ public class BackendInfo {
     this.attributes = attributes;
   }
 
-  public BackendInfo(Entity build) {}
-
   public Entity getEntity() {
     return entity;
   }
