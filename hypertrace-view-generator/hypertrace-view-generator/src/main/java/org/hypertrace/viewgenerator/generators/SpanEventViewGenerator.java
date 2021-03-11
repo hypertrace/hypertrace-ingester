@@ -68,7 +68,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
             parentToChildrenEventIds,
             eventMap);
 
-    Map<ByteBuffer, ExitCallBreakup> eventToApiExitCall = computeApiExitCallCount(structuredTrace);
+    Map<ByteBuffer, ApiExitCallInfo> eventToApiExitCall = computeApiExitCallCount(structuredTrace);
 
     return structuredTrace.getEventList().stream()
         .map(
@@ -143,58 +143,93 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
    * api_node to api_entry_span (child of api_exit_span) in another api_node 2. exit calls to
    * backend from api_exit_span in api_node
    */
-  Map<ByteBuffer, ExitCallBreakup> computeApiExitCallCount(StructuredTrace trace) {
+  Map<ByteBuffer, ApiExitCallInfo> computeApiExitCallCount(StructuredTrace trace) {
     ApiTraceGraph apiTraceGraph = ViewGeneratorState.getApiTraceGraph(trace);
     // event -> api exit call count for the corresponding api_node
-    Map<ByteBuffer, ExitCallBreakup> eventToExitInfo = Maps.newHashMap();
+    Map<ByteBuffer, ApiExitCallInfo> eventToExitInfo = Maps.newHashMap();
 
     for (ApiNode<Event> apiNode : apiTraceGraph.getApiNodeList()) {
       List<Event> backendExitEvents =
           apiTraceGraph.getExitBoundaryEventsWithNoOutboundEdgeForApiNode(apiNode);
       List<ApiNodeEventEdge> edges = apiTraceGraph.getOutboundEdgesForApiNode(apiNode);
       int totalExitCallCount = backendExitEvents.size() + edges.size();
-      ExitCallBreakup exitCallBreakup = new ExitCallBreakup(totalExitCallCount);
-      edges.forEach(edge -> exitCallBreakup.handleApiNodeEdge(trace, edge));
-      backendExitEvents.forEach(
-          backendExitEvent -> exitCallBreakup.handleBackend(backendExitEvent));
-      apiNode.getEvents().forEach(e -> eventToExitInfo.put(e.getEventId(), exitCallBreakup));
+      ApiExitCallInfo apiExitCallInfo = new ApiExitCallInfo().withExitCallCount(totalExitCallCount);
+      edges.forEach(edge -> apiExitCallInfo.handleApiNodeEdge(trace, edge));
+      backendExitEvents.forEach(apiExitCallInfo::handleBackend);
+      apiNode.getEvents().forEach(e -> eventToExitInfo.put(e.getEventId(), apiExitCallInfo));
     }
     return eventToExitInfo;
   }
 
-  static class ExitCallBreakup {
-    int exitCallCount;
-    Map<String, String> calleeIdToName;
-    Map<String, AtomicInteger> calleeIdToExitCallCount;
+  static class ApiExitCallInfo {
 
-    public ExitCallBreakup(int exitCallCount) {
-      this.exitCallCount = exitCallCount;
+    private static final String UNKNOWN_SERVICE = "unknown-service";
+    private static final String UNKNOWN_BACKEND = "unknown-backend";
+
+    private int exitCallCount;
+    private final Map<String, String> calleeIdToName;
+    private final Map<String, AtomicInteger> calleeIdToCallCount;
+
+    private int unknownServiceExit;
+    private int unknownBackendExits;
+
+    public ApiExitCallInfo() {
+      unknownServiceExit = 0;
+      unknownBackendExits = 0;
       this.calleeIdToName = Maps.newHashMap();
-      this.calleeIdToExitCallCount = Maps.newHashMap();
+      this.calleeIdToCallCount = Maps.newHashMap();
     }
 
-    public void handleApiNodeEdge(StructuredTrace trace, ApiNodeEventEdge edge) {
+    public ApiExitCallInfo withExitCallCount(int exitCallCount) {
+      this.exitCallCount = exitCallCount;
+      return this;
+    }
+
+    void handleApiNodeEdge(StructuredTrace trace, ApiNodeEventEdge edge) {
       Event event = trace.getEventList().get(edge.getTgtEventIndex());
       if (EnrichedSpanUtils.containsServiceId(event)) {
         calleeIdToName.put(
             EnrichedSpanUtils.getServiceId(event), EnrichedSpanUtils.getServiceName(event));
-        calleeIdToExitCallCount
+        calleeIdToCallCount
             .computeIfAbsent(EnrichedSpanUtils.getServiceId(event), v -> new AtomicInteger(0))
             .incrementAndGet();
+      } else {
+        unknownServiceExit++;
       }
     }
 
-    public void handleBackend(Event exitEvent) {
+    void handleBackend(Event exitEvent) {
       if (exitEvent
           .getEnrichedAttributes()
           .getAttributeMap()
           .containsKey(EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_ID))) {
         calleeIdToName.put(
             EnrichedSpanUtils.getBackendId(exitEvent), EnrichedSpanUtils.getBackendName(exitEvent));
-        calleeIdToExitCallCount
+        calleeIdToCallCount
             .computeIfAbsent(EnrichedSpanUtils.getBackendId(exitEvent), v -> new AtomicInteger(0))
             .incrementAndGet();
+      } else {
+        unknownBackendExits++;
       }
+    }
+
+    int getExitCallCount() {
+      return exitCallCount;
+    }
+
+    Map<String, Integer> getServiceNameToExitCalls() {
+      Map<String, Integer> serviceNameToExitCalls = calleeIdToCallCount.entrySet()
+          .stream()
+          .collect(Collectors.toMap(
+              k -> calleeIdToName.get(k.getKey()),
+              v -> v.getValue().get()));
+      if (unknownServiceExit > 0) {
+        serviceNameToExitCalls.put(UNKNOWN_SERVICE, unknownServiceExit);
+      }
+      if (unknownBackendExits > 0) {
+        serviceNameToExitCalls.put(UNKNOWN_BACKEND, unknownBackendExits);
+      }
+      return serviceNameToExitCalls;
     }
   }
 
@@ -204,7 +239,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       Map<ByteBuffer, Event> eventMap,
       Map<ByteBuffer, ByteBuffer> childToParentEventIds,
       Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap,
-      Map<ByteBuffer, ExitCallBreakup> eventToApiExitCall) {
+      Map<ByteBuffer, ApiExitCallInfo> eventToApiExitCall) {
 
     SpanEventView.Builder builder = SpanEventView.newBuilder();
 
@@ -254,6 +289,11 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     Event entryApiSpan = EnrichedSpanUtils.getApiEntrySpan(event, eventMap, childToParentEventIds);
     if (entryApiSpan != null) {
       builder.setEntryApiId(EnrichedSpanUtils.getApiId(entryApiSpan));
+      builder.setApiExitServices(
+          eventToApiExitCall.getOrDefault(
+              event.getEventId(),
+              new ApiExitCallInfo())
+              .getServiceNameToExitCalls());
     }
 
     // display entity and span names
@@ -302,7 +342,9 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
 
     builder.setApiExitCalls(
-        eventToApiExitCall.getOrDefault(event.getEventId(), new ExitCallBreakup(0)).exitCallCount);
+        eventToApiExitCall.getOrDefault(
+            event.getEventId(),
+            new ApiExitCallInfo()).getExitCallCount());
 
     return builder;
   }
