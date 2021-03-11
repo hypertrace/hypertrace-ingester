@@ -148,25 +148,25 @@ public class SpanEventViewGeneratorTest {
     // for events parts of api_node 1, there should be 13 exit calls
     // for events parts of api_node 2, there should be 1 exit calls
     Map<Integer, Integer> apiNodeToExitCallCount = Map.of(0, 12, 1, 13, 2, 1);
-    Map<Integer, Map<String, Integer>> apiNodeToExitServices = Map.of(
-        0, Map.of(
-        "route", 10,
-        "driver", 1,
-        "customer", 1),
-        1, Map.of(
-            "redis", 11,
-            "unknown-backend", 2),
-        2, Map.of(
-            "unknown-backend", 1)
-    );
+    Map<Integer, Map<String, Integer>> apiNodeToExitServices =
+        Map.of(
+            0,
+                Map.of(
+                    "route", 10,
+                    "driver", 1,
+                    "customer", 1),
+            1,
+                Map.of(
+                    "redis", 11,
+                    "unknown-backend", 2),
+            2, Map.of("unknown-backend", 1));
     Map<ByteBuffer, Integer> eventToApiNodeIndex = buildEventIdToApiNode(apiTraceGraph);
     eventToApiExitInfo.forEach(
         (k, v) -> {
           Integer apiNodeIndex = eventToApiNodeIndex.get(k);
           if (null != apiNodeIndex) {
             assertEquals(
-                apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0),
-                v.getExitCallCount());
+                apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0), v.getExitCallCount());
             assertEquals(
                 apiNodeToExitServices.getOrDefault(apiNodeIndex, Maps.newHashMap()),
                 v.getServiceNameToExitCalls());
