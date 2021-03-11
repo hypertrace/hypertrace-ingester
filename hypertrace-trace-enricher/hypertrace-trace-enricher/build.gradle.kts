@@ -46,10 +46,16 @@ dependencies {
     implementation("com.google.guava:guava:30.1-jre") {
       because("Information Disclosure [Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415] in com.google.guava:guava@29.0-android")
     }
+    runtimeOnly("io.netty:netty-codec-http2:4.1.60.Final") {
+      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
+    }
+    runtimeOnly("io.netty:netty-handler-proxy:4.1.60.Final") {
+      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
+    }
   }
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty-shaded:1.35.0")
+  runtimeOnly("io.grpc:grpc-netty:1.35.0")
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")

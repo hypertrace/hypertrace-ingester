@@ -7,11 +7,6 @@ plugins {
   id("org.hypertrace.jacoco-report-plugin")
 }
 
-repositories {
-  // Need this to fetch confluent's kafka-avro-serializer dependency
-  maven("http://packages.confluent.io/maven")
-}
-
 application {
   mainClass.set("org.hypertrace.core.serviceframework.PlatformServiceLauncher")
 }
@@ -19,7 +14,6 @@ application {
 hypertraceDocker {
   defaultImage {
     javaApplication {
-      serviceName.set("${project.name}")
       adminPort.set(8099)
     }
   }
@@ -27,7 +21,7 @@ hypertraceDocker {
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
 tasks.run<JavaExec> {
-  jvmArgs = listOf("-Dbootstrap.config.uri=file:$projectDir/src/main/resources/configs", "-Dservice.name=${project.name}")
+  jvmArgs = listOf("-Dservice.name=${project.name}")
 }
 
 tasks.test {
@@ -48,11 +42,11 @@ dependencies {
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.35.0")
   constraints {
-    runtimeOnly("io.netty:netty-codec-http2:4.1.59.Final") {
-      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
+    runtimeOnly("io.netty:netty-codec-http2:4.1.60.Final") {
+      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
     }
-    runtimeOnly("io.netty:netty-handler-proxy:4.1.59.Final") {
-      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1020439")
+    runtimeOnly("io.netty:netty-handler-proxy:4.1.60.Final") {
+      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
     }
   }
 
