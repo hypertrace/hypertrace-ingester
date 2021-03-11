@@ -4,15 +4,14 @@ import java.util.List;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.entity.data.service.v1.Entity;
 
 /**
  * Composite backend entity resolver which tries to resolve the backend entity using other resolvers
  */
-public class BackendEntityResolver extends AbstractBackendResolver {
+public class BackendResolver extends AbstractBackendResolver {
   private final List<AbstractBackendResolver> backendResolvers;
 
-  public BackendEntityResolver() {
+  public BackendResolver() {
     backendResolvers =
         List.of(
             new HttpBackendResolver(),
@@ -27,11 +26,11 @@ public class BackendEntityResolver extends AbstractBackendResolver {
   }
 
   @Override
-  public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
+  public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
     for (AbstractBackendResolver backendResolver : backendResolvers) {
-      Optional<Entity> entity = backendResolver.resolveEntity(event, structuredTraceGraph);
-      if (entity.isPresent()) {
-        return entity;
+      Optional<BackendInfo> backendInfo = backendResolver.resolve(event, structuredTraceGraph);
+      if (backendInfo.isPresent()) {
+        return backendInfo;
       }
     }
     return Optional.empty();

@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import com.typesafe.config.Config;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -22,7 +23,8 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendEntityResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendResolver;
 import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,17 +39,16 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL);
   private static final String BACKEND_HOST_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST);
-
   private EdsClient edsClient;
   private EntityCache entityCache;
-  private BackendEntityResolver backendEntityResolver;
+  private BackendResolver backendResolver;
 
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {
     LOGGER.info("Initialize BackendEntityEnricher with Config: {}", enricherConfig.toString());
     this.edsClient = clientRegistry.getEdsCacheClient();
     this.entityCache = clientRegistry.getEntityCache();
-    this.backendEntityResolver = new BackendEntityResolver();
+    this.backendResolver = new BackendResolver();
   }
 
   // At trace level, based on the next span to identify if a backend entity is actually a service
@@ -62,9 +63,7 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
                 EnrichedSpanUtils.isExitSpan(event)
                     && SpanAttributeUtils.isLeafSpan(structuredTraceGraph, event))
         // resolve backend entity
-        .map(
-            event ->
-                Pair.of(event, backendEntityResolver.resolveEntity(event, structuredTraceGraph)))
+        .map(event -> Pair.of(event, backendResolver.resolve(event, structuredTraceGraph)))
         .filter(pair -> pair.getRight().isPresent())
         // check if backend entity is valid
         .filter(pair -> isValidBackendEntity(pair.getLeft(), pair.getRight().get()))
@@ -73,10 +72,11 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
   }
 
   /** Checks if the candidateEntity is indeed a backend Entity */
-  private boolean isValidBackendEntity(Event backendSpan, Entity candidateEntity) {
+  private boolean isValidBackendEntity(Event backendSpan, BackendInfo candidateInfo) {
     // Always create backend entity for RabbitMq, Mongo, Redis, Jdbc
     String backendProtocol =
-        candidateEntity
+        candidateInfo
+            .getEntity()
             .getIdentifyingAttributesMap()
             .get(BACKEND_PROTOCOL_ATTR_NAME)
             .getValue()
@@ -91,7 +91,8 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
 
     // If there is a Service with the same FQN, then it isn't a Backend
     String fqn =
-        candidateEntity
+        candidateInfo
+            .getEntity()
             .getIdentifyingAttributesMap()
             .get(BACKEND_HOST_ATTR_NAME)
             .getValue()
@@ -103,7 +104,8 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
               .get(Pair.of(backendSpan.getCustomerId(), fqn))
               .isPresent();
       if (serviceExists) {
-        LOGGER.debug("BackendEntity {} is actually an Existing service entity.", candidateEntity);
+        LOGGER.debug(
+            "BackendEntity {} is actually an Existing service entity.", candidateInfo.getEntity());
         return false;
       }
     } catch (ExecutionException ex) {
@@ -120,25 +122,28 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
     // if it couldn't find a child that's not a service
   }
 
-  private void decorateWithBackendEntity(Entity backendEntity, Event event, StructuredTrace trace) {
+  private void decorateWithBackendEntity(
+      BackendInfo backendInfo, Event event, StructuredTrace trace) {
     LOGGER.debug(
         "Trying to load or create backend entity: {}, corresponding event: {}",
-        backendEntity,
+        backendInfo.getEntity(),
         event);
-    Entity backend = createBackendIfMissing(backendEntity);
+    Entity backend = createBackendIfMissing(backendInfo.getEntity());
     if (backend == null) {
-      LOGGER.warn("Failed to upsert backend entity: {}", backendEntity);
+      LOGGER.warn("Failed to upsert backend entity: {}", backendInfo.getEntity());
       return;
     }
     org.hypertrace.core.datamodel.Entity avroEntity =
         EntityAvroConverter.convertToAvroEntity(backend, true);
     if (avroEntity == null) {
-      LOGGER.warn("Error converting backendEntity:{} to avro", backendEntity);
+      LOGGER.warn("Error converting backendEntity:{} to avro", backendInfo.getEntity());
       return;
     }
 
+    Map<String, org.hypertrace.core.datamodel.AttributeValue> attributes =
+        backendInfo.getAttributes();
     addEntity(trace, event, avroEntity);
-    addEnrichedAttributes(event, getAttributesToEnrich(backend));
+    addEnrichedAttributes(event, getAttributesToEnrich(backend), attributes);
   }
 
   private List<Pair<String, org.hypertrace.core.datamodel.AttributeValue>> getAttributesToEnrich(
