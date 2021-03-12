@@ -53,7 +53,7 @@ public class RedisBackendResolver extends AbstractBackendResolver {
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
     Optional<String> redisOperation = DbSemanticConventionUtils.getDbOperationForRedis(event);
-    if (redisOperation != null) {
+    if (redisOperation.isPresent()) {
       enrichedAttributes.put(
           BACKEND_OPERATION_ATTR, AttributeValueCreator.create(redisOperation.get()));
     }

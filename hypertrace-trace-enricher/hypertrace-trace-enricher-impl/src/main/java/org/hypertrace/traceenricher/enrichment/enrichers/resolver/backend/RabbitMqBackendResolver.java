@@ -39,7 +39,7 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
     Optional<String> rabbitmqOperation =
         MessagingSemanticConventionUtils.getRabbitmqOperation(event);
-    if (rabbitmqOperation != null) {
+    if (rabbitmqOperation.isPresent()) {
       enrichedAttributes.put(
           BACKEND_OPERATION_ATTR, AttributeValueCreator.create(rabbitmqOperation.get()));
     }

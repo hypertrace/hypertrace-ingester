@@ -89,7 +89,7 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
     Optional<String> jdbcOperation = DbSemanticConventionUtils.getDbOperationForJDBC(event);
-    if (jdbcOperation != null) {
+    if (jdbcOperation.isPresent()) {
       enrichedAttributes.put(
           BACKEND_OPERATION_ATTR, AttributeValueCreator.create(jdbcOperation.get()));
     }
