@@ -127,8 +127,8 @@ public class DbSemanticConventionUtils {
   }
 
   public static Optional<String> getDbOperationForJDBC(Event event) {
-   Optional<String> jdbcOperation = getOtelDbOperation(event);
-    if (jdbcOperation.isPresent()){
+    Optional<String> jdbcOperation = getOtelDbOperation(event);
+    if (jdbcOperation.isPresent()) {
       return jdbcOperation;
     }
     String sqlQuery =
