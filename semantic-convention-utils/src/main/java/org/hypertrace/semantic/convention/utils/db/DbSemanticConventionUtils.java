@@ -107,7 +107,10 @@ public class DbSemanticConventionUtils {
   }
 
   public static String getOperationFromDbQuery(String query) {
-    return StringUtils.substringBefore(StringUtils.trim(query), " ");
+    if (query != null) {
+      return StringUtils.substringBefore(StringUtils.trim(query), " ");
+    }
+    return null;
   }
 
   public static String getOtelDbOperation(Event event) {
