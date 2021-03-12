@@ -106,38 +106,47 @@ public class DbSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTEL_DB_STATEMENT));
   }
 
+  public static String getOperationFromDbQuery(String query) {
+    boolean isWord = (query.length() > 0 && query.split("\\s+").length == 1);
+    if (isWord) {
+      return query;
+    }
+    return StringUtils.substringBefore(StringUtils.trim(query), " ");
+  }
+
   public static String getOtelDbOperation(Event event) {
     String dbOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    if (dbOperation != null) {
+      return dbOperation;
+    }
     String dbStatement =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForDbStatement());
-    if (dbOperation != null) {
-      return dbOperation;
-    } else return StringUtils.substringBefore(dbStatement, " ");
+    return getOperationFromDbQuery(dbStatement);
   }
 
   public static String getDbOperationForJDBC(Event event) {
     String jdbcOperation = getOtelDbOperation(event);
+    if (jdbcOperation != null) {
+      return jdbcOperation;
+    }
     String sqlQuery =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, List.of(RawSpanConstants.getValue(Sql.SQL_QUERY)));
-
-    if (jdbcOperation != null) {
-      return jdbcOperation;
-    } else return StringUtils.substringBefore(sqlQuery, " ");
+    return getOperationFromDbQuery(sqlQuery);
   }
 
   public static String getDbOperationForRedis(Event event) {
     String redisOperation = getOtelDbOperation(event);
+    if (redisOperation != null) {
+      return redisOperation;
+    }
     String redisCommand =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, List.of(RawSpanConstants.getValue(Redis.REDIS_COMMAND)));
-
-    if (redisOperation != null) {
-      return redisOperation;
-    } else return redisCommand;
+    return redisCommand;
   }
 
   public static String getDbOperationForMongo(Event event) {

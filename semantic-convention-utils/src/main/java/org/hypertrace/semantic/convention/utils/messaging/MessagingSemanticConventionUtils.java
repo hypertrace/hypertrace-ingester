@@ -122,13 +122,13 @@ public class MessagingSemanticConventionUtils {
 
   public static String getRabbitmqOperation(Event event) {
     String messagingOperation = getMessagingOperation(event);
+    if (messagingOperation != null) {
+      return messagingOperation;
+    }
     String rabbitmqCommand =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, MessagingSemanticConventionUtils.getAttributeKeysForRabbitmqCommand());
-
-    if (messagingOperation != null) {
-      return messagingOperation;
-    } else return rabbitmqCommand;
+    return rabbitmqCommand;
   }
 
   public static Optional<String> getSqsBackendURI(Event event) {
