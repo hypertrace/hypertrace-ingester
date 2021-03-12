@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Edge;
@@ -71,12 +70,7 @@ public abstract class AbstractTraceEnricher implements Enricher {
   }
 
   protected void addEnrichedAttributes(
-      Event event,
-      List<Pair<String, AttributeValue>> attributes,
-      Map<String, AttributeValue> attributesToEnrich) {
-    attributes.forEach(
-        attributePair ->
-            addEnrichedAttribute(event, attributePair.getKey(), attributePair.getValue()));
+      Event event, Map<String, AttributeValue> attributesToEnrich) {
     attributesToEnrich.forEach((key, value) -> addEnrichedAttribute(event, key, value));
   }
 
