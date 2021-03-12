@@ -121,9 +121,7 @@ public class MessagingSemanticConventionUtils {
   }
 
   public static String getRabbitmqOperation(Event event) {
-    String messagingOperation =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
+    String messagingOperation = getMessagingOperation(event);
     String rabbitmqCommand =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, MessagingSemanticConventionUtils.getAttributeKeysForRabbitmqCommand());

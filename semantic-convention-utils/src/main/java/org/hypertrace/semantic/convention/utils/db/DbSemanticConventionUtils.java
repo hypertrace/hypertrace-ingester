@@ -106,22 +106,43 @@ public class DbSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTEL_DB_STATEMENT));
   }
 
-  public static String getDbOperation(Event event) {
+  public static String getOtelDbOperation(Event event) {
     String dbOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
-    String sqlQuery =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, List.of(RawSpanConstants.getValue(Sql.SQL_QUERY)));
     String dbStatement =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForDbStatement());
-
     if (dbOperation != null) {
       return dbOperation;
-    } else if (sqlQuery != null) {
-      return StringUtils.substringBefore(sqlQuery, " ");
     } else return StringUtils.substringBefore(dbStatement, " ");
+  }
+
+  public static String getDbOperationForJDBC(Event event) {
+    String jdbcOperation = getOtelDbOperation(event);
+    String sqlQuery =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(Sql.SQL_QUERY)));
+
+    if (jdbcOperation != null) {
+      return jdbcOperation;
+    } else return StringUtils.substringBefore(sqlQuery, " ");
+  }
+
+  public static String getDbOperationForRedis(Event event) {
+    String redisOperation = getOtelDbOperation(event);
+    String redisCommand =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(Redis.REDIS_COMMAND)));
+
+    if (redisOperation != null) {
+      return redisOperation;
+    } else return redisCommand;
+  }
+
+  public static String getDbOperationForMongo(Event event) {
+    return SpanAttributeUtils.getFirstAvailableStringAttribute(
+        event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
   }
 
   /**
