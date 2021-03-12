@@ -107,10 +107,6 @@ public class DbSemanticConventionUtils {
   }
 
   public static String getOperationFromDbQuery(String query) {
-    boolean isWord = (query.length() > 0 && query.split("\\s+").length == 1);
-    if (isWord) {
-      return query;
-    }
     return StringUtils.substringBefore(StringUtils.trim(query), " ");
   }
 
