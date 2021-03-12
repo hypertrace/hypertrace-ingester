@@ -43,7 +43,14 @@ public class EnrichmentProcessor {
         trace, enrichmentArrivalTimer, ENRICHMENT_ARRIVAL_TIME);
     AvroToJsonLogger.log(LOG, "Structured Trace before all the enrichment is: {}", trace);
     for (Enricher enricher : enrichers) {
-      applyEnricher(enricher, trace);
+      try {
+        applyEnricher(enricher, trace);
+      } catch (Exception e) {
+        LOG.error(
+            "Could not apply the enricher: {} to the trace with traceId: {}",
+            enricher.getClass().getCanonicalName(),
+            HexUtils.getHex(trace.getTraceId()));
+      }
     }
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
   }
