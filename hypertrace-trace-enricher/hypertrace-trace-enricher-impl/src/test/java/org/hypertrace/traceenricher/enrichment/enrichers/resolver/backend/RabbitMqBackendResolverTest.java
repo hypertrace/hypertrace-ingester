@@ -43,6 +43,20 @@ public class RabbitMqBackendResolverTest {
     assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("receive")), attributes);
   }
 
+  @Test
+  public void testBackendOperationResolution() {
+    String routingKey = "routingkey";
+    BackendInfo backendInfo =
+        rabbitMqBackendResolver
+            .resolve(getRabbitMqEventMissingOperation(routingKey), structuredTraceGraph)
+            .get();
+    Entity entity = backendInfo.getEntity();
+    Assertions.assertEquals(routingKey, entity.getEntityName());
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(
+        Map.of("BACKEND_OPERATION", AttributeValueCreator.create("basic.publish")), attributes);
+  }
+
   private Event getRabbitMqEvent(String routingKey) {
     Event event =
         Event.newBuilder()
@@ -68,6 +82,62 @@ public class RabbitMqBackendResolverTest {
                             AttributeValue.newBuilder().setValue("client").build(),
                             "messaging.operation",
                             AttributeValue.newBuilder().setValue("receive").build(),
+                            "k8s.pod_id",
+                            AttributeValue.newBuilder()
+                                .setValue("55636196-c840-11e9-a417-42010a8a0064")
+                                .build(),
+                            "docker.container_id",
+                            AttributeValue.newBuilder()
+                                .setValue(
+                                    "ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f")
+                                .build(),
+                            "FLAGS",
+                            AttributeValue.newBuilder().setValue("0").build()))
+                    .build())
+            .setEventName("rabbitmq.connection")
+            .setStartTimeMillis(1566869077746L)
+            .setEndTimeMillis(1566869077750L)
+            .setMetrics(
+                Metrics.newBuilder()
+                    .setMetricMap(
+                        Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build()))
+                    .build())
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+    return event;
+  }
+
+  private Event getRabbitMqEventMissingOperation(String routingKey) {
+    Event event =
+        Event.newBuilder()
+            .setCustomerId("customer1")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f9".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "rabbitmq.routing_key",
+                            AttributeValue.newBuilder().setValue(routingKey).build(),
+                            "rabbitmq.message",
+                            AttributeValue.newBuilder()
+                                .setValue("updating user's last session")
+                                .build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "rabbitmq.command",
+                            AttributeValue.newBuilder().setValue("basic.publish").build(),
                             "k8s.pod_id",
                             AttributeValue.newBuilder()
                                 .setValue("55636196-c840-11e9-a417-42010a8a0064")
