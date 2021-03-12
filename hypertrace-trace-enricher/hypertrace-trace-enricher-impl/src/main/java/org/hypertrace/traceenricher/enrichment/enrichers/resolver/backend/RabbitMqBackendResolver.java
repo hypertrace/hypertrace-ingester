@@ -37,10 +37,11 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
     Builder entityBuilder = getBackendEntityBuilder(BackendType.RABBIT_MQ, routingKey.get(), event);
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String rabbitmqOperation = MessagingSemanticConventionUtils.getRabbitmqOperation(event);
-    if (rabbitmqOperation != null) {
+    Optional<String> rabbitmqOperation =
+        MessagingSemanticConventionUtils.getRabbitmqOperation(event);
+    if (rabbitmqOperation.isPresent()) {
       enrichedAttributes.put(
-          BACKEND_OPERATION_ATTR, AttributeValueCreator.create(rabbitmqOperation));
+          BACKEND_OPERATION_ATTR, AttributeValueCreator.create(rabbitmqOperation.get()));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }

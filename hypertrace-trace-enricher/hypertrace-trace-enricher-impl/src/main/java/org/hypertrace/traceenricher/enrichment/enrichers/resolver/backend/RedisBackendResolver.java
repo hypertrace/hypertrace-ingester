@@ -52,9 +52,10 @@ public class RedisBackendResolver extends AbstractBackendResolver {
         event, entityBuilder, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String redisOperation = DbSemanticConventionUtils.getDbOperationForRedis(event);
-    if (redisOperation != null) {
-      enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(redisOperation));
+    Optional<String> redisOperation = DbSemanticConventionUtils.getDbOperationForRedis(event);
+    if (redisOperation.isPresent()) {
+      enrichedAttributes.put(
+          BACKEND_OPERATION_ATTR, AttributeValueCreator.create(redisOperation.get()));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
