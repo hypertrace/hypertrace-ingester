@@ -12,7 +12,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -92,11 +91,6 @@ public class JdbcBackendResolver extends AbstractBackendResolver {
     String jdbcOperation = DbSemanticConventionUtils.getDbOperationForJDBC(event);
     if (jdbcOperation != null) {
       enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(jdbcOperation));
-    } else {
-      String sqlOperation =
-          SpanAttributeUtils.getFirstAvailableStringAttribute(
-              event, List.of(RawSpanConstants.getValue(Sql.SQL_QUERY)));
-      enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(sqlOperation));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
