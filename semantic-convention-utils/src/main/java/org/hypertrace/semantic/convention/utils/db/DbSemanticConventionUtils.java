@@ -107,45 +107,51 @@ public class DbSemanticConventionUtils {
   }
 
   public static String getOperationFromDbQuery(String query) {
-    if (query != null) {
-      return StringUtils.substringBefore(StringUtils.trim(query), " ");
-    }
-    return null;
+    return StringUtils.substringBefore(StringUtils.trim(query), " ");
   }
 
-  public static String getOtelDbOperation(Event event) {
+  public static Optional<String> getOtelDbOperation(Event event) {
     String dbOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
     if (dbOperation != null) {
-      return dbOperation;
+      return Optional.of(dbOperation);
     }
     String dbStatement =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForDbStatement());
-    return getOperationFromDbQuery(dbStatement);
+    if (dbStatement != null) {
+      return Optional.of(getOperationFromDbQuery(dbStatement));
+    }
+    return Optional.empty();
   }
 
-  public static String getDbOperationForJDBC(Event event) {
-    String jdbcOperation = getOtelDbOperation(event);
-    if (jdbcOperation != null) {
+  public static Optional<String> getDbOperationForJDBC(Event event) {
+   Optional<String> jdbcOperation = getOtelDbOperation(event);
+    if (jdbcOperation.isPresent()){
       return jdbcOperation;
     }
     String sqlQuery =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, List.of(RawSpanConstants.getValue(Sql.SQL_QUERY)));
-    return getOperationFromDbQuery(sqlQuery);
+    if (sqlQuery != null) {
+      return Optional.of(getOperationFromDbQuery(sqlQuery));
+    }
+    return Optional.empty();
   }
 
-  public static String getDbOperationForRedis(Event event) {
-    String redisOperation = getOtelDbOperation(event);
-    if (redisOperation != null) {
+  public static Optional<String> getDbOperationForRedis(Event event) {
+    Optional<String> redisOperation = getOtelDbOperation(event);
+    if (redisOperation.isPresent()) {
       return redisOperation;
     }
     String redisCommand =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, List.of(RawSpanConstants.getValue(Redis.REDIS_COMMAND)));
-    return redisCommand;
+    if (redisCommand != null) {
+      return Optional.of(redisCommand);
+    }
+    return Optional.empty();
   }
 
   public static String getDbOperationForMongo(Event event) {

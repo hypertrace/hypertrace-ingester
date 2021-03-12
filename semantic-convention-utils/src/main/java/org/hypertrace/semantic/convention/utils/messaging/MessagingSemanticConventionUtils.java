@@ -120,15 +120,18 @@ public class MessagingSemanticConventionUtils {
         event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
   }
 
-  public static String getRabbitmqOperation(Event event) {
+  public static Optional<String> getRabbitmqOperation(Event event) {
     String messagingOperation = getMessagingOperation(event);
     if (messagingOperation != null) {
-      return messagingOperation;
+      return Optional.of(messagingOperation);
     }
     String rabbitmqCommand =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, MessagingSemanticConventionUtils.getAttributeKeysForRabbitmqCommand());
-    return rabbitmqCommand;
+    if (rabbitmqCommand != null) {
+      return Optional.of(rabbitmqCommand);
+    }
+    return Optional.empty();
   }
 
   public static Optional<String> getSqsBackendURI(Event event) {
