@@ -1,8 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import com.typesafe.config.Config;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -140,63 +139,51 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
       return;
     }
 
-    Map<String, org.hypertrace.core.datamodel.AttributeValue> attributes =
-        backendInfo.getAttributes();
     addEntity(trace, event, avroEntity);
-    addEnrichedAttributes(event, getAttributesToEnrich(backend), attributes);
+    addEnrichedAttributes(event, getAttributesToEnrich(backend));
+    addEnrichedAttributes(event, backendInfo.getAttributes());
   }
 
-  private List<Pair<String, org.hypertrace.core.datamodel.AttributeValue>> getAttributesToEnrich(
+  private Map<String, org.hypertrace.core.datamodel.AttributeValue> getAttributesToEnrich(
       Entity backend) {
-    List<Pair<String, org.hypertrace.core.datamodel.AttributeValue>> attributePairs =
-        new ArrayList<>(
-            List.of(
-                Pair.of(
-                    EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_ID),
-                    AttributeValueCreator.create(backend.getEntityId())),
-                Pair.of(
-                    EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_NAME),
-                    AttributeValueCreator.create(backend.getEntityName())),
-                Pair.of(
-                    EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST),
-                    createAttributeValue(
-                        backend
-                            .getAttributesMap()
-                            .get(
-                                EntityConstants.getValue(
-                                    BackendAttribute.BACKEND_ATTRIBUTE_HOST)))),
-                Pair.of(
-                    EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT),
-                    createAttributeValue(
-                        backend
-                            .getAttributesMap()
-                            .get(
-                                EntityConstants.getValue(
-                                    BackendAttribute.BACKEND_ATTRIBUTE_PORT)))),
-                Pair.of(
-                    EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL),
-                    createAttributeValue(
-                        backend
-                            .getAttributesMap()
-                            .get(
-                                EntityConstants.getValue(
-                                    BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL)))),
-                Pair.of(
-                    EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_NAME),
-                    AttributeValueCreator.create(backend.getEntityName()))));
+    Map<String, org.hypertrace.core.datamodel.AttributeValue> attributes = new LinkedHashMap<>();
+
+    attributes.put(
+        EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_ID),
+        AttributeValueCreator.create(backend.getEntityId()));
+    attributes.put(
+        EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_NAME),
+        AttributeValueCreator.create(backend.getEntityName()));
+    attributes.put(
+        EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST),
+        createAttributeValue(
+            backend
+                .getAttributesMap()
+                .get(EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST))));
+    attributes.put(
+        EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT),
+        createAttributeValue(
+            backend
+                .getAttributesMap()
+                .get(EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT))));
+    attributes.put(
+        EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL),
+        createAttributeValue(
+            backend
+                .getAttributesMap()
+                .get(EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))));
 
     AttributeValue path =
         backend
             .getAttributesMap()
             .get(EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH));
     if (path != null) {
-      attributePairs.add(
-          Pair.of(
-              EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
-              createAttributeValue(path)));
+      attributes.put(
+          EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
+          createAttributeValue(path));
     }
 
-    return attributePairs;
+    return attributes;
   }
 
   @Nullable
