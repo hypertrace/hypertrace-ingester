@@ -9,7 +9,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
@@ -49,9 +48,7 @@ public class MongoBackendResolver extends AbstractBackendResolver {
         event, entityBuilder, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String mongoOperation =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
+    String mongoOperation = DbSemanticConventionUtils.getDbOperationForMongo(event);
     if (mongoOperation != null) {
       enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(mongoOperation));
     }
