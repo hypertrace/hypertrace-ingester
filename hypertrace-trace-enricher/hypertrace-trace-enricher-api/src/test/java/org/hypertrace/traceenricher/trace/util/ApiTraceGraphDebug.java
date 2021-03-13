@@ -11,7 +11,6 @@ import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
-import org.junit.jupiter.api.Test;
 
 /**
  * Meant for debugging / playing around with ApiTraceGraph
@@ -233,9 +232,12 @@ public class ApiTraceGraphDebug {
 
     prettyPrintApiTraceGraph(apiTraceGraph);
 
-    trace.getEventList().forEach(v -> addEnrichedAttribute(
-        v, "test-attribute",
-        AttributeValue.newBuilder().setValue("test-val").build()));
+    trace
+        .getEventList()
+        .forEach(
+            v ->
+                addEnrichedAttribute(
+                    v, "test-attribute", AttributeValue.newBuilder().setValue("test-val").build()));
 
     prettyPrintApiTraceGraph(new ApiTraceGraph(trace));
   }
