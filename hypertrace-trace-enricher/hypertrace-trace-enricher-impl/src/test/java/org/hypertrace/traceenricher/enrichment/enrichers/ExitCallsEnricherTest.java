@@ -67,19 +67,24 @@ public class ExitCallsEnricherTest {
             2,
             Map.of("unknown-backend", "1"));
     Map<ByteBuffer, Integer> eventToApiNodeIndex = buildEventIdToApiNode(apiTraceGraph);
-    trace.getEventList().forEach(e -> {
-      Integer apiNodeIndex = eventToApiNodeIndex.get(e.getEventId());
-      if (null != apiNodeIndex) {
-        assertEquals(
-            apiNodeToExitServices.getOrDefault(apiNodeIndex, Maps.newHashMap()),
-            SpanAttributeUtils.getAttributeValue(
-                e, EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE).getValueMap());
-        assertEquals(
-            apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0),
-            Integer.parseInt(SpanAttributeUtils.getStringAttribute(
-                e, EnrichedSpanConstants.API_EXIT_CALLS_ATTRIBUTE)));
-      }
-    });
+    trace
+        .getEventList()
+        .forEach(
+            e -> {
+              Integer apiNodeIndex = eventToApiNodeIndex.get(e.getEventId());
+              if (null != apiNodeIndex) {
+                assertEquals(
+                    apiNodeToExitServices.getOrDefault(apiNodeIndex, Maps.newHashMap()),
+                    SpanAttributeUtils.getAttributeValue(
+                            e, EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE)
+                        .getValueMap());
+                assertEquals(
+                    apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0),
+                    Integer.parseInt(
+                        SpanAttributeUtils.getStringAttribute(
+                            e, EnrichedSpanConstants.API_EXIT_CALLS_ATTRIBUTE)));
+              }
+            });
 
     Map<ByteBuffer, ApiExitCallInfo> eventToApiExitInfo =
         exitCallsEnricher.computeApiExitCallCount(trace);
