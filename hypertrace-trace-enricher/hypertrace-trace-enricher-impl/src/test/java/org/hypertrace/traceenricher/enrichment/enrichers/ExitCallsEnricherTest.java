@@ -15,6 +15,8 @@ import org.apache.avro.specific.SpecificDatumReader;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
+import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
+import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.ExitCallsEnricher.ApiExitCallInfo;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
@@ -40,8 +42,6 @@ public class ExitCallsEnricherTest {
 
   private void verifyComputeApiExitInfo_HotrodTrace(
       StructuredTrace trace, ExitCallsEnricher exitCallsEnricher) {
-    Map<ByteBuffer, ApiExitCallInfo> eventToApiExitInfo =
-        exitCallsEnricher.computeApiExitCallCount(trace);
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     // this trace has 12 api nodes
     // api edges
@@ -67,18 +67,22 @@ public class ExitCallsEnricherTest {
             2,
             Map.of("unknown-backend", "1"));
     Map<ByteBuffer, Integer> eventToApiNodeIndex = buildEventIdToApiNode(apiTraceGraph);
-    eventToApiExitInfo.forEach(
-        (k, v) -> {
-          Integer apiNodeIndex = eventToApiNodeIndex.get(k);
-          if (null != apiNodeIndex) {
-            assertEquals(
-                apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0), v.getExitCallCount());
-            assertEquals(
-                apiNodeToExitServices.getOrDefault(apiNodeIndex, Maps.newHashMap()),
-                v.getCalleeNameToExitCalls());
-          }
-        });
+    trace.getEventList().forEach(e -> {
+      Integer apiNodeIndex = eventToApiNodeIndex.get(e.getEventId());
+      if (null != apiNodeIndex) {
+        assertEquals(
+            apiNodeToExitServices.getOrDefault(apiNodeIndex, Maps.newHashMap()),
+            SpanAttributeUtils.getAttributeValue(
+                e, EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE).getValueMap());
+        assertEquals(
+            apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0),
+            Integer.parseInt(SpanAttributeUtils.getStringAttribute(
+                e, EnrichedSpanConstants.API_EXIT_CALLS_ATTRIBUTE)));
+      }
+    });
 
+    Map<ByteBuffer, ApiExitCallInfo> eventToApiExitInfo =
+        exitCallsEnricher.computeApiExitCallCount(trace);
     // verify exit call count per service per api_trace
     // this trace has 4 services
     // frontend service has 1 api_entry span and that api_node has 12 exit calls [drive: 1,
