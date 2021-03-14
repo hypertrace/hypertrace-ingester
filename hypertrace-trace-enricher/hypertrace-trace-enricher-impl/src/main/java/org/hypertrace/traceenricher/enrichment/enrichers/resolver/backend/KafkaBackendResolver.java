@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -44,9 +43,7 @@ public class KafkaBackendResolver extends AbstractBackendResolver {
         getBackendEntityBuilder(BackendType.KAFKA, backendURI.get(), event);
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String kafkaOperation =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
+    String kafkaOperation = MessagingSemanticConventionUtils.getMessagingOperation(event);
     if (kafkaOperation != null) {
       enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(kafkaOperation));
     }

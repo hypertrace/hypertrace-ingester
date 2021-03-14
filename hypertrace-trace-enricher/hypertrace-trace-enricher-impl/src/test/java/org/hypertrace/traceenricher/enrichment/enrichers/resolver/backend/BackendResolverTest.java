@@ -773,7 +773,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    BackendInfo backendInfo = backendResolver.resolve(e, structuredTraceGraph).get();
+    final Entity backendEntity = backendInfo.getEntity();
     assertEquals("redis-cart:6379", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -816,6 +817,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
     assertEquals(
         backendEntity.getAttributesMap().get("redis.args").getValue().getString(),
         "key<product_5d644175551847d7408760b3>");
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("GET")), attributes);
   }
 
   @Test
@@ -848,7 +851,7 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                             "k8s.pod_id",
                             buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
                             "db.operation",
-                            AttributeValue.newBuilder().setValue("select").build(),
+                            AttributeValue.newBuilder().setValue("GET").build(),
                             "docker.container_id",
                             buildAttributeValue(
                                 "ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
@@ -911,7 +914,7 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
             .getString(),
         "62646630336466616266356337306638");
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
-    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")), attributes);
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("GET")), attributes);
   }
 
   @Test

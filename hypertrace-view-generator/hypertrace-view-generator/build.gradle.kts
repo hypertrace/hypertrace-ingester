@@ -32,7 +32,7 @@ dependencies {
 
   // TODO: migrate in core
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.24")
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.12")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.13")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.21")
 
   implementation("org.hypertrace.entity.service:entity-service-api:0.1.21")

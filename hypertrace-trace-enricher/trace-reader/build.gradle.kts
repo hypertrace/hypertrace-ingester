@@ -10,7 +10,7 @@ dependencies {
   api("org.hypertrace.core.attribute.service:caching-attribute-service-client:0.8.7")
   api("org.hypertrace.entity.service:entity-type-service-rx-client:0.2.5")
   api("org.hypertrace.entity.service:entity-data-service-rx-client:0.2.5")
-  api("org.hypertrace.core.datamodel:data-model:0.1.12")
+  api("org.hypertrace.core.datamodel:data-model:0.1.13")
   implementation("org.hypertrace.core.attribute.service:attribute-projection-registry:0.8.7")
   implementation("org.hypertrace.core.grpcutils:grpc-client-rx-utils:0.3.3")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.3.3")

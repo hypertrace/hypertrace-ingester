@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
@@ -38,12 +37,11 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
     Builder entityBuilder = getBackendEntityBuilder(BackendType.RABBIT_MQ, routingKey.get(), event);
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String rabbitmqOperation =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
-    if (rabbitmqOperation != null) {
+    Optional<String> rabbitmqOperation =
+        MessagingSemanticConventionUtils.getRabbitmqOperation(event);
+    if (rabbitmqOperation.isPresent()) {
       enrichedAttributes.put(
-          BACKEND_OPERATION_ATTR, AttributeValueCreator.create(rabbitmqOperation));
+          BACKEND_OPERATION_ATTR, AttributeValueCreator.create(rabbitmqOperation.get()));
     }
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
