@@ -76,7 +76,7 @@ public class ExitCallsEnricherTest {
                 assertEquals(
                     apiNodeToExitServices.getOrDefault(apiNodeIndex, Maps.newHashMap()),
                     SpanAttributeUtils.getAttributeValue(
-                            e, EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE)
+                            e, EnrichedSpanConstants.API_CALLEE_NAME_COUNT_ATTRIBUTE)
                         .getValueMap());
                 assertEquals(
                     apiNodeToExitCallCount.getOrDefault(apiNodeIndex, 0),

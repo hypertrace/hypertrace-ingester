@@ -146,10 +146,10 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       // set this count to 1 only if this span is the head of the Api Trace
       builder.setApiTraceCount(1);
       if (SpanAttributeUtils.containsAttributeKey(
-          event, EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE)) {
+          event, EnrichedSpanConstants.API_CALLEE_NAME_COUNT_ATTRIBUTE)) {
         builder.setApiCalleeNameCount(
             SpanAttributeUtils.getAttributeValue(
-                    event, EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE)
+                    event, EnrichedSpanConstants.API_CALLEE_NAME_COUNT_ATTRIBUTE)
                 .getValueMap());
       }
     } else {

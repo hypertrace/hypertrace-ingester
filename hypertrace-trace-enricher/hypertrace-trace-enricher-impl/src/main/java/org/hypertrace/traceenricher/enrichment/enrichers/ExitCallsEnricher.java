@@ -35,7 +35,7 @@ public class ExitCallsEnricher extends AbstractTraceEnricher {
                   AttributeValueCreator.create(apiExitCallInfo.getExitCallCount()));
               addEnrichedAttribute(
                   event,
-                  EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE,
+                  EnrichedSpanConstants.API_CALLEE_NAME_COUNT_ATTRIBUTE,
                   AttributeValue.newBuilder()
                       .setValueMap(apiExitCallInfo.getCalleeNameToCallCount())
                       .build());

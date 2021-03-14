@@ -187,7 +187,7 @@ public class SpanEventViewGeneratorTest {
         AttributeValue.newBuilder().setValue("5").build());
     Map<String, String> calleeNameCount = Map.of("service1", "5", "backend1", "2");
     spanAttributes.put(
-        EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE,
+        EnrichedSpanConstants.API_CALLEE_NAME_COUNT_ATTRIBUTE,
         AttributeValue.newBuilder().setValueMap(calleeNameCount).build());
     spanAttributes.put(
         EnrichedSpanConstants.getValue(Api.API_BOUNDARY_TYPE),
