@@ -147,7 +147,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       builder.setApiTraceCount(1);
       if (SpanAttributeUtils.containsAttributeKey(
           event, EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE)) {
-        builder.setApiExitServices(
+        builder.setApiCalleeNameCount(
             SpanAttributeUtils.getAttributeValue(
                     event, EnrichedSpanConstants.API_EXIT_SERVICES_ATTRIBUTE)
                 .getValueMap());

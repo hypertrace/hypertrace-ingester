@@ -99,7 +99,7 @@ protocol SpanEventViewProtocol {
 
     int api_exit_calls = 0;
 
-    // map of service -> exit call count for api
-    map<string> api_exit_services = {};
+    // map of api callee name -> incoming call count
+    map<string> api_callee_name_count = {};
   }
 }
