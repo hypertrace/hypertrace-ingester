@@ -153,9 +153,8 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
                 .build());
 
     // for broken event service and peer service are different
-    Event e = createApiExitEvent(EVENT_ID, serviceName, backendName)
-        .setEventName(eventName)
-        .build();
+    Event e =
+        createApiExitEvent(EVENT_ID, serviceName, backendName).setEventName(eventName).build();
     StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
     enricher.enrichTrace(trace);
 
@@ -193,9 +192,8 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
                 .build());
 
     // both service and peer service are same
-    Event e = createApiExitEvent(EVENT_ID, serviceName, backendName)
-        .setEventName(eventName)
-        .build();
+    Event e =
+        createApiExitEvent(EVENT_ID, serviceName, backendName).setEventName(eventName).build();
     StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
     enricher.enrichTrace(trace);
 
@@ -222,8 +220,7 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
         .setAttributes(createNewAvroAttributes(Map.of(SPAN_TYPE_ATTR, "EXIT")));
   }
 
-  private Event.Builder createApiExitEvent(
-      String eventId, String serviceName, String peerService) {
+  private Event.Builder createApiExitEvent(String eventId, String serviceName, String peerService) {
     return Event.newBuilder()
         .setCustomerId(TENANT_ID)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))

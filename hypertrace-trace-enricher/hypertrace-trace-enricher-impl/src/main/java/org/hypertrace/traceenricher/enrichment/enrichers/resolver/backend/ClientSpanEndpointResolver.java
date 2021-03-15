@@ -46,7 +46,7 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
               peerServiceName);
           final Builder backendBuilder =
               getBackendEntityBuilder(BackendType.UNKNOWN, peerServiceName, event);
-          return Optional.of(backendBuilder.build());
+          return Optional.of(new BackendInfo(backendBuilder.build(), Collections.emptyMap()));
         }
       }
     }
