@@ -125,6 +125,83 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
     Assertions.assertEquals(backendName, EnrichedSpanUtils.getBackendName(e));
   }
 
+  @Test
+  public void test_EnrichTrace_BackendResolvedForBrokenEvent() {
+    String eventName = "broken event";
+    String backendName = "peer";
+    String backendId = "peerId";
+    String serviceName = "client";
+    Map<String, String> identifyingAttributes =
+        Map.of(
+            BACKEND_PROTOCOL_ATTR_NAME, "UNKNOWN",
+            BACKEND_HOST_ATTR_NAME, backendName,
+            BACKEND_PORT_ATTR_NAME, "-1");
+    Map<String, String> attributes =
+        Map.of(
+            "FROM_EVENT",
+            eventName,
+            "FROM_EVENT_ID",
+            HexUtils.getHex(ByteBuffer.wrap(EVENT_ID.getBytes())));
+    Entity backendEntity =
+        createEntity(EntityType.BACKEND, backendName, identifyingAttributes, attributes, TENANT_ID);
+
+    when(edsClient.upsert(eq(backendEntity)))
+        .thenReturn(
+            Entity.newBuilder(backendEntity)
+                .setEntityId(backendId)
+                .putAllAttributes(createEdsAttributes(identifyingAttributes))
+                .build());
+
+    // for broken event service and peer service are different
+    Event e =
+        createApiExitEvent(EVENT_ID, serviceName, backendName).setEventName(eventName).build();
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+    enricher.enrichTrace(trace);
+
+    // assert that backend has been created
+    Assertions.assertNotNull(EnrichedSpanUtils.getBackendId(e));
+    Assertions.assertNotNull(EnrichedSpanUtils.getBackendName(e));
+  }
+
+  @Test
+  public void test_EnrichTrace_BackendResolvedForBrokenFacadeEvent() {
+    String eventName = "broken facade event";
+    String backendName = "peer";
+    String serviceName = "peer";
+    String backendId = "peerId";
+
+    Map<String, String> identifyingAttributes =
+        Map.of(
+            BACKEND_PROTOCOL_ATTR_NAME, "UNKNOWN",
+            BACKEND_HOST_ATTR_NAME, backendName,
+            BACKEND_PORT_ATTR_NAME, "-1");
+    Map<String, String> attributes =
+        Map.of(
+            "FROM_EVENT",
+            eventName,
+            "FROM_EVENT_ID",
+            HexUtils.getHex(ByteBuffer.wrap(EVENT_ID.getBytes())));
+    Entity backendEntity =
+        createEntity(EntityType.BACKEND, backendName, identifyingAttributes, attributes, TENANT_ID);
+
+    when(edsClient.upsert(eq(backendEntity)))
+        .thenReturn(
+            Entity.newBuilder(backendEntity)
+                .setEntityId(backendId)
+                .putAllAttributes(createEdsAttributes(identifyingAttributes))
+                .build());
+
+    // both service and peer service are same
+    Event e =
+        createApiExitEvent(EVENT_ID, serviceName, backendName).setEventName(eventName).build();
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+    enricher.enrichTrace(trace);
+
+    // assert that backend has been created for above event
+    Assertions.assertNotNull(EnrichedSpanUtils.getBackendId(e));
+    Assertions.assertNotNull(EnrichedSpanUtils.getBackendName(e));
+  }
+
   private Event.Builder createApiEntryEvent(String eventId) {
     return Event.newBuilder()
         .setCustomerId(TENANT_ID)
@@ -141,6 +218,17 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
         .setEntityIdList(Collections.singletonList(SERVICE_ID))
         .setEnrichedAttributes(createNewAvroAttributes(Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT")))
         .setAttributes(createNewAvroAttributes(Map.of(SPAN_TYPE_ATTR, "EXIT")));
+  }
+
+  private Event.Builder createApiExitEvent(String eventId, String serviceName, String peerService) {
+    return Event.newBuilder()
+        .setCustomerId(TENANT_ID)
+        .setEventId(ByteBuffer.wrap(eventId.getBytes()))
+        .setServiceName(serviceName)
+        .setEntityIdList(Collections.singletonList(SERVICE_ID))
+        .setEnrichedAttributes(createNewAvroAttributes(Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT")))
+        .setAttributes(
+            createNewAvroAttributes(Map.of(SPAN_TYPE_ATTR, "EXIT", "peer.service", peerService)));
   }
 
   private org.hypertrace.entity.data.service.v1.Entity createEntity(

@@ -159,6 +159,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     // Case 1:  sampleapp (entry) -> redis (exit)
     Event parent =
         createEvent(
+            TENANT_ID,
             "parent",
             Map.of("span.kind", "server"),
             Map.of("SPAN_TYPE", "ENTRY", "SERVICE_NAME", "sampleapp"),
@@ -166,6 +167,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
             "sampleapp");
     Event current =
         createEvent(
+            TENANT_ID,
             "current",
             Map.of("span.kind", "client"),
             Map.of("SPAN_TYPE", "EXIT"),
@@ -189,6 +191,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     // Case 2:  sampleapp (entry) -> sampleapp (exit)
     Event parent =
         createEvent(
+            TENANT_ID,
             "parent",
             Map.of("span.kind", "server"),
             Map.of("SPAN_TYPE", "ENTRY", "SERVICE_NAME", "sampleapp"),
@@ -196,6 +199,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
             "sampleapp");
     Event current =
         createEvent(
+            TENANT_ID,
             "current",
             Map.of("span.kind", "client"),
             Map.of("SPAN_TYPE", "EXIT"),
@@ -219,6 +223,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     // Case 3:  sampleapp (entry) -> sampleapp (exit) -> redis (exit)
     Event parent1 =
         createEvent(
+            TENANT_ID,
             "parent1",
             Map.of("span.kind", "server"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"),
@@ -227,6 +232,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
 
     Event parent2 =
         createEvent(
+            TENANT_ID,
             "parent2",
             Map.of("span.kind", "client"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT", "SERVICE_NAME", "sampleapp"),
@@ -235,6 +241,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
 
     Event current =
         createEvent(
+            TENANT_ID,
             "current",
             Map.of("span.kind", "client"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"),
@@ -259,6 +266,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     // Case 4:  sampleapp (entry) -> sampleapp (exit) -> sampleapp (exit)
     Event parent1 =
         createEvent(
+            TENANT_ID,
             "parent1",
             Map.of("span.kind", "server"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"),
@@ -266,6 +274,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
             "sampleapp");
     Event parent2 =
         createEvent(
+            TENANT_ID,
             "parent2",
             Map.of("span.kind", "client"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT", "SERVICE_NAME", "sampleapp"),
@@ -273,6 +282,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
             "sampleapp");
     Event current =
         createEvent(
+            TENANT_ID,
             "current",
             Map.of("span.kind", "client"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"),
@@ -296,6 +306,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     // Case 4:  sampleapp (exit)
     Event current =
         createEvent(
+            TENANT_ID,
             "current",
             Map.of("span.kind", "client"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"),
@@ -320,6 +331,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     // Case 6:  sampleapp (entry) -> sampleapp (entry) -> sampleapp (exit)
     Event parent1 =
         createEvent(
+            TENANT_ID,
             "parent1",
             Map.of("span.kind", "server"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"),
@@ -327,6 +339,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
             "sampleapp");
     Event parent2 =
         createEvent(
+            TENANT_ID,
             "parent2",
             Map.of("span.kind", "client"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "ENTRY", "SERVICE_NAME", "sampleapp"),
@@ -334,6 +347,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
             "sampleapp");
     Event current =
         createEvent(
+            TENANT_ID,
             "current",
             Map.of("span.kind", "client"),
             Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT"),
@@ -351,7 +365,63 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     assertEquals(expected, actual);
   }
 
+  @Test
+  public void testBrokenTraceWithNoFacadeService() {
+    String serviceName = "client";
+    String peerServiceName = "peer";
+    org.hypertrace.entity.data.service.v1.Entity service =
+        org.hypertrace.entity.data.service.v1.Entity.newBuilder()
+            .setTenantId("TENANT_ID")
+            .setEntityType(EntityType.SERVICE.name())
+            .setEntityId(ENTITY_ID)
+            .setEntityName(serviceName)
+            .build();
+    doReturn(Collections.singletonList(service))
+        .when(edsClient)
+        .getEntitiesByName(TENANT_ID, EntityType.SERVICE.name(), serviceName);
+
+    Event exitEvent =
+        createEvent(
+            TENANT_ID,
+            "current",
+            Map.of("span.kind", "client", "peer.service", peerServiceName),
+            Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT", "SPAN_TYPE", "EXIT"),
+            null,
+            serviceName);
+
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, exitEvent);
+    enricher.enrichEvent(trace, exitEvent);
+
+    // Assert that entity is created for broken span having none facade service
+    assertEquals(1, trace.getEntityList().size());
+    assertEquals(1, exitEvent.getEntityIdList().size());
+    assertEquals(serviceName, EnrichedSpanUtils.getServiceName(exitEvent));
+  }
+
+  @Test
+  public void testBrokenTraceWithFacadeService() {
+    String serviceName = "peer";
+    String peerServiceName = "peer";
+    Event exitEvent =
+        createEvent(
+            TENANT_ID,
+            "current",
+            Map.of("span.kind", "client", "peer.service", peerServiceName),
+            Map.of(API_BOUNDARY_TYPE_ATTR, "EXIT", "SPAN_TYPE", "EXIT"),
+            null,
+            serviceName);
+
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, exitEvent);
+    enricher.enrichEvent(trace, exitEvent);
+
+    // Assert that no entity created for facade service
+    assertEquals(0, trace.getEntityList().size());
+    assertEquals(0, exitEvent.getEntityIdList().size());
+    assertNull(EnrichedSpanUtils.getServiceName(exitEvent));
+  }
+
   private Event createEvent(
+      String tenantId,
       String eventName,
       Map<String, String> attributes,
       Map<String, String> enriched,
@@ -377,7 +447,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     }
 
     return Event.newBuilder()
-        .setCustomerId("__default")
+        .setCustomerId(tenantId)
         .setEventId(ByteBuffer.wrap(eventName.getBytes()))
         .setEnrichedAttributes(
             Attributes.newBuilder().setAttributeMap(enrichedAttributesMap).build())

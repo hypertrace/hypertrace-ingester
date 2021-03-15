@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
+import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.slf4j.Logger;
@@ -34,6 +35,17 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
               serviceName);
           final Builder backendBuilder =
               getBackendEntityBuilder(BackendType.UNKNOWN, serviceName, event);
+          return Optional.of(new BackendInfo(backendBuilder.build(), Collections.emptyMap()));
+        }
+      } else {
+        // if its broken span, create backend entity using peer.service
+        String peerServiceName = SpanSemanticConventionUtils.getPeerServiceName(event);
+        if (peerServiceName != null) {
+          LOGGER.debug(
+              "Detected exit span which has same peer.service. Will be creating a backend based on exit span peer service name = [{}]",
+              peerServiceName);
+          final Builder backendBuilder =
+              getBackendEntityBuilder(BackendType.UNKNOWN, peerServiceName, event);
           return Optional.of(new BackendInfo(backendBuilder.build(), Collections.emptyMap()));
         }
       }

@@ -13,6 +13,7 @@ import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.servicetype.ServiceType;
+import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
@@ -71,7 +72,16 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
             findServiceNameOfFirstAncestorThatIsNotAnExitSpanAndBelongsToADifferentService(
                     event, serviceName, graph)
                 .orElse(null);
-        serviceName = parentSvcName != null ? parentSvcName : serviceName;
+        if (parentSvcName != null) {
+          serviceName = parentSvcName;
+        } else {
+          // create backend entity at {@link ClientSpanEndpointResolver} if service and peer service
+          // are same
+          String peerServiceName = SpanSemanticConventionUtils.getPeerServiceName(event);
+          if (peerServiceName != null && peerServiceName.equals(serviceName)) {
+            return;
+          }
+        }
       }
 
       Map<String, String> attributes =
