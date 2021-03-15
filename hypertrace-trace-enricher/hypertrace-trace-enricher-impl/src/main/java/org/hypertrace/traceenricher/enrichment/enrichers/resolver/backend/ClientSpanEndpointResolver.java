@@ -1,9 +1,9 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
+import java.util.Collections;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
@@ -23,7 +23,7 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
    * out the destination endpoint
    */
   @Override
-  public Optional<Entity> resolveEntity(Event event, StructuredTraceGraph structuredTraceGraph) {
+  public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
     String serviceName = event.getServiceName();
     if (serviceName != null) {
       Event parentSpan = structuredTraceGraph.getParentEvent(event);
@@ -35,7 +35,7 @@ public class ClientSpanEndpointResolver extends AbstractBackendResolver {
               serviceName);
           final Builder backendBuilder =
               getBackendEntityBuilder(BackendType.UNKNOWN, serviceName, event);
-          return Optional.of(backendBuilder.build());
+          return Optional.of(new BackendInfo(backendBuilder.build(), Collections.emptyMap()));
         }
       } else {
         // if its broken span, create backend entity using peer.service

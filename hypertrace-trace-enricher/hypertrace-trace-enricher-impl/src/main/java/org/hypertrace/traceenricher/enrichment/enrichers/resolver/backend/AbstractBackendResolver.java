@@ -8,7 +8,6 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
-import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.entitytype.EntityType;
@@ -29,13 +28,12 @@ public abstract class AbstractBackendResolver {
   private static final String DEFAULT_PORT = "-1";
   private static final String SVC_CLUSTER_LOCAL_SUFFIX = ".svc.cluster.local";
 
-  public abstract Optional<Entity> resolveEntity(
+  public abstract Optional<BackendInfo> resolve(
       Event event, StructuredTraceGraph structuredTraceGraph);
 
   Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event) {
     String[] hostAndPort = backendURI.split(COLON);
     String host = hostAndPort[0].replace(SVC_CLUSTER_LOCAL_SUFFIX, "");
-    ;
     String port = (hostAndPort.length == 2) ? hostAndPort[1] : DEFAULT_PORT;
     String entityName = port.equals(DEFAULT_PORT) ? host : COLON_JOINER.join(host, port);
     final Builder entityBuilder =

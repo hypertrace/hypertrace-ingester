@@ -27,6 +27,7 @@ public class DbSemanticConventionUtils {
   private static final String OTEL_DB_CONNECTION_STRING =
       OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue();
   private static final String OTEL_DB_OPERATION = OTelDbSemanticConventions.DB_OPERATION.getValue();
+  private static final String OTEL_DB_STATEMENT = OTelDbSemanticConventions.DB_STATEMENT.getValue();
 
   // mongo specific attributes
   private static final String OTEL_MONGO_DB_SYSTEM_VALUE =
@@ -49,15 +50,15 @@ public class DbSemanticConventionUtils {
   // sql specific attributes
   private static final String[] OTEL_SQL_DB_SYSTEM_VALUES = {
     OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.ORACLE_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.ORACLE_DB_SYSTEM_VALUE.getValue(),
     OTelDbSemanticConventions.MSSQL_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.DB2_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.DB2_DB_SYSTEM_VALUE.getValue(),
     OTelDbSemanticConventions.POSTGRESQL_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.REDSHIFT_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.REDSHIFT_DB_SYSTEM_VALUE.getValue(),
     OTelDbSemanticConventions.HIVE_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.CLOUDSCAPE_DB_SYSTEM_VALUE.getValue(),
+    OTelDbSemanticConventions.CLOUDSCAPE_DB_SYSTEM_VALUE.getValue(),
     OTelDbSemanticConventions.HSQLDB_DB_SYSTEM_VALUE.getValue(),
-        OTelDbSemanticConventions.OTHER_SQL_DB_SYSTEM_VALUE.getValue()
+    OTelDbSemanticConventions.OTHER_SQL_DB_SYSTEM_VALUE.getValue()
   };
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final String SQL_URL = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
@@ -95,6 +96,67 @@ public class DbSemanticConventionUtils {
   /** @return attribute keys representing mongo namespace */
   public static List<String> getAttributeKeysForMongoNamespace() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_NAMESPACE, OTEL_MONGO_COLLECTION));
+  }
+
+  public static List<String> getAttributeKeysForDbOperation() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_OPERATION));
+  }
+
+  public static List<String> getAttributeKeysForDbStatement() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_STATEMENT));
+  }
+
+  public static String getOperationFromDbQuery(String query) {
+    return StringUtils.substringBefore(StringUtils.trim(query), " ");
+  }
+
+  public static Optional<String> getOtelDbOperation(Event event) {
+    String dbOperation =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    if (dbOperation != null) {
+      return Optional.of(dbOperation);
+    }
+    String dbStatement =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, DbSemanticConventionUtils.getAttributeKeysForDbStatement());
+    if (dbStatement != null) {
+      return Optional.of(getOperationFromDbQuery(dbStatement));
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getDbOperationForJDBC(Event event) {
+    Optional<String> jdbcOperation = getOtelDbOperation(event);
+    if (jdbcOperation.isPresent()) {
+      return jdbcOperation;
+    }
+    String sqlQuery =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(Sql.SQL_QUERY)));
+    if (sqlQuery != null) {
+      return Optional.of(getOperationFromDbQuery(sqlQuery));
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getDbOperationForRedis(Event event) {
+    Optional<String> redisOperation = getOtelDbOperation(event);
+    if (redisOperation.isPresent()) {
+      return redisOperation;
+    }
+    String redisCommand =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(Redis.REDIS_COMMAND)));
+    if (redisCommand != null) {
+      return Optional.of(redisCommand);
+    }
+    return Optional.empty();
+  }
+
+  public static String getDbOperationForMongo(Event event) {
+    return SpanAttributeUtils.getFirstAvailableStringAttribute(
+        event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
   }
 
   /**

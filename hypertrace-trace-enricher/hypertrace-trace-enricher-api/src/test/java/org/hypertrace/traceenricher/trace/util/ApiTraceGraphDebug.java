@@ -6,6 +6,9 @@ import java.net.URL;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Attributes;
+import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 
@@ -227,6 +230,29 @@ public class ApiTraceGraphDebug {
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     dfrStructuredTrace.close();
 
+    prettyPrintApiTraceGraph(apiTraceGraph);
+
+    trace
+        .getEventList()
+        .forEach(
+            v ->
+                addEnrichedAttribute(
+                    v, "test-attribute", AttributeValue.newBuilder().setValue("test-val").build()));
+
+    prettyPrintApiTraceGraph(new ApiTraceGraph(trace));
+  }
+
+  void addEnrichedAttribute(Event event, String key, AttributeValue value) {
+    Attributes enrichedAttributes = event.getEnrichedAttributes();
+    if (enrichedAttributes == null) {
+      enrichedAttributes = Attributes.newBuilder().build();
+      event.setEnrichedAttributes(enrichedAttributes);
+    }
+
+    enrichedAttributes.getAttributeMap().put(key, value);
+  }
+
+  void prettyPrintApiTraceGraph(ApiTraceGraph apiTraceGraph) {
     AtomicInteger index = new AtomicInteger();
     apiTraceGraph
         .getApiNodeList()

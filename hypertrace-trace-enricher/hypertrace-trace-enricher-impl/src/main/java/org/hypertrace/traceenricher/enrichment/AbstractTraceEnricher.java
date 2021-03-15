@@ -4,10 +4,10 @@ import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Edge;
@@ -69,10 +69,9 @@ public abstract class AbstractTraceEnricher implements Enricher {
     enrichedAttributes.getAttributeMap().put(key, value);
   }
 
-  protected void addEnrichedAttributes(Event event, List<Pair<String, AttributeValue>> attributes) {
-    attributes.forEach(
-        attributePair ->
-            addEnrichedAttribute(event, attributePair.getKey(), attributePair.getValue()));
+  protected void addEnrichedAttributes(
+      Event event, Map<String, AttributeValue> attributesToEnrich) {
+    attributesToEnrich.forEach((key, value) -> addEnrichedAttribute(event, key, value));
   }
 
   protected void addEnrichedAttributeIfNotNull(Event event, String key, String value) {
