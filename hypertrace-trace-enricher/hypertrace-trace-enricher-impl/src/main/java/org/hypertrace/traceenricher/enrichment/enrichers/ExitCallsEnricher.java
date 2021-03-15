@@ -43,13 +43,15 @@ public class ExitCallsEnricher extends AbstractTraceEnricher {
   }
 
   /**
-   * An api_node represents an api call in the trace It consists of api_entry span and multiple
+   * <p>An api_node represents an api call in the trace It consists of api_entry span and multiple
    * api_exit and internal spans
    *
    * <p>This method computes the count & breakup of exit calls for any given api (identified by
-   * api_entry_span) This count is a composition of 2 things 1. link between api_exit_span in
-   * api_node to api_entry_span (child of api_exit_span) in another api_node 2. exit calls to
-   * backend from api_exit_span in api_node
+   * api_entry_span) This count is a composition of 2 things
+   * <ul>
+   * <li>1. link between api_exit_span in api_node to api_entry_span (child of api_exit_span) in another api_node </li>
+   * <li>2. exit calls to backend from api_exit_span in api_node</li>
+   * </ul>
    */
   Map<ByteBuffer, ApiExitCallInfo> computeApiExitCallCount(StructuredTrace trace) {
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
