@@ -9,6 +9,8 @@ public class EnrichedSpanConstants {
   private static final Logger LOGGER = LoggerFactory.getLogger(EnrichedSpanConstants.class);
 
   public static final String SPACE_IDS_ATTRIBUTE = "SPACE_IDS";
+  public static final String API_EXIT_CALLS_ATTRIBUTE = "API_EXIT_CALLS";
+  public static final String API_CALLEE_NAME_COUNT_ATTRIBUTE = "API_CALLEE_NAME_COUNT";
 
   /**
    * Returns the constant value for the given Enum.
