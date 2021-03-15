@@ -26,6 +26,8 @@ public class SpanSemanticConventionUtils {
   private static final String OT_PEER_IP = OpenTracingSpanSemanticConventions.PEER_IPV4.getValue();
   private static final String OT_PEER_PORT =
       OpenTracingSpanSemanticConventions.PEER_PORT.getValue();
+  private static final String OT_PEER_NAME =
+      OpenTracingSpanSemanticConventions.PEER_NAME.getValue();
 
   /**
    * @param event Object encapsulating span data
@@ -134,5 +136,12 @@ public class SpanSemanticConventionUtils {
                   .getValue());
     }
     return false;
+  }
+
+  public static String getPeerServiceName(Event event) {
+    if (SpanAttributeUtils.containsAttributeKey(event, OT_PEER_NAME)) {
+      return SpanAttributeUtils.getStringAttribute(event, OT_PEER_NAME);
+    }
+    return null;
   }
 }
