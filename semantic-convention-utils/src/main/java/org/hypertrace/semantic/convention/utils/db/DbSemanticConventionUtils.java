@@ -194,13 +194,9 @@ public class DbSemanticConventionUtils {
   }
 
   public static Optional<String> getRedisDbIndex(Event event) {
-    String redisDbIndex =
+    return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForRedisTableIndex());
-    if (redisDbIndex != null) {
-      return Optional.of(redisDbIndex);
-    }
-    return Optional.empty();
+            event, getAttributeKeysForRedisTableIndex()));
   }
 
   public static Optional<String> getDestinationForDb(Event event, Optional<String> table_name) {

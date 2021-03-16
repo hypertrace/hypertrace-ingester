@@ -134,23 +134,15 @@ public class MessagingSemanticConventionUtils {
   }
 
   public static Optional<String> getMessagingOperation(Event event) {
-    String messagingOperation =
+    return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForMessagingOperation());
-    if (messagingOperation != null) {
-      return Optional.of(messagingOperation);
-    }
-    return Optional.empty();
+            event, getAttributeKeysForMessagingOperation()));
   }
 
   public static Optional<String> getMessagingDestination(Event event) {
-    String messagingDestination =
+    return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForMessagingDestination());
-    if (messagingDestination != null) {
-      return Optional.of(messagingDestination);
-    }
-    return Optional.empty();
+            event, getAttributeKeysForMessagingDestination()));
   }
 
   public static Optional<String> getMessagingDestinationWithAdditionalInfo(
