@@ -21,6 +21,8 @@ public class KafkaBackendResolver extends AbstractBackendResolver {
   private static final Logger LOGGER = LoggerFactory.getLogger(KafkaBackendResolver.class);
   private static final String BACKEND_OPERATION_ATTR =
       EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
+  private static final String BACKEND_DESTINATION_ATTR =
+      EnrichedSpanConstants.getValue(Backend.BACKEND_DESTINATION);
 
   @Override
   public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
@@ -43,10 +45,17 @@ public class KafkaBackendResolver extends AbstractBackendResolver {
         getBackendEntityBuilder(BackendType.KAFKA, backendURI.get(), event);
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String kafkaOperation = MessagingSemanticConventionUtils.getMessagingOperation(event);
-    if (kafkaOperation != null) {
-      enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(kafkaOperation));
-    }
+    Optional<String> kafkaOperation = MessagingSemanticConventionUtils.getMessagingOperation(event);
+    kafkaOperation.ifPresent(
+        operation ->
+            enrichedAttributes.put(
+                BACKEND_OPERATION_ATTR, AttributeValueCreator.create(operation)));
+    Optional<String> kafkaDestination =
+        MessagingSemanticConventionUtils.getMessagingDestinationForKafka(event);
+    kafkaDestination.ifPresent(
+        destination ->
+            enrichedAttributes.put(
+                BACKEND_DESTINATION_ATTR, AttributeValueCreator.create(destination)));
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
 }

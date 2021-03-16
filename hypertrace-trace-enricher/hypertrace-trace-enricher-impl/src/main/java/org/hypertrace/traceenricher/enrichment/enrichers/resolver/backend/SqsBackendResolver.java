@@ -21,6 +21,8 @@ public class SqsBackendResolver extends AbstractBackendResolver {
   private static final Logger LOGGER = LoggerFactory.getLogger(SqsBackendResolver.class);
   private static final String BACKEND_OPERATION_ATTR =
       EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
+  private static final String BACKEND_DESTINATION_ATTR =
+      EnrichedSpanConstants.getValue(Backend.BACKEND_DESTINATION);
 
   @Override
   public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
@@ -43,10 +45,18 @@ public class SqsBackendResolver extends AbstractBackendResolver {
         getBackendEntityBuilder(BackendType.SQS, backendURI.get(), event);
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    String sqsOperation = MessagingSemanticConventionUtils.getMessagingOperation(event);
-    if (sqsOperation != null) {
-      enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(sqsOperation));
-    }
+    Optional<String> sqsOperation = MessagingSemanticConventionUtils.getMessagingOperation(event);
+    sqsOperation.ifPresent(
+        operation ->
+            enrichedAttributes.put(
+                BACKEND_OPERATION_ATTR, AttributeValueCreator.create(operation)));
+    Optional<String> sqsDestination =
+        MessagingSemanticConventionUtils.getMessagingDestination(event);
+    sqsDestination.ifPresent(
+        destination ->
+            enrichedAttributes.put(
+                BACKEND_DESTINATION_ATTR, AttributeValueCreator.create(destination)));
+
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
 }

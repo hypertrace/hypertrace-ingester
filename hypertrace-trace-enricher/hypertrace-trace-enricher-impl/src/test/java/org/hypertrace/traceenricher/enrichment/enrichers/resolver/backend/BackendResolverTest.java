@@ -87,6 +87,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                             AttributeValue.newBuilder().setValue("GET").build(),
                             "http.host",
                             AttributeValue.newBuilder().setValue("dataservice:9394").build(),
+                            "http.target",
+                            AttributeValue.newBuilder().setValue("/path/12314/?q=ddds#123").build(),
                             "status.code",
                             AttributeValue.newBuilder().setValue("0").build()))
                     .build())
@@ -115,7 +117,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                     .build())
             .build();
 
-    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final BackendInfo backendInfo = backendResolver.resolve(e, structuredTraceGraph).get();
+    final Entity backendEntity = backendInfo.getEntity();
     assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -160,6 +163,11 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
             .getValue()
             .getString(),
         "GET");
+
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(
+        Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("/path/12314/?q=ddds#123")),
+        attributes);
   }
 
   @Test
@@ -852,6 +860,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                             buildAttributeValue("55636196-c840-11e9-a417-42010a8a0064"),
                             "db.operation",
                             AttributeValue.newBuilder().setValue("GET").build(),
+                            "db.redis.database_index",
+                            AttributeValue.newBuilder().setValue("15").build(),
                             "docker.container_id",
                             buildAttributeValue(
                                 "ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f"),
@@ -914,7 +924,13 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
             .getString(),
         "62646630336466616266356337306638");
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
-    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("GET")), attributes);
+    assertEquals(
+        Map.of(
+            "BACKEND_OPERATION",
+            AttributeValueCreator.create("GET"),
+            "BACKEND_DESTINATION",
+            AttributeValueCreator.create("15")),
+        attributes);
   }
 
   @Test
@@ -1148,6 +1164,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                             buildAttributeValue("client"),
                             OTelDbSemanticConventions.DB_OPERATION.getValue(),
                             buildAttributeValue("FindOperation"),
+                            OTelDbSemanticConventions.DB_NAME.getValue(),
+                            buildAttributeValue("customers"),
                             OTelSpanSemanticConventions.NET_PEER_PORT.getValue(),
                             buildAttributeValue("27017")))
                     .build())
@@ -1167,7 +1185,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final BackendInfo backendInfo = backendResolver.resolve(e, structuredTraceGraph).get();
+    final Entity backendEntity = backendInfo.getEntity();
     assertEquals("mongodb0:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -1219,6 +1238,15 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
             .getValue()
             .getString(),
         "62646630336466616266356337306638");
+
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(
+        Map.of(
+            "BACKEND_DESTINATION",
+            AttributeValueCreator.create("customers.sampleshop.userReview"),
+            "BACKEND_OPERATION",
+            AttributeValueCreator.create("FindOperation")),
+        attributes);
   }
 
   @Test
@@ -1265,6 +1293,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                         Map.of(
                             "SPAN_TYPE",
                             AttributeValue.newBuilder().setValue("EXIT").build(),
+                            "rpc.service",
+                            AttributeValue.newBuilder().setValue("myservice.EchoService").build(),
                             "PROTOCOL",
                             AttributeValue.newBuilder().setValue("GRPC").build()))
                     .build())
@@ -1285,7 +1315,8 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final BackendInfo backendInfo = backendResolver.resolve(e, structuredTraceGraph).get();
+    final Entity backendEntity = backendInfo.getEntity();
     assertEquals("productcatalogservice:3550", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -1330,6 +1361,14 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
             .getValue()
             .getString(),
         "/hipstershop.ProductCatalogService/ListProducts");
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(
+        Map.of(
+            "BACKEND_DESTINATION",
+            AttributeValueCreator.create("myservice.EchoService"),
+            "BACKEND_OPERATION",
+            AttributeValueCreator.create("/hipstershop.ProductCatalogService/ListProducts")),
+        attributes);
   }
 
   @Test

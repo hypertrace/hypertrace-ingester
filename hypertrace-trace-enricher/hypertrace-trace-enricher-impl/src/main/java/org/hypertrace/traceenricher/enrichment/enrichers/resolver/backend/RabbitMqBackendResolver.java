@@ -21,6 +21,8 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
   private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMqBackendResolver.class);
   private static final String BACKEND_OPERATION_ATTR =
       EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
+  private static final String BACKEND_DESTINATION_ATTR =
+      EnrichedSpanConstants.getValue(Backend.BACKEND_DESTINATION);
 
   @Override
   public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
@@ -39,10 +41,17 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
     Optional<String> rabbitmqOperation =
         MessagingSemanticConventionUtils.getRabbitmqOperation(event);
-    if (rabbitmqOperation.isPresent()) {
-      enrichedAttributes.put(
-          BACKEND_OPERATION_ATTR, AttributeValueCreator.create(rabbitmqOperation.get()));
-    }
+    rabbitmqOperation.ifPresent(
+        operation ->
+            enrichedAttributes.put(
+                BACKEND_OPERATION_ATTR, AttributeValueCreator.create(operation)));
+    Optional<String> rabbitmqDestination =
+        MessagingSemanticConventionUtils.getMessagingDestinationFroRabbitmq(event);
+    rabbitmqDestination.ifPresent(
+        destination ->
+            enrichedAttributes.put(
+                BACKEND_DESTINATION_ATTR, AttributeValueCreator.create(destination)));
+
     return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
   }
 }

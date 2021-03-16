@@ -41,6 +41,10 @@ public class MessagingSemanticConventionUtils {
       OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue();
   private static final String RABBITMQ_COMMAND_VALUE =
       OtelMessagingSemanticConventions.RABBITMQ_COMMAND.getValue();
+  private static final String OTEL_MESSAGING_DESTINATION =
+      OtelMessagingSemanticConventions.MESSAGING_DESTINATION.getValue();
+  private static final String KAFKA_CONSUMER_GROUP =
+      OtelMessagingSemanticConventions.KAFKA_MESSAGING_CONSUMER_GROUP.getValue();
 
   private static final List<String> RABBITMQ_ROUTING_KEYS =
       new ArrayList<>(
@@ -111,23 +115,80 @@ public class MessagingSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(MESSAGING_OPERATION));
   }
 
+  public static List<String> getAttributeKeysForMessagingDestination() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_MESSAGING_DESTINATION));
+  }
+
+  public static List<String> getAttributeKeysForKafkaConsumerGroup() {
+    return Lists.newArrayList(Sets.newHashSet(KAFKA_CONSUMER_GROUP));
+  }
+
   public static List<String> getAttributeKeysForRabbitmqCommand() {
     return Lists.newArrayList(Sets.newHashSet(RABBITMQ_COMMAND_VALUE));
   }
 
-  public static String getMessagingOperation(Event event) {
-    return SpanAttributeUtils.getFirstAvailableStringAttribute(
-        event, MessagingSemanticConventionUtils.getAttributeKeysForMessagingOperation());
+  public static Optional<String> getKafkaConsumerGroupName(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForKafkaConsumerGroup()));
   }
 
-  public static Optional<String> getRabbitmqOperation(Event event) {
-    String messagingOperation = getMessagingOperation(event);
+  public static Optional<String> getMessagingOperation(Event event) {
+    String messagingOperation =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForMessagingOperation());
     if (messagingOperation != null) {
       return Optional.of(messagingOperation);
     }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getMessagingDestination(Event event) {
+    String messagingDestination =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForMessagingDestination());
+    if (messagingDestination != null) {
+      return Optional.of(messagingDestination);
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getMessagingDestinationWithAdditionalInfo(
+      Event event, Optional<String> additionalDestinationInfo) {
+    Optional<String> messagingDestination = getMessagingDestination(event);
+    if (messagingDestination.isPresent() && additionalDestinationInfo.isPresent()) {
+      return Optional.of(
+          (new StringBuilder()
+              .append(additionalDestinationInfo.get())
+              .append(".")
+              .append(messagingDestination.get())
+              .toString()));
+    } else if (messagingDestination.isPresent()) {
+      return messagingDestination;
+    } else if (additionalDestinationInfo.isPresent()) {
+      return additionalDestinationInfo;
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getMessagingDestinationForKafka(Event event) {
+    Optional<String> kafkaConsumerGroup = getKafkaConsumerGroupName(event);
+    return getMessagingDestinationWithAdditionalInfo(event, kafkaConsumerGroup);
+  }
+
+  public static Optional<String> getMessagingDestinationFroRabbitmq(Event event) {
+    Optional<String> rabbitmqRoutingKey = getRabbitMqRoutingKey(event);
+    return getMessagingDestinationWithAdditionalInfo(event, rabbitmqRoutingKey);
+  }
+
+  public static Optional<String> getRabbitmqOperation(Event event) {
+    Optional<String> messagingOperation = getMessagingOperation(event);
+    if (messagingOperation.isPresent()) {
+      return messagingOperation;
+    }
     String rabbitmqCommand =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, MessagingSemanticConventionUtils.getAttributeKeysForRabbitmqCommand());
+            event, getAttributeKeysForRabbitmqCommand());
     if (rabbitmqCommand != null) {
       return Optional.of(rabbitmqCommand);
     }

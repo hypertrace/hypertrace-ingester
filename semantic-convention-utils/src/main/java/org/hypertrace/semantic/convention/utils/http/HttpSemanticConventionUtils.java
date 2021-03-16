@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -38,6 +40,7 @@ public class HttpSemanticConventionUtils {
   };
   private static final String OTHER_HTTP_RESPONSE_STATUS_MESSAGE =
       RawSpanConstants.getValue(Http.HTTP_RESPONSE_STATUS_MESSAGE);
+  private static final String OTEL_HTTP_TARGET = OTelHttpSemanticConventions.HTTP_TARGET.getValue();
 
   /** @return attribute keys for http method */
   public static List<String> getAttributeKeysForHttpMethod() {
@@ -47,6 +50,16 @@ public class HttpSemanticConventionUtils {
   /** @return attribute keys for http request method */
   public static List<String> getAttributeKeysForHttpRequestMethod() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_HTTP_REQUEST_METHOD));
+  }
+
+  public static List<String> getAttributeKeysForHttpTarget() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_HTTP_TARGET));
+  }
+
+  public static Optional<String> getOtelHttpTarget(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForHttpTarget()));
   }
 
   /**

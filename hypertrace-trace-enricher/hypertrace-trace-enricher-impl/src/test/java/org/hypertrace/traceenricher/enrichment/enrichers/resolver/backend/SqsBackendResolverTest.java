@@ -48,7 +48,12 @@ public class SqsBackendResolverTest {
       Assertions.assertEquals(sqsHost, entity.getEntityName());
       Map<String, AttributeValue> attributes = backendInfo.getAttributes();
       assertEquals(
-          Map.of("BACKEND_OPERATION", AttributeValueCreator.create("receive")), attributes);
+          Map.of(
+              "BACKEND_OPERATION",
+              AttributeValueCreator.create("receive"),
+              "BACKEND_DESTINATION",
+              AttributeValueCreator.create("QueueName")),
+          attributes);
     } catch (MalformedURLException e) {
       Assertions.fail("Unable to create URL for given connection string");
     }
@@ -83,6 +88,8 @@ public class SqsBackendResolverTest {
                             AttributeValue.newBuilder().setValue(connectionString).build(),
                             "messaging.operation",
                             AttributeValue.newBuilder().setValue("receive").build(),
+                            "messaging.destination",
+                            AttributeValue.newBuilder().setValue("QueueName").build(),
                             "span.kind",
                             AttributeValue.newBuilder().setValue("client").build(),
                             "FLAGS",

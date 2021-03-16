@@ -11,7 +11,9 @@ public enum OtelMessagingSemanticConventions {
   AWS_SQS_MESSAGING_SYSTEM_VALUE("sqs"),
   PRODUCER("PRODUCER"),
   CONSUMER("CONSUMER"),
-  MESSAGING_OPERATION("messaging.operation");
+  MESSAGING_OPERATION("messaging.operation"),
+  MESSAGING_DESTINATION("messaging.destination"),
+  KAFKA_MESSAGING_CONSUMER_GROUP("messaging.kafka.consumer_group");
 
   private final String value;
 

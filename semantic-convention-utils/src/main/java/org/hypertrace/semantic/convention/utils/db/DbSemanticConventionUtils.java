@@ -28,6 +28,7 @@ public class DbSemanticConventionUtils {
       OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue();
   private static final String OTEL_DB_OPERATION = OTelDbSemanticConventions.DB_OPERATION.getValue();
   private static final String OTEL_DB_STATEMENT = OTelDbSemanticConventions.DB_STATEMENT.getValue();
+  private static final String OTEL_DB_NAME = OTelDbSemanticConventions.DB_NAME.getValue();
 
   // mongo specific attributes
   private static final String OTEL_MONGO_DB_SYSTEM_VALUE =
@@ -46,6 +47,8 @@ public class DbSemanticConventionUtils {
       RawSpanConstants.getValue(Redis.REDIS_CONNECTION);
   private static final String OTEL_REDIS_DB_SYSTEM_VALUE =
       OTelDbSemanticConventions.REDIS_DB_SYSTEM_VALUE.getValue();
+  private static final String OTEL_REDIS_DB_INDEX =
+      OTelDbSemanticConventions.REDIS_TABLE_INDEX.getValue();
 
   // sql specific attributes
   private static final String[] OTEL_SQL_DB_SYSTEM_VALUES = {
@@ -62,6 +65,7 @@ public class DbSemanticConventionUtils {
   };
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final String SQL_URL = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
+  private static final String SQL_TABLE_NAME = OTelDbSemanticConventions.SQL_TABLE_NAME.getValue();
 
   /**
    * @param event Object encapsulating span data
@@ -104,6 +108,18 @@ public class DbSemanticConventionUtils {
 
   public static List<String> getAttributeKeysForDbStatement() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_DB_STATEMENT));
+  }
+
+  public static List<String> getAttributeKeysForDbName() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_NAME));
+  }
+
+  public static List<String> getAttributeKeysForSqlTableName() {
+    return Lists.newArrayList(Sets.newHashSet(SQL_TABLE_NAME));
+  }
+
+  public static List<String> getAttributeKeysForRedisTableIndex() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_REDIS_DB_INDEX));
   }
 
   public static String getOperationFromDbQuery(String query) {
@@ -154,9 +170,69 @@ public class DbSemanticConventionUtils {
     return Optional.empty();
   }
 
-  public static String getDbOperationForMongo(Event event) {
-    return SpanAttributeUtils.getFirstAvailableStringAttribute(
-        event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation());
+  public static Optional<String> getDbOperationForMongo(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation()));
+  }
+
+  public static Optional<String> getDbName(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(event, getAttributeKeysForDbName()));
+  }
+
+  public static Optional<String> getSqlTableName(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForSqlTableName()));
+  }
+
+  public static Optional<String> getMongoCollectionName(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForMongoNamespace()));
+  }
+
+  public static Optional<String> getRedisDbIndex(Event event) {
+    String redisDbIndex =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForRedisTableIndex());
+    if (redisDbIndex != null) {
+      return Optional.of(redisDbIndex);
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getDestinationForDb(Event event, Optional<String> table_name) {
+    Optional<String> dbName = getDbName(event);
+    if (dbName.isPresent() && table_name.isPresent()) {
+      return Optional.of(
+          (new StringBuilder()
+              .append(dbName.get())
+              .append(".")
+              .append(table_name.get())
+              .toString()));
+    } else if (dbName.isPresent()) {
+      return dbName;
+    } else if (table_name.isPresent()) {
+      return table_name;
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getDestinationForJdbc(Event event) {
+    Optional<String> sqlTableName = getSqlTableName(event);
+    return getDestinationForDb(event, sqlTableName);
+  }
+
+  public static Optional<String> getDestinationForMongo(Event event) {
+    Optional<String> mongoCollection = getMongoCollectionName(event);
+    return getDestinationForDb(event, mongoCollection);
+  }
+
+  public static Optional<String> getDestinationForRedis(Event event) {
+    Optional<String> redisDbIndex = getRedisDbIndex(event);
+    return getDestinationForDb(event, redisDbIndex);
   }
 
   /**
