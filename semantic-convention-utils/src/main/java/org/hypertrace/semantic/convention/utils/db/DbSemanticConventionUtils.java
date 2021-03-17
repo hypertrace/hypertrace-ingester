@@ -48,7 +48,7 @@ public class DbSemanticConventionUtils {
   private static final String OTEL_REDIS_DB_SYSTEM_VALUE =
       OTelDbSemanticConventions.REDIS_DB_SYSTEM_VALUE.getValue();
   private static final String OTEL_REDIS_DB_INDEX =
-      OTelDbSemanticConventions.REDIS_TABLE_INDEX.getValue();
+      OTelDbSemanticConventions.REDIS_DB_INDEX.getValue();
 
   // sql specific attributes
   private static final String[] OTEL_SQL_DB_SYSTEM_VALUES = {
@@ -176,7 +176,7 @@ public class DbSemanticConventionUtils {
             event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation()));
   }
 
-  public static Optional<String> getDbName(Event event) {
+  private static Optional<String> getDbName(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, getAttributeKeysForDbName()));
   }
@@ -199,19 +199,19 @@ public class DbSemanticConventionUtils {
             event, getAttributeKeysForRedisTableIndex()));
   }
 
-  public static Optional<String> getDestinationForDb(Event event, Optional<String> table_name) {
+  private static Optional<String> getDestinationForDb(Event event, Optional<String> tableName) {
     Optional<String> dbName = getDbName(event);
-    if (dbName.isPresent() && table_name.isPresent()) {
+    if (dbName.isPresent() && tableName.isPresent()) {
       return Optional.of(
           (new StringBuilder()
               .append(dbName.get())
               .append(".")
-              .append(table_name.get())
+              .append(tableName.get())
               .toString()));
     } else if (dbName.isPresent()) {
       return dbName;
-    } else if (table_name.isPresent()) {
-      return table_name;
+    } else if (tableName.isPresent()) {
+      return tableName;
     }
     return Optional.empty();
   }

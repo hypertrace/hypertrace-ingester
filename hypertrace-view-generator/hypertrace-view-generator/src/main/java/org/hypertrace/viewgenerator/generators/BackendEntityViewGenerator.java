@@ -123,7 +123,6 @@ public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityV
       builder.setStatus(EnrichedSpanUtils.getStatus(event));
       builder.setStatusMessage(EnrichedSpanUtils.getStatusMessage(event));
       builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
-      // backend
       builder.setBackendOperation(EnrichedSpanUtils.getBackendOperation(event));
       builder.setBackendDestination(EnrichedSpanUtils.getBackendDestination(event));
     } catch (Exception e) {

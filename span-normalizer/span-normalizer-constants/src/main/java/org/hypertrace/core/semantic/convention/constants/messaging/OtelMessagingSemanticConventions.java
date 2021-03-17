@@ -13,7 +13,7 @@ public enum OtelMessagingSemanticConventions {
   CONSUMER("CONSUMER"),
   MESSAGING_OPERATION("messaging.operation"),
   MESSAGING_DESTINATION("messaging.destination"),
-  KAFKA_MESSAGING_CONSUMER_GROUP("messaging.kafka.consumer_group");
+  MESSAGING_KAFKA_CONSUMER_GROUP("messaging.kafka.consumer_group");
 
   private final String value;
 

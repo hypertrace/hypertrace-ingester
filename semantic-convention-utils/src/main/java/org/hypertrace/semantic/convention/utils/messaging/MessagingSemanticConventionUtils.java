@@ -44,7 +44,7 @@ public class MessagingSemanticConventionUtils {
   private static final String OTEL_MESSAGING_DESTINATION =
       OtelMessagingSemanticConventions.MESSAGING_DESTINATION.getValue();
   private static final String KAFKA_CONSUMER_GROUP =
-      OtelMessagingSemanticConventions.KAFKA_MESSAGING_CONSUMER_GROUP.getValue();
+      OtelMessagingSemanticConventions.MESSAGING_KAFKA_CONSUMER_GROUP.getValue();
 
   private static final List<String> RABBITMQ_ROUTING_KEYS =
       new ArrayList<>(
@@ -145,7 +145,7 @@ public class MessagingSemanticConventionUtils {
             event, getAttributeKeysForMessagingDestination()));
   }
 
-  public static Optional<String> getMessagingDestinationWithAdditionalInfo(
+  private static Optional<String> getMessagingDestinationWithAdditionalInfo(
       Event event, Optional<String> additionalDestinationInfo) {
     Optional<String> messagingDestination = getMessagingDestination(event);
     if (messagingDestination.isPresent() && additionalDestinationInfo.isPresent()) {

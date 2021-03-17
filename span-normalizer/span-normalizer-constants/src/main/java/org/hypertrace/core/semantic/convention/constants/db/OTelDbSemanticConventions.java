@@ -20,7 +20,7 @@ public enum OTelDbSemanticConventions {
   HSQLDB_DB_SYSTEM_VALUE("hsqldb"),
   MONGODB_COLLECTION("db.mongodb.collection"),
   DB_NAME("db.name"),
-  REDIS_TABLE_INDEX("db.redis.database_index"),
+  REDIS_DB_INDEX("db.redis.database_index"),
   SQL_TABLE_NAME("db.sql.table");
 
   private final String value;
