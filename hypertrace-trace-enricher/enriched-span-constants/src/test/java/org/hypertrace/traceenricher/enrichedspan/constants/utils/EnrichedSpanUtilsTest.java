@@ -402,6 +402,26 @@ public class EnrichedSpanUtilsTest {
   }
 
   @Test
+  public void testGetBackendDestination_empty() {
+    Event e = mock(Event.class);
+
+    String backend_destination = EnrichedSpanUtils.getBackendDestination(e);
+    assertNull(backend_destination);
+  }
+
+  @Test
+  public void testGetBackendDestination_withData() {
+    Event e = mock(Event.class);
+    when(e.getEnrichedAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("tableName")))
+                .build());
+    assertEquals("tableName", EnrichedSpanUtils.getBackendDestination(e));
+  }
+
+  @Test
   public void testGetSpaceIds_withData() {
     List<String> spaceIds = List.of("space1", "space2");
     Event e = mock(Event.class);

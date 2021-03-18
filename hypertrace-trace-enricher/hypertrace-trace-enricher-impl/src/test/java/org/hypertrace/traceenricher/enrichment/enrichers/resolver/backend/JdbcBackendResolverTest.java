@@ -239,6 +239,88 @@ public class JdbcBackendResolverTest {
   }
 
   @Test
+  public void testBackendDestinationWithTableName() {
+    Event e =
+        Event.newBuilder()
+            .setCustomerId("__default")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "sql.url",
+                            AttributeValue.newBuilder()
+                                .setValue("jdbc:hsqldb:hsql://dbhost:9001/webgoat")
+                                .build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "db.sql.table",
+                            AttributeValue.newBuilder().setValue("orders").build(),
+                            "db.name",
+                            AttributeValue.newBuilder().setValue("customer").build()))
+                    .build())
+            .setEventName("jdbc.connection.prepare")
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(
+        Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("customer.orders")), attributes);
+  }
+
+  @Test
+  public void testBackendDestinationWithoutTableName() {
+    Event e =
+        Event.newBuilder()
+            .setCustomerId("__default")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "sql.url",
+                            AttributeValue.newBuilder()
+                                .setValue("jdbc:hsqldb:hsql://dbhost:9001/webgoat")
+                                .build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "db.name",
+                            AttributeValue.newBuilder().setValue("customer").build()))
+                    .build())
+            .setEventName("jdbc.connection.prepare")
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(
+        Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("customer")), attributes);
+  }
+
+  @Test
   public void testWithOtelFormatUrl() {
     Event e =
         Event.newBuilder()

@@ -55,6 +55,21 @@ public class KafkaBackendResolverTest {
     Assertions.assertEquals(String.format("%s:%s", brokerHost, brokerPort), entity.getEntityName());
   }
 
+  @Test
+  public void TestOtelBackendDestinationResolution() {
+    String broker = "kafka-test.hypertrace.com:9092";
+    BackendInfo backendInfo =
+        kafkaBackendResolver
+            .resolve(getOtelKafkaBackendEventForDestination(broker), structuredTraceGraph)
+            .get();
+    Entity entity = backendInfo.getEntity();
+    Assertions.assertEquals(broker, entity.getEntityName());
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(
+        Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("myGroup.QueueName")),
+        attributes);
+  }
+
   private Event getOtelKafkaBackendEvent(String broker) {
     Event event =
         Event.newBuilder()
@@ -121,6 +136,54 @@ public class KafkaBackendResolverTest {
                             "peer.port", AttributeValue.newBuilder().setValue(port).build(),
                             "span.kind", AttributeValue.newBuilder().setValue("client").build(),
                             "FLAGS", AttributeValue.newBuilder().setValue("0").build()))
+                    .build())
+            .setEventName("kafka.connection")
+            .setStartTimeMillis(1566869077746L)
+            .setEndTimeMillis(1566869077750L)
+            .setMetrics(
+                Metrics.newBuilder()
+                    .setMetricMap(
+                        Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build()))
+                    .build())
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+
+    return event;
+  }
+
+  private Event getOtelKafkaBackendEventForDestination(String broker) {
+    Event event =
+        Event.newBuilder()
+            .setCustomerId("customer1")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f9".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "messaging.system",
+                            AttributeValue.newBuilder().setValue("kafka").build(),
+                            "messaging.url",
+                            AttributeValue.newBuilder().setValue(broker).build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "messaging.destination",
+                            AttributeValue.newBuilder().setValue("QueueName").build(),
+                            "messaging.kafka.consumer_group",
+                            AttributeValue.newBuilder().setValue("myGroup").build(),
+                            "FLAGS",
+                            AttributeValue.newBuilder().setValue("0").build()))
                     .build())
             .setEventName("kafka.connection")
             .setStartTimeMillis(1566869077746L)

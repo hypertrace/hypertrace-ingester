@@ -8,7 +8,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
@@ -25,6 +24,8 @@ public class GrpcBackendResolver extends AbstractBackendResolver {
   private static final Logger LOGGER = LoggerFactory.getLogger(GrpcBackendResolver.class);
   private static final String BACKEND_OPERATION_ATTR =
       EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
+  private static final String BACKEND_DESTINATION_ATTR =
+      EnrichedSpanConstants.getValue(Backend.BACKEND_DESTINATION);
 
   @Override
   public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
@@ -45,12 +46,16 @@ public class GrpcBackendResolver extends AbstractBackendResolver {
           event, entityBuilder, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
 
       Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-      String grpcOperation =
-          SpanAttributeUtils.getFirstAvailableStringAttribute(
-              event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod());
-      if (grpcOperation != null) {
-        enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(grpcOperation));
-      }
+      Optional<String> grpcOperation = RpcSemanticConventionUtils.getRpcOperation(event);
+      grpcOperation.ifPresent(
+          operation ->
+              enrichedAttributes.put(
+                  BACKEND_OPERATION_ATTR, AttributeValueCreator.create(operation)));
+      Optional<String> grpcDestination = RpcSemanticConventionUtils.getRpcService(event);
+      grpcDestination.ifPresent(
+          destination ->
+              enrichedAttributes.put(
+                  BACKEND_DESTINATION_ATTR, AttributeValueCreator.create(destination)));
       return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
     }
     return Optional.empty();

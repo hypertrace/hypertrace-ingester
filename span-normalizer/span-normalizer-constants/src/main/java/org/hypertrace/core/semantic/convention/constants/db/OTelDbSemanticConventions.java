@@ -18,7 +18,10 @@ public enum OTelDbSemanticConventions {
   HIVE_DB_SYSTEM_VALUE("hive"),
   CLOUDSCAPE_DB_SYSTEM_VALUE("cloudspace"),
   HSQLDB_DB_SYSTEM_VALUE("hsqldb"),
-  MONGODB_COLLECTION("db.mongodb.collection");
+  MONGODB_COLLECTION("db.mongodb.collection"),
+  DB_NAME("db.name"),
+  REDIS_DB_INDEX("db.redis.database_index"),
+  SQL_TABLE_NAME("db.sql.table");
 
   private final String value;
 
