@@ -127,12 +127,6 @@ public class MessagingSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(RABBITMQ_COMMAND_VALUE));
   }
 
-  public static Optional<String> getKafkaConsumerGroupName(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForKafkaConsumerGroup()));
-  }
-
   public static Optional<String> getMessagingOperation(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
@@ -143,24 +137,6 @@ public class MessagingSemanticConventionUtils {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, getAttributeKeysForMessagingDestination()));
-  }
-
-  private static Optional<String> getMessagingDestinationWithAdditionalInfo(
-      Event event, Optional<String> additionalDestinationInfo) {
-    Optional<String> messagingDestination = getMessagingDestination(event);
-    if (messagingDestination.isPresent() && additionalDestinationInfo.isPresent()) {
-      return Optional.of(
-          (new StringBuilder()
-              .append(additionalDestinationInfo.get())
-              .append(".")
-              .append(messagingDestination.get())
-              .toString()));
-    } else if (messagingDestination.isPresent()) {
-      return messagingDestination;
-    } else if (additionalDestinationInfo.isPresent()) {
-      return additionalDestinationInfo;
-    }
-    return Optional.empty();
   }
 
   public static Optional<String> getMessagingDestinationForKafka(Event event) {
@@ -230,5 +206,29 @@ public class MessagingSemanticConventionUtils {
               event, MESSAGING_SYSTEM, StringUtils.EMPTY));
     }
     return false;
+  }
+
+  private static Optional<String> getKafkaConsumerGroupName(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForKafkaConsumerGroup()));
+  }
+
+  private static Optional<String> getMessagingDestinationWithAdditionalInfo(
+      Event event, Optional<String> additionalDestinationInfo) {
+    Optional<String> messagingDestination = getMessagingDestination(event);
+    if (messagingDestination.isPresent() && additionalDestinationInfo.isPresent()) {
+      return Optional.of(
+          (new StringBuilder()
+              .append(additionalDestinationInfo.get())
+              .append(".")
+              .append(messagingDestination.get())
+              .toString()));
+    } else if (messagingDestination.isPresent()) {
+      return messagingDestination;
+    } else if (additionalDestinationInfo.isPresent()) {
+      return additionalDestinationInfo;
+    }
+    return Optional.empty();
   }
 }

@@ -42,7 +42,8 @@ public class RpcSemanticConventionUtils {
           RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),
           RPC_STATUS_CODE,
           RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE));
-  private static final String OTEL_RPC_SERVICE = OTelRpcSemanticConventions.RPC_SERVICE.getValue();
+  private static final String OTEL_RPC_SERVICE =
+      OTelRpcSemanticConventions.RPC_SYSTEM_SERVICE.getValue();
 
   /** @return attribute keys for grpc method */
   public static List<String> getAttributeKeysForGrpcMethod() {

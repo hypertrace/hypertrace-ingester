@@ -66,7 +66,7 @@ public class HttpBackendResolver extends AbstractBackendResolver {
       if (httpOperation != null) {
         enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(httpOperation));
       }
-      Optional<String> httpDestination = HttpSemanticConventionUtils.getOtelHttpTarget(event);
+      Optional<String> httpDestination = HttpSemanticConventionUtils.getHttpTarget(event);
       httpDestination.ifPresent(
           destination ->
               enrichedAttributes.put(

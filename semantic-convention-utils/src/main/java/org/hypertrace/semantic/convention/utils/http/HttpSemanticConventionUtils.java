@@ -56,7 +56,7 @@ public class HttpSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTEL_HTTP_TARGET));
   }
 
-  public static Optional<String> getOtelHttpTarget(Event event) {
+  public static Optional<String> getHttpTarget(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, getAttributeKeysForHttpTarget()));

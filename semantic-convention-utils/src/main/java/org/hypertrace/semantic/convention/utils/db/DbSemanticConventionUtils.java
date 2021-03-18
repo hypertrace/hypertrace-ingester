@@ -122,26 +122,6 @@ public class DbSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTEL_REDIS_DB_INDEX));
   }
 
-  public static String getOperationFromDbQuery(String query) {
-    return StringUtils.substringBefore(StringUtils.trim(query), " ");
-  }
-
-  public static Optional<String> getOtelDbOperation(Event event) {
-    String dbOperation =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
-    if (dbOperation != null) {
-      return Optional.of(dbOperation);
-    }
-    String dbStatement =
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, DbSemanticConventionUtils.getAttributeKeysForDbStatement());
-    if (dbStatement != null) {
-      return Optional.of(getOperationFromDbQuery(dbStatement));
-    }
-    return Optional.empty();
-  }
-
   public static Optional<String> getDbOperationForJDBC(Event event) {
     Optional<String> jdbcOperation = getOtelDbOperation(event);
     if (jdbcOperation.isPresent()) {
@@ -174,46 +154,6 @@ public class DbSemanticConventionUtils {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForMongoOperation()));
-  }
-
-  private static Optional<String> getDbName(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(event, getAttributeKeysForDbName()));
-  }
-
-  public static Optional<String> getSqlTableName(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForSqlTableName()));
-  }
-
-  public static Optional<String> getMongoCollectionName(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForMongoNamespace()));
-  }
-
-  public static Optional<String> getRedisDbIndex(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForRedisTableIndex()));
-  }
-
-  private static Optional<String> getDestinationForDb(Event event, Optional<String> tableName) {
-    Optional<String> dbName = getDbName(event);
-    if (dbName.isPresent() && tableName.isPresent()) {
-      return Optional.of(
-          (new StringBuilder()
-              .append(dbName.get())
-              .append(".")
-              .append(tableName.get())
-              .toString()));
-    } else if (dbName.isPresent()) {
-      return dbName;
-    } else if (tableName.isPresent()) {
-      return tableName;
-    }
-    return Optional.empty();
   }
 
   public static Optional<String> getDestinationForJdbc(Event event) {
@@ -380,5 +320,65 @@ public class DbSemanticConventionUtils {
       return false;
     }
     return true;
+  }
+
+  private static String getOperationFromDbQuery(String query) {
+    return StringUtils.substringBefore(StringUtils.trim(query), " ");
+  }
+
+  private static Optional<String> getSqlTableName(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForSqlTableName()));
+  }
+
+  private static Optional<String> getMongoCollectionName(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForMongoNamespace()));
+  }
+
+  private static Optional<String> getRedisDbIndex(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForRedisTableIndex()));
+  }
+
+  private static Optional<String> getOtelDbOperation(Event event) {
+    String dbOperation =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
+    if (dbOperation != null) {
+      return Optional.of(dbOperation);
+    }
+    String dbStatement =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, DbSemanticConventionUtils.getAttributeKeysForDbStatement());
+    if (dbStatement != null) {
+      return Optional.of(getOperationFromDbQuery(dbStatement));
+    }
+    return Optional.empty();
+  }
+
+  private static Optional<String> getDbName(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(event, getAttributeKeysForDbName()));
+  }
+
+  private static Optional<String> getDestinationForDb(Event event, Optional<String> tableName) {
+    Optional<String> dbName = getDbName(event);
+    if (dbName.isPresent() && tableName.isPresent()) {
+      return Optional.of(
+          (new StringBuilder()
+              .append(dbName.get())
+              .append(".")
+              .append(tableName.get())
+              .toString()));
+    } else if (dbName.isPresent()) {
+      return dbName;
+    } else if (tableName.isPresent()) {
+      return tableName;
+    }
+    return Optional.empty();
   }
 }
