@@ -75,7 +75,7 @@ enum Backend {
     BACKEND_FROM_EVENT_ID = 6 [(string_value) = "FROM_EVENT_ID"];
     BACKEND_NAME = 7 [(string_value) = "BACKEND_NAME"];
     BACKEND_OPERATION = 8 [(string_value) = "BACKEND_OPERATION"];
-    BACKEND_DESTINATION= 9 [(string_value) = "BACKEND_DESTINATION"];
+    BACKEND_DESTINATION = 9 [(string_value) = "BACKEND_DESTINATION"];
 }
 
 enum UserAgent {
