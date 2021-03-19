@@ -141,7 +141,8 @@ public class StructuredTracesEnrichmentTest {
 
     InputStream din = resource.openStream();
     Decoder decoder = DecoderFactory.get().jsonDecoder(schema, din);
-    DatumReader<StructuredTrace> reader = new SpecificDatumReader<>(schema);
+    DatumReader<StructuredTrace> reader =
+        new SpecificDatumReader<>(schema, StructuredTrace.getClassSchema());
 
     StructuredTrace structuredTrace = null;
 

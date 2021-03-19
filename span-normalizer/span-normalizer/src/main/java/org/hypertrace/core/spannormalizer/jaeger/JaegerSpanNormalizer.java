@@ -98,6 +98,7 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
   private final List<List<Pair<String, String>>> spanDropCriterion;
   private final ConcurrentMap<String, Timer> tenantToSpanNormalizationTimer =
       new ConcurrentHashMap<>();
+  private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
 
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
@@ -260,6 +261,7 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
           buildEvent(tenantId, jaegerSpan, spanTags, tenantIdProvider.getTenantIdTagKey());
       rawSpanBuilder.setEvent(event);
       rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
+      resourceNormalizer.normalize(jaegerSpan).ifPresent(rawSpanBuilder::setResource);
 
       // build raw span
       RawSpan rawSpan = rawSpanBuilder.build();
