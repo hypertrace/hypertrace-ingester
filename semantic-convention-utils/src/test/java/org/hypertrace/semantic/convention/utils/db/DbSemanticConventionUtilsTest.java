@@ -91,6 +91,34 @@ public class DbSemanticConventionUtilsTest {
   }
 
   @Test
+  public void testGetMongoOperation() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                RawSpanConstants.getValue(Mongo.MONGO_OPERATION),
+                SemanticConventionTestUtil.buildAttributeValue("find")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDbOperationForMongo(e);
+    assertEquals("find", v.get());
+  }
+
+  @Test
+  public void testGetMongoDestination() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.MONGODB_COLLECTION.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("testCollection"),
+                OTelDbSemanticConventions.DB_NAME.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("customer")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDestinationForMongo(e);
+    assertEquals("customer.testCollection", v.get());
+  }
+
+  @Test
   public void isRedisBackend() {
     Event e = mock(Event.class);
     // redis connection present
@@ -140,6 +168,32 @@ public class DbSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     Optional<String> v = DbSemanticConventionUtils.getRedisURI(e);
     assertEquals("127.0.0.1:4562", v.get());
+  }
+
+  @Test
+  public void testGetRedisOperation() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                RawSpanConstants.getValue(Redis.REDIS_COMMAND),
+                SemanticConventionTestUtil.buildAttributeValue("GET")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDbOperationForRedis(e);
+    assertEquals("GET", v.get());
+  }
+
+  @Test
+  public void testGetRedisDestination() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.REDIS_DB_INDEX.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("15")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDestinationForRedis(e);
+    assertEquals("15", v.get());
   }
 
   @Test
@@ -251,6 +305,34 @@ public class DbSemanticConventionUtilsTest {
             SemanticConventionTestUtil.buildAttributeValue("jdbc:mysql://mysql:3306/shop"));
     v = DbSemanticConventionUtils.getSqlUrlForOtelFormat(map);
     assertEquals("127.0.0.1", v.get());
+  }
+
+  @Test
+  public void testGetSqlOperation() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                RawSpanConstants.getValue(Sql.SQL_QUERY),
+                SemanticConventionTestUtil.buildAttributeValue("SELECT * FROM DB")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDbOperationForJDBC(e);
+    assertEquals("SELECT", v.get());
+  }
+
+  @Test
+  public void testGetSqlDestination() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.SQL_TABLE_NAME.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("payment"),
+                OTelDbSemanticConventions.DB_NAME.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("customer")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDestinationForJdbc(e);
+    assertEquals("customer.payment", v.get());
   }
 
   @Test

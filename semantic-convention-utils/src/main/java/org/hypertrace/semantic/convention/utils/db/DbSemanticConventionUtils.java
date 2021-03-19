@@ -102,26 +102,6 @@ public class DbSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_NAMESPACE, OTEL_MONGO_COLLECTION));
   }
 
-  public static List<String> getAttributeKeysForDbOperation() {
-    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_OPERATION));
-  }
-
-  public static List<String> getAttributeKeysForDbStatement() {
-    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_STATEMENT));
-  }
-
-  public static List<String> getAttributeKeysForDbName() {
-    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_NAME));
-  }
-
-  public static List<String> getAttributeKeysForSqlTableName() {
-    return Lists.newArrayList(Sets.newHashSet(SQL_TABLE_NAME));
-  }
-
-  public static List<String> getAttributeKeysForRedisTableIndex() {
-    return Lists.newArrayList(Sets.newHashSet(OTEL_REDIS_DB_INDEX));
-  }
-
   public static Optional<String> getDbOperationForJDBC(Event event) {
     Optional<String> jdbcOperation = getOtelDbOperation(event);
     if (jdbcOperation.isPresent()) {
@@ -320,6 +300,26 @@ public class DbSemanticConventionUtils {
       return false;
     }
     return true;
+  }
+
+  private static List<String> getAttributeKeysForDbOperation() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_OPERATION));
+  }
+
+  private static List<String> getAttributeKeysForDbStatement() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_STATEMENT));
+  }
+
+  private static List<String> getAttributeKeysForDbName() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_NAME));
+  }
+
+  private static List<String> getAttributeKeysForSqlTableName() {
+    return Lists.newArrayList(Sets.newHashSet(SQL_TABLE_NAME));
+  }
+
+  private static List<String> getAttributeKeysForRedisTableIndex() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_REDIS_DB_INDEX));
   }
 
   private static String getOperationFromDbQuery(String query) {

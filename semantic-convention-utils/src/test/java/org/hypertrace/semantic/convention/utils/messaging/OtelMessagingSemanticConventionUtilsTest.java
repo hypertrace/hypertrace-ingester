@@ -14,6 +14,7 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.semantic.convention.constants.messaging.OtelMessagingSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.RabbitMq;
+import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -80,5 +81,87 @@ public class OtelMessagingSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     v = MessagingSemanticConventionUtils.isRabbitMqBackend(e);
     Assertions.assertFalse(v);
+  }
+
+  @Test
+  public void testGetRabbitmqDestination() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OtelMessagingSemanticConventions.MESSAGING_DESTINATION.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("queueName"),
+                OtelMessagingSemanticConventions.RABBITMQ_ROUTING_KEY.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("test-key")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = MessagingSemanticConventionUtils.getMessagingDestinationForRabbitmq(e);
+    assertEquals("test-key.queueName", v.get());
+  }
+
+  @Test
+  public void testGetRabbitmqOperation() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("publish")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = MessagingSemanticConventionUtils.getMessagingOperation(e);
+    assertEquals("publish", v.get());
+  }
+
+  @Test
+  public void testGetKafkaDestination() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OtelMessagingSemanticConventions.MESSAGING_DESTINATION.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("queueName"),
+                OtelMessagingSemanticConventions.MESSAGING_KAFKA_CONSUMER_GROUP.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("test")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = MessagingSemanticConventionUtils.getMessagingDestinationForKafka(e);
+    assertEquals("test.queueName", v.get());
+  }
+
+  @Test
+  public void testGetKafkaOperation() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("publish")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = MessagingSemanticConventionUtils.getMessagingOperation(e);
+    assertEquals("publish", v.get());
+  }
+
+  @Test
+  public void testGetSqsDestination() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OtelMessagingSemanticConventions.MESSAGING_DESTINATION.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("queueName")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = MessagingSemanticConventionUtils.getMessagingDestination(e);
+    assertEquals("queueName", v.get());
+  }
+
+  @Test
+  public void testGetSqsOperation() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OtelMessagingSemanticConventions.MESSAGING_OPERATION.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("publish")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = MessagingSemanticConventionUtils.getMessagingOperation(e);
+    assertEquals("publish", v.get());
   }
 }
