@@ -37,28 +37,7 @@ data:
     }
 
     enricher {
-      DefaultServiceEntityEnricher {
-        entity.service.config = {
-          host = {{ .Values.traceEnricherConfig.entityServiceHost }}
-          port = {{ .Values.traceEnricherConfig.entityServicePort }}
-        }
-      }
-
-      BackendEntityEnricher {
-        entity.service.config = {
-          host = {{ .Values.traceEnricherConfig.entityServiceHost }}
-          port = {{ .Values.traceEnricherConfig.entityServicePort }}
-        }
-      }
-
-      EndpointEnricher {
-        entity.service.config = {
-          host = {{ .Values.traceEnricherConfig.entityServiceHost }}
-          port = {{ .Values.traceEnricherConfig.entityServicePort }}
-        }
-      }
-
-      EntitySpanEnricher {
+      clients = {
         entity.service.config = {
           host = {{ .Values.traceEnricherConfig.entityServiceHost }}
           port = {{ .Values.traceEnricherConfig.entityServicePort }}
@@ -67,16 +46,9 @@ data:
           host = {{ .Values.traceEnricherConfig.attributeServiceHost }}
           port = {{ .Values.traceEnricherConfig.attributeServicePort }}
         }
-      }
-
-      SpaceEnricher {
         config.service.config = {
           host = {{ .Values.traceEnricherConfig.configServiceHost }}
           port = {{ .Values.traceEnricherConfig.configServicePort }}
-        }
-        attribute.service.config = {
-          host = {{ .Values.traceEnricherConfig.attributeServiceHost }}
-          port = {{ .Values.traceEnricherConfig.attributeServicePort }}
         }
       }
     }
