@@ -14,6 +14,7 @@ import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConv
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
+import org.hypertrace.semantic.convention.utils.messaging.MessagingSemanticConventionUtils;
 import org.junit.jupiter.api.Test;
 
 /** Unit test for {@link RpcSemanticConventionUtils} */
@@ -75,5 +76,11 @@ class RpcSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     Optional<String> v = RpcSemanticConventionUtils.getRpcService(e);
     assertEquals("testService", v.get());
+  }
+
+  @Test
+  public void testIfRpcDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(RpcSemanticConventionUtils.getRpcService(e).isEmpty());
   }
 }

@@ -2,6 +2,7 @@ package org.hypertrace.semantic.convention.utils.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -119,6 +120,18 @@ public class DbSemanticConventionUtilsTest {
   }
 
   @Test
+  public void testIfMongoOperationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDbOperationForMongo(e).isEmpty());
+  }
+
+  @Test
+  public void testIfMongoDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDestinationForMongo(e).isEmpty());
+  }
+
+  @Test
   public void isRedisBackend() {
     Event e = mock(Event.class);
     // redis connection present
@@ -196,6 +209,17 @@ public class DbSemanticConventionUtilsTest {
     assertEquals("15", v.get());
   }
 
+  @Test
+  public void testIfRedisOperationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDbOperationForRedis(e).isEmpty());
+  }
+
+  @Test
+  public void testIfRedisDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDestinationForRedis(e).isEmpty());
+  }
   @Test
   public void testIsSqlBackend() {
     Event e = mock(Event.class);
@@ -333,6 +357,18 @@ public class DbSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     Optional<String> v = DbSemanticConventionUtils.getDestinationForJdbc(e);
     assertEquals("customer.payment", v.get());
+  }
+
+  @Test
+  public void testIfSqlOperationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDbOperationForJDBC(e).isEmpty());
+  }
+
+  @Test
+  public void testIfsqlDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDestinationForJdbc(e).isEmpty());
   }
 
   @Test

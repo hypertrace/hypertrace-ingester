@@ -15,6 +15,7 @@ import org.hypertrace.core.semantic.convention.constants.messaging.OtelMessaging
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.RabbitMq;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
+import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -112,6 +113,19 @@ public class OtelMessagingSemanticConventionUtilsTest {
   }
 
   @Test
+  public void testIfRabbitmqOperationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(MessagingSemanticConventionUtils.getMessagingOperation(e).isEmpty());
+  }
+
+  @Test
+  public void testIfRabbitmqDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(MessagingSemanticConventionUtils.getMessagingDestinationForRabbitmq(e).isEmpty());
+  }
+
+
+  @Test
   public void testGetKafkaDestination() {
     Event e = mock(Event.class);
     Attributes attributes =
@@ -140,6 +154,19 @@ public class OtelMessagingSemanticConventionUtilsTest {
   }
 
   @Test
+  public void testIfKafkaOperationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(MessagingSemanticConventionUtils.getMessagingOperation(e).isEmpty());
+  }
+
+  @Test
+  public void testIfKafkaDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(MessagingSemanticConventionUtils.getMessagingDestinationForKafka(e).isEmpty());
+  }
+
+
+  @Test
   public void testGetSqsDestination() {
     Event e = mock(Event.class);
     Attributes attributes =
@@ -164,4 +191,17 @@ public class OtelMessagingSemanticConventionUtilsTest {
     Optional<String> v = MessagingSemanticConventionUtils.getMessagingOperation(e);
     assertEquals("publish", v.get());
   }
+
+  @Test
+  public void testIfSqsOperationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(MessagingSemanticConventionUtils.getMessagingOperation(e).isEmpty());
+  }
+
+  @Test
+  public void testIfSqsDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(MessagingSemanticConventionUtils.getMessagingDestination(e).isEmpty());
+  }
+
 }
