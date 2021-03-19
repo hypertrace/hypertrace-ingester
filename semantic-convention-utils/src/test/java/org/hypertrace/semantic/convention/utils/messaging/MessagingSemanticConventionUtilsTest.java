@@ -15,12 +15,11 @@ import org.hypertrace.core.semantic.convention.constants.messaging.OtelMessaging
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.RabbitMq;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
-import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Unit test for {@link OtelMessagingSemanticConventions} */
-public class OtelMessagingSemanticConventionUtilsTest {
+public class MessagingSemanticConventionUtilsTest {
 
   @Test
   public void testGetRabbitMqRoutingKey() {
@@ -124,7 +123,6 @@ public class OtelMessagingSemanticConventionUtilsTest {
     assertTrue(MessagingSemanticConventionUtils.getMessagingDestinationForRabbitmq(e).isEmpty());
   }
 
-
   @Test
   public void testGetKafkaDestination() {
     Event e = mock(Event.class);
@@ -165,7 +163,6 @@ public class OtelMessagingSemanticConventionUtilsTest {
     assertTrue(MessagingSemanticConventionUtils.getMessagingDestinationForKafka(e).isEmpty());
   }
 
-
   @Test
   public void testGetSqsDestination() {
     Event e = mock(Event.class);
@@ -203,5 +200,4 @@ public class OtelMessagingSemanticConventionUtilsTest {
     Event e = mock(Event.class);
     assertTrue(MessagingSemanticConventionUtils.getMessagingDestination(e).isEmpty());
   }
-
 }

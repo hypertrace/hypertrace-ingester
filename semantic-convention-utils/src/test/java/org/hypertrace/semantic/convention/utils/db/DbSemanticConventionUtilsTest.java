@@ -2,7 +2,6 @@ package org.hypertrace.semantic.convention.utils.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -220,6 +219,7 @@ public class DbSemanticConventionUtilsTest {
     Event e = mock(Event.class);
     assertTrue(DbSemanticConventionUtils.getDestinationForRedis(e).isEmpty());
   }
+
   @Test
   public void testIsSqlBackend() {
     Event e = mock(Event.class);
