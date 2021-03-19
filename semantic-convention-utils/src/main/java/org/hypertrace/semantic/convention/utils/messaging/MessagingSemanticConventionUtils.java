@@ -111,22 +111,6 @@ public class MessagingSemanticConventionUtils {
     return false;
   }
 
-  public static List<String> getAttributeKeysForMessagingOperation() {
-    return Lists.newArrayList(Sets.newHashSet(MESSAGING_OPERATION));
-  }
-
-  public static List<String> getAttributeKeysForMessagingDestination() {
-    return Lists.newArrayList(Sets.newHashSet(OTEL_MESSAGING_DESTINATION));
-  }
-
-  public static List<String> getAttributeKeysForKafkaConsumerGroup() {
-    return Lists.newArrayList(Sets.newHashSet(KAFKA_CONSUMER_GROUP));
-  }
-
-  public static List<String> getAttributeKeysForRabbitmqCommand() {
-    return Lists.newArrayList(Sets.newHashSet(RABBITMQ_COMMAND_VALUE));
-  }
-
   public static Optional<String> getMessagingOperation(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
@@ -144,7 +128,7 @@ public class MessagingSemanticConventionUtils {
     return getMessagingDestinationWithAdditionalInfo(event, kafkaConsumerGroup);
   }
 
-  public static Optional<String> getMessagingDestinationFroRabbitmq(Event event) {
+  public static Optional<String> getMessagingDestinationForRabbitmq(Event event) {
     Optional<String> rabbitmqRoutingKey = getRabbitMqRoutingKey(event);
     return getMessagingDestinationWithAdditionalInfo(event, rabbitmqRoutingKey);
   }
@@ -206,6 +190,22 @@ public class MessagingSemanticConventionUtils {
               event, MESSAGING_SYSTEM, StringUtils.EMPTY));
     }
     return false;
+  }
+
+  private static List<String> getAttributeKeysForMessagingOperation() {
+    return Lists.newArrayList(Sets.newHashSet(MESSAGING_OPERATION));
+  }
+
+  private static List<String> getAttributeKeysForMessagingDestination() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_MESSAGING_DESTINATION));
+  }
+
+  private static List<String> getAttributeKeysForKafkaConsumerGroup() {
+    return Lists.newArrayList(Sets.newHashSet(KAFKA_CONSUMER_GROUP));
+  }
+
+  private static List<String> getAttributeKeysForRabbitmqCommand() {
+    return Lists.newArrayList(Sets.newHashSet(RABBITMQ_COMMAND_VALUE));
   }
 
   private static Optional<String> getKafkaConsumerGroupName(Event event) {

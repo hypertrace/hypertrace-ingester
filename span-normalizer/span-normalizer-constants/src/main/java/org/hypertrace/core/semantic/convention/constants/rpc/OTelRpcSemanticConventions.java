@@ -8,7 +8,7 @@ public enum OTelRpcSemanticConventions {
   GRPC_STATUS_CODE("rpc.grpc.status_code"),
   RPC_SYSTEM_VALUE_GRPC("grpc"),
   RPC_SYSTEM_VALUE_JAVA_RMI("java_rmi"),
-  RPC_SYSTEM_VALUE("wcf"),
+  RPC_SYSTEM_VALUE_WCF("wcf"),
   RPC_SYSTEM_SERVICE("rpc.service");
 
   private final String value;

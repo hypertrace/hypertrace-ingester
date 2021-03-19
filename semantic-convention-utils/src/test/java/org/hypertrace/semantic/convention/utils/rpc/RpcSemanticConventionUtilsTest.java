@@ -63,4 +63,23 @@ class RpcSemanticConventionUtilsTest {
     v = RpcSemanticConventionUtils.getGrpcURI(e);
     assertTrue(v.isEmpty());
   }
+
+  @Test
+  public void testGetRpcDestination() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelRpcSemanticConventions.RPC_SYSTEM_SERVICE.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("testService")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = RpcSemanticConventionUtils.getRpcService(e);
+    assertEquals("testService", v.get());
+  }
+
+  @Test
+  public void testIfRpcDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(RpcSemanticConventionUtils.getRpcService(e).isEmpty());
+  }
 }

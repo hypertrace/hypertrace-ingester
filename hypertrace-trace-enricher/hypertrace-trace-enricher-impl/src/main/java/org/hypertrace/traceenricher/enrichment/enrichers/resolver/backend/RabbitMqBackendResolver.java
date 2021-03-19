@@ -46,7 +46,7 @@ public class RabbitMqBackendResolver extends AbstractBackendResolver {
             enrichedAttributes.put(
                 BACKEND_OPERATION_ATTR, AttributeValueCreator.create(operation)));
     Optional<String> rabbitmqDestination =
-        MessagingSemanticConventionUtils.getMessagingDestinationFroRabbitmq(event);
+        MessagingSemanticConventionUtils.getMessagingDestinationForRabbitmq(event);
     rabbitmqDestination.ifPresent(
         destination ->
             enrichedAttributes.put(
