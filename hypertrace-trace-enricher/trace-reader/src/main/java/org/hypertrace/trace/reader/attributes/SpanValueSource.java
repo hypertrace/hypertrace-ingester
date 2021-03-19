@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.Resource;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 
@@ -22,6 +23,7 @@ class SpanValueSource extends AvroBackedValueSource {
   public Optional<LiteralValue> getAttribute(String key, AttributeKind attributeKind) {
     return this.getAttributeString(this.span.getEnrichedAttributes(), key)
         .or(() -> this.getAttributeString(this.span.getAttributes(), key))
+        .or(() -> this.getResourceAttributeString(key))
         .flatMap(stringValue -> ValueCoercer.toLiteral(stringValue, attributeKind));
   }
 
@@ -54,5 +56,15 @@ class SpanValueSource extends AvroBackedValueSource {
   @Override
   public int hashCode() {
     return Objects.hash(trace, span);
+  }
+
+  private Optional<String> getResourceAttributeString(String key) {
+    if (span.getResourceIndex() < 0 || span.getResourceIndex() >= trace.getResourceList().size()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(trace.getResourceList().get(span.getResourceIndex()))
+        .map(Resource::getAttributes)
+        .flatMap(attributes -> this.getAttributeString(attributes, key));
   }
 }
