@@ -2,6 +2,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers.endpoint;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -107,6 +108,22 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
     assertEquals(API_PATTERN_VAL, EnrichedSpanUtils.getApiPattern(event));
     assertEquals(API_ID, EnrichedSpanUtils.getApiId(event));
     assertEquals(API_DISCOVERY_STATE_VAL, EnrichedSpanUtils.getApiDiscoveryState(event));
+  }
+
+  @Test
+  public void testApiEnrichmentForIntermediateEvents() {
+    StructuredTrace trace = getBigTrace();
+    Event exitEvent = trace.getEventList().get(2);
+    endpointEnricher.enrichTrace(trace);
+
+    assertEquals(API_NAME_VAL, EnrichedSpanUtils.getApiName(exitEvent));
+    assertEquals(API_PATTERN_VAL, EnrichedSpanUtils.getApiPattern(exitEvent));
+    assertEquals(API_ID, EnrichedSpanUtils.getApiId(exitEvent));
+
+    Event intermediateEvent = trace.getEventList().get(1);
+    assertEquals(API_NAME_VAL, EnrichedSpanUtils.getApiName(intermediateEvent));
+    assertEquals(API_PATTERN_VAL, EnrichedSpanUtils.getApiPattern(intermediateEvent));
+    assertEquals(API_ID, EnrichedSpanUtils.getApiId(intermediateEvent));
   }
 
   private Event createMockApiBoundaryEntryEvent() {

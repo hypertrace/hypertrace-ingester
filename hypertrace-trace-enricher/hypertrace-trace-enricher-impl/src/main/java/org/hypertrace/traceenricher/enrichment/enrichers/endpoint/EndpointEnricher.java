@@ -2,11 +2,15 @@ package org.hypertrace.traceenricher.enrichment.enrichers.endpoint;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.constants.v1.ApiAttribute;
@@ -15,6 +19,7 @@ import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,5 +147,58 @@ public class EndpointEnricher extends AbstractTraceEnricher {
         serviceId,
         e -> new OperationNameBasedEndpointDiscoverer(customerId, serviceId, apiEntityDao));
     return serviceIdToEndpointDiscoverer.get(serviceId);
+  }
+
+  /**
+   * All the spans within the same API Trace graph gets the same API id as their representative span
+   * i.e the entry boundary span
+   */
+  @Override
+  public void enrichTrace(StructuredTrace trace) {
+    List<ApiNode<Event>> apiNodes = new ApiTraceGraph(trace).getApiNodeList();
+    for (ApiNode<Event> apiNode : apiNodes) {
+      Optional<Event> optionalEvent = apiNode.getEntryApiBoundaryEvent();
+      if (optionalEvent.isEmpty()) {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug(
+              "Skipping enrichment, since api node has no entry api boundary event. ApiNode exit event ids {}",
+              apiNode.getExitApiBoundaryEvents().stream()
+                  .map(event -> HexUtils.getHex(event.getEventId()))
+                  .collect(Collectors.toList()));
+        }
+        continue;
+      }
+
+      Event entryApiBoundaryEvent = optionalEvent.get();
+
+      Optional<String> apiId =
+          Optional.ofNullable(EnrichedSpanUtils.getApiId(entryApiBoundaryEvent));
+      Optional<String> apiPattern =
+          Optional.ofNullable(EnrichedSpanUtils.getApiPattern(entryApiBoundaryEvent));
+      Optional<String> apiName =
+          Optional.ofNullable(EnrichedSpanUtils.getApiName(entryApiBoundaryEvent));
+      if (apiId.isEmpty() || apiPattern.isEmpty() || apiName.isEmpty()) {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug(
+              "Entry API boundary event should have non null apiId, apiPattern and apiName:"
+                  + " traceId: {}, eventId: {}, eventName: {}, serviceName: {}, apiId: {}, apiPattern: {},"
+                  + " apiName: {}",
+              HexUtils.getHex(trace.getTraceId()),
+              HexUtils.getHex(entryApiBoundaryEvent.getEventId()),
+              entryApiBoundaryEvent.getEventName(),
+              entryApiBoundaryEvent.getServiceName(),
+              apiId,
+              apiPattern,
+              apiName);
+        }
+      } else {
+        List<Event> events = apiNode.getEvents();
+        for (Event event : events) {
+          addEnrichedAttributeIfNotNull(event, API_ID_ATTR_NAME, apiId.get());
+          addEnrichedAttributeIfNotNull(event, API_URL_PATTERN_ATTR_NAME, apiPattern.get());
+          addEnrichedAttributeIfNotNull(event, API_NAME_ATTR_NAME, apiName.get());
+        }
+      }
+    }
   }
 }
