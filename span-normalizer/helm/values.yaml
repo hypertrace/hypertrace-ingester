@@ -92,6 +92,9 @@ spanNormalizerConfig:
     consumerMaxPartitionFetchBytes: 8388608 # default = 1048576
     consumerMaxPollRecords: 1000 # default = 1000 (kafka streams default)
     consumerSessionTimeoutMs: 10000 # default = 10000
+    # Exception handler configs
+    defaultProductionExceptionHandler: "org.hypertrace.core.kafkastreams.framework.exceptionhandlers.IgnoreProductionExceptionHandler"
+    ignoreProductionExceptionClasses: "org.apache.kafka.common.errors.RecordTooLargeException"
     # Others
     metricsRecordingLevel: INFO # default = INFO
   # All other streams config goes here.
