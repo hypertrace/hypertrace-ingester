@@ -19,6 +19,8 @@ public class BackendResolver extends AbstractBackendResolver {
             new RedisBackendResolver(),
             new MongoBackendResolver(),
             new JdbcBackendResolver(),
+            new CassandraBackendResolver(),
+            new ElasticsearchBackendResolver(),
             new RabbitMqBackendResolver(),
             new KafkaBackendResolver(),
             new SqsBackendResolver(),

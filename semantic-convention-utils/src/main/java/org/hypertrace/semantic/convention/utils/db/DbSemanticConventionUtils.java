@@ -13,14 +13,19 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.span.OpenTracingSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.core.span.constants.v1.Sql;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Utility class to fetch database span attributes */
 public class DbSemanticConventionUtils {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DbSemanticConventionUtils.class);
 
   // db related OTEL attributes
   private static final String OTEL_DB_SYSTEM = OTelDbSemanticConventions.DB_SYSTEM.getValue();
@@ -50,6 +55,28 @@ public class DbSemanticConventionUtils {
   private static final String OTEL_REDIS_DB_INDEX =
       OTelDbSemanticConventions.REDIS_DB_INDEX.getValue();
 
+  // cassandra specific attributes
+  private static final String OTEL_CASSANDRA_DB_SYSTEM_VALUE =
+      OTelDbSemanticConventions.CASSANDRA_DB_SYSTEM_VALUE.getValue();
+  private static final String OTEL_CASSANDRA_DB_NAME =
+      OTelDbSemanticConventions.CASSANDRA_DB_NAME.getValue();
+  private static final String OTEL_CASSANDRA_TABLE_NAME =
+      OTelDbSemanticConventions.CASSANDRA_TABLE_NAME.getValue();
+
+  // elasticsearch specific attributes
+  private static final String OTEL_ELASTICSEARCH_DB_SYSTEM_VALUE =
+      OTelDbSemanticConventions.ELASTICSEARCH_DB_SYSTEM_VALUE.getValue();
+  private static final String OTEL_ELASTICSEARCH_URL =
+      OTelDbSemanticConventions.ELASTICSEARCH_URL.getValue();
+  private static final String OTEL_ELASTICSEARCH_ACTION =
+      OTelDbSemanticConventions.ELASTICSEARCH_ACTION.getValue();
+  private static final String OTEL_ELASTICSEARCH_METHOD =
+      OTelDbSemanticConventions.ELASTICSEARCH_METHOD.getValue();
+  private static final String OTEL_ELASTICSEARCH_REQUEST =
+      OTelDbSemanticConventions.ELASTICSEARCH_REQUEST.getValue();
+  private static final String OTEL_ELASTICSEARCH_REQUEST_INDEX =
+      OTelDbSemanticConventions.ELASTICSEARCH_REQUEST_INDICES.getValue();
+
   // sql specific attributes
   private static final String[] OTEL_SQL_DB_SYSTEM_VALUES = {
     OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue(),
@@ -66,41 +93,8 @@ public class DbSemanticConventionUtils {
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final String SQL_URL = RawSpanConstants.getValue(Sql.SQL_SQL_URL);
   private static final String SQL_TABLE_NAME = OTelDbSemanticConventions.SQL_TABLE_NAME.getValue();
-
-  /**
-   * @param event Object encapsulating span data
-   * @return check if this span is for a mongo backend
-   */
-  public static boolean isMongoBackend(Event event) {
-    return SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_ADDRESS)
-        || SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_URL)
-        || OTEL_MONGO_DB_SYSTEM_VALUE.equals(
-            SpanAttributeUtils.getStringAttributeWithDefault(
-                event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
-  }
-
-  /**
-   * @param event Object encapsulating span data
-   * @return URI for mongo database
-   */
-  public static Optional<String> getMongoURI(Event event) {
-    if (SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_ADDRESS)) {
-      return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_MONGO_ADDRESS));
-    } else if (SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_URL)) {
-      return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_MONGO_URL));
-    }
-    return getBackendURIForOtelFormat(event);
-  }
-
-  /** @return attribute keys representing mongo operation */
-  public static List<String> getAttributeKeysForMongoOperation() {
-    return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_OPERATION, OTEL_DB_OPERATION));
-  }
-
-  /** @return attribute keys representing mongo namespace */
-  public static List<String> getAttributeKeysForMongoNamespace() {
-    return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_NAMESPACE, OTEL_MONGO_COLLECTION));
-  }
+  private static final String OT_PEER_ADDRESS =
+      OpenTracingSpanSemanticConventions.PEER_ADDRESS.getValue();
 
   public static Optional<String> getDbOperationForJDBC(Event event) {
     Optional<String> jdbcOperation = getOtelDbOperation(event);
@@ -130,6 +124,20 @@ public class DbSemanticConventionUtils {
     return Optional.empty();
   }
 
+  public static Optional<String> getDbOperationForElasticsearch(Event event) {
+    Optional<String> esOperation = getOtelDbOperation(event);
+    if (esOperation.isPresent()) {
+      return esOperation;
+    }
+    String esCommand =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributekeysForElasticsearchOperation());
+    if (esCommand != null) {
+      return Optional.of(esCommand);
+    }
+    return Optional.empty();
+  }
+
   public static Optional<String> getDbOperationForMongo(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
@@ -151,15 +159,14 @@ public class DbSemanticConventionUtils {
     return getDestinationForDb(event, redisDbIndex);
   }
 
-  /**
-   * @param event Object encapsulating span data
-   * @return check if this span is for a redis backend
-   */
-  public static boolean isRedisBackend(Event event) {
-    return SpanAttributeUtils.containsAttributeKey(event, OTHER_REDIS_CONNECTION)
-        || OTEL_REDIS_DB_SYSTEM_VALUE.equals(
-            SpanAttributeUtils.getStringAttributeWithDefault(
-                event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
+  public static Optional<String> getDestinationForCassandra(Event event) {
+    Optional<String> cassandraTableName = getCassandraTableName(event);
+    return getDestinationForDb(event, cassandraTableName);
+  }
+
+  public static Optional<String> getDestinationForElasticsearch(Event event) {
+    Optional<String> esIndex = getElasticsearchIndex(event);
+    return getDestinationForDb(event, esIndex);
   }
 
   /**
@@ -171,19 +178,6 @@ public class DbSemanticConventionUtils {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_REDIS_CONNECTION));
     }
     return getBackendURIForOtelFormat(event);
-  }
-
-  /**
-   * @param event Object encapsulating span data
-   * @return check if the event is for a sql backend
-   */
-  public static boolean isSqlBackend(Event event) {
-    if (event.getEventName() != null
-        && event.getEventName().startsWith(JDBC_EVENT_PREFIX)
-        && SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
-      return true;
-    }
-    return isSqlTypeBackendForOtelFormat(event);
   }
 
   /**
@@ -261,6 +255,61 @@ public class DbSemanticConventionUtils {
     return Optional.empty();
   }
 
+  public static Optional<String> getCassandraURI(Event event) {
+    if (!isCassandraBackend(event)) {
+      return Optional.empty();
+    }
+
+    Optional<String> OtBackendURI = getBackendURIForOpenTracingFormat(event);
+    if (OtBackendURI.isPresent()) {
+      return OtBackendURI;
+    }
+
+    if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_CONNECTION_STRING)) {
+      String uri =
+          StringUtils.substringAfter(
+              StringUtils.trim(
+                  SpanAttributeUtils.getStringAttribute(event, OTEL_DB_CONNECTION_STRING)),
+              ":");
+      return getHostPortFromURI(uri);
+    }
+
+    return getBackendURIForOtelFormat(event);
+  }
+
+  public static Optional<String> getElasticsearchURI(Event event) {
+    if (!isElasticsearchBackend(event)) {
+      return Optional.empty();
+    }
+
+    Optional<String> OtBackendURI = getBackendURIForOpenTracingFormat(event);
+    if (OtBackendURI.isPresent()) {
+      return OtBackendURI;
+    }
+
+    if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_CONNECTION_STRING)
+        || SpanAttributeUtils.containsAttributeKey(event, OTEL_ELASTICSEARCH_URL)) {
+      return Optional.of(
+          SpanAttributeUtils.getFirstAvailableStringAttribute(
+              event, getAttributekeysForElasticsearchUrl()));
+    }
+
+    return getBackendURIForOtelFormat(event);
+  }
+
+  /**
+   * @param event Object encapsulating span data
+   * @return URI for mongo database
+   */
+  public static Optional<String> getMongoURI(Event event) {
+    if (SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_ADDRESS)) {
+      return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_MONGO_ADDRESS));
+    } else if (SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_URL)) {
+      return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_MONGO_URL));
+    }
+    return getBackendURIForOtelFormat(event);
+  }
+
   /**
    * @param event Object encapsulating span data
    * @return backend uri based on otel format
@@ -302,6 +351,62 @@ public class DbSemanticConventionUtils {
     return true;
   }
 
+  /**
+   * @param event Object encapsulating span data
+   * @return check if the event is for a sql backend
+   */
+  public static boolean isSqlBackend(Event event) {
+    if (event.getEventName() != null
+        && event.getEventName().startsWith(JDBC_EVENT_PREFIX)
+        && SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
+      return true;
+    }
+    return isSqlTypeBackendForOtelFormat(event);
+  }
+
+  /**
+   * @param event Object encapsulating span data
+   * @return check if this span is for a mongo backend
+   */
+  public static boolean isMongoBackend(Event event) {
+    return SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_ADDRESS)
+        || SpanAttributeUtils.containsAttributeKey(event, OTHER_MONGO_URL)
+        || OTEL_MONGO_DB_SYSTEM_VALUE.equals(
+            SpanAttributeUtils.getStringAttributeWithDefault(
+                event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
+  }
+
+  /**
+   * @param event Object encapsulating span data
+   * @return check if this span is for a redis backend
+   */
+  public static boolean isRedisBackend(Event event) {
+    return SpanAttributeUtils.containsAttributeKey(event, OTHER_REDIS_CONNECTION)
+        || OTEL_REDIS_DB_SYSTEM_VALUE.equals(
+            SpanAttributeUtils.getStringAttributeWithDefault(
+                event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
+  }
+
+  public static boolean isCassandraBackend(Event event) {
+    return OTEL_CASSANDRA_DB_SYSTEM_VALUE.equals(
+        SpanAttributeUtils.getStringAttributeWithDefault(event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
+  }
+
+  public static boolean isElasticsearchBackend(Event event) {
+    return OTEL_ELASTICSEARCH_DB_SYSTEM_VALUE.equals(
+        SpanAttributeUtils.getStringAttributeWithDefault(event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
+  }
+
+  /** @return attribute keys representing mongo operation */
+  public static List<String> getAttributeKeysForMongoOperation() {
+    return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_OPERATION, OTEL_DB_OPERATION));
+  }
+
+  /** @return attribute keys representing mongo namespace */
+  public static List<String> getAttributeKeysForMongoNamespace() {
+    return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_NAMESPACE, OTEL_MONGO_COLLECTION));
+  }
+
   private static List<String> getAttributeKeysForDbOperation() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_DB_OPERATION));
   }
@@ -311,15 +416,34 @@ public class DbSemanticConventionUtils {
   }
 
   private static List<String> getAttributeKeysForDbName() {
-    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_NAME));
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_NAME, OTEL_CASSANDRA_DB_NAME));
   }
 
   private static List<String> getAttributeKeysForSqlTableName() {
     return Lists.newArrayList(Sets.newHashSet(SQL_TABLE_NAME));
   }
 
+  public static List<String> getAttributeKeysForCassandraTableName() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_CASSANDRA_TABLE_NAME));
+  }
+
   private static List<String> getAttributeKeysForRedisTableIndex() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_REDIS_DB_INDEX));
+  }
+
+  private static List<String> getAttributekeysForElasticsearchUrl() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_CONNECTION_STRING, OTEL_ELASTICSEARCH_URL));
+  }
+
+  private static List<String> getAttributekeysForElasticsearchOperation() {
+    return Lists.newArrayList(
+        Sets.newHashSet(
+            OTEL_ELASTICSEARCH_ACTION, OTEL_ELASTICSEARCH_METHOD, OTEL_ELASTICSEARCH_REQUEST));
+  }
+
+  private static List<String> getAttributekeysForElasticsearchDestination() {
+    return Lists.newArrayList(
+        Sets.newHashSet(OTEL_ELASTICSEARCH_REQUEST_INDEX, OTEL_ELASTICSEARCH_URL));
   }
 
   private static String getOperationFromDbQuery(String query) {
@@ -330,6 +454,18 @@ public class DbSemanticConventionUtils {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, getAttributeKeysForSqlTableName()));
+  }
+
+  private static Optional<String> getCassandraTableName(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForCassandraTableName()));
+  }
+
+  private static Optional<String> getElasticsearchIndex(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributekeysForElasticsearchDestination()));
   }
 
   private static Optional<String> getMongoCollectionName(Event event) {
@@ -344,7 +480,7 @@ public class DbSemanticConventionUtils {
             event, getAttributeKeysForRedisTableIndex()));
   }
 
-  private static Optional<String> getOtelDbOperation(Event event) {
+  public static Optional<String> getOtelDbOperation(Event event) {
     String dbOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());
@@ -380,5 +516,21 @@ public class DbSemanticConventionUtils {
       return tableName;
     }
     return Optional.empty();
+  }
+
+  private static List<String> getAttributeKeysForConnectionString() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_DB_CONNECTION_STRING, OT_PEER_ADDRESS));
+  }
+
+  public static Optional<String> getHostPortFromURI(String uri) {
+    try {
+      URI backendURL = new URI(uri);
+      String host = backendURL.getHost();
+      Integer port = backendURL.getPort();
+      return Optional.of(String.format("%s:%s", host, port));
+    } catch (URISyntaxException e) {
+      LOGGER.warn("Unable to construct backendURI from {}", uri);
+      return Optional.empty();
+    }
   }
 }

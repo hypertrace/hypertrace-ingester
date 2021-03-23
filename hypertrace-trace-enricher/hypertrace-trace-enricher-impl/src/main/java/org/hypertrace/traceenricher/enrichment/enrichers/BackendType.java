@@ -8,6 +8,8 @@ public enum BackendType {
   REDIS,
   MONGO,
   JDBC,
+  CASSANDRA,
+  ELASTICSEARCH,
   RABBIT_MQ,
   KAFKA,
   SQS
