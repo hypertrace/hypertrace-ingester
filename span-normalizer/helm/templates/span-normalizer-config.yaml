@@ -27,6 +27,9 @@ data:
       consumer.max.partition.fetch.bytes = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.consumerMaxPartitionFetchBytes }}"
       consumer.max.poll.records = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.consumerMaxPollRecords }}"
       consumer.session.timeout.ms = "{{ int .Values.spanNormalizerConfig.kafkaStreamsConfig.consumerSessionTimeoutMs }}"
+      # Exception handler configs
+      default.production.exception.handler = {{ .Values.spanNormalizerConfig.kafkaStreamsConfig.defaultProductionExceptionHandler }}
+      ignore.production.exception.classes = {{ .Values.spanNormalizerConfig.kafkaStreamsConfig.ignoreProductionExceptionClasses }}
       # Others
       metrics.recording.level = "{{ .Values.spanNormalizerConfig.kafkaStreamsConfig.metricsRecordingLevel }}"
       {{- if .Values.spanNormalizerConfig.extraKafkaStreamsConfig }}
