@@ -256,15 +256,6 @@ public class DbSemanticConventionUtils {
   }
 
   public static Optional<String> getCassandraURI(Event event) {
-    if (!isCassandraBackend(event)) {
-      return Optional.empty();
-    }
-
-    Optional<String> OtBackendURI = getBackendURIForOpenTracingFormat(event);
-    if (OtBackendURI.isPresent()) {
-      return OtBackendURI;
-    }
-
     if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_CONNECTION_STRING)) {
       String uri =
           StringUtils.substringAfter(
@@ -273,28 +264,33 @@ public class DbSemanticConventionUtils {
               ":");
       return getHostPortFromURI(uri);
     }
-
-    return getBackendURIForOtelFormat(event);
-  }
-
-  public static Optional<String> getElasticsearchURI(Event event) {
-    if (!isElasticsearchBackend(event)) {
-      return Optional.empty();
-    }
-
     Optional<String> OtBackendURI = getBackendURIForOpenTracingFormat(event);
     if (OtBackendURI.isPresent()) {
       return OtBackendURI;
     }
+    Optional<String> OtelBackendURI = getBackendURIForOtelFormat(event);
+    if (OtelBackendURI.isPresent()) {
+      return OtelBackendURI;
+    }
+    return Optional.empty();
+  }
 
+  public static Optional<String> getElasticsearchURI(Event event) {
     if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_CONNECTION_STRING)
         || SpanAttributeUtils.containsAttributeKey(event, OTEL_ELASTICSEARCH_URL)) {
       return Optional.of(
           SpanAttributeUtils.getFirstAvailableStringAttribute(
               event, getAttributekeysForElasticsearchUrl()));
     }
-
-    return getBackendURIForOtelFormat(event);
+    Optional<String> OtBackendURI = getBackendURIForOpenTracingFormat(event);
+    if (OtBackendURI.isPresent()) {
+      return OtBackendURI;
+    }
+    Optional<String> OtelBackendURI = getBackendURIForOtelFormat(event);
+    if (OtelBackendURI.isPresent()) {
+      return OtelBackendURI;
+    }
+    return Optional.empty();
   }
 
   /**
@@ -423,7 +419,7 @@ public class DbSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(SQL_TABLE_NAME));
   }
 
-  public static List<String> getAttributeKeysForCassandraTableName() {
+  private static List<String> getAttributeKeysForCassandraTableName() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_CASSANDRA_TABLE_NAME));
   }
 
@@ -522,7 +518,7 @@ public class DbSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTEL_DB_CONNECTION_STRING, OT_PEER_ADDRESS));
   }
 
-  public static Optional<String> getHostPortFromURI(String uri) {
+  private static Optional<String> getHostPortFromURI(String uri) {
     try {
       URI backendURL = new URI(uri);
       String host = backendURL.getHost();
