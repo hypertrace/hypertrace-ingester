@@ -97,7 +97,7 @@ public class DbSemanticConventionUtils {
       OpenTracingSpanSemanticConventions.PEER_ADDRESS.getValue();
 
   public static Optional<String> getDbOperationForJDBC(Event event) {
-    Optional<String> jdbcOperation = getOtelDbOperation(event);
+    Optional<String> jdbcOperation = getDbOperation(event);
     if (jdbcOperation.isPresent()) {
       return jdbcOperation;
     }
@@ -111,7 +111,7 @@ public class DbSemanticConventionUtils {
   }
 
   public static Optional<String> getDbOperationForRedis(Event event) {
-    Optional<String> redisOperation = getOtelDbOperation(event);
+    Optional<String> redisOperation = getDbOperation(event);
     if (redisOperation.isPresent()) {
       return redisOperation;
     }
@@ -125,7 +125,7 @@ public class DbSemanticConventionUtils {
   }
 
   public static Optional<String> getDbOperationForElasticSearch(Event event) {
-    Optional<String> esOperation = getOtelDbOperation(event);
+    Optional<String> esOperation = getDbOperation(event);
     if (esOperation.isPresent()) {
       return esOperation;
     }
@@ -476,7 +476,7 @@ public class DbSemanticConventionUtils {
             event, getAttributeKeysForRedisTableIndex()));
   }
 
-  public static Optional<String> getOtelDbOperation(Event event) {
+  public static Optional<String> getDbOperation(Event event) {
     String dbOperation =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, DbSemanticConventionUtils.getAttributeKeysForDbOperation());

@@ -41,7 +41,7 @@ public class CassandraBackendResolver extends AbstractBackendResolver {
         getBackendEntityBuilder(BackendType.CASSANDRA, backendURI.get(), event);
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    Optional<String> cassandraOperation = DbSemanticConventionUtils.getOtelDbOperation(event);
+    Optional<String> cassandraOperation = DbSemanticConventionUtils.getDbOperation(event);
     cassandraOperation.ifPresent(
         operation ->
             enrichedAttributes.put(

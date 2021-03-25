@@ -242,7 +242,7 @@ public class DbSemanticConventionUtilsTest {
                 OTelDbSemanticConventions.DB_OPERATION.getValue(),
                 SemanticConventionTestUtil.buildAttributeValue("select")));
     when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbSemanticConventionUtils.getOtelDbOperation(e);
+    Optional<String> v = DbSemanticConventionUtils.getDbOperation(e);
     assertEquals("select", v.get());
   }
 
@@ -264,7 +264,7 @@ public class DbSemanticConventionUtilsTest {
   @Test
   public void testIfCassandraOperationIsEmpty() {
     Event e = mock(Event.class);
-    assertTrue(DbSemanticConventionUtils.getOtelDbOperation(e).isEmpty());
+    assertTrue(DbSemanticConventionUtils.getDbOperation(e).isEmpty());
   }
 
   @Test
