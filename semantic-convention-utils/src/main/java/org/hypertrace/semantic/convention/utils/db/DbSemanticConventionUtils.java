@@ -131,7 +131,7 @@ public class DbSemanticConventionUtils {
     }
     String esCommand =
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributekeysForElasticsearchOperation());
+            event, getAttributekeysForElasticSearchOperation());
     if (esCommand != null) {
       return Optional.of(esCommand);
     }
@@ -165,7 +165,7 @@ public class DbSemanticConventionUtils {
   }
 
   public static Optional<String> getDestinationForElasticsearch(Event event) {
-    Optional<String> esIndex = getElasticsearchIndex(event);
+    Optional<String> esIndex = getElasticSearchIndex(event);
     return getDestinationForDb(event, esIndex);
   }
 
@@ -264,13 +264,13 @@ public class DbSemanticConventionUtils {
               ":");
       return getHostPortFromURI(uri);
     }
-    Optional<String> OtBackendURI = getBackendURIForOpenTracingFormat(event);
-    if (OtBackendURI.isPresent()) {
-      return OtBackendURI;
+    Optional<String> otelBackendURI = getBackendURIForOtelFormat(event);
+    if (otelBackendURI.isPresent()) {
+      return otelBackendURI;
     }
-    Optional<String> OtelBackendURI = getBackendURIForOtelFormat(event);
-    if (OtelBackendURI.isPresent()) {
-      return OtelBackendURI;
+    Optional<String> otBackendURI = getBackendURIForOpenTracingFormat(event);
+    if (otBackendURI.isPresent()) {
+      return otBackendURI;
     }
     return Optional.empty();
   }
@@ -280,15 +280,15 @@ public class DbSemanticConventionUtils {
         || SpanAttributeUtils.containsAttributeKey(event, OTEL_ELASTICSEARCH_URL)) {
       return Optional.of(
           SpanAttributeUtils.getFirstAvailableStringAttribute(
-              event, getAttributekeysForElasticsearchUrl()));
+              event, getAttributekeysForElasticSearchUrl()));
     }
-    Optional<String> OtBackendURI = getBackendURIForOpenTracingFormat(event);
-    if (OtBackendURI.isPresent()) {
-      return OtBackendURI;
+    Optional<String> otBackendURI = getBackendURIForOpenTracingFormat(event);
+    if (otBackendURI.isPresent()) {
+      return otBackendURI;
     }
-    Optional<String> OtelBackendURI = getBackendURIForOtelFormat(event);
-    if (OtelBackendURI.isPresent()) {
-      return OtelBackendURI;
+    Optional<String> otelBackendURI = getBackendURIForOtelFormat(event);
+    if (otelBackendURI.isPresent()) {
+      return otelBackendURI;
     }
     return Optional.empty();
   }
@@ -388,7 +388,7 @@ public class DbSemanticConventionUtils {
         SpanAttributeUtils.getStringAttributeWithDefault(event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
   }
 
-  public static boolean isElasticsearchBackend(Event event) {
+  public static boolean isElasticSearchBackend(Event event) {
     return OTEL_ELASTICSEARCH_DB_SYSTEM_VALUE.equals(
         SpanAttributeUtils.getStringAttributeWithDefault(event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
   }
@@ -427,17 +427,17 @@ public class DbSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTEL_REDIS_DB_INDEX));
   }
 
-  private static List<String> getAttributekeysForElasticsearchUrl() {
+  private static List<String> getAttributekeysForElasticSearchUrl() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_DB_CONNECTION_STRING, OTEL_ELASTICSEARCH_URL));
   }
 
-  private static List<String> getAttributekeysForElasticsearchOperation() {
+  private static List<String> getAttributekeysForElasticSearchOperation() {
     return Lists.newArrayList(
         Sets.newHashSet(
             OTEL_ELASTICSEARCH_ACTION, OTEL_ELASTICSEARCH_METHOD, OTEL_ELASTICSEARCH_REQUEST));
   }
 
-  private static List<String> getAttributekeysForElasticsearchDestination() {
+  private static List<String> getAttributekeysForElasticSearchDestination() {
     return Lists.newArrayList(
         Sets.newHashSet(OTEL_ELASTICSEARCH_REQUEST_INDEX, OTEL_ELASTICSEARCH_URL));
   }
@@ -458,10 +458,10 @@ public class DbSemanticConventionUtils {
             event, getAttributeKeysForCassandraTableName()));
   }
 
-  private static Optional<String> getElasticsearchIndex(Event event) {
+  private static Optional<String> getElasticSearchIndex(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributekeysForElasticsearchDestination()));
+            event, getAttributekeysForElasticSearchDestination()));
   }
 
   private static Optional<String> getMongoCollectionName(Event event) {

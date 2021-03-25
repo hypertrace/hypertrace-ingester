@@ -1,8 +1,5 @@
 package org.hypertrace.semantic.convention.utils.span;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -146,24 +143,5 @@ public class SpanSemanticConventionUtils {
       return SpanAttributeUtils.getStringAttribute(event, OT_PEER_NAME);
     }
     return null;
-  }
-
-  private static List<String> getAttributeKeysForOTUri() {
-    return Lists.newArrayList(Sets.newHashSet(OT_PEER_HOSTNAME, OT_PEER_NAME, OT_PEER_IP));
-  }
-
-  private static List<String> getAttributeKeysForOtelUri() {
-    return Lists.newArrayList(
-        Sets.newHashSet(OTEL_NET_PEER_NAME, OTEL_NET_PEER_IP, OTEL_NET_PEER_PORT));
-  }
-
-  public static Optional<String> getOtelUriComponent(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(event, getAttributeKeysForOtelUri()));
-  }
-
-  public static Optional<String> getOTUriComponent(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(event, getAttributeKeysForOTUri()));
   }
 }

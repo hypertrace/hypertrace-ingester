@@ -287,7 +287,7 @@ public class DbSemanticConventionUtilsTest {
   }
 
   @Test
-  public void testGetElasticsearchOperation() {
+  public void testGetElasticSearchOperation() {
     Event e = mock(Event.class);
     Attributes attributes =
         SemanticConventionTestUtil.buildAttributes(
@@ -300,7 +300,7 @@ public class DbSemanticConventionUtilsTest {
   }
 
   @Test
-  public void testGetElasticsearchDestination() {
+  public void testGetElasticSearchDestination() {
     Event e = mock(Event.class);
     Attributes attributes =
         SemanticConventionTestUtil.buildAttributes(
@@ -313,13 +313,13 @@ public class DbSemanticConventionUtilsTest {
   }
 
   @Test
-  public void testIfElasticsearchOperationIsEmpty() {
+  public void testIfElasticSearchOperationIsEmpty() {
     Event e = mock(Event.class);
     assertTrue(DbSemanticConventionUtils.getDbOperationForElasticsearch(e).isEmpty());
   }
 
   @Test
-  public void testIfElasticsearchDestinationIsEmpty() {
+  public void testIfElasticSearchDestinationIsEmpty() {
     Event e = mock(Event.class);
     assertTrue(DbSemanticConventionUtils.getDestinationForElasticsearch(e).isEmpty());
   }

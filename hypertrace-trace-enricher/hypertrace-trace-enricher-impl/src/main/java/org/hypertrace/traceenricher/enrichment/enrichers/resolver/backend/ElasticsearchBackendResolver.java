@@ -28,7 +28,7 @@ public class ElasticsearchBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
-    if (!DbSemanticConventionUtils.isElasticsearchBackend(event)) {
+    if (!DbSemanticConventionUtils.isElasticSearchBackend(event)) {
       return Optional.empty();
     }
 
