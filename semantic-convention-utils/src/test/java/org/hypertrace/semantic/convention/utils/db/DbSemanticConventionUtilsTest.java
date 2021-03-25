@@ -282,7 +282,7 @@ public class DbSemanticConventionUtilsTest {
                 OTelDbSemanticConventions.ELASTICSEARCH_URL.getValue(),
                 SemanticConventionTestUtil.buildAttributeValue("localhost:9000")));
     when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbSemanticConventionUtils.getElasticsearchURI(e);
+    Optional<String> v = DbSemanticConventionUtils.getElasticSearchURI(e);
     assertEquals("localhost:9000", v.get());
   }
 
@@ -295,7 +295,7 @@ public class DbSemanticConventionUtilsTest {
                 OTelDbSemanticConventions.DB_OPERATION.getValue(),
                 SemanticConventionTestUtil.buildAttributeValue("GET")));
     when(e.getAttributes()).thenReturn(attributes);
-    Optional<String> v = DbSemanticConventionUtils.getDbOperationForElasticsearch(e);
+    Optional<String> v = DbSemanticConventionUtils.getDbOperationForElasticSearch(e);
     assertEquals("GET", v.get());
   }
 
@@ -315,7 +315,7 @@ public class DbSemanticConventionUtilsTest {
   @Test
   public void testIfElasticSearchOperationIsEmpty() {
     Event e = mock(Event.class);
-    assertTrue(DbSemanticConventionUtils.getDbOperationForElasticsearch(e).isEmpty());
+    assertTrue(DbSemanticConventionUtils.getDbOperationForElasticSearch(e).isEmpty());
   }
 
   @Test

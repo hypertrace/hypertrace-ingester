@@ -19,8 +19,8 @@ import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ElasticsearchBackendResolver extends AbstractBackendResolver {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchBackendResolver.class);
+public class ElasticsSearchBackendResolver extends AbstractBackendResolver {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsSearchBackendResolver.class);
   private static final String BACKEND_OPERATION_ATTR =
       EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
   private static final String BACKEND_DESTINATION_ATTR =
@@ -32,7 +32,7 @@ public class ElasticsearchBackendResolver extends AbstractBackendResolver {
       return Optional.empty();
     }
 
-    Optional<String> backendURI = DbSemanticConventionUtils.getElasticsearchURI(event);
+    Optional<String> backendURI = DbSemanticConventionUtils.getElasticSearchURI(event);
 
     if (backendURI.isEmpty() || StringUtils.isEmpty(backendURI.get())) {
       LOGGER.warn("Unable to infer a elasticsearch backend from event: {}", event);
@@ -44,7 +44,7 @@ public class ElasticsearchBackendResolver extends AbstractBackendResolver {
     setAttributeIfExist(event, entityBuilder, OTelDbSemanticConventions.DB_OPERATION.getValue());
 
     Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-    Optional<String> esOperation = DbSemanticConventionUtils.getDbOperationForElasticsearch(event);
+    Optional<String> esOperation = DbSemanticConventionUtils.getDbOperationForElasticSearch(event);
     esOperation.ifPresent(
         operation ->
             enrichedAttributes.put(

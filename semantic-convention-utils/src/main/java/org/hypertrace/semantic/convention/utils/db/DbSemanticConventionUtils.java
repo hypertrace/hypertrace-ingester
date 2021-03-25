@@ -124,7 +124,7 @@ public class DbSemanticConventionUtils {
     return Optional.empty();
   }
 
-  public static Optional<String> getDbOperationForElasticsearch(Event event) {
+  public static Optional<String> getDbOperationForElasticSearch(Event event) {
     Optional<String> esOperation = getOtelDbOperation(event);
     if (esOperation.isPresent()) {
       return esOperation;
@@ -275,7 +275,7 @@ public class DbSemanticConventionUtils {
     return Optional.empty();
   }
 
-  public static Optional<String> getElasticsearchURI(Event event) {
+  public static Optional<String> getElasticSearchURI(Event event) {
     if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_CONNECTION_STRING)
         || SpanAttributeUtils.containsAttributeKey(event, OTEL_ELASTICSEARCH_URL)) {
       return Optional.of(

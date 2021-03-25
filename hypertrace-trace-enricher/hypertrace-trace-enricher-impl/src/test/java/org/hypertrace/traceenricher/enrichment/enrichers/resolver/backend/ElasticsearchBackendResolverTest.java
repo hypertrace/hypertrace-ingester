@@ -21,19 +21,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class ElasticsearchBackendResolverTest {
-  private ElasticsearchBackendResolver elasticsearchBackendResolver;
+  private ElasticsSearchBackendResolver elasticsSarchBackendResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    elasticsearchBackendResolver = new ElasticsearchBackendResolver();
+    elasticsSarchBackendResolver = new ElasticsSearchBackendResolver();
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
   @Test
   public void testBackendResolution() {
     BackendInfo backendInfo =
-        elasticsearchBackendResolver.resolve(getElasticsearchEvent(), structuredTraceGraph).get();
+        elasticsSarchBackendResolver.resolve(getElasticsearchEvent(), structuredTraceGraph).get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals("test-index", entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
@@ -49,7 +49,7 @@ public class ElasticsearchBackendResolverTest {
   @Test
   public void testBackendResolutionForOTEvent() {
     BackendInfo backendInfo =
-        elasticsearchBackendResolver.resolve(getElasticsearchOTEvent(), structuredTraceGraph).get();
+        elasticsSarchBackendResolver.resolve(getElasticsearchOTEvent(), structuredTraceGraph).get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals("test", entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
@@ -65,7 +65,7 @@ public class ElasticsearchBackendResolverTest {
   @Test
   public void testBackendResolutionForOTelEvent() {
     BackendInfo backendInfo =
-        elasticsearchBackendResolver
+        elasticsSarchBackendResolver
             .resolve(getElasticsearchOTelEvent(), structuredTraceGraph)
             .get();
     Entity entity = backendInfo.getEntity();
