@@ -221,6 +221,110 @@ public class DbSemanticConventionUtilsTest {
   }
 
   @Test
+  public void testGetCassandraURI() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("jdbc:cassandra://localhost:9000")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getCassandraURI(e);
+    assertEquals("localhost:9000", v.get());
+  }
+
+  @Test
+  public void testGetCassandraOperation() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.DB_OPERATION.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("select")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDbOperation(e);
+    assertEquals("select", v.get());
+  }
+
+  @Test
+  public void testGetCassandraDestination() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.CASSANDRA_TABLE_NAME.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("payment"),
+                OTelDbSemanticConventions.CASSANDRA_DB_NAME.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("customer")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDestinationForCassandra(e);
+    assertEquals("customer.payment", v.get());
+  }
+
+  @Test
+  public void testIfCassandraOperationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDbOperation(e).isEmpty());
+  }
+
+  @Test
+  public void testIfCassandraDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDestinationForCassandra(e).isEmpty());
+  }
+
+  @Test
+  public void testGetElasticsearchURI() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.ELASTICSEARCH_URL.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("localhost:9000")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getElasticSearchURI(e);
+    assertEquals("localhost:9000", v.get());
+  }
+
+  @Test
+  public void testGetElasticSearchOperation() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.DB_OPERATION.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("GET")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDbOperationForElasticSearch(e);
+    assertEquals("GET", v.get());
+  }
+
+  @Test
+  public void testGetElasticSearchDestination() {
+    Event e = mock(Event.class);
+    Attributes attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.ELASTICSEARCH_REQUEST_INDICES.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("test-index")));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = DbSemanticConventionUtils.getDestinationForElasticsearch(e);
+    assertEquals("test-index", v.get());
+  }
+
+  @Test
+  public void testIfElasticSearchOperationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDbOperationForElasticSearch(e).isEmpty());
+  }
+
+  @Test
+  public void testIfElasticSearchDestinationIsEmpty() {
+    Event e = mock(Event.class);
+    assertTrue(DbSemanticConventionUtils.getDestinationForElasticsearch(e).isEmpty());
+  }
+
+  @Test
   public void testIsSqlBackend() {
     Event e = mock(Event.class);
 
