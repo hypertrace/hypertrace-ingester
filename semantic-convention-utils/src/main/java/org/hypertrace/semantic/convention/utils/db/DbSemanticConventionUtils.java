@@ -255,6 +255,9 @@ public class DbSemanticConventionUtils {
     return Optional.empty();
   }
 
+  /* The DB_CONNECTION_STRING for Cassandra is in the format "jdbc:cassandra://localhost:9000" as per the documentation.
+   * To get the host and port value we need to convert it to correct URI syntax, so we are trimming the initial jdbc part here.
+   */
   public static Optional<String> getCassandraURI(Event event) {
     if (SpanAttributeUtils.containsAttributeKey(event, OTEL_DB_CONNECTION_STRING)) {
       String uri =

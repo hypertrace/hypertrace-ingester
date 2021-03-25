@@ -20,7 +20,7 @@ public class BackendResolver extends AbstractBackendResolver {
             new MongoBackendResolver(),
             new JdbcBackendResolver(),
             new CassandraBackendResolver(),
-            new ElasticsSearchBackendResolver(),
+            new ElasticSearchBackendResolver(),
             new RabbitMqBackendResolver(),
             new KafkaBackendResolver(),
             new SqsBackendResolver(),

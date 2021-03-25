@@ -19,8 +19,8 @@ import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ElasticsSearchBackendResolver extends AbstractBackendResolver {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsSearchBackendResolver.class);
+public class ElasticSearchBackendResolver extends AbstractBackendResolver {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchBackendResolver.class);
   private static final String BACKEND_OPERATION_ATTR =
       EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
   private static final String BACKEND_DESTINATION_ATTR =
