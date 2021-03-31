@@ -1,7 +1,14 @@
 @namespace("org.hypertrace.viewgenerator.api")
 protocol LogEventViewProtocol {
-//Each record corresponds to one span
-  record LogEventView {
 
+  record LogEventView {
+    string tenant_id;
+
+    bytes span_id;
+    bytes trace_id;
+
+    long time_stamp = 0;
+
+    string attributes;
   }
 }
