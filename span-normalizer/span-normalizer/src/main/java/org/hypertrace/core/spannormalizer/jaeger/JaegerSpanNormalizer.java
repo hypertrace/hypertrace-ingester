@@ -125,7 +125,11 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
       rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
       // Build Event
       Event event =
-          buildEvent(tenantId, jaegerSpan, spanTags, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
+          buildEvent(
+              tenantId,
+              jaegerSpan,
+              spanTags,
+              tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
       rawSpanBuilder.setEvent(event);
       rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
       resourceNormalizer.normalize(jaegerSpan).ifPresent(rawSpanBuilder::setResource);

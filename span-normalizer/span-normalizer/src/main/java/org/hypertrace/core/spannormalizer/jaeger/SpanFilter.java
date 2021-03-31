@@ -82,7 +82,6 @@ public class SpanFilter {
                         p ->
                             tags.containsKey(p.getLeft())
                                 && StringUtils.equals(
-                                tags.get(p.getLeft()).getVStr(), p.getRight())));
+                                    tags.get(p.getLeft()).getVStr(), p.getRight())));
   }
 }
-

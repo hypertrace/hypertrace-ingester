@@ -19,8 +19,8 @@ import org.hypertrace.core.datamodel.LogEventRecord;
 import org.hypertrace.core.datamodel.LogEventRecords;
 import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
 
-public class JaegerSpanToLogRecordsTransformer implements
-    Transformer<byte[], Span, KeyValue<String, LogEventRecords>> {
+public class JaegerSpanToLogRecordsTransformer
+    implements Transformer<byte[], Span, KeyValue<String, LogEventRecords>> {
 
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
@@ -58,24 +58,30 @@ public class JaegerSpanToLogRecordsTransformer implements
   LogEventRecords buildLogEventRecords(Span value, String tenantId) {
     ByteBuffer spanId = value.getSpanId().asReadOnlyByteBuffer();
     ByteBuffer traceId = value.getTraceId().asReadOnlyByteBuffer();
-    return LogEventRecords.newBuilder().setLogEventRecords(
-        value.getLogsList().stream().map(log ->
-            LogEventRecord.newBuilder()
-                .setCustomerId(tenantId)
-                .setSpanId(spanId)
-                .setTraceId(traceId)
-                .setTimeStamp(Timestamps.toMillis(log.getTimestamp()))
-                .setAttributes(buildAttributes(log.getFieldsList()))
-                .build()
-        ).collect(Collectors.toList())
-    ).build();
+    return LogEventRecords.newBuilder()
+        .setLogEventRecords(
+            value.getLogsList().stream()
+                .map(
+                    log ->
+                        LogEventRecord.newBuilder()
+                            .setCustomerId(tenantId)
+                            .setSpanId(spanId)
+                            .setTraceId(traceId)
+                            .setTimeStamp(Timestamps.toMillis(log.getTimestamp()))
+                            .setAttributes(buildAttributes(log.getFieldsList()))
+                            .build())
+                .collect(Collectors.toList()))
+        .build();
   }
 
   private Attributes buildAttributes(List<JaegerSpanInternalModel.KeyValue> keyValues) {
     return Attributes.newBuilder()
         .setAttributeMap(
-            keyValues.stream().collect(Collectors.toMap(k -> k.getKey().toLowerCase(),
-                AttributeValueCreator::createFromJaegerKeyValue)))
+            keyValues.stream()
+                .collect(
+                    Collectors.toMap(
+                        k -> k.getKey().toLowerCase(),
+                        AttributeValueCreator::createFromJaegerKeyValue)))
         .build();
   }
 

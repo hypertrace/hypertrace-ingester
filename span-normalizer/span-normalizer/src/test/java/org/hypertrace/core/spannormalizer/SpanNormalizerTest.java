@@ -3,7 +3,6 @@ package org.hypertrace.core.spannormalizer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Duration;
 import com.google.protobuf.Timestamp;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -94,24 +93,27 @@ class SpanNormalizerTest {
                     .setKey("jaeger.servicename")
                     .setVStr(SERVICE_NAME)
                     .build())
-            .addLogs(Log.newBuilder()
-                .setTimestamp(Timestamp.newBuilder().setSeconds(5).build())
-                .addFields(JaegerSpanInternalModel.KeyValue.newBuilder()
-                    .setKey("e1")
-                    .setVStr("some event detail")
-                    .build())
-                .addFields(JaegerSpanInternalModel.KeyValue.newBuilder()
-                    .setKey("e2")
-                    .setVStr("some event detail")
-                    .build())
-            )
-            .addLogs(Log.newBuilder()
-                .setTimestamp(Timestamp.newBuilder().setSeconds(10).build())
-                .addFields(JaegerSpanInternalModel.KeyValue.newBuilder()
-                    .setKey("z2")
-                    .setVStr("some event detail")
-                    .build())
-            )
+            .addLogs(
+                Log.newBuilder()
+                    .setTimestamp(Timestamp.newBuilder().setSeconds(5).build())
+                    .addFields(
+                        JaegerSpanInternalModel.KeyValue.newBuilder()
+                            .setKey("e1")
+                            .setVStr("some event detail")
+                            .build())
+                    .addFields(
+                        JaegerSpanInternalModel.KeyValue.newBuilder()
+                            .setKey("e2")
+                            .setVStr("some event detail")
+                            .build()))
+            .addLogs(
+                Log.newBuilder()
+                    .setTimestamp(Timestamp.newBuilder().setSeconds(10).build())
+                    .addFields(
+                        JaegerSpanInternalModel.KeyValue.newBuilder()
+                            .setKey("z2")
+                            .setVStr("some event detail")
+                            .build()))
             .build();
     inputTopic.pipeInput(span);
 
