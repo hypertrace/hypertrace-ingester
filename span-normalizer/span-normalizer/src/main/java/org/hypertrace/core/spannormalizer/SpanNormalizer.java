@@ -2,6 +2,7 @@ package org.hypertrace.core.spannormalizer;
 
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.INPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.OUTPUT_TOPIC_CONFIG_KEY;
+import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 
 import com.typesafe.config.Config;
@@ -37,6 +38,7 @@ public class SpanNormalizer extends KafkaStreamsApp {
     Config jobConfig = getJobConfig(streamsProperties);
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
+    String outputTopicRawLogs = jobConfig.getString(OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY);
 
     KStream<byte[], Span> inputStream = (KStream<byte[], Span>) inputStreams.get(inputTopic);
     if (inputStream == null) {
@@ -47,6 +49,7 @@ public class SpanNormalizer extends KafkaStreamsApp {
     }
 
     inputStream.transform(JaegerSpanToAvroRawSpanTransformer::new).to(outputTopic);
+
 
     return streamsBuilder;
   }

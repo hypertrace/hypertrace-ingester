@@ -1,0 +1,7 @@
+@namespace("org.hypertrace.viewgenerator.api")
+protocol LogEventViewProtocol {
+//Each record corresponds to one span
+  record LogEventView {
+
+  }
+}
