@@ -58,7 +58,7 @@ dependencies {
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
-  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.0")
+  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
   testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.21")

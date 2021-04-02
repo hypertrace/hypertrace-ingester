@@ -48,6 +48,21 @@ public interface ValueCoercer {
     }
   }
 
+  static Optional<LiteralValue> toLiteral(Long longValue, AttributeKind attributeKind) {
+    switch (attributeKind) {
+      case TYPE_DOUBLE:
+        return Optional.of(doubleLiteral(longValue));
+      case TYPE_TIMESTAMP:
+      case TYPE_INT64: // Timestamp and long both convert the same
+        return Optional.of(longLiteral(longValue));
+      case TYPE_STRING:
+      case TYPE_BYTES: // Treat bytes and string the same
+        return Optional.of(stringLiteral(longValue.toString()));
+      default:
+        return Optional.empty();
+    }
+  }
+
   static Optional<String> convertToString(LiteralValue literalValue) {
     switch (literalValue.getValueCase()) {
       case INT_VALUE:

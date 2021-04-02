@@ -2,11 +2,13 @@ package org.hypertrace.trace.reader.attributes;
 
 import java.util.Objects;
 import java.util.Optional;
+import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.Resource;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 
 class SpanValueSource extends AvroBackedValueSource {
@@ -31,6 +33,20 @@ class SpanValueSource extends AvroBackedValueSource {
   public Optional<LiteralValue> getMetric(String key, AttributeKind attributeKind) {
     return this.getMetricDouble(this.span.getMetrics(), key)
         .flatMap(doubleValue -> ValueCoercer.toLiteral(doubleValue, attributeKind));
+  }
+
+  @Override
+  public Optional<LiteralValue> getSourceField(SourceField field, AttributeKind attributeKind) {
+    switch (field) {
+      case SOURCE_FIELD_START_TIME:
+        return ValueCoercer.toLiteral(this.span.getStartTimeMillis(), attributeKind);
+      case SOURCE_FIELD_END_TIME:
+        return ValueCoercer.toLiteral(this.span.getEndTimeMillis(), attributeKind);
+      case SOURCE_FIELD_UNSET:
+      case UNRECOGNIZED:
+      default:
+        throw new UnsupportedOperationException("Unsupported source field for span value source: " + field.name());
+    }
   }
 
   @Override

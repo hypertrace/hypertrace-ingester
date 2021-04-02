@@ -41,5 +41,5 @@ dependencies {
   implementation("org.apache.commons:commons-lang3:3.11")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-  testImplementation("org.mockito:mockito-core:3.6.28")
+  testImplementation("org.mockito:mockito-core:3.8.0")
 }

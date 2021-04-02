@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjection;
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
+import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
@@ -46,6 +47,11 @@ class DefaultValueResolver implements ValueResolver {
       case PROJECTION:
         return this.resolveProjection(
             valueSource, attributeMetadata.getDefinition().getProjection());
+      case SOURCE_FIELD:
+        return this.resolveField(
+            valueSource,
+            attributeMetadata.getDefinition().getSourceField(),
+            attributeMetadata.getValueKind());
       case VALUE_NOT_SET:
       default:
         return this.buildError("Unrecognized attribute definition");
@@ -66,15 +72,11 @@ class DefaultValueResolver implements ValueResolver {
       case ATTRIBUTE:
         return matchingValueSource
             .mapOptional(valueSource -> valueSource.getAttribute(path, attributeKind))
-            .switchIfEmpty(
-                this.buildError(
-                    "Unable to extract attribute path %s with type %s", path, attributeKind));
+            .defaultIfEmpty(LiteralValue.getDefaultInstance());
       case METRIC:
         return matchingValueSource
             .mapOptional(valueSource -> valueSource.getMetric(path, attributeKind))
-            .switchIfEmpty(
-                this.buildError(
-                    "Unable to extract metric path %s with type %s", path, attributeKind));
+            .defaultIfEmpty(LiteralValue.getDefaultInstance());
       case UNRECOGNIZED:
       case TYPE_UNDEFINED:
       default:
@@ -97,6 +99,12 @@ class DefaultValueResolver implements ValueResolver {
       default:
         return this.buildError("Unrecognized projection type");
     }
+  }
+
+  private Single<LiteralValue> resolveField(
+      ValueSource valueSource, SourceField sourceField, AttributeKind attributeKind) {
+    return Maybe.fromOptional(valueSource.getSourceField(sourceField, attributeKind))
+        .defaultIfEmpty(LiteralValue.getDefaultInstance());
   }
 
   private Single<LiteralValue> resolveExpression(

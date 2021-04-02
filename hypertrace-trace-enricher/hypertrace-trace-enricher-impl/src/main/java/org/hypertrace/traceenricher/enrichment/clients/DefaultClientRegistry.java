@@ -16,9 +16,8 @@ import org.hypertrace.entity.service.client.config.EntityServiceClientConfig;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReaderFactory;
-import org.hypertrace.trace.reader.entities.TraceEntityClientContext;
 import org.hypertrace.trace.reader.entities.TraceEntityReader;
-import org.hypertrace.trace.reader.entities.TraceEntityReaderFactory;
+import org.hypertrace.trace.reader.entities.TraceEntityReaderBuilder;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 
 public class DefaultClientRegistry implements ClientRegistry {
@@ -59,11 +58,11 @@ public class DefaultClientRegistry implements ClientRegistry {
             EntityServiceClientConfig.from(config).getCacheConfig());
     this.entityCache = new EntityCache(this.edsCacheClient);
     this.entityReader =
-        TraceEntityReaderFactory.build(
-            TraceEntityClientContext.usingClients(
+        new TraceEntityReaderBuilder(
                 EntityTypeClient.builder(this.entityServiceChannel).build(),
                 EntityDataClient.builder(this.entityServiceChannel).build(),
-                this.cachingAttributeClient));
+                this.cachingAttributeClient)
+            .build();
   }
 
   @Override
