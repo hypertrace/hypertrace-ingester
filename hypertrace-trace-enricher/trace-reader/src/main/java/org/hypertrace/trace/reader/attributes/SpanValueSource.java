@@ -8,7 +8,6 @@ import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.Resource;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
 
 class SpanValueSource extends AvroBackedValueSource {
@@ -45,7 +44,8 @@ class SpanValueSource extends AvroBackedValueSource {
       case SOURCE_FIELD_UNSET:
       case UNRECOGNIZED:
       default:
-        throw new UnsupportedOperationException("Unsupported source field for span value source: " + field.name());
+        throw new UnsupportedOperationException(
+            "Unsupported source field for span value source: " + field.name());
     }
   }
 

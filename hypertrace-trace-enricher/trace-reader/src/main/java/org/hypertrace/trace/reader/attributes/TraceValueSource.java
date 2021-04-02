@@ -38,7 +38,8 @@ class TraceValueSource extends AvroBackedValueSource {
       case SOURCE_FIELD_UNSET:
       case UNRECOGNIZED:
       default:
-        throw new UnsupportedOperationException("Unsupported source field for trace value source: " + field.name());
+        throw new UnsupportedOperationException(
+            "Unsupported source field for trace value source: " + field.name());
     }
   }
 
