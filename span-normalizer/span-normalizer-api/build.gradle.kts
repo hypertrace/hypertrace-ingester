@@ -7,7 +7,7 @@ import com.google.protobuf.gradle.protoc
 
 plugins {
   `java-library`
-  id("com.google.protobuf") version "0.8.8"
+  id("com.google.protobuf") version "0.8.15"
   id("org.hypertrace.publish-plugin")
   id("org.hypertrace.avro-plugin")
 }
@@ -16,11 +16,11 @@ val generateLocalGoGrpcFiles = false
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.6.1"
+    artifact = "com.google.protobuf:protoc:3.15.7"
   }
   plugins {
     id("grpc_java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.35.0"
+      artifact = "io.grpc:protoc-gen-grpc-java:1.36.1"
     }
 
     if (generateLocalGoGrpcFiles) {
@@ -56,6 +56,6 @@ sourceSets {
   }
 }
 dependencies {
-  api("com.google.api.grpc:proto-google-common-protos:1.12.0")
+  api("com.google.api.grpc:proto-google-common-protos:2.1.0")
   api("org.apache.avro:avro:1.10.1")
 }

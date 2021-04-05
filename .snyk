@@ -5,35 +5,35 @@ ignore:
   SNYK-JAVA-COMMONSHTTPCLIENT-30083:
     - '*':
         reason: no available replacement
-        expires: 2021-03-31T00:00:00.000Z
+        expires: 2021-05-31T00:00:00.000Z
   SNYK-JAVA-COMMONSHTTPCLIENT-31660:
     - '*':
         reason: no available replacement
-        expires: 2021-03-31T00:00:00.000Z
+        expires: 2021-05-31T00:00:00.000Z
   SNYK-JAVA-IONETTY-473694:
     - '*':
         reason: no available replacement
-        expires: 2021-03-31T00:00:00.000Z
+        expires: 2021-05-31T00:00:00.000Z
   SNYK-JAVA-LOG4J-572732:
     - '*':
         reason: no available replacement
-        expires: 2021-03-31T00:00:00.000Z
+        expires: 2021-05-31T00:00:00.000Z
   SNYK-JAVA-ORGAPACHECOMMONS-559327:
     - '*':
         reason: no available replacement
-        expires: 2021-03-31T00:00:00.000Z
+        expires: 2021-05-31T00:00:00.000Z
   SNYK-JAVA-ORGCODEHAUSJACKSON-534878:
     - '*':
         reason: no available replacement
-        expires: 2021-03-31T00:00:00.000Z
+        expires: 2021-05-31T00:00:00.000Z
   SNYK-JAVA-IONETTY-1042268:
     - '*':
         reason: no available replacement
-        expires: 2021-03-31T00:00:00.000Z
+        expires: 2021-05-31T00:00:00.000Z
   SNYK-JAVA-ORGAPACHETHRIFT-1074898:
     - '*':
         reason: None Given
-        expires: 2021-03-31T00:00:00.000Z
+        expires: 2021-05-31T00:00:00.000Z
   SNYK-JAVA-NETMINIDEV-1078499:
     - '*':
         reason: None Given

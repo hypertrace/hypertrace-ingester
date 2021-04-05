@@ -17,7 +17,7 @@ tasks.test {
 
 dependencies {
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
-  implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.1.24")
+  implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.1.25")
   constraints {
     // to have calcite libs on the same version
     implementation("org.apache.calcite:calcite-babel:1.26.0") {
@@ -25,7 +25,7 @@ dependencies {
     }
   }
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
 }
 
