@@ -7,7 +7,7 @@ pluginManagement {
 }
 
 plugins {
-  id("org.hypertrace.version-settings") version "0.1.2"
+  id("org.hypertrace.version-settings") version "0.1.6"
 }
 
 rootProject.name = "hypertrace-ingester"
