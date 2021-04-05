@@ -63,5 +63,5 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.23")
   testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
-  testImplementation("org.apache.kafka:kafka-streams-test-utils:6.0.1-ccs")
+  testImplementation("org.apache.kafka:kafka-streams-test-utils:6.1.0-ccs")
 }
