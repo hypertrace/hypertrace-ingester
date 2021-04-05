@@ -14,6 +14,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
+import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
@@ -204,6 +205,41 @@ class DefaultValueResolverTest {
         longLiteral(42),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(trace, mock(Event.class)), projectionMetadata)
+            .blockingGet());
+  }
+
+  @Test
+  void resolveFields() {
+    Event span = defaultedEventBuilder().setStartTimeMillis(123).setEndTimeMillis(234).build();
+
+    AttributeMetadata metadataStartTime =
+        AttributeMetadata.newBuilder()
+            .setScopeString("TEST_SCOPE")
+            .setType(AttributeType.ATTRIBUTE)
+            .setValueKind(AttributeKind.TYPE_INT64)
+            .setDefinition(
+                AttributeDefinition.newBuilder()
+                    .setSourceField(SourceField.SOURCE_FIELD_START_TIME)
+                    .build())
+            .build();
+
+    AttributeMetadata metadataEndTime =
+        metadataStartTime.toBuilder()
+            .setDefinition(
+                AttributeDefinition.newBuilder()
+                    .setSourceField(SourceField.SOURCE_FIELD_END_TIME)
+                    .build())
+            .build();
+
+    assertEquals(
+        longLiteral(123),
+        this.resolver
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadataStartTime)
+            .blockingGet());
+    assertEquals(
+        longLiteral(234),
+        this.resolver
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadataEndTime)
             .blockingGet());
   }
 }

@@ -71,5 +71,5 @@ dependencies {
   implementation("org.hypertrace.entity.service:entity-service-api:0.1.23")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-  testImplementation("org.mockito:mockito-core:3.6.28")
+  testImplementation("org.mockito:mockito-core:3.8.0")
 }
