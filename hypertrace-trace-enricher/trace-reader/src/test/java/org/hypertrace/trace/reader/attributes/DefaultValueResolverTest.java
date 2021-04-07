@@ -1,6 +1,7 @@
 package org.hypertrace.trace.reader.attributes;
 
 import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributesWithKeyValue;
+import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributesWithKeyValues;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.buildMetricsWithKeyValue;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedEventBuilder;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedStructuredTraceBuilder;
@@ -11,13 +12,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.reactivex.rxjava3.core.Single;
+import java.util.Map;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
+import org.hypertrace.core.attribute.service.v1.AttributeDefinition.AttributeDefinitions;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
+import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.attribute.service.v1.Projection;
 import org.hypertrace.core.attribute.service.v1.ProjectionExpression;
 import org.hypertrace.core.attribute.service.v1.ProjectionOperator;
@@ -240,6 +244,71 @@ class DefaultValueResolverTest {
         longLiteral(234),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadataEndTime)
+            .blockingGet());
+  }
+
+  @Test
+  void resolvesFirstAvailableDefinition() {
+    AttributeMetadata metadata =
+        AttributeMetadata.newBuilder()
+            .setScopeString("TEST_SCOPE")
+            .setType(AttributeType.ATTRIBUTE)
+            .setValueKind(AttributeKind.TYPE_INT64)
+            .setDefinition(
+                AttributeDefinition.newBuilder()
+                    .setFirstValuePresent(
+                        AttributeDefinitions.newBuilder()
+                            .addDefinitions( // Should error due to data type
+                                AttributeDefinition.newBuilder().setSourcePath("path.to.string"))
+                            .addDefinitions( // Should be empty and skipped
+                                AttributeDefinition.newBuilder().setSourcePath("non.existent"))
+                            .addDefinitions(
+                                AttributeDefinition.newBuilder().setSourcePath("path.to.int"))
+                            .addDefinitions( // Shouldn't be reached
+                                AttributeDefinition.newBuilder()
+                                    .setSourceField(SourceField.SOURCE_FIELD_START_TIME))))
+            .build();
+
+    Event span =
+        defaultedEventBuilder()
+            .setAttributes(
+                buildAttributesWithKeyValues(Map.of("path.to.string", "foo", "path.to.int", "14")))
+            .build();
+
+    assertEquals(
+        longLiteral(14),
+        this.resolver
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
+            .blockingGet());
+  }
+
+  @Test
+  void resolvesEmptyIfNoDefinitionAvailable() {
+    AttributeMetadata metadata =
+        AttributeMetadata.newBuilder()
+            .setScopeString("TEST_SCOPE")
+            .setType(AttributeType.ATTRIBUTE)
+            .setValueKind(AttributeKind.TYPE_INT64)
+            .setDefinition(
+                AttributeDefinition.newBuilder()
+                    .setFirstValuePresent(
+                        AttributeDefinitions.newBuilder()
+                            .addDefinitions( // Should error due to data type
+                                AttributeDefinition.newBuilder().setSourcePath("path.to.string"))
+                            .addDefinitions( // Should be empty and skipped
+                                AttributeDefinition.newBuilder().setSourcePath("non.existent"))))
+            .build();
+
+    Event span =
+        defaultedEventBuilder()
+            .setAttributes(
+                buildAttributesWithKeyValues(Map.of("path.to.string", "foo", "path.to.int", "14")))
+            .build();
+
+    assertEquals(
+        LiteralValue.getDefaultInstance(),
+        this.resolver
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
             .blockingGet());
   }
 }
