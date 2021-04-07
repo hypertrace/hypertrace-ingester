@@ -10,11 +10,14 @@ import java.util.stream.Collectors;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjection;
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
+import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
+import org.hypertrace.core.attribute.service.v1.AttributeDefinition.AttributeDefinitions;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
+import org.hypertrace.core.attribute.service.v1.LiteralValue.ValueCase;
 import org.hypertrace.core.attribute.service.v1.Projection;
 import org.hypertrace.core.attribute.service.v1.ProjectionExpression;
 
@@ -36,26 +39,47 @@ class DefaultValueResolver implements ValueResolver {
       return this.buildError("Attribute definition not set");
     }
 
-    switch (attributeMetadata.getDefinition().getValueCase()) {
+    return this.resolveDefinition(
+        valueSource, attributeMetadata, attributeMetadata.getDefinition());
+  }
+
+  private Single<LiteralValue> resolveDefinition(
+      ValueSource valueSource,
+      AttributeMetadata attributeMetadata,
+      AttributeDefinition definition) {
+
+    switch (definition.getValueCase()) {
       case SOURCE_PATH:
         return this.resolveValue(
             valueSource,
             attributeMetadata.getScopeString(),
             attributeMetadata.getType(),
             attributeMetadata.getValueKind(),
-            attributeMetadata.getDefinition().getSourcePath());
+            definition.getSourcePath());
       case PROJECTION:
         return this.resolveProjection(
             valueSource, attributeMetadata.getDefinition().getProjection());
       case SOURCE_FIELD:
         return this.resolveField(
+            valueSource, definition.getSourceField(), attributeMetadata.getValueKind());
+      case FIRST_VALUE_PRESENT:
+        return this.resolveFirstValuePresent(
             valueSource,
-            attributeMetadata.getDefinition().getSourceField(),
-            attributeMetadata.getValueKind());
+            attributeMetadata,
+            attributeMetadata.getDefinition().getFirstValuePresent());
       case VALUE_NOT_SET:
       default:
         return this.buildError("Unrecognized attribute definition");
     }
+  }
+
+  private Maybe<LiteralValue> maybeResolveDefinition(
+      ValueSource valueSource,
+      AttributeMetadata attributeMetadata,
+      AttributeDefinition definition) {
+    return this.resolveDefinition(valueSource, attributeMetadata, definition)
+        .filter(literalValue -> !literalValue.getValueCase().equals(ValueCase.VALUE_NOT_SET))
+        .onErrorComplete();
   }
 
   private Single<LiteralValue> resolveValue(
@@ -105,6 +129,17 @@ class DefaultValueResolver implements ValueResolver {
       ValueSource valueSource, SourceField sourceField, AttributeKind attributeKind) {
     return Maybe.fromOptional(valueSource.getSourceField(sourceField, attributeKind))
         .defaultIfEmpty(LiteralValue.getDefaultInstance());
+  }
+
+  private Single<LiteralValue> resolveFirstValuePresent(
+      ValueSource valueSource,
+      AttributeMetadata attributeMetadata,
+      AttributeDefinitions definitions) {
+
+    return Observable.fromIterable(definitions.getDefinitionsList())
+        .concatMapMaybe(
+            definition -> this.maybeResolveDefinition(valueSource, attributeMetadata, definition))
+        .first(LiteralValue.getDefaultInstance());
   }
 
   private Single<LiteralValue> resolveExpression(
