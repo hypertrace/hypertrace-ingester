@@ -71,7 +71,8 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     ErrorsAndExceptionsEnricher enricher = new ErrorsAndExceptionsEnricher();
     Event e1 = createMockEvent();
     Map<String, AttributeValue> attributeValueMap = e1.getAttributes().getAttributeMap();
-    attributeValueMap.put(Constants.getRawSpanConstant(Error.ERROR_ERROR), AttributeValueCreator.create("test error"));
+    attributeValueMap.put(
+        Constants.getRawSpanConstant(Error.ERROR_ERROR), AttributeValueCreator.create(true));
     enricher.enrichEvent(null, e1);
     Assertions.assertEquals(
         1.0d,
@@ -132,13 +133,23 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     );
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
-        4.0d,
-        trace.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS)).getValue()
-    );
+        6.0d,
+        trace
+            .getMetrics()
+            .getMetricMap()
+            .get(
+                Constants.getEnrichedSpanConstant(
+                    ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS))
+            .getValue());
     Assertions.assertEquals(
-        2.0d,
-        trace.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS)).getValue()
-    );
+        3.0d,
+        trace
+            .getMetrics()
+            .getMetricMap()
+            .get(
+                Constants.getEnrichedSpanConstant(
+                    ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS))
+            .getValue());
 
     // Trace itself doesn't have an error since there was no entry span.
     Assertions.assertFalse(trace.getAttributes().getAttributeMap().containsKey(
@@ -149,14 +160,31 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
         AttributeValueCreator.create(Constants.getEnrichedSpanConstant(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY)));
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
-        4.0d,
-        trace.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS)).getValue()
-    );
+        6.0d,
+        trace
+            .getMetrics()
+            .getMetricMap()
+            .get(
+                Constants.getEnrichedSpanConstant(
+                    ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS))
+            .getValue());
     Assertions.assertEquals(
-        2.0d,
-        trace.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS)).getValue()
-    );
-    Assertions.assertEquals("true",
-        trace.getAttributes().getAttributeMap().get(Constants.getEnrichedSpanConstant(CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR)).getValue());
+        3.0d,
+        trace
+            .getMetrics()
+            .getMetricMap()
+            .get(
+                Constants.getEnrichedSpanConstant(
+                    ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS))
+            .getValue());
+    Assertions.assertEquals(
+        "true",
+        trace
+            .getAttributes()
+            .getAttributeMap()
+            .get(
+                Constants.getEnrichedSpanConstant(
+                    CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR))
+            .getValue());
   }
 }
