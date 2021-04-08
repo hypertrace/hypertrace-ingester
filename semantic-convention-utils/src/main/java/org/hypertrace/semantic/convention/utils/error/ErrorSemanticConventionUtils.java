@@ -48,10 +48,10 @@ public class ErrorSemanticConventionUtils {
   }
 
   /**
-   * This maps to {@link ErrorMetrics#ERROR_METRICS_ERROR_COUNT} enriched constant
+   * This maps to {@link ErrorMetrics#ERROR_METRICS_EXCEPTION_COUNT} enriched constant
    *
    * @param event object encapsulating span data
-   * @return check for error in the span event
+   * @return check for exception in the span event
    */
   public static boolean checkForException(Event event) {
     return EXCEPTION_ATTRIBUTES.stream()
