@@ -114,18 +114,14 @@ public class ErrorSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     v = ErrorSemanticConventionUtils.checkForException(e);
     assertFalse(v);
-  }
 
-  @Test
-  public void testCheckForErrorStacktrace() {
-    Event e = mock(Event.class);
-    Attributes attributes =
+    attributes =
         SemanticConventionTestUtil.buildAttributes(
             Map.of(
                 RawSpanConstants.getValue(Error.ERROR_STACK_TRACE),
                 SemanticConventionTestUtil.buildAttributeValue("org.abc.etc...")));
     when(e.getAttributes()).thenReturn(attributes);
-    boolean v = ErrorSemanticConventionUtils.checkForErrorStackTrace(e);
+    v = ErrorSemanticConventionUtils.checkForException(e);
     assertTrue(v);
 
     attributes =
@@ -134,7 +130,7 @@ public class ErrorSemanticConventionUtilsTest {
                 OTelErrorSemanticConventions.EXCEPTION_STACKTRACE.getValue(),
                 SemanticConventionTestUtil.buildAttributeValue("org.abc.etc...")));
     when(e.getAttributes()).thenReturn(attributes);
-    v = ErrorSemanticConventionUtils.checkForErrorStackTrace(e);
+    v = ErrorSemanticConventionUtils.checkForException(e);
     assertTrue(v);
   }
 }

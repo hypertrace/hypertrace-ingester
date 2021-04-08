@@ -55,17 +55,8 @@ public class ErrorSemanticConventionUtils {
    */
   public static boolean checkForException(Event event) {
     return EXCEPTION_ATTRIBUTES.stream()
-        .anyMatch(v -> SpanAttributeUtils.containsAttributeKey(event, v));
-  }
-
-  /**
-   * This maps to {@link ErrorMetrics#ERROR_METRICS_EXCEPTION_COUNT} enriched constant
-   *
-   * @param event object encapsulating span data
-   * @return check for exception in the span event
-   */
-  public static boolean checkForErrorStackTrace(Event event) {
-    return EXCEPTION_STACK_TRACE_ATTRIBUTES.stream()
-        .anyMatch(v -> SpanAttributeUtils.containsAttributeKey(event, v));
+            .anyMatch(v -> SpanAttributeUtils.containsAttributeKey(event, v))
+        || EXCEPTION_STACK_TRACE_ATTRIBUTES.stream()
+            .anyMatch(v -> SpanAttributeUtils.containsAttributeKey(event, v));
   }
 }

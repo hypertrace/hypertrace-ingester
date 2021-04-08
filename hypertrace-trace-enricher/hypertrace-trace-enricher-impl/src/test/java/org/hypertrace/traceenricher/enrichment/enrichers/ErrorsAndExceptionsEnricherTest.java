@@ -174,7 +174,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .getValue());
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
-        4.0d,
+        6.0d,
         trace
             .getMetrics()
             .getMetricMap()
@@ -210,7 +210,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
                 Constants.getEnrichedSpanConstant(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY)));
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
-        4.0d,
+        6.0d,
         trace
             .getMetrics()
             .getMetricMap()

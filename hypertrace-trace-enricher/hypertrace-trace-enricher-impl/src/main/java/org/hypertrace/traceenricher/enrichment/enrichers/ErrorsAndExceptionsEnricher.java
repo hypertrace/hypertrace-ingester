@@ -46,9 +46,7 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
   private void enrichExceptionDetails(Event event) {
     // Figure out if event has any exceptions in it.
-    boolean hasException =
-        ErrorSemanticConventionUtils.checkForException(event)
-            || ErrorSemanticConventionUtils.checkForErrorStackTrace(event);
+    boolean hasException = ErrorSemanticConventionUtils.checkForException(event);
 
     if (hasException) {
       if (event.getMetrics() == null) {
