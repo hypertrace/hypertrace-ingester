@@ -219,7 +219,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
                     ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS))
             .getValue());
     Assertions.assertEquals(
-        2.0d,
+        3.0d,
         trace
             .getMetrics()
             .getMetricMap()
