@@ -37,11 +37,6 @@ public class ErrorSemanticConventionUtilsTest {
                 SemanticConventionTestUtil.buildAttributeValue("false")));
     when(e.getAttributes()).thenReturn(attributes);
     v = ErrorSemanticConventionUtils.checkForError(e);
-    assertTrue(v);
-
-    attributes = SemanticConventionTestUtil.buildAttributes(Map.of());
-    when(e.getAttributes()).thenReturn(attributes);
-    v = ErrorSemanticConventionUtils.checkForError(e);
     assertFalse(v);
 
     attributes =
@@ -52,6 +47,44 @@ public class ErrorSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     v = ErrorSemanticConventionUtils.checkForError(e);
     assertTrue(v);
+
+    // check for UNSET, OK
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelErrorSemanticConventions.STATUS_CODE.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue(
+                    OTelErrorSemanticConventions.STATUS_CODE_UNSET_VALUE.getValue())));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = ErrorSemanticConventionUtils.checkForError(e);
+    assertFalse(v);
+
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelErrorSemanticConventions.STATUS_CODE.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue(
+                    OTelErrorSemanticConventions.STATUS_CODE_OK_VALUE.getValue())));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = ErrorSemanticConventionUtils.checkForError(e);
+    assertFalse(v);
+
+    // check for ERROR
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelErrorSemanticConventions.STATUS_CODE.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue(
+                    OTelErrorSemanticConventions.STATUS_CODE_ERROR_VALUE.getValue())));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = ErrorSemanticConventionUtils.checkForError(e);
+    assertTrue(v);
+
+    // check for both the attributes are empty
+    attributes = SemanticConventionTestUtil.buildAttributes(Map.of());
+    when(e.getAttributes()).thenReturn(attributes);
+    v = ErrorSemanticConventionUtils.checkForError(e);
+    assertFalse(v);
   }
 
   @Test
@@ -63,7 +96,7 @@ public class ErrorSemanticConventionUtilsTest {
                 OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue(),
                 SemanticConventionTestUtil.buildAttributeValue("xyzerror")));
     when(e.getAttributes()).thenReturn(attributes);
-    boolean v  = ErrorSemanticConventionUtils.checkForException(e);
+    boolean v = ErrorSemanticConventionUtils.checkForException(e);
     assertTrue(v);
 
     attributes =

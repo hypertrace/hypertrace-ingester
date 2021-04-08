@@ -18,11 +18,15 @@ public class ErrorSemanticConventionUtils {
       OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue();
   private static final String OTEL_EXCEPTION_STACK_TRACE =
       OTelErrorSemanticConventions.EXCEPTION_STACKTRACE.getValue();
+  private static final String OTEL_STATUS_CODE =
+      OTelErrorSemanticConventions.STATUS_CODE.getValue();
+  private static final String OTEL_STATUS_CODE_ERROR_VALUE =
+      OTelErrorSemanticConventions.STATUS_CODE_ERROR_VALUE.getValue();
+  private static final String OTEL_STATUS_CODE_UNSET_VALUE =
+      OTelErrorSemanticConventions.STATUS_CODE_UNSET_VALUE.getValue();
 
-  private static final List<String> ERROR_ATTRIBUTES =
-      List.of(
-          RawSpanConstants.getValue(Error.ERROR_ERROR),
-          RawSpanConstants.getValue(OTSpanTag.OT_SPAN_TAG_ERROR));
+  private static final String OT_SPAN_TAG_ERROR =
+      RawSpanConstants.getValue(OTSpanTag.OT_SPAN_TAG_ERROR);
 
   private static final List<String> EXCEPTION_ATTRIBUTES =
       List.of(OTEL_EXCEPTION_TYPE, OTEL_EXCEPTION_MESSAGE);
@@ -37,8 +41,10 @@ public class ErrorSemanticConventionUtils {
    * @return check for error in the span event
    */
   public static boolean checkForError(Event event) {
-    return EXCEPTION_ATTRIBUTES.stream()
-        .anyMatch(v -> SpanAttributeUtils.getBooleanAttribute(event, v));
+    return SpanAttributeUtils.getBooleanAttribute(event, OT_SPAN_TAG_ERROR)
+        || OTEL_STATUS_CODE_ERROR_VALUE.equals(
+            SpanAttributeUtils.getStringAttributeWithDefault(
+                event, OTEL_STATUS_CODE, OTEL_STATUS_CODE_UNSET_VALUE));
   }
 
   /**
