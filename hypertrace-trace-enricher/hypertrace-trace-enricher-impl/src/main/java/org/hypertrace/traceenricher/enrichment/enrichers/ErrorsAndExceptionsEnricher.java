@@ -57,7 +57,7 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
   private void enrichExceptionDetails(Event event) {
     // Figure out if event has any exceptions in it.
-    boolean hasException = ErrorSemanticConventionUtils.checkForErrorStackTrace(event);
+    boolean hasException = ErrorSemanticConventionUtils.checkForException(event);
 
     if (hasException) {
       if (event.getMetrics() == null) {
@@ -72,9 +72,11 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
   private void enrichErrorDetails(Event event) {
     // Figure out if there are any errors in the event.
-    boolean hasError = ErrorSemanticConventionUtils.checkForError(event) ||
-        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL)
-            .equals(EnrichedSpanUtils.getStatus(event));
+    boolean hasError =
+        ErrorSemanticConventionUtils.checkForError(event)
+            || ErrorSemanticConventionUtils.checkForException(event)
+            || Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL)
+                .equals(EnrichedSpanUtils.getStatus(event));
 
     if (hasError) {
       if (event.getMetrics() == null) {
