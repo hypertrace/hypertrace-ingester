@@ -57,5 +57,5 @@ sourceSets {
 }
 dependencies {
   api("com.google.api.grpc:proto-google-common-protos:2.1.0")
-  api("org.apache.avro:avro:1.10.1")
+  api("org.apache.avro:avro:1.10.2")
 }
