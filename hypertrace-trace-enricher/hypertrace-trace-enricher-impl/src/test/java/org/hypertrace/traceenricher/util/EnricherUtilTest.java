@@ -36,12 +36,15 @@ public class EnricherUtilTest {
   @Test
   public void testSetAttributeForFirstExistingKey() {
     Event e = mock(Event.class);
-    Attributes attributes = Attributes.newBuilder().setAttributeMap(
-        Map.of(
-            "a",
-            TestUtil.buildAttributeValue("a-value"),
-            "b",
-            TestUtil.buildAttributeValue("b-value"))).build();
+    Attributes attributes =
+        Attributes.newBuilder()
+            .setAttributeMap(
+                Map.of(
+                    "a",
+                    TestUtil.buildAttributeValue("a-value"),
+                    "b",
+                    TestUtil.buildAttributeValue("b-value")))
+            .build();
     when(e.getAttributes()).thenReturn(attributes);
 
     Builder entityBuilder = Entity.newBuilder();

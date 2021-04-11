@@ -7,17 +7,14 @@ import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstan
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Produced;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
-import org.hypertrace.core.serviceframework.config.ConfigUtils;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToAvroRawSpanTransformer;
 import org.slf4j.Logger;
@@ -32,7 +29,8 @@ public class SpanNormalizer extends KafkaStreamsApp {
   }
 
   @Override
-  public StreamsBuilder buildTopology(Map<String, Object> streamsProperties,
+  public StreamsBuilder buildTopology(
+      Map<String, Object> streamsProperties,
       StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> inputStreams) {
 
@@ -42,18 +40,17 @@ public class SpanNormalizer extends KafkaStreamsApp {
 
     KStream<byte[], Span> inputStream = (KStream<byte[], Span>) inputStreams.get(inputTopic);
     if (inputStream == null) {
-      inputStream = streamsBuilder
-          .stream(inputTopic, Consumed.with(Serdes.ByteArray(), new JaegerSpanSerde()));
+      inputStream =
+          streamsBuilder.stream(
+              inputTopic, Consumed.with(Serdes.ByteArray(), new JaegerSpanSerde()));
       inputStreams.put(inputTopic, inputStream);
     }
 
-    inputStream
-        .transform(JaegerSpanToAvroRawSpanTransformer::new)
-        .to(outputTopic);
+    inputStream.transform(JaegerSpanToAvroRawSpanTransformer::new).to(outputTopic);
 
     return streamsBuilder;
   }
-  
+
   @Override
   public String getJobConfigKey() {
     return SPAN_NORMALIZER_JOB_CONFIG;

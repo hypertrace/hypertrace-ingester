@@ -18,86 +18,98 @@ import org.hypertrace.entity.data.service.v1.Value;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.entitytype.EntityType;
 
-/**
- * Class that holds all the entity related caches used by the enrichers
- */
+/** Class that holds all the entity related caches used by the enrichers */
 public class EntityCache {
   private final EdsClient edsClient;
 
   /**
-   * Cache to cache the service fqn to service Entity mapping so that we don't
-   * look it up over and over.
+   * Cache to cache the service fqn to service Entity mapping so that we don't look it up over and
+   * over.
    */
-  private final LoadingCache<Pair<String, String>, Optional<Entity>>
-      fqnToServiceEntity =
-      CacheBuilder.newBuilder().maximumSize(10000).expireAfterWrite(5, TimeUnit.MINUTES)
-          .build(new CacheLoader<>() {
-            public Optional<Entity> load(@Nonnull Pair<String, String> pair) {
-              AttributeValue fqnAttribute = AttributeValue.newBuilder()
-                  .setValue(Value.newBuilder().setString(pair.getRight())).build();
+  private final LoadingCache<Pair<String, String>, Optional<Entity>> fqnToServiceEntity =
+      CacheBuilder.newBuilder()
+          .maximumSize(10000)
+          .expireAfterWrite(5, TimeUnit.MINUTES)
+          .build(
+              new CacheLoader<>() {
+                public Optional<Entity> load(@Nonnull Pair<String, String> pair) {
+                  AttributeValue fqnAttribute =
+                      AttributeValue.newBuilder()
+                          .setValue(Value.newBuilder().setString(pair.getRight()))
+                          .build();
 
-              ByTypeAndIdentifyingAttributes request =
-                  ByTypeAndIdentifyingAttributes.newBuilder()
-                      .setEntityType(EntityType.SERVICE.name())
-                      .putIdentifyingAttributes(
-                          EntityConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_FQN), fqnAttribute)
-                      .build();
+                  ByTypeAndIdentifyingAttributes request =
+                      ByTypeAndIdentifyingAttributes.newBuilder()
+                          .setEntityType(EntityType.SERVICE.name())
+                          .putIdentifyingAttributes(
+                              EntityConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_FQN),
+                              fqnAttribute)
+                          .build();
 
-              return Optional.ofNullable(edsClient.getByTypeAndIdentifyingAttributes(pair.getLeft(),
-                  request));
-            }
-          });
+                  return Optional.ofNullable(
+                      edsClient.getByTypeAndIdentifyingAttributes(pair.getLeft(), request));
+                }
+              });
 
   /**
-   * Cache to cache the service name to a list of services mapping so that we don't look it up
-   * over and over.
+   * Cache to cache the service name to a list of services mapping so that we don't look it up over
+   * and over.
    */
   private final LoadingCache<Pair<String, String>, List<Entity>> nameToServiceEntities =
-      CacheBuilder.newBuilder().maximumSize(10000).expireAfterWrite(5, TimeUnit.MINUTES)
-          .build(new CacheLoader<>() {
-            @Override
-            public List<Entity> load(@Nonnull Pair<String, String> pair) {
-              // Lookup by name first, to see if there are any services with that name.
-              return edsClient.getEntitiesByName(pair.getLeft(), EntityType.SERVICE.name(), pair.getRight());
-            }
-          });
+      CacheBuilder.newBuilder()
+          .maximumSize(10000)
+          .expireAfterWrite(5, TimeUnit.MINUTES)
+          .build(
+              new CacheLoader<>() {
+                @Override
+                public List<Entity> load(@Nonnull Pair<String, String> pair) {
+                  // Lookup by name first, to see if there are any services with that name.
+                  return edsClient.getEntitiesByName(
+                      pair.getLeft(), EntityType.SERVICE.name(), pair.getRight());
+                }
+              });
 
   /**
-   * Cache of K8S namespaces
-   * Key: Customer Id, Namespace name
-   * Value: List of Namespace entity ids
+   * Cache of K8S namespaces Key: Customer Id, Namespace name Value: List of Namespace entity ids
    */
   private final LoadingCache<Pair<String, String>, List<Entity>> namespaceCache =
-      CacheBuilder.newBuilder().maximumSize(10000).expireAfterWrite(5, TimeUnit.MINUTES)
-          .build(new CacheLoader<>() {
-            @Override
-            public List<Entity> load(@Nonnull Pair<String, String> key) {
-              return edsClient.getEntitiesByName(
-                  key.getLeft(), EntityType.K8S_NAMESPACE.name(), key.getRight());
-            }
-          });
+      CacheBuilder.newBuilder()
+          .maximumSize(10000)
+          .expireAfterWrite(5, TimeUnit.MINUTES)
+          .build(
+              new CacheLoader<>() {
+                @Override
+                public List<Entity> load(@Nonnull Pair<String, String> key) {
+                  return edsClient.getEntitiesByName(
+                      key.getLeft(), EntityType.K8S_NAMESPACE.name(), key.getRight());
+                }
+              });
 
   /**
-   * Cache of Backend identifying attributes to Entity
-   * Key: Map of identifying attributes
-   * Value: Optional Backend entity
+   * Cache of Backend identifying attributes to Entity Key: Map of identifying attributes Value:
+   * Optional Backend entity
    */
-  private final LoadingCache<Pair<String, Map<String, AttributeValue>>, Optional<Entity>> backendIdAttrsToEntityCache =
-      CacheBuilder.newBuilder().maximumSize(10000).expireAfterWrite(5, TimeUnit.MINUTES)
-          .build(new CacheLoader<>() {
-            @Override
-            public Optional<Entity> load(@Nonnull Pair<String, Map<String, AttributeValue>> pair) {
-              ByTypeAndIdentifyingAttributes request =
-                  ByTypeAndIdentifyingAttributes.newBuilder()
-                      .setEntityType(EntityType.BACKEND.name())
-                      .putAllIdentifyingAttributes(pair.getRight())
-                      .build();
-              return Optional.ofNullable(edsClient.getByTypeAndIdentifyingAttributes(pair.getLeft(),
-                  request));
-            }
-          });
+  private final LoadingCache<Pair<String, Map<String, AttributeValue>>, Optional<Entity>>
+      backendIdAttrsToEntityCache =
+          CacheBuilder.newBuilder()
+              .maximumSize(10000)
+              .expireAfterWrite(5, TimeUnit.MINUTES)
+              .build(
+                  new CacheLoader<>() {
+                    @Override
+                    public Optional<Entity> load(
+                        @Nonnull Pair<String, Map<String, AttributeValue>> pair) {
+                      ByTypeAndIdentifyingAttributes request =
+                          ByTypeAndIdentifyingAttributes.newBuilder()
+                              .setEntityType(EntityType.BACKEND.name())
+                              .putAllIdentifyingAttributes(pair.getRight())
+                              .build();
+                      return Optional.ofNullable(
+                          edsClient.getByTypeAndIdentifyingAttributes(pair.getLeft(), request));
+                    }
+                  });
 
-  private EntityCache(EdsClient edsClient) {
+  public EntityCache(EdsClient edsClient) {
     this.edsClient = edsClient;
   }
 
@@ -113,38 +125,8 @@ public class EntityCache {
     return namespaceCache;
   }
 
-  public LoadingCache<Pair<String, Map<String, AttributeValue>>, Optional<Entity>> getBackendIdAttrsToEntityCache() {
+  public LoadingCache<Pair<String, Map<String, AttributeValue>>, Optional<Entity>>
+      getBackendIdAttrsToEntityCache() {
     return backendIdAttrsToEntityCache;
-  }
-
-  public static class EntityCacheProvider {
-    private static final Object lock = new Object();
-    private static EntityCache INSTANCE = null;
-
-    public static EntityCache get(EdsClient edsClient) {
-      if (INSTANCE == null) {
-        synchronized (lock) {
-          if (INSTANCE == null) {
-            INSTANCE = new EntityCache(edsClient);
-          }
-        }
-      }
-      return INSTANCE;
-    }
-
-    /**
-     * Used in unit tests to clear cache after a test is done.
-     * TODO: Fix this better by passing an EntityCacheProvider to the Enrichers init() method. Can be picked up in
-     * a different PR.
-     */
-    public static void clear() {
-      if (INSTANCE != null) {
-        synchronized (lock) {
-          if (INSTANCE != null) {
-            INSTANCE = null;
-          }
-        }
-      }
-    }
   }
 }

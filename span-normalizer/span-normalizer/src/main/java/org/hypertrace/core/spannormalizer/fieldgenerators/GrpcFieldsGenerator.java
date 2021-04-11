@@ -1,18 +1,5 @@
 package org.hypertrace.core.spannormalizer.fieldgenerators;
 
-import io.jaegertracing.api_v2.JaegerSpanInternalModel;
-import java.util.Optional;
-import org.hypertrace.core.datamodel.AttributeValue;
-import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.eventfields.grpc.Grpc;
-import org.hypertrace.core.span.constants.RawSpanConstants;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
-import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
-
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_GRPC_STATUS_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
@@ -36,6 +23,18 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUE
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA_CONTENT_TYPE;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_STATUS_CODE;
+
+import io.jaegertracing.api_v2.JaegerSpanInternalModel;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.eventfields.grpc.Grpc;
+import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
+import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 
 public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
   private static final String METADATA_STR_VAL_PREFIX = "Metadata(";
@@ -73,10 +72,13 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
             builder.getRequestBuilder().setHostPort(ValueConverter.getString(keyValue)));
 
     // grpc method
-    RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod().forEach(v ->
-        fieldGeneratorMap.put(
-            v, (key, keyValue, builder, tagsMap) ->
-                builder.getRequestBuilder().setMethod(ValueConverter.getString(keyValue))));
+    RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod()
+        .forEach(
+            v ->
+                fieldGeneratorMap.put(
+                    v,
+                    (key, keyValue, builder, tagsMap) ->
+                        builder.getRequestBuilder().setMethod(ValueConverter.getString(keyValue))));
 
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(GRPC_ERROR_NAME),
@@ -93,9 +95,12 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
             builder.getRequestBuilder().setCallOptions(ValueConverter.getString(keyValue)));
 
     // Response Status Code
-    RpcSemanticConventionUtils.getAttributeKeysForGrpcStatusCode().forEach(v ->
-        fieldGeneratorMap.put(
-            v, (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap)));
+    RpcSemanticConventionUtils.getAttributeKeysForGrpcStatusCode()
+        .forEach(
+            v ->
+                fieldGeneratorMap.put(
+                    v,
+                    (key, keyValue, builder, tagsMap) -> setResponseStatusCode(builder, tagsMap)));
 
     // Response Status message
     fieldGeneratorMap.put(
@@ -157,38 +162,49 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
     fieldGeneratorMap.put(
         RPC_REQUEST_METADATA_X_FORWARDED_FOR.getValue(),
         (key, keyValue, builder, tagsMap) ->
-            builder.getRequestBuilder().getRequestMetadataBuilder().setXForwardedFor(ValueConverter.getString(keyValue))
-    );
+            builder
+                .getRequestBuilder()
+                .getRequestMetadataBuilder()
+                .setXForwardedFor(ValueConverter.getString(keyValue)));
 
     fieldGeneratorMap.put(
         RPC_REQUEST_METADATA_AUTHORITY.getValue(),
         (key, keyValue, builder, tagsMap) ->
-            builder.getRequestBuilder().getRequestMetadataBuilder().setAuthority(ValueConverter.getString(keyValue))
-    );
+            builder
+                .getRequestBuilder()
+                .getRequestMetadataBuilder()
+                .setAuthority(ValueConverter.getString(keyValue)));
 
     fieldGeneratorMap.put(
-        RPC_REQUEST_METADATA_CONTENT_TYPE.getValue()
-        ,
+        RPC_REQUEST_METADATA_CONTENT_TYPE.getValue(),
         (key, keyValue, builder, tagsMap) ->
-            builder.getRequestBuilder().getRequestMetadataBuilder().setContentType(ValueConverter.getString(keyValue))
-    );
+            builder
+                .getRequestBuilder()
+                .getRequestMetadataBuilder()
+                .setContentType(ValueConverter.getString(keyValue)));
 
     fieldGeneratorMap.put(
         RPC_REQUEST_METADATA_PATH.getValue(),
         (key, keyValue, builder, tagsMap) ->
-            builder.getRequestBuilder().getRequestMetadataBuilder().setPath(ValueConverter.getString(keyValue))
-    );
+            builder
+                .getRequestBuilder()
+                .getRequestMetadataBuilder()
+                .setPath(ValueConverter.getString(keyValue)));
     fieldGeneratorMap.put(
         RPC_REQUEST_METADATA_USER_AGENT.getValue(),
         (key, keyValue, builder, tagsMap) ->
-            builder.getRequestBuilder().getRequestMetadataBuilder().setUserAgent(ValueConverter.getString(keyValue))
-    );
+            builder
+                .getRequestBuilder()
+                .getRequestMetadataBuilder()
+                .setUserAgent(ValueConverter.getString(keyValue)));
 
     fieldGeneratorMap.put(
         RPC_RESPONSE_METADATA_CONTENT_TYPE.getValue(),
         (key, keyValue, builder, tagsMap) ->
-            builder.getResponseBuilder().getResponseMetadataBuilder().setContentType(ValueConverter.getString(keyValue))
-    );
+            builder
+                .getResponseBuilder()
+                .getResponseMetadataBuilder()
+                .setContentType(ValueConverter.getString(keyValue)));
 
     return fieldGeneratorMap;
   }
@@ -200,8 +216,8 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
     }
 
     FirstMatchingKeyFinder.getIntegerValueByFirstMatchingKey(
-        tagsMap, RpcSemanticConventionUtils.getAttributeKeysForGrpcStatusCode()).ifPresent(
-            statusCode -> grpcBuilder.getResponseBuilder().setStatusCode(statusCode));
+            tagsMap, RpcSemanticConventionUtils.getAttributeKeysForGrpcStatusCode())
+        .ifPresent(statusCode -> grpcBuilder.getResponseBuilder().setStatusCode(statusCode));
   }
 
   private static void setResponseStatusMessage(
@@ -228,8 +244,7 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
           ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)));
       grpcBuilder.getRequestBuilder().setSize(requestBody.length());
     } else if (tagsMap.containsKey(RPC_REQUEST_BODY.getValue())) {
-      String requestBody =
-          ValueConverter.getString(tagsMap.get(RPC_REQUEST_BODY.getValue()));
+      String requestBody = ValueConverter.getString(tagsMap.get(RPC_REQUEST_BODY.getValue()));
       grpcBuilder.getRequestBuilder().setSize(requestBody.length());
     }
   }
@@ -247,8 +262,7 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
           ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)));
       grpcBuilder.getResponseBuilder().setSize(responseBody.length());
     } else if (tagsMap.containsKey(RPC_RESPONSE_BODY.getValue())) {
-      String responseBody =
-          ValueConverter.getString(tagsMap.get(RPC_RESPONSE_BODY.getValue()));
+      String responseBody = ValueConverter.getString(tagsMap.get(RPC_RESPONSE_BODY.getValue()));
       grpcBuilder.getResponseBuilder().setSize(responseBody.length());
     }
   }
@@ -287,7 +301,10 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
       grpcBuilder.getRequestBuilder().setMetadata(new HashMap<>());
       grpcBuilder.getResponseBuilder().setMetadata(new HashMap<>());
       grpcBuilder.getRequestBuilder().getRequestMetadataBuilder().setOtherMetadata(new HashMap<>());
-      grpcBuilder.getResponseBuilder().getResponseMetadataBuilder().setOtherMetadata(new HashMap<>());
+      grpcBuilder
+          .getResponseBuilder()
+          .getResponseMetadataBuilder()
+          .setOtherMetadata(new HashMap<>());
     }
 
     return grpcBuilder;
@@ -302,35 +319,59 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
     return rpcFieldGeneratorMap;
   }
 
-  protected void handleRpcRequestMetadata(String key, JaegerSpanInternalModel.KeyValue keyValue, Grpc.Builder grpcBuilder) {
-    grpcBuilder.getRequestBuilder().getRequestMetadataBuilder().getOtherMetadata().put(key, ValueConverter.getString(keyValue));
+  protected void handleRpcRequestMetadata(
+      String key, JaegerSpanInternalModel.KeyValue keyValue, Grpc.Builder grpcBuilder) {
+    grpcBuilder
+        .getRequestBuilder()
+        .getRequestMetadataBuilder()
+        .getOtherMetadata()
+        .put(key, ValueConverter.getString(keyValue));
     grpcBuilder.getRequestBuilder().getMetadata().put(key, ValueConverter.getString(keyValue));
   }
 
-  protected void handleRpcResponseMetadata(String key, JaegerSpanInternalModel.KeyValue keyValue, Grpc.Builder grpcBuilder) {
-    grpcBuilder.getResponseBuilder().getResponseMetadataBuilder().getOtherMetadata().put(key, ValueConverter.getString(keyValue));
+  protected void handleRpcResponseMetadata(
+      String key, JaegerSpanInternalModel.KeyValue keyValue, Grpc.Builder grpcBuilder) {
+    grpcBuilder
+        .getResponseBuilder()
+        .getResponseMetadataBuilder()
+        .getOtherMetadata()
+        .put(key, ValueConverter.getString(keyValue));
     grpcBuilder.getResponseBuilder().getMetadata().put(key, ValueConverter.getString(keyValue));
   }
 
-  protected void populateOtherFields(Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
+  protected void populateOtherFields(
+      Event.Builder eventBuilder, final Map<String, AttributeValue> attributeValueMap) {
     maybeSetGrpcHostPortForOtelFormat(eventBuilder, attributeValueMap);
     maybeSetGrpcExceptionForOtelFormat(eventBuilder, attributeValueMap);
   }
 
-  protected void maybeSetGrpcExceptionForOtelFormat(Event.Builder builder, final Map<String, AttributeValue> attributeValueMap) {
+  protected void maybeSetGrpcExceptionForOtelFormat(
+      Event.Builder builder, final Map<String, AttributeValue> attributeValueMap) {
     if (RpcSemanticConventionUtils.isRpcTypeGrpcForOTelFormat(attributeValueMap)) {
       if (attributeValueMap.containsKey(OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue())) {
-        builder.getGrpcBuilder().getResponseBuilder().setErrorName(
-            attributeValueMap.get(OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue()).getValue());
+        builder
+            .getGrpcBuilder()
+            .getResponseBuilder()
+            .setErrorName(
+                attributeValueMap
+                    .get(OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue())
+                    .getValue());
       }
-      if (attributeValueMap.containsKey(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue())) {
-        builder.getGrpcBuilder().getResponseBuilder().setErrorMessage(
-            attributeValueMap.get(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue()).getValue());
+      if (attributeValueMap.containsKey(
+          OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue())) {
+        builder
+            .getGrpcBuilder()
+            .getResponseBuilder()
+            .setErrorMessage(
+                attributeValueMap
+                    .get(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue())
+                    .getValue());
       }
     }
   }
 
-  protected void maybeSetGrpcHostPortForOtelFormat(Event.Builder builder, final Map<String, AttributeValue> attributeValueMap) {
+  protected void maybeSetGrpcHostPortForOtelFormat(
+      Event.Builder builder, final Map<String, AttributeValue> attributeValueMap) {
     Optional<String> grpcHostPort = RpcSemanticConventionUtils.getGrpcURI(attributeValueMap);
     grpcHostPort.ifPresent(s -> builder.getGrpcBuilder().getRequestBuilder().setHostPort(s));
   }

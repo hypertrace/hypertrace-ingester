@@ -46,12 +46,18 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     ErrorsAndExceptionsEnricher enricher = new ErrorsAndExceptionsEnricher();
     Event e1 = createMockEvent();
     Map<String, AttributeValue> attributeValueMap = e1.getAttributes().getAttributeMap();
-    attributeValueMap.put(Constants.getEnrichedSpanConstant(API_STATUS), AttributeValue.newBuilder().setValue(
-        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL)).build());
+    attributeValueMap.put(
+        Constants.getEnrichedSpanConstant(API_STATUS),
+        AttributeValue.newBuilder()
+            .setValue(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL))
+            .build());
     enricher.enrichEvent(null, e1);
     Assertions.assertEquals(
         1.0d,
-        e1.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)).getValue());
+        e1.getMetrics()
+            .getMetricMap()
+            .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
+            .getValue());
   }
 
   @Test
@@ -60,10 +66,16 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     // Negative test
     Event e2 = createMockEvent();
     Map<String, AttributeValue> attributeValueMap = e2.getAttributes().getAttributeMap();
-    attributeValueMap.put(Constants.getEnrichedSpanConstant(API_STATUS),
-        AttributeValue.newBuilder().setValue(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_SUCCESS)).build());
+    attributeValueMap.put(
+        Constants.getEnrichedSpanConstant(API_STATUS),
+        AttributeValue.newBuilder()
+            .setValue(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_SUCCESS))
+            .build());
     enricher.enrichEvent(null, e2);
-    Assertions.assertNull(e2.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)));
+    Assertions.assertNull(
+        e2.getMetrics()
+            .getMetricMap()
+            .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)));
   }
 
   @Test
@@ -76,48 +88,75 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     enricher.enrichEvent(null, e1);
     Assertions.assertEquals(
         1.0d,
-        e1.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)).getValue());
+        e1.getMetrics()
+            .getMetricMap()
+            .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
+            .getValue());
 
     Event e2 = createMockEvent();
     attributeValueMap = e2.getAttributes().getAttributeMap();
-    attributeValueMap.put(Constants.getRawSpanConstant(Error.ERROR_STACK_TRACE), AttributeValueCreator.create("test stack"));
+    attributeValueMap.put(
+        Constants.getRawSpanConstant(Error.ERROR_STACK_TRACE),
+        AttributeValueCreator.create("test stack"));
     enricher.enrichEvent(null, e2);
     Assertions.assertEquals(
         1.0d,
-        e2.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT)).getValue());
+        e2.getMetrics()
+            .getMetricMap()
+            .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT))
+            .getValue());
 
     Event e3 = createMockEvent();
     attributeValueMap = e3.getAttributes().getAttributeMap();
-    attributeValueMap.put(Constants.getRawSpanConstant(Error.ERROR_ERROR).toLowerCase(), AttributeValueCreator.create(true));
+    attributeValueMap.put(
+        Constants.getRawSpanConstant(Error.ERROR_ERROR).toLowerCase(),
+        AttributeValueCreator.create(true));
     enricher.enrichEvent(null, e3);
     Assertions.assertEquals(
         1.0d,
-        e3.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)).getValue()
-    );
+        e3.getMetrics()
+            .getMetricMap()
+            .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
+            .getValue());
 
     Event e4 = createMockEvent();
     attributeValueMap = e4.getAttributes().getAttributeMap();
-    attributeValueMap.put(Constants.getRawSpanConstant(Error.ERROR_ERROR).toLowerCase(), AttributeValueCreator.create(true));
+    attributeValueMap.put(
+        Constants.getRawSpanConstant(Error.ERROR_ERROR).toLowerCase(),
+        AttributeValueCreator.create(true));
     enricher.enrichEvent(null, e4);
     Assertions.assertEquals(
         1.0d,
-        e4.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)).getValue());
+        e4.getMetrics()
+            .getMetricMap()
+            .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
+            .getValue());
 
     Event e5 = createMockEvent();
     attributeValueMap = e5.getAttributes().getAttributeMap();
-    attributeValueMap.put(OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue().toLowerCase(), AttributeValueCreator.create(true));
+    attributeValueMap.put(
+        OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue().toLowerCase(),
+        AttributeValueCreator.create(true));
     enricher.enrichEvent(null, e5);
     Assertions.assertEquals(
         1.0d,
-        e5.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)).getValue());
+        e5.getMetrics()
+            .getMetricMap()
+            .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
+            .getValue());
 
     Event e6 = createMockEvent();
     attributeValueMap = e6.getAttributes().getAttributeMap();
-    attributeValueMap.put(OTelErrorSemanticConventions.EXCEPTION_STACKTRACE.getValue().toLowerCase(), AttributeValueCreator.create(true));
+    attributeValueMap.put(
+        OTelErrorSemanticConventions.EXCEPTION_STACKTRACE.getValue().toLowerCase(),
+        AttributeValueCreator.create(true));
     enricher.enrichEvent(null, e6);
     Assertions.assertEquals(
         1.0d,
-        e6.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT)).getValue());
+        e6.getMetrics()
+            .getMetricMap()
+            .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT))
+            .getValue());
 
     StructuredTrace trace = createMockStructuredTrace();
     when(trace.getEventList()).thenReturn(Lists.newArrayList(e1, e2, e3, e4, e5, e6));
@@ -129,8 +168,10 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     enricher.enrichEvent(trace, e6);
     Assertions.assertEquals(
         1.0d,
-        e4.getMetrics().getMetricMap().get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT)).getValue()
-    );
+        e4.getMetrics()
+            .getMetricMap()
+            .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
+            .getValue());
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
         6.0d,
@@ -152,12 +193,21 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .getValue());
 
     // Trace itself doesn't have an error since there was no entry span.
-    Assertions.assertFalse(trace.getAttributes().getAttributeMap().containsKey(
-        Constants.getEnrichedSpanConstant(CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR)));
+    Assertions.assertFalse(
+        trace
+            .getAttributes()
+            .getAttributeMap()
+            .containsKey(
+                Constants.getEnrichedSpanConstant(
+                    CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR)));
 
     // Make e1 as ENTRY span so that the error is reflected on the structured trace.
-    e1.getEnrichedAttributes().getAttributeMap().put(Constants.getEnrichedSpanConstant(CommonAttribute.COMMON_ATTRIBUTE_SPAN_TYPE),
-        AttributeValueCreator.create(Constants.getEnrichedSpanConstant(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY)));
+    e1.getEnrichedAttributes()
+        .getAttributeMap()
+        .put(
+            Constants.getEnrichedSpanConstant(CommonAttribute.COMMON_ATTRIBUTE_SPAN_TYPE),
+            AttributeValueCreator.create(
+                Constants.getEnrichedSpanConstant(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY)));
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
         6.0d,

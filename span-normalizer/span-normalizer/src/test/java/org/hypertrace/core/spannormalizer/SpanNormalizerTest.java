@@ -1,6 +1,5 @@
 package org.hypertrace.core.spannormalizer;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.protobuf.ByteString;
@@ -42,24 +41,27 @@ class SpanNormalizerTest {
   @Test
   @SetEnvironmentVariable(key = "SERVICE_NAME", value = "span-normalizer")
   public void whenJaegerSpansAreProcessedExpectRawSpansToBeOutput() {
-    Config config = ConfigFactory.parseURL(
-        getClass().getClassLoader().getResource("configs/span-normalizer/application.conf"));
+    Config config =
+        ConfigFactory.parseURL(
+            getClass().getClassLoader().getResource("configs/span-normalizer/application.conf"));
 
     Map<String, Object> mergedProps = new HashMap<>();
     underTest.getBaseStreamsConfig().forEach(mergedProps::put);
     underTest.getStreamsConfig(config).forEach(mergedProps::put);
     mergedProps.put(SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG, config);
 
-    StreamsBuilder streamsBuilder = underTest
-        .buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
+    StreamsBuilder streamsBuilder =
+        underTest.buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
 
     Properties props = new Properties();
     mergedProps.forEach(props::put);
 
     TopologyTestDriver td = new TopologyTestDriver(streamsBuilder.build(), props);
-    TestInputTopic<byte[], Span> inputTopic = td
-        .createInputTopic(config.getString(SpanNormalizerConstants.INPUT_TOPIC_CONFIG_KEY),
-            Serdes.ByteArray().serializer(), new JaegerSpanSerde().serializer());
+    TestInputTopic<byte[], Span> inputTopic =
+        td.createInputTopic(
+            config.getString(SpanNormalizerConstants.INPUT_TOPIC_CONFIG_KEY),
+            Serdes.ByteArray().serializer(),
+            new JaegerSpanSerde().serializer());
 
     Serde<RawSpan> rawSpanSerde = new AvroSerde<>();
     rawSpanSerde.configure(Map.of(), false);
@@ -67,23 +69,31 @@ class SpanNormalizerTest {
     Serde<TraceIdentity> spanIdentitySerde = new AvroSerde<>();
     spanIdentitySerde.configure(Map.of(), true);
 
-    TestOutputTopic outputTopic = td
-        .createOutputTopic(config.getString(SpanNormalizerConstants.OUTPUT_TOPIC_CONFIG_KEY),
-            spanIdentitySerde.deserializer(), rawSpanSerde.deserializer());
+    TestOutputTopic outputTopic =
+        td.createOutputTopic(
+            config.getString(SpanNormalizerConstants.OUTPUT_TOPIC_CONFIG_KEY),
+            spanIdentitySerde.deserializer(),
+            rawSpanSerde.deserializer());
 
-    Span span = Span.newBuilder().setSpanId(ByteString.copyFrom("1".getBytes()))
-        .setTraceId(ByteString.copyFrom("trace-1".getBytes()))
-        .addTags(JaegerSpanInternalModel.KeyValue.newBuilder().setKey("jaeger.servicename").setVStr(SERVICE_NAME).build())
-        .build();
+    Span span =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("1".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-1".getBytes()))
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .build();
     inputTopic.pipeInput(span);
 
     KeyValue<TraceIdentity, RawSpan> kv = outputTopic.readKeyValue();
     assertEquals("__default", kv.key.getTenantId());
-    assertEquals(HexUtils.getHex(ByteString.copyFrom("trace-1".getBytes()).toByteArray()),
+    assertEquals(
+        HexUtils.getHex(ByteString.copyFrom("trace-1".getBytes()).toByteArray()),
         HexUtils.getHex(kv.key.getTraceId().array()));
     RawSpan value = kv.value;
-    assertEquals(HexUtils.getHex("1".getBytes()),
-        HexUtils.getHex((value).getEvent().getEventId()));
+    assertEquals(HexUtils.getHex("1".getBytes()), HexUtils.getHex((value).getEvent().getEventId()));
     assertEquals(SERVICE_NAME, value.getEvent().getServiceName());
   }
 }

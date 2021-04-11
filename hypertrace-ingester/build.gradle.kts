@@ -25,23 +25,23 @@ hypertraceDocker {
 }
 
 dependencies {
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.18")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.18")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.18")
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.12")
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.21")
-  implementation("com.typesafe:config:1.4.0")
-  implementation("org.apache.commons:commons-lang3:3.11")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.20")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.23")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.23")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.14")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.25")
+  implementation("com.typesafe:config:1.4.1")
+  implementation("org.apache.commons:commons-lang3:3.12.0")
 
   implementation(project(":span-normalizer:span-normalizer"))
   implementation(project(":raw-spans-grouper:raw-spans-grouper"))
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-  testImplementation("org.mockito:mockito-core:3.6.0")
-  testImplementation("org.junit-pioneer:junit-pioneer:1.0.0")
-  testImplementation("org.apache.kafka:kafka-streams-test-utils:6.0.1-ccs")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+  testImplementation("org.mockito:mockito-core:3.8.0")
+  testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
+  testImplementation("org.apache.kafka:kafka-streams-test-utils:6.1.0-ccs")
   testImplementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   testImplementation(project(":span-normalizer:span-normalizer-api"))
 }
@@ -52,8 +52,8 @@ tasks.run<JavaExec> {
 }
 
 tasks.processResources {
-  dependsOn("copyServiceConfigs");
-  dependsOn("createCopySpecForSubJob");
+  dependsOn("copyServiceConfigs")
+  dependsOn("createCopySpecForSubJob")
 }
 
 tasks.register<Copy>("copyServiceConfigs") {
@@ -67,9 +67,9 @@ tasks.register<Copy>("copyServiceConfigs") {
 
 fun createCopySpec(projectName: String, serviceName: String, srcFolder: String, configFolder: String): CopySpec {
   return copySpec {
-    from("../${projectName}/${serviceName}/src/${srcFolder}/resources/configs/${configFolder}") {
+    from("../$projectName/$serviceName/src/$srcFolder/resources/configs/$configFolder") {
       include("application.conf")
-      into("${serviceName}")
+      into("$serviceName")
     }
   }
 }
@@ -82,7 +82,7 @@ tasks.register<Copy>("createCopySpecForSubJob") {
 
 fun createCopySpecForSubJob(projectName: String, serviceName: String, srcFolder: String): CopySpec {
   return copySpec {
-    from("../${projectName}/${serviceName}/src/${srcFolder}/resources/configs/") {
+    from("../$projectName/$serviceName/src/$srcFolder/resources/configs/") {
     }
   }
 }
@@ -92,8 +92,8 @@ tasks.test {
   /**
    * Copy config for respective kafka streams topology under resource
    */
-  dependsOn("copyServiceConfigsTest");
-  dependsOn("createCopySpecForSubJobTest");
+  dependsOn("copyServiceConfigsTest")
+  dependsOn("createCopySpecForSubJobTest")
 }
 
 tasks.register<Copy>("copyServiceConfigsTest") {

@@ -15,9 +15,7 @@ import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
 import org.junit.jupiter.api.Test;
 
-/**
- * Unit test for {@link ErrorSemanticConventionUtils}
- */
+/** Unit test for {@link ErrorSemanticConventionUtils} */
 public class ErrorSemanticConventionUtilsTest {
 
   @Test
@@ -61,10 +59,23 @@ public class ErrorSemanticConventionUtilsTest {
     v = ErrorSemanticConventionUtils.checkForError(e);
     assertFalse(v);
 
-    attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue("xyzerror")));
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelErrorSemanticConventions.STATUS_CODE.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue(
+                    OTelErrorSemanticConventions.STATUS_CODE_OK_VALUE.getValue())));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = ErrorSemanticConventionUtils.checkForError(e);
+    assertFalse(v);
+
+    // check for ERROR
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelErrorSemanticConventions.STATUS_CODE.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue(
+                    OTelErrorSemanticConventions.STATUS_CODE_ERROR_VALUE.getValue())));
     when(e.getAttributes()).thenReturn(attributes);
     v = ErrorSemanticConventionUtils.checkForError(e);
     assertFalse(v);
@@ -124,10 +135,11 @@ public class ErrorSemanticConventionUtilsTest {
     v = ErrorSemanticConventionUtils.checkForException(e);
     assertTrue(v);
 
-    attributes = SemanticConventionTestUtil.buildAttributes(
-        Map.of(
-            OTelErrorSemanticConventions.EXCEPTION_STACKTRACE.getValue(),
-            SemanticConventionTestUtil.buildAttributeValue("org.abc.etc...")));
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelErrorSemanticConventions.EXCEPTION_STACKTRACE.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("org.abc.etc...")));
     when(e.getAttributes()).thenReturn(attributes);
     v = ErrorSemanticConventionUtils.checkForException(e);
     assertTrue(v);

@@ -18,17 +18,20 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
 /**
  * Utility class to fetch rpc attributes
  *
- * The methods in this class might work under the
- * assumption that span data is for specific rpc system
+ * <p>The methods in this class might work under the assumption that span data is for specific rpc
+ * system
  */
 public class RpcSemanticConventionUtils {
 
   // otel specific attributes
   private static final String OTEL_RPC_SYSTEM = OTelRpcSemanticConventions.RPC_SYSTEM.getValue();
   private static final String OTEL_RPC_METHOD = OTelRpcSemanticConventions.RPC_METHOD.getValue();
-  private static final String OTEL_GRPC_STATUS_CODE = OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue();
-  private static final String RPC_STATUS_CODE = OTelRpcSemanticConventions.RPC_STATUS_CODE.getValue();
-  private static final String OTEL_RPC_SYSTEM_GRPC = OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue();
+  private static final String OTEL_GRPC_STATUS_CODE =
+      OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue();
+  private static final String RPC_STATUS_CODE =
+      OTelRpcSemanticConventions.RPC_STATUS_CODE.getValue();
+  private static final String OTEL_RPC_SYSTEM_GRPC =
+      OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue();
 
   private static final String OTHER_GRPC_HOST_PORT = RawSpanConstants.getValue(Grpc.GRPC_HOST_PORT);
   private static final String OTHER_GRPC_METHOD = RawSpanConstants.getValue(Grpc.GRPC_METHOD);
@@ -38,19 +41,16 @@ public class RpcSemanticConventionUtils {
           RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_CODE),
           RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),
           RPC_STATUS_CODE,
-          RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE)
-      );
+          RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE));
+  private static final String OTEL_RPC_SERVICE =
+      OTelRpcSemanticConventions.RPC_SYSTEM_SERVICE.getValue();
 
-  /**
-   * @return attribute keys for grpc method
-   */
+  /** @return attribute keys for grpc method */
   public static List<String> getAttributeKeysForGrpcMethod() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_GRPC_METHOD, OTEL_RPC_METHOD));
   }
 
-  /**
-   * @return attribute keys for grpc status code
-   */
+  /** @return attribute keys for grpc status code */
   public static List<String> getAttributeKeysForGrpcStatusCode() {
     return ALL_GRPC_STATUS_CODES;
   }
@@ -65,13 +65,31 @@ public class RpcSemanticConventionUtils {
             event, OTEL_RPC_SYSTEM, StringUtils.EMPTY));
   }
 
+  public static List<String> getAttributeKeysForRpcService() {
+    return Lists.newArrayList(Sets.newHashSet(OTEL_RPC_SERVICE));
+  }
+
+  public static Optional<String> getRpcService(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, getAttributeKeysForRpcService()));
+  }
+
+  public static Optional<String> getRpcOperation(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod()));
+  }
+
   /**
    * @param valueMap object encapsulating span data
    * @return if the span is for grpc based on OTel format
    */
   public static boolean isRpcTypeGrpcForOTelFormat(Map<String, AttributeValue> valueMap) {
     return OTEL_RPC_SYSTEM_GRPC.equals(
-        valueMap.getOrDefault(OTEL_RPC_SYSTEM, AttributeValue.newBuilder().setValue(StringUtils.EMPTY).build())
+        valueMap
+            .getOrDefault(
+                OTEL_RPC_SYSTEM, AttributeValue.newBuilder().setValue(StringUtils.EMPTY).build())
             .getValue());
   }
 

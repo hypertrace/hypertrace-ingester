@@ -1,6 +1,8 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import com.google.common.collect.Lists;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -22,20 +24,16 @@ import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.util.GrpcCodeMapper;
 import org.hypertrace.traceenricher.util.HttpCodeMapper;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Enriches Api Status and Status Message
- * Api Status based on status code
- * Api Status Message based on the raw data first, and it's not in span as raw data,
- * fina it based on code status
+ * Enriches Api Status and Status Message Api Status based on status code Api Status Message based
+ * on the raw data first, and it's not in span as raw data, fina it based on code status
  */
 public class ApiStatusEnricher extends AbstractTraceEnricher {
   private static final List<String> grpcStatusCodeKeys = initializeGrpcStatusCodeKeys();
   private static final List<String> httpStatusCodeKeys = initializeHttpStatusCodeKeys();
   private static final List<String> grpcStatusMessageKeys = initializeGrpcStatusMessageKeys();
-  private static final String HTTP_RESPONSE_STATUS_MESSAGE_ATTR = RawSpanConstants.getValue(Http.HTTP_RESPONSE_STATUS_MESSAGE);
+  private static final String HTTP_RESPONSE_STATUS_MESSAGE_ATTR =
+      RawSpanConstants.getValue(Http.HTTP_RESPONSE_STATUS_MESSAGE);
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -52,8 +50,10 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
 
       statusMessage = getHttpStatusMessage(event, statusCode);
     }
-    addEnrichedAttributeIfNotNull(event, EnrichedSpanConstants.getValue(Api.API_STATUS_CODE), statusCode);
-    addEnrichedAttributeIfNotNull(event, EnrichedSpanConstants.getValue(Api.API_STATUS_MESSAGE), statusMessage);
+    addEnrichedAttributeIfNotNull(
+        event, EnrichedSpanConstants.getValue(Api.API_STATUS_CODE), statusCode);
+    addEnrichedAttributeIfNotNull(
+        event, EnrichedSpanConstants.getValue(Api.API_STATUS_MESSAGE), statusMessage);
     addEnrichedAttributeIfNotNull(event, EnrichedSpanConstants.getValue(Api.API_STATUS), status);
   }
 
@@ -85,7 +85,8 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
         statusMessage = response.getErrorMessage();
       }
     } else {
-      statusMessage = SpanAttributeUtils.getFirstAvailableStringAttribute(event, grpcStatusMessageKeys);
+      statusMessage =
+          SpanAttributeUtils.getFirstAvailableStringAttribute(event, grpcStatusMessageKeys);
     }
 
     // if application tracer doesn't send the status message, then, we'll use
@@ -97,9 +98,8 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
   }
 
   private static String getHttpStatusMessage(Event event, String statusCode) {
-    String statusMessage = SpanAttributeUtils.getStringAttribute(
-        event,
-        HTTP_RESPONSE_STATUS_MESSAGE_ATTR);
+    String statusMessage =
+        SpanAttributeUtils.getStringAttribute(event, HTTP_RESPONSE_STATUS_MESSAGE_ATTR);
     if (statusMessage == null) {
       statusMessage = HttpCodeMapper.getMessage(statusCode);
     }
@@ -110,7 +110,8 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
     List<String> grpcStatusCodeKeys = new ArrayList<>();
     grpcStatusCodeKeys.add(RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_CODE));
     grpcStatusCodeKeys.add(RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE));
-    grpcStatusCodeKeys.add(RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE));
+    grpcStatusCodeKeys.add(
+        RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE));
     grpcStatusCodeKeys.add(OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue());
     return grpcStatusCodeKeys;
   }
@@ -125,7 +126,8 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
 
   private static List<String> initializeGrpcStatusMessageKeys() {
     List<String> grpcStatusMessageKeys = new ArrayList<>();
-    grpcStatusMessageKeys.add(RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE));
+    grpcStatusMessageKeys.add(
+        RawSpanConstants.getValue(CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE));
     grpcStatusMessageKeys.add(RawSpanConstants.getValue(Envoy.ENVOY_GRPC_STATUS_MESSAGE));
     return grpcStatusMessageKeys;
   }

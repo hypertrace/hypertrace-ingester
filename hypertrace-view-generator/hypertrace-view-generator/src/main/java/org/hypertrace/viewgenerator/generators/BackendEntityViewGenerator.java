@@ -48,12 +48,12 @@ public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityV
         .map(
             event ->
                 generateViewBuilder(
-                    event,
-                    structuredTrace,
-                    EnrichedSpanUtils.getBackendId(event),
-                    entityMap,
-                    eventMap,
-                    childToParentEventIds)
+                        event,
+                        structuredTrace,
+                        EnrichedSpanUtils.getBackendId(event),
+                        entityMap,
+                        eventMap,
+                        childToParentEventIds)
                     .build())
         .collect(Collectors.toList());
   }
@@ -123,6 +123,8 @@ public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityV
       builder.setStatus(EnrichedSpanUtils.getStatus(event));
       builder.setStatusMessage(EnrichedSpanUtils.getStatusMessage(event));
       builder.setSpaceIds(EnrichedSpanUtils.getSpaceIds(event));
+      builder.setBackendOperation(EnrichedSpanUtils.getBackendOperation(event));
+      builder.setBackendDestination(EnrichedSpanUtils.getBackendDestination(event));
     } catch (Exception e) {
       LOG.error(String.format("Failed to generate backendEntityView from Event: %s", event), e);
     }

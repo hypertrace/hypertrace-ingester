@@ -76,12 +76,13 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
   private static final String TENANT_IDS_TO_EXCLUDE_CONFIG = "processor.excludeTenantIds";
 
   /**
-   * Config key using which a list of criterion can be specified to drop the matching spans.
-   * Any span matching any one of the criterion is dropped. Each criteria is a comma separated
-   * list of key:value pairs and multiple pairs in one criteria are AND'ed.
+   * Config key using which a list of criterion can be specified to drop the matching spans. Any
+   * span matching any one of the criterion is dropped. Each criteria is a comma separated list of
+   * key:value pairs and multiple pairs in one criteria are AND'ed.
    *
-   * For example: ["messaging.destination_kind:queue,messaging.operation:receive,messaging.system:jms"]
-   * drops all spans which have all 3 attribute:value pairs.
+   * <p>For example:
+   * ["messaging.destination_kind:queue,messaging.operation:receive,messaging.system:jms"] drops all
+   * spans which have all 3 attribute:value pairs.
    */
   private static final String SPAN_DROP_CRITERION_CONFIG = "processor.spanDropCriterion";
 
@@ -95,7 +96,9 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
   private final TenantIdProvider tenantIdProvider;
   private final List<String> tenantIdsToExclude;
   private final List<List<Pair<String, String>>> spanDropCriterion;
-  private final ConcurrentMap<String, Timer> tenantToSpanNormalizationTimer = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Timer> tenantToSpanNormalizationTimer =
+      new ConcurrentHashMap<>();
+  private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
 
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
@@ -157,16 +160,23 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
       LOG.info("list of tenant ids to exclude : {}", this.tenantIdsToExclude);
     }
 
-    List<String> criterion = config.hasPath(SPAN_DROP_CRITERION_CONFIG)
-        ? config.getStringList(SPAN_DROP_CRITERION_CONFIG)
-        : Collections.emptyList();
+    List<String> criterion =
+        config.hasPath(SPAN_DROP_CRITERION_CONFIG)
+            ? config.getStringList(SPAN_DROP_CRITERION_CONFIG)
+            : Collections.emptyList();
 
     // Parse the config to see if there is any criteria to drop spans.
-    this.spanDropCriterion = criterion.stream()
-        // Split each criteria based on comma
-        .map(s -> s.split(COMMA))
-        .map(a -> Arrays.stream(a).map(this::convertToPair).filter(Objects::nonNull).collect(Collectors.toList()))
-        .collect(Collectors.toList());
+    this.spanDropCriterion =
+        criterion.stream()
+            // Split each criteria based on comma
+            .map(s -> s.split(COMMA))
+            .map(
+                a ->
+                    Arrays.stream(a)
+                        .map(this::convertToPair)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList()))
+            .collect(Collectors.toList());
 
     if (!this.spanDropCriterion.isEmpty()) {
       LOG.info("Span drop criterion: {}", this.spanDropCriterion);
@@ -224,27 +234,34 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
   }
 
   /**
-   * Method to check if the given span attributes match any of the drop criterion. Returns true if the span should be
-   * dropped, false otherwise.
+   * Method to check if the given span attributes match any of the drop criterion. Returns true if
+   * the span should be dropped, false otherwise.
    */
   private boolean shouldDropSpan(Map<String, KeyValue> tags) {
     return this.spanDropCriterion.stream()
-        .anyMatch(l -> l.stream()
-            .allMatch(p -> tags.containsKey(p.getLeft())
-                && StringUtils.equals(tags.get(p.getLeft()).getVStr(), p.getRight())));
+        .anyMatch(
+            l ->
+                l.stream()
+                    .allMatch(
+                        p ->
+                            tags.containsKey(p.getLeft())
+                                && StringUtils.equals(
+                                    tags.get(p.getLeft()).getVStr(), p.getRight())));
   }
 
   @Nonnull
-  private Callable<RawSpan> getRawSpanNormalizerCallable(Span jaegerSpan,
-      Map<String, KeyValue> spanTags, String tenantId) {
+  private Callable<RawSpan> getRawSpanNormalizerCallable(
+      Span jaegerSpan, Map<String, KeyValue> spanTags, String tenantId) {
     return () -> {
       Builder rawSpanBuilder = RawSpan.newBuilder();
       rawSpanBuilder.setCustomerId(tenantId);
       rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
       // Build Event
-      Event event = buildEvent(tenantId, jaegerSpan, spanTags, tenantIdProvider.getTenantIdTagKey());
+      Event event =
+          buildEvent(tenantId, jaegerSpan, spanTags, tenantIdProvider.getTenantIdTagKey());
       rawSpanBuilder.setEvent(event);
       rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
+      resourceNormalizer.normalize(jaegerSpan).ifPresent(rawSpanBuilder::setResource);
 
       // build raw span
       RawSpan rawSpan = rawSpanBuilder.build();
@@ -348,13 +365,14 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
       jaegerFieldsBuilder.setLogs(eventLogsList);
     }
 
-    // Jaeger service name can come from either first class field in Span or the tag `jaeger.servicename`
+    // Jaeger service name can come from either first class field in Span or the tag
+    // `jaeger.servicename`
     String serviceName =
         !StringUtils.isEmpty(jaegerSpan.getProcess().getServiceName())
-        ? jaegerSpan.getProcess().getServiceName()
-        : attributeFieldMap.containsKey(OLD_JAEGER_SERVICENAME_KEY)
-            ? attributeFieldMap.get(OLD_JAEGER_SERVICENAME_KEY).getValue()
-            : StringUtils.EMPTY;
+            ? jaegerSpan.getProcess().getServiceName()
+            : attributeFieldMap.containsKey(OLD_JAEGER_SERVICENAME_KEY)
+                ? attributeFieldMap.get(OLD_JAEGER_SERVICENAME_KEY).getValue()
+                : StringUtils.EMPTY;
 
     if (!StringUtils.isEmpty(serviceName)) {
       eventBuilder.setServiceName(serviceName);
@@ -379,7 +397,10 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
   // Check if debug log is enabled before calling this method
   private void logSpanConversion(Span jaegerSpan, RawSpan rawSpan) {
     try {
-      LOG.debug("Converted Jaeger span: {} to rawSpan: {} ", jaegerSpan, convertToJsonString(rawSpan, rawSpan.getSchema()));
+      LOG.debug(
+          "Converted Jaeger span: {} to rawSpan: {} ",
+          jaegerSpan,
+          convertToJsonString(rawSpan, rawSpan.getSchema()));
     } catch (IOException e) {
       LOG.warn("An exception occurred while converting avro to JSON string", e);
     }

@@ -4,9 +4,7 @@ import com.typesafe.config.Config;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Encapsulates the Enricher config along with its dependent enrichers too
- */
+/** Encapsulates the Enricher config along with its dependent enrichers too */
 public class EnricherInfo {
 
   private String name;

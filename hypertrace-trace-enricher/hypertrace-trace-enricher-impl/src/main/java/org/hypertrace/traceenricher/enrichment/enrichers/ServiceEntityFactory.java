@@ -18,13 +18,10 @@ import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.entity.v1.servicetype.ServiceType;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
-import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache.EntityCacheProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Factory class for constructing and creating the Service entity
- */
+/** Factory class for constructing and creating the Service entity */
 public class ServiceEntityFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ServiceEntityFactory.class);
 
@@ -38,22 +35,22 @@ public class ServiceEntityFactory {
   private final EdsClient edsClient;
   private final EntityCache entityCache;
 
-  public ServiceEntityFactory(EdsClient edsClient) {
+  public ServiceEntityFactory(EdsClient edsClient, EntityCache entityCache) {
     this.edsClient = edsClient;
-    this.entityCache = EntityCacheProvider.get(edsClient);
+    this.entityCache = entityCache;
   }
 
-  Entity getService(String customerId, String name, String serviceType,
-                    Map<String, String> attributes) {
+  Entity getService(
+      String customerId, String name, String serviceType, Map<String, String> attributes) {
     try {
-      List<Entity> services = entityCache.getNameToServiceEntitiesCache()
-          .get(Pair.of(customerId, name));
+      List<Entity> services =
+          entityCache.getNameToServiceEntitiesCache().get(Pair.of(customerId, name));
       if (services.size() == 1) {
         return services.get(0);
       } else if (!services.isEmpty()) {
         // Filter out the jaeger service subtypes and see if there is only one matching service.
-        List<Entity> nonJaegerServices = services.stream().filter(e -> !isJaegerService(e))
-            .collect(Collectors.toList());
+        List<Entity> nonJaegerServices =
+            services.stream().filter(e -> !isJaegerService(e)).collect(Collectors.toList());
 
         // If there is only one other service which isn't based on Jaeger, pick that since that
         // would be our logical service.
@@ -63,9 +60,8 @@ public class ServiceEntityFactory {
           if (MULTIPLE_SERVICES_LIMITER.tryAcquire()) {
             LOG.warn("Multiple logical services found with same name; services: {}", services);
           }
-          List<Entity> jaegerService = services.stream()
-              .filter(this::isJaegerService)
-              .collect(Collectors.toList());
+          List<Entity> jaegerService =
+              services.stream().filter(this::isJaegerService).collect(Collectors.toList());
 
           if (jaegerService.size() == 1) {
             return jaegerService.get(0);
@@ -80,17 +76,25 @@ public class ServiceEntityFactory {
   }
 
   @Nonnull
-  private org.hypertrace.entity.data.service.v1.Entity createServiceEntity(String customerId, String name,
-                                                                           String fqn, String serviceType, Map<String, String> attributes) {
-    LOG.info("Creating a new service; customerId: {}, fqn: {}, serviceType: {}",
-        customerId, fqn, serviceType);
+  private org.hypertrace.entity.data.service.v1.Entity createServiceEntity(
+      String customerId,
+      String name,
+      String fqn,
+      String serviceType,
+      Map<String, String> attributes) {
+    LOG.info(
+        "Creating a new service; customerId: {}, fqn: {}, serviceType: {}",
+        customerId,
+        fqn,
+        serviceType);
 
     org.hypertrace.entity.data.service.v1.Entity.Builder builder =
         org.hypertrace.entity.data.service.v1.Entity.newBuilder()
             .setTenantId(customerId)
             .setEntityType(EntityType.SERVICE.name())
             .setEntityName(name)
-            .putIdentifyingAttributes(FQN_ATTRIBUTE_NAME,
+            .putIdentifyingAttributes(
+                FQN_ATTRIBUTE_NAME,
                 AttributeValue.newBuilder().setValue(Value.newBuilder().setString(fqn)).build());
 
     attributes.forEach((k, v) -> addStringAttribute(builder, k, v));
@@ -103,17 +107,21 @@ public class ServiceEntityFactory {
       return false;
     }
     AttributeValue value = service.getAttributesMap().get(SERVICE_TYPE_ATTRIBUTE_NAME);
-    return value == null || (value.getTypeCase() == AttributeValue.TypeCase.VALUE &&
-        StringUtils.equals(value.getValue().getString(), ServiceType.JAEGER_SERVICE.name()));
+    return value == null
+        || (value.getTypeCase() == AttributeValue.TypeCase.VALUE
+            && StringUtils.equals(value.getValue().getString(), ServiceType.JAEGER_SERVICE.name()));
   }
 
-  private void addStringAttribute(org.hypertrace.entity.data.service.v1.Entity.Builder builder, String name,
-                                  String value) {
+  private void addStringAttribute(
+      org.hypertrace.entity.data.service.v1.Entity.Builder builder, String name, String value) {
     if (StringUtils.isEmpty(value)) {
       return;
     }
 
-    builder.putAttributes(name, org.hypertrace.entity.data.service.v1.AttributeValue.newBuilder()
-        .setValue(Value.newBuilder().setString(value).build()).build());
+    builder.putAttributes(
+        name,
+        org.hypertrace.entity.data.service.v1.AttributeValue.newBuilder()
+            .setValue(Value.newBuilder().setString(value).build())
+            .build());
   }
 }

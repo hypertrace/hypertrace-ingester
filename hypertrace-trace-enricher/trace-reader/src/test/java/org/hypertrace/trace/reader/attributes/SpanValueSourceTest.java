@@ -3,15 +3,19 @@ package org.hypertrace.trace.reader.attributes;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributesWithKeyValue;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.buildMetricsWithKeyValue;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedEventBuilder;
+import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedStructuredTraceBuilder;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.doubleLiteral;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.longLiteral;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
+import java.util.List;
 import java.util.Optional;
+import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.Resource;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.junit.jupiter.api.Test;
 
@@ -78,5 +82,58 @@ class SpanValueSourceTest {
     assertEquals(
         Optional.of(ValueSourceFactory.forTrace(mockTrace)),
         originalSource.sourceForScope("TRACE"));
+  }
+
+  @Test
+  void returnsEmptyOptionalIfNoResource() {
+    Event span = defaultedEventBuilder().build();
+    assertEquals(
+        Optional.empty(),
+        new SpanValueSource(mock(StructuredTrace.class), span)
+            .getAttribute("resourceKey", AttributeKind.TYPE_STRING));
+  }
+
+  @Test
+  void returnsEmptyOptionalIfNoMatchingKeyInResource() {
+    Event span = defaultedEventBuilder().setResourceIndex(0).build();
+
+    assertEquals(
+        Optional.empty(),
+        new SpanValueSource(mock(StructuredTrace.class), span)
+            .getAttribute("resourceKey", AttributeKind.TYPE_STRING));
+  }
+
+  @Test
+  void returnsValueIfMatchingKeyInResource() {
+    StructuredTrace trace =
+        defaultedStructuredTraceBuilder()
+            .setResourceList(
+                List.of(
+                    mock(Resource.class), // idx 0 won't be used in this test
+                    Resource.newBuilder()
+                        .setAttributes(buildAttributesWithKeyValue("resourceKey", "value"))
+                        .build()))
+            .build();
+
+    Event span = defaultedEventBuilder().setResourceIndex(1).build();
+
+    assertEquals(
+        Optional.of(stringLiteral("value")),
+        new SpanValueSource(trace, span).getAttribute("resourceKey", AttributeKind.TYPE_STRING));
+  }
+
+  @Test
+  void canResolveFields() {
+    Event span = defaultedEventBuilder().setStartTimeMillis(15).setEndTimeMillis(18).build();
+
+    assertEquals(
+        Optional.of(longLiteral(15)),
+        new SpanValueSource(mock(StructuredTrace.class), span)
+            .getSourceField(SourceField.SOURCE_FIELD_START_TIME, AttributeKind.TYPE_TIMESTAMP));
+
+    assertEquals(
+        Optional.of(longLiteral(18)),
+        new SpanValueSource(mock(StructuredTrace.class), span)
+            .getSourceField(SourceField.SOURCE_FIELD_END_TIME, AttributeKind.TYPE_TIMESTAMP));
   }
 }

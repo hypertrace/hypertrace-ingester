@@ -35,7 +35,8 @@ import org.junit.jupiter.api.Test;
 
 public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
 
-  private static final String API_NAME_ATTR = EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_NAME);
+  private static final String API_NAME_ATTR =
+      EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_NAME);
   private static final String API_DISCOVERY_STATE_ATTR =
       EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_DISCOVERY_STATE);
 
@@ -49,7 +50,6 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
   private EndpointEnricher endpointEnricher;
   private ApiEntityDao dao;
 
-
   @BeforeEach
   public void setup() {
     dao = mock(ApiEntityDao.class);
@@ -59,8 +59,11 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
 
   @Test
   public void whenEnrichedAttributesAreMissing_thenNoEnrichmentWillHappen() {
-    Event event = Event.newBuilder().setCustomerId(TENANT_ID)
-        .setEventId(ByteBuffer.wrap("name".getBytes())).build();
+    Event event =
+        Event.newBuilder()
+            .setCustomerId(TENANT_ID)
+            .setEventId(ByteBuffer.wrap("name".getBytes()))
+            .build();
     endpointEnricher.enrichEvent(getBigTrace(), event);
     String apiName = EnrichedSpanUtils.getApiName(event);
     assertNull(apiName);
@@ -79,23 +82,25 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
   public void whenAllAttributesArePresentThenExpectEventToBeEnriched() {
     StructuredTrace trace = getBigTrace();
     Event event = trace.getEventList().get(0);
-    Entity entity = Entity.newBuilder()
-        .setEntityId(API_ID)
-        .setEntityName(API_PATTERN_VAL)
-        .putAttributes(
-            API_NAME_ATTR, org.hypertrace.entity.data.service.v1.AttributeValue.newBuilder().setValue(
-                Value.newBuilder().setString(API_NAME_VAL)
-            ).build()
-        )
-        .putAttributes(
-            API_DISCOVERY_STATE_ATTR, org.hypertrace.entity.data.service.v1.AttributeValue.newBuilder().setValue(
-                Value.newBuilder().setString(API_DISCOVERY_STATE_VAL)
-            ).build()
-        )
-        .build();
+    Entity entity =
+        Entity.newBuilder()
+            .setEntityId(API_ID)
+            .setEntityName(API_PATTERN_VAL)
+            .putAttributes(
+                API_NAME_ATTR,
+                org.hypertrace.entity.data.service.v1.AttributeValue.newBuilder()
+                    .setValue(Value.newBuilder().setString(API_NAME_VAL))
+                    .build())
+            .putAttributes(
+                API_DISCOVERY_STATE_ATTR,
+                org.hypertrace.entity.data.service.v1.AttributeValue.newBuilder()
+                    .setValue(Value.newBuilder().setString(API_DISCOVERY_STATE_VAL))
+                    .build())
+            .build();
 
-    when(dao.upsertApiEntity(trace.getCustomerId(), SERVICE_ID, ApiEntityDao.API_TYPE,
-        event.getEventName())).thenReturn(entity);
+    when(dao.upsertApiEntity(
+            trace.getCustomerId(), SERVICE_ID, ApiEntityDao.API_TYPE, event.getEventName()))
+        .thenReturn(entity);
     endpointEnricher.enrichEvent(trace, event);
 
     assertEquals(API_NAME_VAL, EnrichedSpanUtils.getApiName(event));
@@ -104,9 +109,27 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
     assertEquals(API_DISCOVERY_STATE_VAL, EnrichedSpanUtils.getApiDiscoveryState(event));
   }
 
+  @Test
+  public void testApiEnrichmentForIntermediateEvents() {
+    StructuredTrace trace = getBigTrace();
+    Event exitEvent = trace.getEventList().get(2);
+    endpointEnricher.enrichTrace(trace);
+
+    assertEquals(API_NAME_VAL, EnrichedSpanUtils.getApiName(exitEvent));
+    assertEquals(API_PATTERN_VAL, EnrichedSpanUtils.getApiPattern(exitEvent));
+    assertEquals(API_ID, EnrichedSpanUtils.getApiId(exitEvent));
+
+    Event intermediateEvent = trace.getEventList().get(1);
+    assertEquals(API_NAME_VAL, EnrichedSpanUtils.getApiName(intermediateEvent));
+    assertEquals(API_PATTERN_VAL, EnrichedSpanUtils.getApiPattern(intermediateEvent));
+    assertEquals(API_ID, EnrichedSpanUtils.getApiId(intermediateEvent));
+  }
+
   private Event createMockApiBoundaryEntryEvent() {
     Event e = createMockEvent();
-    addEnrichedAttributeToEvent(e, Constants.getEnrichedSpanConstant(Api.API_BOUNDARY_TYPE),
+    addEnrichedAttributeToEvent(
+        e,
+        Constants.getEnrichedSpanConstant(Api.API_BOUNDARY_TYPE),
         AttributeValueCreator.create(Constants.getEnrichedSpanConstant(ENTRY)));
     return e;
   }
@@ -129,111 +152,107 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
      * ------------|-------------------
      *             2 (exit)
      */
-    //0th raw span
+    // 0th raw span
     Map<String, AttributeValue> entrySpan0Map = new HashMap<>();
     entrySpan0Map.put(
         EnrichedSpanConstants.getValue(Http.HTTP_REQUEST_URL),
-        AttributeValue.newBuilder().setValue("http://someservice.ai/users/1/checkout").build()
-    );
+        AttributeValue.newBuilder().setValue("http://someservice.ai/users/1/checkout").build());
     Map<String, AttributeValue> enrichedEntrySpan0Map = new HashMap<>();
     enrichedEntrySpan0Map.put(
         EnrichedSpanConstants.getValue(Api.API_BOUNDARY_TYPE),
-        AttributeValue.newBuilder().setValue("ENTRY").build()
-    );
+        AttributeValue.newBuilder().setValue("ENTRY").build());
     enrichedEntrySpan0Map.put(
         EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_ID),
-        AttributeValue.newBuilder().setValue(SERVICE_ID).build()
-    );
+        AttributeValue.newBuilder().setValue(SERVICE_ID).build());
     enrichedEntrySpan0Map.put(
         EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME),
-        AttributeValue.newBuilder().setValue(SERVICE_NAME).build()
-    );
+        AttributeValue.newBuilder().setValue(SERVICE_NAME).build());
     enrichedEntrySpan0Map.put(
         EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_ID),
-        AttributeValue.newBuilder().setValue(API_ID).build()
-    );
+        AttributeValue.newBuilder().setValue(API_ID).build());
     enrichedEntrySpan0Map.put(
         EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_URL_PATTERN),
-        AttributeValue.newBuilder().setValue(API_PATTERN_VAL).build()
-    );
+        AttributeValue.newBuilder().setValue(API_PATTERN_VAL).build());
     enrichedEntrySpan0Map.put(
         EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_NAME),
-        AttributeValue.newBuilder().setValue(API_NAME_VAL).build()
-    );
-    Event event0 = Event.newBuilder()
-        .setCustomerId(TENANT_ID)
-        .setAttributes(Attributes.newBuilder().setAttributeMap(entrySpan0Map).build())
-        .setEnrichedAttributes(
-            Attributes.newBuilder().setAttributeMap(enrichedEntrySpan0Map).build())
-        .setEventId(createByteBuffer("event0"))
-        .setEventName(API_PATTERN_VAL)
-        .build();
-    RawSpan rawSpan0 = RawSpan.newBuilder()
-        .setCustomerId(TENANT_ID)
-        .setEvent(event0)
-        .setTraceId(createByteBuffer("trace"))
-        .build();
+        AttributeValue.newBuilder().setValue(API_NAME_VAL).build());
+    Event event0 =
+        Event.newBuilder()
+            .setCustomerId(TENANT_ID)
+            .setAttributes(Attributes.newBuilder().setAttributeMap(entrySpan0Map).build())
+            .setEnrichedAttributes(
+                Attributes.newBuilder().setAttributeMap(enrichedEntrySpan0Map).build())
+            .setEventId(createByteBuffer("event0"))
+            .setEventName(API_PATTERN_VAL)
+            .build();
+    RawSpan rawSpan0 =
+        RawSpan.newBuilder()
+            .setCustomerId(TENANT_ID)
+            .setEvent(event0)
+            .setTraceId(createByteBuffer("trace"))
+            .build();
 
-    //1st intermediate raw span
-    EventRef eventRef0 = EventRef.newBuilder()
-        .setRefType(EventRefType.CHILD_OF)
-        .setTraceId(createByteBuffer("trace"))
-        .setEventId(createByteBuffer("event0"))
-        .build();
+    // 1st intermediate raw span
+    EventRef eventRef0 =
+        EventRef.newBuilder()
+            .setRefType(EventRefType.CHILD_OF)
+            .setTraceId(createByteBuffer("trace"))
+            .setEventId(createByteBuffer("event0"))
+            .build();
     Map<String, AttributeValue> exitSpanMap = new HashMap<>();
     Map<String, AttributeValue> enrichedExitSpanMap = new HashMap<>();
-    Event event1 = Event.newBuilder()
-        .setCustomerId(TENANT_ID)
-        .setEventId(createByteBuffer("event1"))
-        .setAttributes(Attributes.newBuilder().setAttributeMap(exitSpanMap).build())
-        .setEnrichedAttributes(Attributes.newBuilder().setAttributeMap(enrichedExitSpanMap).build())
-        .setEventRefList(Collections.singletonList(eventRef0))
-        .build();
-    RawSpan rawSpan1 = RawSpan.newBuilder()
-        .setCustomerId(TENANT_ID)
-        .setEvent(event1)
-        .setTraceId(createByteBuffer("trace"))
-        .build();
+    Event event1 =
+        Event.newBuilder()
+            .setCustomerId(TENANT_ID)
+            .setEventId(createByteBuffer("event1"))
+            .setAttributes(Attributes.newBuilder().setAttributeMap(exitSpanMap).build())
+            .setEnrichedAttributes(
+                Attributes.newBuilder().setAttributeMap(enrichedExitSpanMap).build())
+            .setEventRefList(Collections.singletonList(eventRef0))
+            .build();
+    RawSpan rawSpan1 =
+        RawSpan.newBuilder()
+            .setCustomerId(TENANT_ID)
+            .setEvent(event1)
+            .setTraceId(createByteBuffer("trace"))
+            .build();
 
-    //2nd exit raw span
-    EventRef eventRef1 = EventRef.newBuilder()
-        .setRefType(EventRefType.CHILD_OF)
-        .setTraceId(createByteBuffer("trace"))
-        .setEventId(createByteBuffer("event1"))
-        .build();
+    // 2nd exit raw span
+    EventRef eventRef1 =
+        EventRef.newBuilder()
+            .setRefType(EventRefType.CHILD_OF)
+            .setTraceId(createByteBuffer("trace"))
+            .setEventId(createByteBuffer("event1"))
+            .build();
     Map<String, AttributeValue> entrySpan2Map = new HashMap<>();
     entrySpan2Map.put(
         EnrichedSpanConstants.getValue(Http.HTTP_REQUEST_URL),
-        AttributeValue.newBuilder().setValue("http://nextservice.ai/login").build()
-    );
+        AttributeValue.newBuilder().setValue("http://nextservice.ai/login").build());
     Map<String, AttributeValue> enrichedEntrySpan2Map = new HashMap<>();
     enrichedEntrySpan2Map.put(
         EnrichedSpanConstants.getValue(Api.API_BOUNDARY_TYPE),
-        AttributeValue.newBuilder().setValue("EXIT").build()
-    );
-    Event event2 = Event.newBuilder()
-        .setCustomerId(TENANT_ID)
-        .setAttributes(Attributes.newBuilder().setAttributeMap(entrySpan2Map).build())
-        .setEnrichedAttributes(
-            Attributes.newBuilder().setAttributeMap(enrichedEntrySpan2Map).build())
-        .setEventId(createByteBuffer("event2"))
-        .setEventRefList(Collections.singletonList(eventRef1))
-        .build();
-    RawSpan rawSpan2 = RawSpan.newBuilder()
-        .setCustomerId(TENANT_ID)
-        .setEvent(event2)
-        .setTraceId(createByteBuffer("trace"))
-        .build();
+        AttributeValue.newBuilder().setValue("EXIT").build());
+    Event event2 =
+        Event.newBuilder()
+            .setCustomerId(TENANT_ID)
+            .setAttributes(Attributes.newBuilder().setAttributeMap(entrySpan2Map).build())
+            .setEnrichedAttributes(
+                Attributes.newBuilder().setAttributeMap(enrichedEntrySpan2Map).build())
+            .setEventId(createByteBuffer("event2"))
+            .setEventRefList(Collections.singletonList(eventRef1))
+            .build();
+    RawSpan rawSpan2 =
+        RawSpan.newBuilder()
+            .setCustomerId(TENANT_ID)
+            .setEvent(event2)
+            .setTraceId(createByteBuffer("trace"))
+            .build();
 
     return StructuredTraceBuilder.buildStructuredTraceFromRawSpans(
-        List.of(rawSpan0, rawSpan1, rawSpan2),
-        createByteBuffer("trace"),
-        TENANT_ID
-    );
+        List.of(rawSpan0, rawSpan1, rawSpan2), createByteBuffer("trace"), TENANT_ID);
   }
 
   private ByteBuffer createByteBuffer(String id) {
     return ByteBuffer.wrap(id.getBytes());
   }
-
 }

@@ -1,10 +1,15 @@
-import com.google.protobuf.gradle.*
+import com.google.protobuf.gradle.generateProtoTasks
+import com.google.protobuf.gradle.id
+import com.google.protobuf.gradle.ofSourceSet
+import com.google.protobuf.gradle.plugins
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
 
 plugins {
   `java-library`
   jacoco
   id("org.hypertrace.jacoco-report-plugin")
-  id("com.google.protobuf") version "0.8.13"
+  id("com.google.protobuf") version "0.8.15"
   id("org.hypertrace.publish-plugin")
 }
 
@@ -12,11 +17,11 @@ val generateLocalGoGrpcFiles = false
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.13.0"
+    artifact = "com.google.protobuf:protoc:3.15.7"
   }
   plugins {
     id("grpc_java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.35.0"
+      artifact = "io.grpc:protoc-gen-grpc-java:1.36.1"
     }
 
     if (generateLocalGoGrpcFiles) {
@@ -58,13 +63,13 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.13.0")
+  api("com.google.protobuf:protobuf-java-util:3.15.7")
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.12")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.14")
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":span-normalizer:span-normalizer-constants"))
-  implementation("org.hypertrace.entity.service:entity-service-api:0.1.23")
+  implementation("org.hypertrace.entity.service:entity-service-api:0.6.0")
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-  testImplementation("org.mockito:mockito-core:3.6.28")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+  testImplementation("org.mockito:mockito-core:3.8.0")
 }

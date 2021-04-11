@@ -5,38 +5,25 @@ import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 
 public interface Enricher {
 
-  /**
-   * Provides the configuration needed for the enricher.
-   */
-  void init(Config enricherConfig, EntityDataServiceClientProvider provider);
+  /** Provides the configuration needed for the enricher. */
+  void init(Config enricherConfig, ClientRegistry clientRegistry);
 
-  /**
-   * Enrich the attributes/metrics for an Entity
-   */
+  /** Enrich the attributes/metrics for an Entity */
   void enrichEntity(StructuredTrace trace, Entity entity);
 
-  /**
-   * Called after all the entities in the trace are enriched
-   */
+  /** Called after all the entities in the trace are enriched */
   void onEnrichEntitiesComplete(StructuredTrace trace);
 
-  /**
-   * Enrich the attributes/metrics for an Event
-   */
+  /** Enrich the attributes/metrics for an Event */
   void enrichEvent(StructuredTrace trace, Event event);
 
-  /**
-   * Enrich the attributes/metrics for an Edge
-   */
+  /** Enrich the attributes/metrics for an Edge */
   void enrichEdge(StructuredTrace trace, Edge edge);
 
-  /**
-   * Enrich Trace level attributes/metrics
-   */
+  /** Enrich Trace level attributes/metrics */
   void enrichTrace(StructuredTrace trace);
-
 }

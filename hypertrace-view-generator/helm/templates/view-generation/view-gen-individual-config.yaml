@@ -1,0 +1,14 @@
+{{ $global := . }}
+{{- range $k, $val := .Values.viewGenIndividualConfigs }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $k }}-config
+  labels:
+    release: {{ $global.Release.Name }}
+data:
+  application.conf: |-
+    input.topic = {{ $val.inputTopic }}
+    output.topic = {{ $val.outputTopic }}
+{{- end }}

@@ -1,8 +1,13 @@
-import com.google.protobuf.gradle.*
+import com.google.protobuf.gradle.generateProtoTasks
+import com.google.protobuf.gradle.id
+import com.google.protobuf.gradle.ofSourceSet
+import com.google.protobuf.gradle.plugins
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
 
 plugins {
   `java-library`
-  id("com.google.protobuf") version "0.8.8"
+  id("com.google.protobuf") version "0.8.15"
   id("org.hypertrace.publish-plugin")
 }
 
@@ -10,11 +15,11 @@ val generateLocalGoGrpcFiles = false
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.6.1"
+    artifact = "com.google.protobuf:protoc:3.15.7"
   }
   plugins {
     id("grpc_java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.35.0"
+      artifact = "io.grpc:protoc-gen-grpc-java:1.36.1"
     }
 
     if (generateLocalGoGrpcFiles) {
@@ -52,9 +57,6 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.7.0")
-  api("com.google.guava:guava:30.0-jre") {
-    because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-1015415")
-  }
+  api("com.google.protobuf:protobuf-java-util:3.15.7")
   implementation("org.slf4j:slf4j-api:1.7.30")
 }

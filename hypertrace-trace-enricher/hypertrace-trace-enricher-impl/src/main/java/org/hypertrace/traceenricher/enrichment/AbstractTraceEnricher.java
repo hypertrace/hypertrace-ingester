@@ -4,10 +4,10 @@ import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Edge;
@@ -15,43 +15,30 @@ import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.entity.data.service.client.EntityDataServiceClientProvider;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
 
 public abstract class AbstractTraceEnricher implements Enricher {
 
   @Override
-  public void init(Config enricherConfig, EntityDataServiceClientProvider provider) {
-  }
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {}
 
   @Override
-  public void enrichEdge(StructuredTrace trace, Edge edge) {
-
-  }
+  public void enrichEdge(StructuredTrace trace, Edge edge) {}
 
   @Override
-  public void enrichEntity(StructuredTrace trace, Entity entity) {
-
-  }
+  public void enrichEntity(StructuredTrace trace, Entity entity) {}
 
   @Override
-  public void onEnrichEntitiesComplete(StructuredTrace structuredTrace) {
-
-  }
+  public void onEnrichEntitiesComplete(StructuredTrace structuredTrace) {}
 
   @Override
-  public void enrichEvent(StructuredTrace trace, Event event) {
-
-  }
+  public void enrichEvent(StructuredTrace trace, Event event) {}
 
   @Override
-  public void enrichTrace(StructuredTrace trace) {
+  public void enrichTrace(StructuredTrace trace) {}
 
-  }
-
-  /**
-   * Wrapper to the structure graph factory for testing
-   */
+  /** Wrapper to the structure graph factory for testing */
   public StructuredTraceGraph buildGraph(StructuredTrace trace) {
     return StructuredTraceGraphBuilder.buildGraph(trace);
   }
@@ -82,9 +69,9 @@ public abstract class AbstractTraceEnricher implements Enricher {
     enrichedAttributes.getAttributeMap().put(key, value);
   }
 
-  protected void addEnrichedAttributes(Event event, List<Pair<String, AttributeValue>> attributes) {
-    attributes.forEach(attributePair ->
-        addEnrichedAttribute(event, attributePair.getKey(), attributePair.getValue()));
+  protected void addEnrichedAttributes(
+      Event event, Map<String, AttributeValue> attributesToEnrich) {
+    attributesToEnrich.forEach((key, value) -> addEnrichedAttribute(event, key, value));
   }
 
   protected void addEnrichedAttributeIfNotNull(Event event, String key, String value) {
@@ -109,5 +96,4 @@ public abstract class AbstractTraceEnricher implements Enricher {
       trace.getEntityList().add(entity);
     }
   }
-
 }

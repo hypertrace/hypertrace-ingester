@@ -9,9 +9,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Registry of all the Enrichers
- */
+/** Registry of all the Enrichers */
 public class EnrichmentRegistry {
 
   public static final String ENRICHER_CLASS_CONFIG_PATH = "class";
@@ -22,12 +20,9 @@ public class EnrichmentRegistry {
 
   private final Map<String, EnricherInfo> registeredEnrichers = new LinkedHashMap<>();
 
-  public EnrichmentRegistry() {
-  }
+  public EnrichmentRegistry() {}
 
-  /**
-   * Register all enrichers contained in enricher config map.
-   */
+  /** Register all enrichers contained in enricher config map. */
   public void registerEnrichers(Map<String, Config> enricherConfigs) {
     for (String enricherName : enricherConfigs.keySet()) {
       if (!registeredEnrichers.containsKey(enricherName)) {
@@ -35,7 +30,6 @@ public class EnrichmentRegistry {
       }
     }
   }
-
 
   public List<EnricherInfo> getOrderedRegisteredEnrichers() {
     List<EnricherInfo> enrichers = new ArrayList<>(registeredEnrichers.values());
@@ -47,7 +41,7 @@ public class EnrichmentRegistry {
    * create an entry (enricherToRegister, EnricherInfo) in registeredEnrichers.
    *
    * @param enricherToRegister The name of enricher to register.
-   * @param enricherConfigs    The map that contains config of the enricher .
+   * @param enricherConfigs The map that contains config of the enricher .
    * @return EnricherInfo if successful, otherwise null.
    */
   private EnricherInfo registerEnricher(
@@ -112,8 +106,8 @@ public class EnrichmentRegistry {
   }
 
   /**
-   * Used for constructing a Graph of Enrichers based on their corresponding dependencies
-   * Has the helper method to topologically sort the enrichers
+   * Used for constructing a Graph of Enrichers based on their corresponding dependencies Has the
+   * helper method to topologically sort the enrichers
    */
   private static class EnricherGraph {
 
@@ -148,7 +142,8 @@ public class EnrichmentRegistry {
       return order;
     }
 
-    private void sortUtil(EnricherInfo v, Map<EnricherInfo, Boolean> visited, List<EnricherInfo> order) {
+    private void sortUtil(
+        EnricherInfo v, Map<EnricherInfo, Boolean> visited, List<EnricherInfo> order) {
       // Mark the current node as visited
       visited.replace(v, true);
 

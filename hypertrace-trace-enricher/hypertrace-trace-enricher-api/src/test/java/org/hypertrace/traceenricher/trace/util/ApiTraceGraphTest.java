@@ -23,19 +23,19 @@ public class ApiTraceGraphTest {
 
   @Test
   public void testApiTraceGraph_HotrodTrace() throws IOException {
-    URL resource = Thread.currentThread().getContextClassLoader().
-        getResource("StructuredTrace-Hotrod.avro");
+    URL resource =
+        Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
 
-    SpecificDatumReader<StructuredTrace> datumReader = new SpecificDatumReader<>(
-        StructuredTrace.getClassSchema());
-    DataFileReader<StructuredTrace> dfrStructuredTrace = new DataFileReader<>(new File(resource.getPath()), datumReader);
+    SpecificDatumReader<StructuredTrace> datumReader =
+        new SpecificDatumReader<>(StructuredTrace.getClassSchema());
+    DataFileReader<StructuredTrace> dfrStructuredTrace =
+        new DataFileReader<>(new File(resource.getPath()), datumReader);
     StructuredTrace trace = dfrStructuredTrace.next();
     dfrStructuredTrace.close();
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-    apiTraceGraph.build();
     assertEquals(12, apiTraceGraph.getApiNodeEventEdgeList().size());
-    assertEquals(13, apiTraceGraph.getNodeList().size());
+    assertEquals(13, apiTraceGraph.getApiNodeList().size());
     assertNotNull(apiTraceGraph.getTrace());
     verifyEveryEventPartOfSingleApiNode_HotrodTrace(trace, apiTraceGraph);
   }
@@ -44,17 +44,25 @@ public class ApiTraceGraphTest {
       StructuredTrace trace, ApiTraceGraph apiTraceGraph) {
     Map<ByteBuffer, Set<Integer>> eventToApiNodes = Maps.newHashMap();
 
-    for (int index = 0; index < apiTraceGraph.getNodeList().size(); index++) {
-      ApiNode<Event> apiNode = apiTraceGraph.getNodeList().get(index);
+    for (int index = 0; index < apiTraceGraph.getApiNodeList().size(); index++) {
+      ApiNode<Event> apiNode = apiTraceGraph.getApiNodeList().get(index);
       int finalIndex = index;
-      apiNode.getEvents().forEach(v -> eventToApiNodes.computeIfAbsent(
-          v.getEventId(), s -> new HashSet<>()).add(finalIndex));
+      apiNode
+          .getEvents()
+          .forEach(
+              v ->
+                  eventToApiNodes
+                      .computeIfAbsent(v.getEventId(), s -> new HashSet<>())
+                      .add(finalIndex));
     }
 
     // verify every event belongs to exactly 1 api_node
-    trace.getEventList().forEach(e -> {
-      assertTrue(eventToApiNodes.containsKey(e.getEventId()));
-      assertEquals(1, eventToApiNodes.get(e.getEventId()).size());
-    });
+    trace
+        .getEventList()
+        .forEach(
+            e -> {
+              assertTrue(eventToApiNodes.containsKey(e.getEventId()));
+              assertEquals(1, eventToApiNodes.get(e.getEventId()).size());
+            });
   }
 }

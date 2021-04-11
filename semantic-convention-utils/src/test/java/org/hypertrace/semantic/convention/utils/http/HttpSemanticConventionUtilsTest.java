@@ -1,6 +1,5 @@
 package org.hypertrace.semantic.convention.utils.http;
 
-import static org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil.buildAttributeValue;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_HOST;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_PORT;
@@ -11,6 +10,7 @@ import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSem
 import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions.SPAN_KIND;
 import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE;
 import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE;
+import static org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil.buildAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.Maps;
@@ -22,16 +22,15 @@ import org.hypertrace.core.span.constants.v1.OCAttribute;
 import org.hypertrace.core.span.constants.v1.OCSpanKind;
 import org.junit.jupiter.api.Test;
 
-/**
- * Unit test for {@link HttpSemanticConventionUtils}
- */
+/** Unit test for {@link HttpSemanticConventionUtils} */
 public class HttpSemanticConventionUtilsTest {
 
   @Test
   public void testGetHttpUrlForOtelFormat() {
     // http url present
     Map<String, AttributeValue> map = Maps.newHashMap();
-    map.put(HTTP_URL.getValue(), buildAttributeValue("https://172.0.8.11:1211/webshop/articles/4?s=1"));
+    map.put(
+        HTTP_URL.getValue(), buildAttributeValue("https://172.0.8.11:1211/webshop/articles/4?s=1"));
     String url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
     assertEquals("https://172.0.8.11:1211/webshop/articles/4?s=1", url);
 
@@ -46,7 +45,8 @@ public class HttpSemanticConventionUtilsTest {
     // client span, span_kind present
     map.clear();
     map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
-    map.put(OTelSpanSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("example.com"));
+    map.put(
+        OTelSpanSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("example.com"));
     map.put(OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("1211"));
     map.put(HTTP_TARGET.getValue(), buildAttributeValue("/webshop/articles/4?s=1"));
     map.put(SPAN_KIND.getValue(), buildAttributeValue(SPAN_KIND_CLIENT_VALUE.getValue()));
@@ -65,7 +65,8 @@ public class HttpSemanticConventionUtilsTest {
     // client span, span.kind present
     map.clear();
     map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
-    map.put(OTelSpanSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("example.com"));
+    map.put(
+        OTelSpanSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("example.com"));
     map.put(OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("1211"));
     map.put(HTTP_TARGET.getValue(), buildAttributeValue("/webshop/articles/4?s=1"));
     map.put(

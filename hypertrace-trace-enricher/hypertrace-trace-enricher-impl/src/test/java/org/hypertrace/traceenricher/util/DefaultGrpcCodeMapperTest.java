@@ -30,13 +30,14 @@ public class DefaultGrpcCodeMapperTest {
 
   @Test
   public void test_getState_successCode_shouldGetSuccess() {
-    assertEquals(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_SUCCESS),
+    assertEquals(
+        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_SUCCESS),
         GrpcCodeMapper.getState("0"));
   }
 
   @Test
   public void test_getState_failCode_shouldGetFail() {
-    assertEquals(Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL),
-        GrpcCodeMapper.getState("5"));
+    assertEquals(
+        Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL), GrpcCodeMapper.getState("5"));
   }
 }

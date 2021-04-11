@@ -30,9 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
-/**
- * Topology Test for {@link HypertraceIngester}
- */
+/** Topology Test for {@link HypertraceIngester} */
 public class HypertraceIngesterTest {
 
   private static final String CONFIG_PATH = "configs/%s/application.conf";
@@ -64,8 +62,8 @@ public class HypertraceIngesterTest {
     Map<String, Object> mergedProps = baseProps;
     mergedProps.put(underTest.getJobConfigKey(), underTestConfig);
 
-    StreamsBuilder streamsBuilder = underTest.buildTopology(
-        mergedProps, new StreamsBuilder(), new HashMap<>());
+    StreamsBuilder streamsBuilder =
+        underTest.buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
     Properties props = new Properties();
     mergedProps.forEach(props::put);
     mergedProps.put(StreamsConfig.STATE_DIR_CONFIG, file.getAbsolutePath());
@@ -73,20 +71,27 @@ public class HypertraceIngesterTest {
     // create topology test driver for ingester
     TopologyTestDriver topologyTestDriver = new TopologyTestDriver(streamsBuilder.build(), props);
 
-    Span span = Span.newBuilder().setSpanId(ByteString.copyFrom("1".getBytes()))
-        .setTraceId(ByteString.copyFrom("trace-1".getBytes())).build();
+    Span span =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("1".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-1".getBytes()))
+            .build();
 
-    TestInputTopic<byte[], Span> spanNormalizerInputTopic = topologyTestDriver
-        .createInputTopic(spanNormalizerConfig.getString(
-            org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.INPUT_TOPIC_CONFIG_KEY),
-            Serdes.ByteArray().serializer(), new JaegerSpanSerde().serializer());
+    TestInputTopic<byte[], Span> spanNormalizerInputTopic =
+        topologyTestDriver.createInputTopic(
+            spanNormalizerConfig.getString(
+                org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants
+                    .INPUT_TOPIC_CONFIG_KEY),
+            Serdes.ByteArray().serializer(),
+            new JaegerSpanSerde().serializer());
 
     spanNormalizerInputTopic.pipeInput(span);
 
     // create output topic for span-normalizer topology
-    TestOutputTopic spanNormalizerOutputTopic = topologyTestDriver
-        .createOutputTopic(
-            spanNormalizerConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
+    TestOutputTopic spanNormalizerOutputTopic =
+        topologyTestDriver.createOutputTopic(
+            spanNormalizerConfig.getString(
+                StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
     assertNotNull(spanNormalizerOutputTopic.readKeyValue());
@@ -94,35 +99,40 @@ public class HypertraceIngesterTest {
     topologyTestDriver.advanceWallClockTime(Duration.ofSeconds(32));
 
     // create output topic for span-grouper topology
-    TestOutputTopic spanGrouperOutputTopic = topologyTestDriver
-        .createOutputTopic(
-            rawSpansGrouperConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
+    TestOutputTopic spanGrouperOutputTopic =
+        topologyTestDriver.createOutputTopic(
+            rawSpansGrouperConfig.getString(
+                StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
     assertNotNull(spanGrouperOutputTopic.readKeyValue());
 
     // create output topic for trace-enricher topology
-    TestOutputTopic traceEnricherOutputTopic = topologyTestDriver
-        .createOutputTopic(
+    TestOutputTopic traceEnricherOutputTopic =
+        topologyTestDriver.createOutputTopic(
             traceEnricherConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
     assertNotNull(traceEnricherOutputTopic.readKeyValue());
 
     // create output topic for  topology
-    TestOutputTopic spanEventViewOutputTopic = topologyTestDriver
-        .createOutputTopic(
-            spanEventViewGeneratorConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
+    TestOutputTopic spanEventViewOutputTopic =
+        topologyTestDriver.createOutputTopic(
+            spanEventViewGeneratorConfig.getString(
+                StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
     SpanEventView spanEventView = (SpanEventView) spanEventViewOutputTopic.readValue();
-    assertEquals(HexUtils.getHex(spanEventView.getSpanId()), HexUtils.getHex(span.getSpanId().toByteArray()));
-    assertEquals(HexUtils.getHex(spanEventView.getTraceId()), HexUtils.getHex(span.getTraceId().toByteArray()));
+    assertEquals(
+        HexUtils.getHex(spanEventView.getSpanId()),
+        HexUtils.getHex(span.getSpanId().toByteArray()));
+    assertEquals(
+        HexUtils.getHex(spanEventView.getTraceId()),
+        HexUtils.getHex(span.getTraceId().toByteArray()));
   }
 
   private Config getConfig(String serviceName) {
     return ConfigFactory.parseURL(
-        getClass().getClassLoader().getResource(
-            String.format(CONFIG_PATH, serviceName)));
+        getClass().getClassLoader().getResource(String.format(CONFIG_PATH, serviceName)));
   }
 }

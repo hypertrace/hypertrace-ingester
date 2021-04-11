@@ -48,8 +48,7 @@ public class EntityUtil {
                     valueMap.entrySet().stream()
                         .collect(
                             Collectors.toMap(
-                                Map.Entry::getKey,
-                                entry -> buildAttributeValue(entry.getValue()))))
+                                Map.Entry::getKey, entry -> buildAttributeValue(entry.getValue()))))
                 .build())
         .build();
   }
