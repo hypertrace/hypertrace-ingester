@@ -2,12 +2,12 @@ pluginManagement {
   repositories {
     mavenLocal()
     gradlePluginPortal()
-    maven("https://dl.bintray.com/hypertrace/maven")
+    maven("https://hypertrace.jfrog.io/artifactory/maven")
   }
 }
 
 plugins {
-  id("org.hypertrace.version-settings") version "0.1.2"
+  id("org.hypertrace.version-settings") version "0.2.0"
 }
 
 rootProject.name = "hypertrace-ingester"

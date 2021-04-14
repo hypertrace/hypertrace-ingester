@@ -1,6 +1,6 @@
 plugins {
   `java-library`
-  id("com.commercehub.gradle.plugin.avro")
+  id("com.github.davidmc24.gradle.plugin.avro")
 }
 
 sourceSets {
@@ -12,5 +12,5 @@ sourceSets {
 }
 
 dependencies {
-  api("org.apache.avro:avro:1.10.1")
+  api("org.apache.avro:avro:1.10.2")
 }

@@ -31,15 +31,15 @@ dependencies {
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
 
   // TODO: migrate in core
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.24")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.25")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.15")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.21")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.23")
 
-  implementation("org.hypertrace.entity.service:entity-service-api:0.1.21")
+  implementation("org.hypertrace.entity.service:entity-service-api:0.6.0")
 
-  implementation("org.apache.avro:avro:1.10.1")
-  implementation("org.apache.commons:commons-lang3:3.11")
+  implementation("org.apache.avro:avro:1.10.2")
+  implementation("org.apache.commons:commons-lang3:3.12.0")
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-  testImplementation("org.mockito:mockito-core:3.6.28")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+  testImplementation("org.mockito:mockito-core:3.8.0")
 }

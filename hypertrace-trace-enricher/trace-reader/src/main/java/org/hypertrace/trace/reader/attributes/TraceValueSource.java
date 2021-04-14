@@ -2,6 +2,7 @@ package org.hypertrace.trace.reader.attributes;
 
 import java.util.Objects;
 import java.util.Optional;
+import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -25,6 +26,21 @@ class TraceValueSource extends AvroBackedValueSource {
   public Optional<LiteralValue> getMetric(String key, AttributeKind attributeKind) {
     return this.getMetricDouble(this.trace.getMetrics(), key)
         .flatMap(doubleValue -> ValueCoercer.toLiteral(doubleValue, attributeKind));
+  }
+
+  @Override
+  public Optional<LiteralValue> getSourceField(SourceField field, AttributeKind attributeKind) {
+    switch (field) {
+      case SOURCE_FIELD_START_TIME:
+        return ValueCoercer.toLiteral(this.trace.getStartTimeMillis(), attributeKind);
+      case SOURCE_FIELD_END_TIME:
+        return ValueCoercer.toLiteral(this.trace.getEndTimeMillis(), attributeKind);
+      case SOURCE_FIELD_UNSET:
+      case UNRECOGNIZED:
+      default:
+        throw new UnsupportedOperationException(
+            "Unsupported source field for trace value source: " + field.name());
+    }
   }
 
   @Override

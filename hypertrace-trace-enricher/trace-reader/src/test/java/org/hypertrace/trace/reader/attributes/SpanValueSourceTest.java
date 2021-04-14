@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import java.util.Optional;
+import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.Resource;
@@ -94,15 +95,6 @@ class SpanValueSourceTest {
 
   @Test
   void returnsEmptyOptionalIfNoMatchingKeyInResource() {
-    StructuredTrace trace =
-        defaultedStructuredTraceBuilder()
-            .setResourceList(
-                List.of(
-                    Resource.newBuilder()
-                        .setAttributes(buildAttributesWithKeyValue("otherResourceKey", "value"))
-                        .build()))
-            .build();
-
     Event span = defaultedEventBuilder().setResourceIndex(0).build();
 
     assertEquals(
@@ -128,5 +120,20 @@ class SpanValueSourceTest {
     assertEquals(
         Optional.of(stringLiteral("value")),
         new SpanValueSource(trace, span).getAttribute("resourceKey", AttributeKind.TYPE_STRING));
+  }
+
+  @Test
+  void canResolveFields() {
+    Event span = defaultedEventBuilder().setStartTimeMillis(15).setEndTimeMillis(18).build();
+
+    assertEquals(
+        Optional.of(longLiteral(15)),
+        new SpanValueSource(mock(StructuredTrace.class), span)
+            .getSourceField(SourceField.SOURCE_FIELD_START_TIME, AttributeKind.TYPE_TIMESTAMP));
+
+    assertEquals(
+        Optional.of(longLiteral(18)),
+        new SpanValueSource(mock(StructuredTrace.class), span)
+            .getSourceField(SourceField.SOURCE_FIELD_END_TIME, AttributeKind.TYPE_TIMESTAMP));
   }
 }

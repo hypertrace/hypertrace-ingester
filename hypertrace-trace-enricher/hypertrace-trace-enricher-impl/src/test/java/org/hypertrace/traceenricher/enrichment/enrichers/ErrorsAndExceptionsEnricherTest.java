@@ -84,8 +84,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     Event e1 = createMockEvent();
     Map<String, AttributeValue> attributeValueMap = e1.getAttributes().getAttributeMap();
     attributeValueMap.put(
-        Constants.getRawSpanConstant(Error.ERROR_ERROR),
-        AttributeValueCreator.create("test error"));
+        Constants.getRawSpanConstant(Error.ERROR_ERROR), AttributeValueCreator.create(true));
     enricher.enrichEvent(null, e1);
     Assertions.assertEquals(
         1.0d,
@@ -175,7 +174,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .getValue());
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
-        4.0d,
+        6.0d,
         trace
             .getMetrics()
             .getMetricMap()
@@ -184,7 +183,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
                     ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS))
             .getValue());
     Assertions.assertEquals(
-        2.0d,
+        3.0d,
         trace
             .getMetrics()
             .getMetricMap()
@@ -211,7 +210,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
                 Constants.getEnrichedSpanConstant(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY)));
     enricher.enrichTrace(trace);
     Assertions.assertEquals(
-        4.0d,
+        6.0d,
         trace
             .getMetrics()
             .getMetricMap()
@@ -220,7 +219,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
                     ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS))
             .getValue());
     Assertions.assertEquals(
-        2.0d,
+        3.0d,
         trace
             .getMetrics()
             .getMetricMap()
