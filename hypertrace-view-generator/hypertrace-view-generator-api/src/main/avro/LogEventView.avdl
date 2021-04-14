@@ -2,13 +2,13 @@
 protocol LogEventViewProtocol {
 
   record LogEventView {
-    string tenant_id;
+    union {null, string } tenant_id = null;
 
-    bytes span_id;
-    bytes trace_id;
+    union { null, bytes } span_id = null;
+    union { null, bytes } trace_id = null;
 
-    long time_stamp = 0;
+    long timestamp_nanos = 0;
 
-    string attributes;
+    union {null, string} attributes;
   }
 }
