@@ -7,24 +7,23 @@ import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
-import org.hypertrace.core.datamodel.LogEventRecords;
+import org.hypertrace.core.datamodel.LogEvents;
 import org.hypertrace.core.viewgenerator.JavaCodeBasedViewGenerator;
 import org.hypertrace.viewgenerator.api.LogEventView;
 
-public class LogEventViewGenerator
-    implements JavaCodeBasedViewGenerator<LogEventRecords, LogEventView> {
+public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEvents, LogEventView> {
 
   @Override
-  public List<LogEventView> process(LogEventRecords logEventRecords) {
-    return logEventRecords.getLogEventRecords().stream()
+  public List<LogEventView> process(LogEvents logEventRecords) {
+    return logEventRecords.getLogEvents().stream()
         .filter(v -> !v.getAttributes().getAttributeMap().isEmpty())
         .map(
             logEventRecord ->
                 LogEventView.newBuilder()
                     .setSpanId(logEventRecord.getSpanId())
                     .setTraceId(logEventRecord.getTraceId())
-                    .setTimeStamp(logEventRecord.getTimeStamp())
-                    .setTenantId(logEventRecord.getCustomerId())
+                    .setTimeStamp(logEventRecord.getTimestampNanos())
+                    .setTenantId(logEventRecord.getTenantId())
                     .setAttributes(convertAttributes(logEventRecord.getAttributes()))
                     .build())
         .collect(Collectors.toList());

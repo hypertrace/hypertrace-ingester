@@ -15,12 +15,12 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.hypertrace.core.datamodel.Attributes;
-import org.hypertrace.core.datamodel.LogEventRecord;
-import org.hypertrace.core.datamodel.LogEventRecords;
+import org.hypertrace.core.datamodel.LogEvent;
+import org.hypertrace.core.datamodel.LogEvents;
 import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
 
 public class JaegerSpanToLogRecordsTransformer
-    implements Transformer<byte[], Span, KeyValue<String, LogEventRecords>> {
+    implements Transformer<byte[], Span, KeyValue<String, LogEvents>> {
 
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
@@ -33,7 +33,7 @@ public class JaegerSpanToLogRecordsTransformer
   }
 
   @Override
-  public KeyValue<String, LogEventRecords> transform(byte[] key, Span value) {
+  public KeyValue<String, LogEvents> transform(byte[] key, Span value) {
     if (value.getLogsCount() == 0) {
       return null;
     }
@@ -55,19 +55,19 @@ public class JaegerSpanToLogRecordsTransformer
     return new KeyValue<>(null, buildLogEventRecords(value, tenantId));
   }
 
-  LogEventRecords buildLogEventRecords(Span value, String tenantId) {
+  LogEvents buildLogEventRecords(Span value, String tenantId) {
     ByteBuffer spanId = value.getSpanId().asReadOnlyByteBuffer();
     ByteBuffer traceId = value.getTraceId().asReadOnlyByteBuffer();
-    return LogEventRecords.newBuilder()
-        .setLogEventRecords(
+    return LogEvents.newBuilder()
+        .setLogEvents(
             value.getLogsList().stream()
                 .map(
                     log ->
-                        LogEventRecord.newBuilder()
-                            .setCustomerId(tenantId)
+                        LogEvent.newBuilder()
+                            .setTenantId(tenantId)
                             .setSpanId(spanId)
                             .setTraceId(traceId)
-                            .setTimeStamp(Timestamps.toMillis(log.getTimestamp()))
+                            .setTimestampNanos(Timestamps.toNanos(log.getTimestamp()))
                             .setAttributes(buildAttributes(log.getFieldsList()))
                             .build())
                 .collect(Collectors.toList()))

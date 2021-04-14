@@ -19,7 +19,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
-import org.hypertrace.core.datamodel.LogEventRecords;
+import org.hypertrace.core.datamodel.LogEvents;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
@@ -126,6 +126,6 @@ class SpanNormalizerTest {
     assertEquals(HexUtils.getHex("1".getBytes()), HexUtils.getHex((value).getEvent().getEventId()));
     assertEquals(SERVICE_NAME, value.getEvent().getServiceName());
 
-    KeyValue<String, LogEventRecords> keyValue = rawLogOutputTopic.readKeyValue();
+    KeyValue<String, LogEvents> keyValue = rawLogOutputTopic.readKeyValue();
   }
 }
