@@ -1,9 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
-import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
-
 import com.google.protobuf.util.Timestamps;
-import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.nio.ByteBuffer;
@@ -20,14 +17,9 @@ import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
 public class JaegerSpanToLogRecordsTransformer
     implements Transformer<byte[], PreProcessedSpan, KeyValue<String, LogEvents>> {
 
-  private TenantIdHandler tenantIdHandler;
-  private SpanFilter spanFilter;
-
   @Override
   public void init(ProcessorContext context) {
-    Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
-    tenantIdHandler = new TenantIdHandler(jobConfig);
-    spanFilter = new SpanFilter(jobConfig);
+    // no-op
   }
 
   @Override
