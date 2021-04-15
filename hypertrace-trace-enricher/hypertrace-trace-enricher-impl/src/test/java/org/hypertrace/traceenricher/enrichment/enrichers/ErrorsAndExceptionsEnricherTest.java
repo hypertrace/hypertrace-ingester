@@ -3,10 +3,16 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.MetricValue;
+import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
@@ -29,15 +35,10 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     Event e = mock(Event.class);
     when(e.getAttributes()).thenReturn(null);
     enricher.enrichEvent(null, e);
-
     e = createMockEvent();
     enricher.enrichEvent(null, e);
 
-    StructuredTrace trace = mock(StructuredTrace.class);
-    when(trace.getAttributes()).thenReturn(null);
-    enricher.enrichTrace(trace);
-
-    trace = createMockStructuredTrace();
+    StructuredTrace trace = createStructuredTrace("test-id", createMockTestEvent());
     enricher.enrichTrace(trace);
   }
 
@@ -81,7 +82,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
   @Test
   public void errorExists() {
     ErrorsAndExceptionsEnricher enricher = new ErrorsAndExceptionsEnricher();
-    Event e1 = createMockEvent();
+    Event e1 = createMockTestEvent();
     Map<String, AttributeValue> attributeValueMap = e1.getAttributes().getAttributeMap();
     attributeValueMap.put(
         Constants.getRawSpanConstant(Error.ERROR_ERROR), AttributeValueCreator.create(true));
@@ -93,7 +94,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
             .getValue());
 
-    Event e2 = createMockEvent();
+    Event e2 = createMockTestEvent();
     attributeValueMap = e2.getAttributes().getAttributeMap();
     attributeValueMap.put(
         Constants.getRawSpanConstant(Error.ERROR_STACK_TRACE),
@@ -106,7 +107,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT))
             .getValue());
 
-    Event e3 = createMockEvent();
+    Event e3 = createMockTestEvent();
     attributeValueMap = e3.getAttributes().getAttributeMap();
     attributeValueMap.put(
         Constants.getRawSpanConstant(Error.ERROR_ERROR).toLowerCase(),
@@ -119,7 +120,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
             .getValue());
 
-    Event e4 = createMockEvent();
+    Event e4 = createMockTestEvent();
     attributeValueMap = e4.getAttributes().getAttributeMap();
     attributeValueMap.put(
         Constants.getRawSpanConstant(Error.ERROR_ERROR).toLowerCase(),
@@ -132,7 +133,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
             .getValue());
 
-    Event e5 = createMockEvent();
+    Event e5 = createMockTestEvent();
     attributeValueMap = e5.getAttributes().getAttributeMap();
     attributeValueMap.put(
         OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue().toLowerCase(),
@@ -145,7 +146,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
             .getValue());
 
-    Event e6 = createMockEvent();
+    Event e6 = createMockTestEvent();
     attributeValueMap = e6.getAttributes().getAttributeMap();
     attributeValueMap.put(
         OTelErrorSemanticConventions.EXCEPTION_STACKTRACE.getValue().toLowerCase(),
@@ -158,14 +159,15 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT))
             .getValue());
 
-    StructuredTrace trace = createMockStructuredTrace();
-    when(trace.getEventList()).thenReturn(Lists.newArrayList(e1, e2, e3, e4, e5, e6));
+    StructuredTrace trace = createStructuredTrace("test-id", e1, e2, e3, e4, e5, e6);
+
     enricher.enrichEvent(trace, e1);
     enricher.enrichEvent(trace, e2);
     enricher.enrichEvent(trace, e3);
     enricher.enrichEvent(trace, e4);
     enricher.enrichEvent(trace, e5);
     enricher.enrichEvent(trace, e6);
+    trace.setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build());
     Assertions.assertEquals(
         1.0d,
         e4.getMetrics()
@@ -193,7 +195,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .getValue());
 
     // Trace itself doesn't have an error since there was no entry span.
-    Assertions.assertFalse(
+    Assertions.assertTrue(
         trace
             .getAttributes()
             .getAttributeMap()
@@ -236,5 +238,29 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
                 Constants.getEnrichedSpanConstant(
                     CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR))
             .getValue());
+  }
+
+  private Event createMockTestEvent() {
+    Map<String, AttributeValue> map = new HashMap<>();
+    Map<String, MetricValue> metricMap = new HashMap<>();
+    map.put("span.kind", AttributeValue.newBuilder().setValue("server").build());
+    map.put("error", AttributeValue.newBuilder().setValue("true").build());
+    map.put("SPAN_TYPE", AttributeValue.newBuilder().setValue("ENTRY").build());
+    metricMap.put("Duration", MetricValue.newBuilder().setValue(4.0).build());
+    Event event =
+        Event.newBuilder()
+            .setCustomerId("customer1")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f9".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(Attributes.newBuilder().setAttributeMap(map).build())
+            .setAttributes(Attributes.newBuilder().setAttributeMap(map).build())
+            .setEventName("test-event")
+            .setStartTimeMillis(1566869077746L)
+            .setEndTimeMillis(1566869077750L)
+            .setMetrics(Metrics.newBuilder().setMetricMap(metricMap).build())
+            .setEventRefList(Collections.emptyList())
+            .build();
+
+    return event;
   }
 }

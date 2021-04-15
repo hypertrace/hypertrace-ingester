@@ -238,6 +238,11 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
             SpanAttributeUtils.getStringAttributeWithDefault(
                 event, EnrichedSpanConstants.API_EXIT_CALLS_ATTRIBUTE, "0")));
 
+    builder.setApiTraceErrorSpanCount(
+        Integer.parseInt(
+            SpanAttributeUtils.getStringAttributeWithDefault(
+                event, EnrichedSpanConstants.API_TRACE_ERROR_SPAN_COUNT_ATTRIBUTE, "0")));
+
     return builder;
   }
 
