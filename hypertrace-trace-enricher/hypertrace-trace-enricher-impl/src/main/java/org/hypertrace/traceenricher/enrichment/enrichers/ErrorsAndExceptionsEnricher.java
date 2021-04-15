@@ -2,10 +2,12 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.MetricValueCreator;
 import org.hypertrace.semantic.convention.utils.error.ErrorSemanticConventionUtils;
@@ -15,6 +17,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.traceenricher.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,11 +67,7 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
   private void enrichErrorDetails(Event event) {
     // Figure out if there are any errors in the event.
-    boolean hasError =
-        ErrorSemanticConventionUtils.checkForError(event)
-            || ErrorSemanticConventionUtils.checkForException(event)
-            || Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL)
-                .equals(EnrichedSpanUtils.getStatus(event));
+    boolean hasError = findIfEventHasError(event);
 
     if (hasError) {
       if (event.getMetrics() == null) {
@@ -86,11 +85,31 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
     }
   }
 
+  private boolean findIfEventHasError(Event event) {
+    return ErrorSemanticConventionUtils.checkForError(event)
+        || ErrorSemanticConventionUtils.checkForException(event)
+        || Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL)
+            .equals(EnrichedSpanUtils.getStatus(event));
+  }
+
   @Override
   public void enrichTrace(StructuredTrace trace) {
     // TODO: There could be other cases where the client which is initiating this transaction
     //  has errored out but the entry span in transaction might be fine (server responded but
     //  client couldn't process it). Those cases should be handled in future.
+
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    for (ApiNode<Event> apiNode : apiTraceGraph.getApiNodeList()) {
+      Optional<Event> entryEvent = apiNode.getEntryApiBoundaryEvent();
+      int apiTraceErrorCount =
+          (int) apiNode.getEvents().stream().filter(this::findIfEventHasError).count();
+      if (entryEvent.isPresent()) {
+        addEnrichedAttribute(
+            entryEvent.get(),
+            EnrichedSpanConstants.API_TRACE_ERROR_SPAN_COUNT_ATTRIBUTE,
+            AttributeValueCreator.create(apiTraceErrorCount));
+      }
+    }
 
     // Find the earliest Event from this trace and check if that's an ENTRY type.
     Event earliestEvent = getEarliestEvent(trace);
@@ -113,7 +132,6 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
                 AttributeValueCreator.create(true));
       }
     }
-
     // Count the no. of errors and exceptions in this trace overall. These need not have caused
     // the trace to error out but it's a good metric to track anyways.
     // Trace is considered to have an error if there is an error in the entry span only.

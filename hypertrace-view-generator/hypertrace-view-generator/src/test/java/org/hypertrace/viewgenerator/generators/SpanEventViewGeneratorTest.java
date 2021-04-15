@@ -217,4 +217,72 @@ public class SpanEventViewGeneratorTest {
     assertEquals(calleeNameCount, list.get(0).getApiCalleeNameCount());
     assertEquals(5, list.get(0).getApiExitCalls());
   }
+
+  @Test
+  public void testApiTraceErrorSpanCount() {
+    StructuredTrace.Builder traceBuilder = StructuredTrace.newBuilder();
+    traceBuilder
+        .setCustomerId("customer1")
+        .setTraceId(ByteBuffer.wrap("sample-trace-id".getBytes()))
+        .setEntityList(
+            Collections.singletonList(
+                Entity.newBuilder()
+                    .setCustomerId("customer1")
+                    .setEntityId("sample-entity-id")
+                    .setEntityName("sample-entity-name")
+                    .setEntityType("SERVICE")
+                    .build()))
+        .setEventList(
+            Collections.singletonList(
+                Event.newBuilder()
+                    .setCustomerId("customer1")
+                    .setEventId(ByteBuffer.wrap("sample-span-id".getBytes()))
+                    .setEventName("sample-span-name")
+                    .setEntityIdList(Collections.singletonList("sample-entity-id"))
+                    .setStartTimeMillis(System.currentTimeMillis())
+                    .setEndTimeMillis(System.currentTimeMillis())
+                    .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
+                    .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
+                    .setEnrichedAttributesBuilder(
+                        Attributes.newBuilder().setAttributeMap(Maps.newHashMap()))
+                    .build()))
+        .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
+        .setEntityEdgeList(new ArrayList<>())
+        .setEventEdgeList(new ArrayList<>())
+        .setEntityEventEdgeList(new ArrayList<>())
+        .setStartTimeMillis(System.currentTimeMillis())
+        .setEndTimeMillis(System.currentTimeMillis());
+
+    StructuredTrace trace = traceBuilder.build();
+    SpanEventViewGenerator spanEventViewGenerator = new SpanEventViewGenerator();
+    List<SpanEventView> list = spanEventViewGenerator.process(trace);
+    assertEquals(0, list.get(0).getApiTraceErrorSpanCount());
+
+    Map<String, AttributeValue> spanAttributes = new HashMap<>();
+    spanAttributes.put(
+        EnrichedSpanConstants.API_TRACE_ERROR_SPAN_COUNT_ATTRIBUTE,
+        AttributeValue.newBuilder().setValue("5").build());
+
+    traceBuilder
+        .setEventList(
+            Collections.singletonList(
+                Event.newBuilder()
+                    .setCustomerId("customer1")
+                    .setEventId(ByteBuffer.wrap("sample-span-id".getBytes()))
+                    .setEventName("sample-span-name")
+                    .setEntityIdList(Collections.singletonList("sample-entity-id"))
+                    .setStartTimeMillis(System.currentTimeMillis())
+                    .setEndTimeMillis(System.currentTimeMillis())
+                    .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
+                    .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
+                    .setEnrichedAttributesBuilder(
+                        Attributes.newBuilder().setAttributeMap(spanAttributes))
+                    .build()))
+        .build();
+
+    trace = traceBuilder.build();
+    spanEventViewGenerator = new SpanEventViewGenerator();
+    list = spanEventViewGenerator.process(trace);
+    assertEquals(5, list.get(0).getApiTraceErrorSpanCount());
+  }
 }
