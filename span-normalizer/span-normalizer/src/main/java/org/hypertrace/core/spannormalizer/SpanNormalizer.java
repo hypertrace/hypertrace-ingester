@@ -16,9 +16,11 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
+import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToAvroRawSpanTransformer;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToLogRecordsTransformer;
+import org.hypertrace.core.spannormalizer.jaeger.PreProcessedSpan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +51,10 @@ public class SpanNormalizer extends KafkaStreamsApp {
       inputStreams.put(inputTopic, inputStream);
     }
 
-    inputStream.transform(JaegerSpanToAvroRawSpanTransformer::new).to(outputTopic);
-    inputStream.transform(JaegerSpanToLogRecordsTransformer::new).to(outputTopicRawLogs);
+    KStream<byte[], PreProcessedSpan> preProcessedStream =
+        inputStream.transform(JaegerSpanPreProcessor::new);
+    preProcessedStream.transform(JaegerSpanToAvroRawSpanTransformer::new).to(outputTopic);
+    preProcessedStream.transform(JaegerSpanToLogRecordsTransformer::new).to(outputTopicRawLogs);
     return streamsBuilder;
   }
 

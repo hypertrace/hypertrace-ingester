@@ -26,6 +26,7 @@ import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -127,5 +128,7 @@ class SpanNormalizerTest {
     assertEquals(SERVICE_NAME, value.getEvent().getServiceName());
 
     KeyValue<String, LogEvents> keyValue = rawLogOutputTopic.readKeyValue();
+    LogEvents logEvents = keyValue.value;
+    Assertions.assertEquals(2, logEvents.getLogEvents().size());
   }
 }

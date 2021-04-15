@@ -1,7 +1,9 @@
 package org.hypertrace.viewgenerator.generators;
 
+import com.google.gson.Gson;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.hypertrace.core.datamodel.Attributes;
@@ -64,5 +66,34 @@ public class LogEventViewGeneratorTest {
     Assertions.assertNotNull(list.get(0).getTraceId());
     Assertions.assertTrue(list.get(0).getTimestampNanos() != 0);
     Assertions.assertNotNull(list.get(0).getAttributes());
+  }
+
+  @Test
+  public void testProcess_attributeMap() {
+    LogEvents logEvents =
+        LogEvents.newBuilder()
+            .setLogEvents(
+                Collections.singletonList(
+                    LogEvent.newBuilder()
+                        .setTenantId("tenant-1")
+                        .setTimestampNanos(System.nanoTime())
+                        .setSpanId(ByteBuffer.wrap("span".getBytes()))
+                        .setTraceId(ByteBuffer.wrap("trace".getBytes()))
+                        .setAttributes(
+                            Attributes.newBuilder()
+                                .setAttributeMap(
+                                    Map.of(
+                                        "k1", AttributeValueCreator.create(10),
+                                        "k2", AttributeValueCreator.create(20)))
+                                .build())
+                        .build()))
+            .build();
+
+    List<LogEventView> list = new LogEventViewGenerator().process(logEvents);
+    Map<String, String> deserializedMap =
+        new Gson().fromJson(list.get(0).getAttributes(), HashMap.class);
+
+    Assertions.assertEquals("10", deserializedMap.get("k1"));
+    Assertions.assertEquals("20", deserializedMap.get("k2"));
   }
 }

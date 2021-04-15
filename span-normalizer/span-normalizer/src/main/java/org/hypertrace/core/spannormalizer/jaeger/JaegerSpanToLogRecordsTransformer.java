@@ -8,8 +8,6 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
@@ -20,7 +18,7 @@ import org.hypertrace.core.datamodel.LogEvents;
 import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
 
 public class JaegerSpanToLogRecordsTransformer
-    implements Transformer<byte[], Span, KeyValue<String, LogEvents>> {
+    implements Transformer<byte[], PreProcessedSpan, KeyValue<String, LogEvents>> {
 
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
@@ -33,22 +31,14 @@ public class JaegerSpanToLogRecordsTransformer
   }
 
   @Override
-  public KeyValue<String, LogEvents> transform(byte[] key, Span value) {
+  public KeyValue<String, LogEvents> transform(byte[] key, PreProcessedSpan preProcessedSpan) {
+    if (null == preProcessedSpan) {
+      return null;
+    }
+    Span value = preProcessedSpan.getSpan();
+    String tenantId = preProcessedSpan.getTenantId();
+
     if (value.getLogsCount() == 0) {
-      return null;
-    }
-    Map<String, JaegerSpanInternalModel.KeyValue> tags =
-        value.getTagsList().stream()
-            .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
-
-    Optional<String> maybeTenantId = tenantIdHandler.getAllowedTenantId(value, tags);
-    if (maybeTenantId.isEmpty()) {
-      return null;
-    }
-
-    String tenantId = maybeTenantId.get();
-
-    if (spanFilter.shouldDropSpan(tags)) {
       return null;
     }
 

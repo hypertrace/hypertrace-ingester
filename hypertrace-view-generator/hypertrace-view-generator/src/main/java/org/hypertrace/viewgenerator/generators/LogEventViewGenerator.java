@@ -1,5 +1,6 @@
 package org.hypertrace.viewgenerator.generators;
 
+import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
       resultMap.put(entry.getKey(), entry.getValue().getValue());
     }
 
-    return resultMap.toString();
+    return new Gson().toJson(resultMap);
   }
 
   @Override
