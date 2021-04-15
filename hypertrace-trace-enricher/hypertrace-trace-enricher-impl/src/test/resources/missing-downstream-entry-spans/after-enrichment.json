@@ -95,6 +95,14 @@
               "value_list": null,
               "value_map": null
             },
+            "API_TRACE_ERROR_SPAN_COUNT": {
+              "value": {
+                "string": "0"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
             "SERVICE_NAME": {
               "value": {
                 "string": "api_01"
