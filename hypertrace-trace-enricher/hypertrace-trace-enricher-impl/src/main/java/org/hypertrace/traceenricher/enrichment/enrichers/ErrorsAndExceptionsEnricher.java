@@ -37,8 +37,6 @@ import org.slf4j.LoggerFactory;
 public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
   private static final Logger LOG = LoggerFactory.getLogger(ErrorsAndExceptionsEnricher.class);
-  private static final String API_TRACE_ERROR_SPAN_COUNT =
-      EnrichedSpanConstants.getValue(ErrorMetrics.API_TRACE_ERROR_SPAN_COUNT);
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -114,7 +112,8 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
           (int) apiNode.getEvents().stream().filter(this::findIfEventHasError).count();
       if (entryEvent.isPresent()) {
         enrichedAttributes.put(
-            API_TRACE_ERROR_SPAN_COUNT, AttributeValueCreator.create(apiTraceErrorCount));
+            EnrichedSpanConstants.API_TRACE_ERROR_SPAN_COUNT_ATTRIBUTE,
+            AttributeValueCreator.create(apiTraceErrorCount));
       }
     }
 

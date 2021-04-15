@@ -24,7 +24,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
-import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 
@@ -93,9 +92,6 @@ public class EnrichedSpanUtils {
           org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER);
   private static final String OTEL_HTTP_USER_AGENT =
       OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue();
-
-  private static final String API_TRACE_ERROR_SPAN_COUNT =
-      EnrichedSpanConstants.getValue(ErrorMetrics.API_TRACE_ERROR_SPAN_COUNT);
 
   @VisibleForTesting
   static final List<String> USER_AGENT_ATTRIBUTES =
@@ -394,10 +390,5 @@ public class EnrichedSpanUtils {
             SpanAttributeUtils.getAttributeValue(event, EnrichedSpanConstants.SPACE_IDS_ATTRIBUTE))
         .map(AttributeValue::getValueList)
         .orElseGet(Collections::emptyList);
-  }
-
-  @Nullable
-  public static String getApiTraceErrorCount(Event event) {
-    return getStringAttribute(event, API_TRACE_ERROR_SPAN_COUNT);
   }
 }
