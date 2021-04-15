@@ -36,12 +36,10 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     Event e = mock(Event.class);
     when(e.getAttributes()).thenReturn(null);
     enricher.enrichEvent(null, e);
-
     e = createMockEvent();
     enricher.enrichEvent(null, e);
 
     StructuredTrace trace = createStructuredTrace("test-id", getEvent());
-
     enricher.enrichTrace(trace);
   }
 
