@@ -94,4 +94,5 @@ enum ErrorMetrics {
     ERROR_METRICS_EXCEPTION_COUNT = 2 [(string_value) = "exception_count"];
     ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS = 3 [(string_value) = "span_count_with_errors"];
     ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS = 4 [(string_value) = "span_count_with_exceptions"];
+    ERROR_API_TRACE_ERROR_COUNT = 5 [(string_value) = "api_trace_error_count"];
 }

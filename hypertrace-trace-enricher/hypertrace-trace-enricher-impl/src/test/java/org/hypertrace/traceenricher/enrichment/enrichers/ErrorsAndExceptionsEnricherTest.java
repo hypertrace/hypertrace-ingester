@@ -4,9 +4,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.EventRef;
+import org.hypertrace.core.datamodel.EventRefType;
+import org.hypertrace.core.datamodel.MetricValue;
+import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
@@ -236,5 +243,44 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
                 Constants.getEnrichedSpanConstant(
                     CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR))
             .getValue());
+  }
+
+  private Event getEvent() {
+    Event event =
+        Event.newBuilder()
+            .setCustomerId("customer1")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f9".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("ENTRY").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "error",
+                            AttributeValue.newBuilder().setValue("true").build()))
+                    .build())
+            .setEventName("test-event")
+            .setStartTimeMillis(1566869077746L)
+            .setEndTimeMillis(1566869077750L)
+            .setMetrics(
+                Metrics.newBuilder()
+                    .setMetricMap(
+                        Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build()))
+                    .build())
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+
+    return event;
   }
 }

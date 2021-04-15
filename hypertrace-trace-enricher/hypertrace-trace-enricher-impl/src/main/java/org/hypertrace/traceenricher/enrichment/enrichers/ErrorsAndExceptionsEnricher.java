@@ -2,10 +2,13 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.MetricValueCreator;
 import org.hypertrace.semantic.convention.utils.error.ErrorSemanticConventionUtils;
@@ -15,6 +18,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.ApiStatus;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.traceenricher.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +37,8 @@ import org.slf4j.LoggerFactory;
 public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
   private static final Logger LOG = LoggerFactory.getLogger(ErrorsAndExceptionsEnricher.class);
+  private static final String API_TRACE_ERROR_COUNT =
+      EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_API_TRACE_ERROR_COUNT);
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -64,11 +70,7 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
   private void enrichErrorDetails(Event event) {
     // Figure out if there are any errors in the event.
-    boolean hasError =
-        ErrorSemanticConventionUtils.checkForError(event)
-            || ErrorSemanticConventionUtils.checkForException(event)
-            || Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL)
-                .equals(EnrichedSpanUtils.getStatus(event));
+    boolean hasError = findIfEventHasError(event);
 
     if (hasError) {
       if (event.getMetrics() == null) {
@@ -84,6 +86,13 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
               EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT),
               MetricValue.newBuilder().setValue(1.0d).build());
     }
+  }
+
+  private boolean findIfEventHasError(Event event) {
+    return ErrorSemanticConventionUtils.checkForError(event)
+        || ErrorSemanticConventionUtils.checkForException(event)
+        || Constants.getEnrichedSpanConstant(ApiStatus.API_STATUS_FAIL)
+            .equals(EnrichedSpanUtils.getStatus(event));
   }
 
   @Override
@@ -157,6 +166,19 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
           .put(
               EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS),
               MetricValueCreator.create(errorCount));
+    }
+
+    Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
+
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    for (ApiNode<Event> apiNode : apiTraceGraph.getApiNodeList()) {
+      Optional<Event> entryEvent = apiNode.getEntryApiBoundaryEvent();
+      int apiTraceErrorCount =
+          (int) apiNode.getEvents().stream().filter(this::findIfEventHasError).count();
+      if (entryEvent.isPresent()) {
+        enrichedAttributes.put(
+            API_TRACE_ERROR_COUNT, AttributeValueCreator.create(apiTraceErrorCount));
+      }
     }
   }
 }
