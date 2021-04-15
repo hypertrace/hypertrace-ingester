@@ -38,7 +38,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
     e = createMockEvent();
     enricher.enrichEvent(null, e);
 
-    StructuredTrace trace = createStructuredTrace("test-id", getEvent());
+    StructuredTrace trace = createStructuredTrace("test-id", createMockTestEvent());
     enricher.enrichTrace(trace);
   }
 
@@ -82,7 +82,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
   @Test
   public void errorExists() {
     ErrorsAndExceptionsEnricher enricher = new ErrorsAndExceptionsEnricher();
-    Event e1 = getEvent();
+    Event e1 = createMockTestEvent();
     Map<String, AttributeValue> attributeValueMap = e1.getAttributes().getAttributeMap();
     attributeValueMap.put(
         Constants.getRawSpanConstant(Error.ERROR_ERROR), AttributeValueCreator.create(true));
@@ -94,7 +94,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
             .getValue());
 
-    Event e2 = getEvent();
+    Event e2 = createMockTestEvent();
     attributeValueMap = e2.getAttributes().getAttributeMap();
     attributeValueMap.put(
         Constants.getRawSpanConstant(Error.ERROR_STACK_TRACE),
@@ -107,7 +107,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT))
             .getValue());
 
-    Event e3 = getEvent();
+    Event e3 = createMockTestEvent();
     attributeValueMap = e3.getAttributes().getAttributeMap();
     attributeValueMap.put(
         Constants.getRawSpanConstant(Error.ERROR_ERROR).toLowerCase(),
@@ -120,7 +120,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
             .getValue());
 
-    Event e4 = getEvent();
+    Event e4 = createMockTestEvent();
     attributeValueMap = e4.getAttributes().getAttributeMap();
     attributeValueMap.put(
         Constants.getRawSpanConstant(Error.ERROR_ERROR).toLowerCase(),
@@ -133,7 +133,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
             .getValue());
 
-    Event e5 = getEvent();
+    Event e5 = createMockTestEvent();
     attributeValueMap = e5.getAttributes().getAttributeMap();
     attributeValueMap.put(
         OTelErrorSemanticConventions.EXCEPTION_TYPE.getValue().toLowerCase(),
@@ -146,7 +146,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .get(Constants.getEnrichedSpanConstant(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))
             .getValue());
 
-    Event e6 = getEvent();
+    Event e6 = createMockTestEvent();
     attributeValueMap = e6.getAttributes().getAttributeMap();
     attributeValueMap.put(
         OTelErrorSemanticConventions.EXCEPTION_STACKTRACE.getValue().toLowerCase(),
@@ -240,7 +240,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .getValue());
   }
 
-  private Event getEvent() {
+  private Event createMockTestEvent() {
     Map<String, AttributeValue> map = new HashMap<>();
     Map<String, MetricValue> metricMap = new HashMap<>();
     map.put("span.kind", AttributeValue.newBuilder().setValue("server").build());

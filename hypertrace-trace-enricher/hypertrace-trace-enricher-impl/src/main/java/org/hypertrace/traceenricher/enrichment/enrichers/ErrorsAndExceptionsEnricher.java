@@ -37,8 +37,8 @@ import org.slf4j.LoggerFactory;
 public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
   private static final Logger LOG = LoggerFactory.getLogger(ErrorsAndExceptionsEnricher.class);
-  private static final String API_TRACE_ERROR_COUNT =
-      EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_API_TRACE_ERROR_COUNT);
+  private static final String API_TRACE_ERROR_SPAN_COUNT =
+      EnrichedSpanConstants.getValue(ErrorMetrics.API_TRACE_ERROR_SPAN_COUNT);
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -101,6 +101,23 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
     //  has errored out but the entry span in transaction might be fine (server responded but
     //  client couldn't process it). Those cases should be handled in future.
 
+    Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
+
+    enrichedAttributes.put(
+        EnrichedSpanConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR),
+        AttributeValueCreator.create(true));
+
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    for (ApiNode<Event> apiNode : apiTraceGraph.getApiNodeList()) {
+      Optional<Event> entryEvent = apiNode.getEntryApiBoundaryEvent();
+      int apiTraceErrorCount =
+          (int) apiNode.getEvents().stream().filter(this::findIfEventHasError).count();
+      if (entryEvent.isPresent()) {
+        enrichedAttributes.put(
+            API_TRACE_ERROR_SPAN_COUNT, AttributeValueCreator.create(apiTraceErrorCount));
+      }
+    }
+
     // Find the earliest Event from this trace and check if that's an ENTRY type.
     Event earliestEvent = getEarliestEvent(trace);
 
@@ -113,13 +130,7 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
               .getMetricMap()
               .containsKey(
                   EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))) {
-        trace
-            .getAttributes()
-            .getAttributeMap()
-            .put(
-                EnrichedSpanConstants.getValue(
-                    CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR),
-                AttributeValueCreator.create(true));
+        trace.getAttributes().setAttributeMap(enrichedAttributes);
       }
     }
 
@@ -166,19 +177,6 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
           .put(
               EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS),
               MetricValueCreator.create(errorCount));
-    }
-
-    Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-    for (ApiNode<Event> apiNode : apiTraceGraph.getApiNodeList()) {
-      Optional<Event> entryEvent = apiNode.getEntryApiBoundaryEvent();
-      int apiTraceErrorCount =
-          (int) apiNode.getEvents().stream().filter(this::findIfEventHasError).count();
-      if (entryEvent.isPresent()) {
-        enrichedAttributes.put(
-            API_TRACE_ERROR_COUNT, AttributeValueCreator.create(apiTraceErrorCount));
-      }
     }
   }
 }

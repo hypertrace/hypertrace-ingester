@@ -94,8 +94,8 @@ public class EnrichedSpanUtils {
   private static final String OTEL_HTTP_USER_AGENT =
       OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue();
 
-  private static final String API_TRACE_ERROR_COUNT =
-      EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_API_TRACE_ERROR_COUNT);
+  private static final String API_TRACE_ERROR_SPAN_COUNT =
+      EnrichedSpanConstants.getValue(ErrorMetrics.API_TRACE_ERROR_SPAN_COUNT);
 
   @VisibleForTesting
   static final List<String> USER_AGENT_ATTRIBUTES =
@@ -398,6 +398,6 @@ public class EnrichedSpanUtils {
 
   @Nullable
   public static String getApiTraceErrorCount(Event event) {
-    return getStringAttribute(event, API_TRACE_ERROR_COUNT);
+    return getStringAttribute(event, API_TRACE_ERROR_SPAN_COUNT);
   }
 }
