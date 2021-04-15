@@ -3,7 +3,6 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +30,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
   private static final Api API_STATUS = Api.API_STATUS;
 
   @Test
-  public void noAttributes() throws IOException {
+  public void noAttributes() {
     ErrorsAndExceptionsEnricher enricher = new ErrorsAndExceptionsEnricher();
     Event e = mock(Event.class);
     when(e.getAttributes()).thenReturn(null);
@@ -81,7 +80,7 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
   }
 
   @Test
-  public void errorExists() throws IOException {
+  public void errorExists() {
     ErrorsAndExceptionsEnricher enricher = new ErrorsAndExceptionsEnricher();
     Event e1 = getEvent();
     Map<String, AttributeValue> attributeValueMap = e1.getAttributes().getAttributeMap();
