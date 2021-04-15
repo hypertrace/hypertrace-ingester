@@ -3,7 +3,6 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
@@ -99,19 +98,14 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
     //  has errored out but the entry span in transaction might be fine (server responded but
     //  client couldn't process it). Those cases should be handled in future.
 
-    Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-
-    enrichedAttributes.put(
-        EnrichedSpanConstants.getValue(CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR),
-        AttributeValueCreator.create(true));
-
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     for (ApiNode<Event> apiNode : apiTraceGraph.getApiNodeList()) {
       Optional<Event> entryEvent = apiNode.getEntryApiBoundaryEvent();
       int apiTraceErrorCount =
           (int) apiNode.getEvents().stream().filter(this::findIfEventHasError).count();
       if (entryEvent.isPresent()) {
-        enrichedAttributes.put(
+        addEnrichedAttribute(
+            entryEvent.get(),
             EnrichedSpanConstants.API_TRACE_ERROR_SPAN_COUNT_ATTRIBUTE,
             AttributeValueCreator.create(apiTraceErrorCount));
       }
@@ -129,10 +123,15 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
               .getMetricMap()
               .containsKey(
                   EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT))) {
-        trace.getAttributes().setAttributeMap(enrichedAttributes);
+        trace
+            .getAttributes()
+            .getAttributeMap()
+            .put(
+                EnrichedSpanConstants.getValue(
+                    CommonAttribute.COMMON_ATTRIBUTE_TRANSACTION_HAS_ERROR),
+                AttributeValueCreator.create(true));
       }
     }
-
     // Count the no. of errors and exceptions in this trace overall. These need not have caused
     // the trace to error out but it's a good metric to track anyways.
     // Trace is considered to have an error if there is an error in the entry span only.
