@@ -101,10 +101,8 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
       return false;
     }
 
-    // if there's no child, but, it is a partial trace, then check if the destination API
-    // And, as destination API can be associated either with service identified by backend resolver
-    // or either with attributes related to peers. As we are using service name as fqn,
-    // we will check using peer.service attribute.
+    // checks the existence of peer service in case if it is a partial trace, and we are missing
+    // its immediate child span.
     String peerServiceName = SpanSemanticConventionUtils.getPeerServiceName(backendSpan);
     if (peerServiceName != null
         && checkIfServiceEntityExists(
