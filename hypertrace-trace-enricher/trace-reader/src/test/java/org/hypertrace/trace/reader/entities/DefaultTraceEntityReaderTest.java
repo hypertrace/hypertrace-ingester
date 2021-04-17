@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import io.reactivex.rxjava3.core.Observable;
@@ -19,6 +20,7 @@ import io.reactivex.rxjava3.core.Single;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
@@ -33,6 +35,7 @@ import org.hypertrace.entity.data.service.v1.MergeAndUpsertEntityRequest.UpsertC
 import org.hypertrace.entity.data.service.v1.MergeAndUpsertEntityRequest.UpsertCondition.Predicate.PredicateOperator;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.entity.type.service.v2.EntityType;
+import org.hypertrace.entity.type.service.v2.EntityType.EntityFormationCondition;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -204,6 +207,42 @@ class DefaultTraceEntityReaderTest {
         .createOrUpdateEntityEventually(any(), eq(expectedCondition), any());
   }
 
+  @Test
+  void enforceFormationConditions() {
+    AttributeMetadata otherAttribute =
+        TEST_ENTITY_NAME_ATTRIBUTE.toBuilder().setKey("other").build();
+    mockSingleEntityType(
+        TEST_ENTITY_TYPE.toBuilder()
+            .addRequiredConditions(
+                EntityFormationCondition.newBuilder()
+                    .setRequiredKey(TEST_ENTITY_NAME_ATTRIBUTE_KEY))
+            .addRequiredConditions(EntityFormationCondition.newBuilder().setRequiredKey("other"))
+            .build());
+    mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE, otherAttribute);
+    mockTenantId();
+    mockEntityUpsert();
+
+    mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
+    mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
+    mockAttributeReadError(otherAttribute);
+    // No "other" attribute, should not form entity
+
+    this.entityReader
+        .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
+        .blockingSubscribe();
+
+    verifyNoInteractions(mockDataClient);
+
+    // Now add "other"
+    mockAttributeRead(otherAttribute, stringLiteral("other-value"));
+
+    this.entityReader
+        .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
+        .blockingSubscribe();
+
+    verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any());
+  }
+
   private void mockTenantId() {
     when(this.mockAttributeReader.getTenantId(TEST_SPAN)).thenReturn(TENANT_ID);
   }
@@ -212,6 +251,12 @@ class DefaultTraceEntityReaderTest {
     when(this.mockAttributeReader.getSpanValue(
             TEST_TRACE, TEST_SPAN, attributeMetadata.getScopeString(), attributeMetadata.getKey()))
         .thenReturn(Single.just(value));
+  }
+
+  private void mockAttributeReadError(AttributeMetadata attributeMetadata) {
+    when(this.mockAttributeReader.getSpanValue(
+            TEST_TRACE, TEST_SPAN, attributeMetadata.getScopeString(), attributeMetadata.getKey()))
+        .thenReturn(Single.error(new NoSuchElementException()));
   }
 
   private void mockEntityUpsert() {
