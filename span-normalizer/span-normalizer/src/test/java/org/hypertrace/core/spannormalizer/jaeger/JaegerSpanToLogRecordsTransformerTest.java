@@ -45,9 +45,12 @@ public class JaegerSpanToLogRecordsTransformerTest {
                             .build()))
             .build();
 
-    LogEvents logEvents = new JaegerSpanToLogRecordsTransformer().buildLogEventRecords(span, "tenant");
+    LogEvents logEvents =
+        new JaegerSpanToLogRecordsTransformer().buildLogEventRecords(span, "tenant");
     Assertions.assertEquals(2, logEvents.getLogEvents().size());
-    Assertions.assertEquals(2, logEvents.getLogEvents().get(0).getAttributes().getAttributeMap().size());
-    Assertions.assertEquals(1, logEvents.getLogEvents().get(1).getAttributes().getAttributeMap().size());
+    Assertions.assertEquals(
+        2, logEvents.getLogEvents().get(0).getAttributes().getAttributeMap().size());
+    Assertions.assertEquals(
+        1, logEvents.getLogEvents().get(1).getAttributes().getAttributeMap().size());
   }
 }
