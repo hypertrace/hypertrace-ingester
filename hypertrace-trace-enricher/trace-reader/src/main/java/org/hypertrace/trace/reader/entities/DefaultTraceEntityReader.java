@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
@@ -26,11 +27,12 @@ import org.hypertrace.entity.data.service.v1.MergeAndUpsertEntityRequest.UpsertC
 import org.hypertrace.entity.data.service.v1.Value;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.entity.type.service.v2.EntityType;
+import org.hypertrace.entity.type.service.v2.EntityType.EntityFormationCondition;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 
+@Slf4j
 class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
     implements TraceEntityReader<T, S> {
-
   private final EntityTypeClient entityTypeClient;
   private final EntityDataClient entityDataClient;
   private final CachingAttributeClient attributeClient;
@@ -133,16 +135,34 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
         attributes.mapOptional(map -> this.extractString(map, entityType.getNameAttributeKey()));
 
     return zip(
-        id,
-        name,
-        attributes,
-        (resolvedId, resolvedName, resolvedAttributeMap) ->
-            Entity.newBuilder()
-                .setEntityId(resolvedId)
-                .setEntityType(entityType.getName())
-                .setEntityName(resolvedName)
-                .putAllAttributes(resolvedAttributeMap)
-                .build());
+            id,
+            name,
+            attributes,
+            (resolvedId, resolvedName, resolvedAttributeMap) ->
+                Entity.newBuilder()
+                    .setEntityId(resolvedId)
+                    .setEntityType(entityType.getName())
+                    .setEntityName(resolvedName)
+                    .putAllAttributes(resolvedAttributeMap)
+                    .build())
+        .filter(entity -> this.canCreateEntity(entityType, entity));
+  }
+
+  private boolean canCreateEntity(EntityType entityType, Entity entity) {
+    return entityType.getRequiredConditionsList().stream()
+        .allMatch(condition -> this.passesFormationCondition(entity, condition));
+  }
+
+  private boolean passesFormationCondition(Entity entity, EntityFormationCondition condition) {
+    switch (condition.getConditionCase()) {
+      case REQUIRED_KEY:
+        return entity.getAttributesMap().containsKey(condition.getRequiredKey());
+      case CONDITION_NOT_SET: // No condition should not filter formation
+        return true;
+      default: // Unrecognized condition
+        log.error("Unrecognized formation condition: {}", condition);
+        return false;
+    }
   }
 
   private Maybe<Map<String, AttributeValue>> resolveAllAttributes(String scope, T trace, S span) {

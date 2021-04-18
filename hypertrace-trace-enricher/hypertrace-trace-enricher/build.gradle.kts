@@ -38,7 +38,7 @@ dependencies {
   implementation("org.hypertrace.core.datamodel:data-model:0.1.14")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.23")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.23")
-  implementation("org.hypertrace.entity.service:entity-service-client:0.6.0")
+  implementation("org.hypertrace.entity.service:entity-service-client:0.6.4")
 
   implementation("com.typesafe:config:1.4.1")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.20")
