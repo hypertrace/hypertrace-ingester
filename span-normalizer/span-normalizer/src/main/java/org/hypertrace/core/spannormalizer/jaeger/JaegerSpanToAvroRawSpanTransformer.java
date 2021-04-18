@@ -41,15 +41,10 @@ public class JaegerSpanToAvroRawSpanTransformer
 
   @Override
   public KeyValue<TraceIdentity, RawSpan> transform(byte[] key, PreProcessedSpan preProcessedSpan) {
-    if (null == preProcessedSpan) {
-      return null;
-    }
     Span value = preProcessedSpan.getSpan();
     String tenantId = preProcessedSpan.getTenantId();
     try {
-      // this is total spans count received. Irrespective of the fact we are able to parse them, or
-      // they have tenantId or not.
-      RawSpan rawSpan = converter.convert(value);
+      RawSpan rawSpan = converter.convert(tenantId, value);
       if (null != rawSpan) {
         // these are spans per tenant that we were able to parse / convert, and had tenantId.
         tenantToSpanReceivedCount

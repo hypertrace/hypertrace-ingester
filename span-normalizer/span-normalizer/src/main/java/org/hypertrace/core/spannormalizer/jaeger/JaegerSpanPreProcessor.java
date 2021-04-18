@@ -2,6 +2,7 @@ package org.hypertrace.core.spannormalizer.jaeger;
 
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
@@ -26,6 +27,16 @@ public class JaegerSpanPreProcessor
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
 
+  public JaegerSpanPreProcessor() {
+    // empty constructor
+  }
+
+  // constructor for testing
+  JaegerSpanPreProcessor(Config jobConfig) {
+    tenantIdHandler = new TenantIdHandler(jobConfig);
+    spanFilter = new SpanFilter(jobConfig);
+  }
+
   @Override
   public void init(ProcessorContext context) {
     Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
@@ -35,12 +46,25 @@ public class JaegerSpanPreProcessor
 
   @Override
   public KeyValue<byte[], PreProcessedSpan> transform(byte[] key, Span value) {
+    // this is total spans count received. Irrespective of the fact we are able to parse them, or
+    // they have tenantId or not.
     statusToSpansCounter
         .computeIfAbsent(
             "received",
             k -> PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k)))
         .increment();
 
+    PreProcessedSpan preProcessedSpan = preProcessSpan(value);
+
+    if (null == preProcessedSpan) {
+      return null;
+    }
+
+    return new KeyValue<>(key, preProcessedSpan);
+  }
+
+  @VisibleForTesting
+  PreProcessedSpan preProcessSpan(Span value) {
     Map<String, JaegerSpanInternalModel.KeyValue> tags =
         value.getTagsList().stream()
             .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
@@ -55,7 +79,8 @@ public class JaegerSpanPreProcessor
     if (spanFilter.shouldDropSpan(tags)) {
       return null;
     }
-    return new KeyValue<>(key, new PreProcessedSpan(tenantId, value));
+
+    return new PreProcessedSpan(tenantId, value);
   }
 
   @Override

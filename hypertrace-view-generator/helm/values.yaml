@@ -78,6 +78,9 @@ viewGenIndividualConfigs:
   view-gen-span-event:
     inputTopic: "enriched-structured-traces"
     outputTopic: "span-event-view"
+  view-gen-log-event:
+    inputTopic: "raw-logs"
+    outputTopic: "log-event-view"
 
 viewGeneratorGroups:
   all-views-generator:
@@ -111,6 +114,7 @@ viewGeneratorGroups:
           - view-gen-raw-traces
           - view-gen-service-call
           - view-gen-span-event
+          - view-gen-log-event
         kafka:
           streams:
             config:
@@ -299,6 +303,42 @@ viewGeneratorGroups:
               bootstrapServers: "bootstrap:9092"
               schemaRegistryUrl: "http://schema-registry-service:8081"
               autoOffsetReset: "latest"
+  logEventView:
+    enabled: false
+    generator:
+      deploymentName: log-event-view-generator
+      podLabels:
+        app: log-event-view-generator
+      deploymentSelectorMatchLabels:
+        app: log-event-view-generator
+      javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      resources:
+        limits:
+          cpu: 0.2
+          memory: 512Mi
+        requests:
+          cpu: 0.1
+          memory: 320Mi
+      serviceConfig:
+        name: log-event-view-generator-config
+        viewgenerators:
+          - view-gen-log-event
+        kafka:
+          streams:
+            config:
+              applicationId: log-event-view-generator
+              metricsRecordingLevel: INFO
+              numStreamThreads: 2
+              bootstrapServers: "bootstrap:9092"
+              schemaRegistryUrl: "http://schema-registry-service:8081"
+              autoOffsetReset: "latest"
+
 
 ############################################
 # Kafka topic creation job                 #
@@ -333,6 +373,12 @@ kafka-topic-creator:
           - retention.bytes=4294967296
           - retention.ms=259200000
       - name: span-event-view
+        replicationFactor: 1
+        partitions: 2
+        configs:
+          - retention.bytes=4294967296
+          - retention.ms=259200000
+      - name: log-event-view
         replicationFactor: 1
         partitions: 2
         configs:

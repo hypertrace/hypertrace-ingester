@@ -47,11 +47,10 @@ import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.spannormalizer.fieldgenerators.FieldsGenerator;
-import org.hypertrace.core.spannormalizer.processor.SpanNormalizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
+public class JaegerSpanNormalizer {
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanNormalizer.class);
 
   /** Service name can be sent against this key as well */
@@ -65,7 +64,6 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
       new ConcurrentHashMap<>();
   private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
   private final TenantIdHandler tenantIdHandler;
-  private final SpanFilter spanFilter;
 
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
@@ -81,30 +79,17 @@ public class JaegerSpanNormalizer implements SpanNormalizer<Span, RawSpan> {
   public JaegerSpanNormalizer(Config config) {
     this.fieldsGenerator = new FieldsGenerator();
     this.tenantIdHandler = new TenantIdHandler(config);
-    this.spanFilter = new SpanFilter(config);
   }
 
   public Timer getSpanNormalizationTimer(String tenantId) {
     return tenantToSpanNormalizationTimer.get(tenantId);
   }
 
-  @Override
   @Nullable
-  public RawSpan convert(Span jaegerSpan) throws Exception {
+  public RawSpan convert(String tenantId, Span jaegerSpan) throws Exception {
     Map<String, KeyValue> tags =
         jaegerSpan.getTagsList().stream()
             .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
-
-    Optional<String> maybeTenantId = tenantIdHandler.getAllowedTenantId(jaegerSpan, tags);
-    if (maybeTenantId.isEmpty()) {
-      return null;
-    }
-
-    String tenantId = maybeTenantId.get();
-
-    if (spanFilter.shouldDropSpan(tags)) {
-      return null;
-    }
 
     // Record the time taken for converting the span, along with the tenant id tag.
     return tenantToSpanNormalizationTimer

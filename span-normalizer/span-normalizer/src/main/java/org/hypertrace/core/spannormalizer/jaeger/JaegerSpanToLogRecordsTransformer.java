@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.util.Timestamps;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
@@ -24,9 +25,6 @@ public class JaegerSpanToLogRecordsTransformer
 
   @Override
   public KeyValue<String, LogEvents> transform(byte[] key, PreProcessedSpan preProcessedSpan) {
-    if (null == preProcessedSpan) {
-      return null;
-    }
     Span value = preProcessedSpan.getSpan();
     String tenantId = preProcessedSpan.getTenantId();
 
@@ -37,6 +35,7 @@ public class JaegerSpanToLogRecordsTransformer
     return new KeyValue<>(null, buildLogEventRecords(value, tenantId));
   }
 
+  @VisibleForTesting
   LogEvents buildLogEventRecords(Span value, String tenantId) {
     ByteBuffer spanId = value.getSpanId().asReadOnlyByteBuffer();
     ByteBuffer traceId = value.getTraceId().asReadOnlyByteBuffer();

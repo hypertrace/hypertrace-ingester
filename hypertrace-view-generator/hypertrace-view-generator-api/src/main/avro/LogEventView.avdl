@@ -4,7 +4,7 @@ protocol LogEventViewProtocol {
   record LogEventView {
     long timestamp_nanos = 0;
 
-    union {null, string } tenant_id = null;
+    union { null, string } tenant_id = null;
 
     union { null, bytes } span_id = null;
 

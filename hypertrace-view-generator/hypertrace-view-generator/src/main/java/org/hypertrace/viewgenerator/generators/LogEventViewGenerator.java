@@ -1,6 +1,7 @@
 package org.hypertrace.viewgenerator.generators;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +41,15 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
     for (Map.Entry<String, AttributeValue> entry : attributes.getAttributeMap().entrySet()) {
       resultMap.put(entry.getKey(), entry.getValue().getValue());
     }
+    String result = null;
 
-    return new Gson().toJson(resultMap);
+    try {
+      result = new ObjectMapper().writeValueAsString(resultMap);
+    } catch (JsonProcessingException e) {
+      // ignore
+    }
+
+    return result;
   }
 
   @Override
