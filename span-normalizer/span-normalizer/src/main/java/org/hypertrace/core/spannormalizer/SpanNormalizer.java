@@ -77,7 +77,9 @@ public class SpanNormalizer extends KafkaStreamsApp {
   @Override
   public List<String> getOutputTopics(Map<String, Object> properties) {
     Config jobConfig = getJobConfig(properties);
-    return List.of(jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY), jobConfig.getString(OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY));
+    return List.of(
+        jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY),
+        jobConfig.getString(OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY));
   }
 
   private Config getJobConfig(Map<String, Object> properties) {
