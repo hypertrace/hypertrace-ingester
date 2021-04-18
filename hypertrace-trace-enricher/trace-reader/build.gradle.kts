@@ -16,6 +16,9 @@ dependencies {
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.4.0")
   implementation("io.reactivex.rxjava3:rxjava:3.0.11")
 
+  annotationProcessor("org.projectlombok:lombok:1.18.20")
+  compileOnly("org.projectlombok:lombok:1.18.20")
+
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("org.mockito:mockito-junit-jupiter:3.8.0")

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
@@ -29,6 +30,7 @@ import org.hypertrace.entity.type.service.v2.EntityType;
 import org.hypertrace.entity.type.service.v2.EntityType.EntityFormationCondition;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 
+@Slf4j
 class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
     implements TraceEntityReader<T, S> {
   private final EntityTypeClient entityTypeClient;
@@ -155,9 +157,11 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
     switch (condition.getConditionCase()) {
       case REQUIRED_KEY:
         return entity.getAttributesMap().containsKey(condition.getRequiredKey());
-      case CONDITION_NOT_SET:
-      default:
+      case CONDITION_NOT_SET: // No condition should not filter formation
         return true;
+      default: // Unrecognized condition
+        log.error("Unrecognized formation condition: {}", condition);
+        return false;
     }
   }
 

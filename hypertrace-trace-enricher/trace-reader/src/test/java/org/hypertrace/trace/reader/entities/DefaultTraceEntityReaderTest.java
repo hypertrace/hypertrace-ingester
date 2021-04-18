@@ -243,6 +243,26 @@ class DefaultTraceEntityReaderTest {
     verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any());
   }
 
+  @Test
+  void skipsUnsetFormationConditions() {
+    mockSingleEntityType(
+        TEST_ENTITY_TYPE.toBuilder()
+            .addRequiredConditions(EntityFormationCondition.newBuilder())
+            .build());
+    mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE);
+    mockTenantId();
+    mockEntityUpsert();
+
+    mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
+    mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
+
+    this.entityReader
+        .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
+        .blockingSubscribe();
+
+    verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any());
+  }
+
   private void mockTenantId() {
     when(this.mockAttributeReader.getTenantId(TEST_SPAN)).thenReturn(TENANT_ID);
   }
