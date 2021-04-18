@@ -27,7 +27,6 @@ public class JaegerSpanToLogRecordsTransformer
   public KeyValue<String, LogEvents> transform(byte[] key, PreProcessedSpan preProcessedSpan) {
     Span value = preProcessedSpan.getSpan();
     String tenantId = preProcessedSpan.getTenantId();
-
     if (value.getLogsCount() == 0) {
       return null;
     }
