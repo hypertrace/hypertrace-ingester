@@ -50,7 +50,7 @@ public class JaegerSpanPreProcessorTest {
     Span span1 =
         Span.newBuilder()
             .setProcess(process)
-            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("key").setVStr("Val").build())
             .build();
     PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span1);
     Assertions.assertEquals("default-tenant", preProcessedSpan.getTenantId());
@@ -65,7 +65,7 @@ public class JaegerSpanPreProcessorTest {
             .setProcess(process)
             .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
             .build();
-    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span1);
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span2);
     Assertions.assertEquals(tenantId, preProcessedSpan.getTenantId());
   }
 
