@@ -1,6 +1,7 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
+import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor.SPANS_COUNTER;
 
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
@@ -23,7 +24,6 @@ public class JaegerSpanToAvroRawSpanTransformer
   private static final Logger LOGGER =
       LoggerFactory.getLogger(JaegerSpanToAvroRawSpanTransformer.class);
 
-  private static final String SPANS_COUNTER = "hypertrace.reported.spans";
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
 

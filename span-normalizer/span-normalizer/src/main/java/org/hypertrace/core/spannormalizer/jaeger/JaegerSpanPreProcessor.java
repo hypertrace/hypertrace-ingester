@@ -16,13 +16,17 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JaegerSpanPreProcessor
     implements Transformer<byte[], Span, KeyValue<byte[], PreProcessedSpan>> {
 
-  private static final String SPANS_COUNTER = "hypertrace.reported.spans";
+  private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
+
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
+  static final String SPANS_COUNTER = "hypertrace.reported.spans";
 
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
@@ -46,21 +50,36 @@ public class JaegerSpanPreProcessor
 
   @Override
   public KeyValue<byte[], PreProcessedSpan> transform(byte[] key, Span value) {
-    // this is total spans count received. Irrespective of the fact we are able to parse them, or
-    // they have tenantId or not.
-    statusToSpansCounter
-        .computeIfAbsent(
-            "received",
-            k -> PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k)))
-        .increment();
+    try {
+      // this is total spans count received. Irrespective of the fact we are able to parse them, or
+      // they have tenantId or not.
+      statusToSpansCounter
+          .computeIfAbsent(
+              "received",
+              k -> PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k)))
+          .increment();
 
-    PreProcessedSpan preProcessedSpan = preProcessSpan(value);
+      PreProcessedSpan preProcessedSpan = preProcessSpan(value);
 
-    if (null == preProcessedSpan) {
+      if (null == preProcessedSpan) {
+        statusToSpansCounter
+            .computeIfAbsent(
+                "dropped",
+                k -> PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k)))
+            .increment();
+        return null;
+      }
+
+      return new KeyValue<>(key, preProcessedSpan);
+    } catch (Exception e) {
+      LOG.debug("Error preprocessing span", e);
+      statusToSpansCounter
+          .computeIfAbsent(
+              "error",
+              k -> PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k)))
+          .increment();
       return null;
     }
-
-    return new KeyValue<>(key, preProcessedSpan);
   }
 
   @VisibleForTesting
