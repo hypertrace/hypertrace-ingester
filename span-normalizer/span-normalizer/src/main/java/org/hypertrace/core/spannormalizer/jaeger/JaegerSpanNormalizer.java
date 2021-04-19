@@ -1,13 +1,10 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.ProtocolStringList;
-import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.Timestamps;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
-import io.jaegertracing.api_v2.JaegerSpanInternalModel.Log;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Timer;
 import java.io.ByteArrayOutputStream;
@@ -205,20 +202,6 @@ public class JaegerSpanNormalizer {
     ProtocolStringList warningsList = jaegerSpan.getWarningsList();
     if (warningsList.size() > 0) {
       jaegerFieldsBuilder.setWarnings(warningsList);
-    }
-    // LOGS - NOTE: This is modeled as a google.protobuf.Any
-    List<JaegerSpanInternalModel.Log> logsList = jaegerSpan.getLogsList();
-    List<String> eventLogsList = new ArrayList<>();
-    if (logsList.size() > 0) {
-      for (Log log : logsList) {
-        try {
-          String json = JsonFormat.printer().omittingInsignificantWhitespace().print(log);
-          eventLogsList.add(json);
-        } catch (InvalidProtocolBufferException e) {
-          LOG.warn("Exception converting log object to JSON", e);
-        }
-      }
-      jaegerFieldsBuilder.setLogs(eventLogsList);
     }
 
     // Jaeger service name can come from either first class field in Span or the tag

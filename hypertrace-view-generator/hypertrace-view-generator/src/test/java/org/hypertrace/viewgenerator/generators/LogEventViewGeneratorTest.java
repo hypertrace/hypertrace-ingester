@@ -1,6 +1,7 @@
 package org.hypertrace.viewgenerator.generators;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.Test;
 
 public class LogEventViewGeneratorTest {
 
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
   @Test
   public void testProcess_emptyLogEvents() {
     LogEvents logEvents =
@@ -26,6 +29,11 @@ public class LogEventViewGeneratorTest {
     List<LogEventView> list = new LogEventViewGenerator().process(logEvents);
     // empty record is generated
     Assertions.assertFalse(list.isEmpty());
+    Assertions.assertEquals(0, list.get(0).getTimestampNanos());
+    Assertions.assertNull(list.get(0).getTraceId());
+    Assertions.assertNull(list.get(0).getSpanId());
+    Assertions.assertNull(list.get(0).getAttributes());
+    Assertions.assertNull(list.get(0).getTenantId());
   }
 
   @Test
@@ -69,7 +77,7 @@ public class LogEventViewGeneratorTest {
   }
 
   @Test
-  public void testProcess_attributeMap() {
+  public void testProcess_attributeMap() throws JsonProcessingException {
     LogEvents logEvents =
         LogEvents.newBuilder()
             .setLogEvents(
@@ -91,7 +99,7 @@ public class LogEventViewGeneratorTest {
 
     List<LogEventView> list = new LogEventViewGenerator().process(logEvents);
     Map<String, String> deserializedMap =
-        new Gson().fromJson(list.get(0).getAttributes(), HashMap.class);
+        OBJECT_MAPPER.readValue(list.get(0).getAttributes(), HashMap.class);
 
     Assertions.assertEquals("10", deserializedMap.get("k1"));
     Assertions.assertEquals("20", deserializedMap.get("k2"));

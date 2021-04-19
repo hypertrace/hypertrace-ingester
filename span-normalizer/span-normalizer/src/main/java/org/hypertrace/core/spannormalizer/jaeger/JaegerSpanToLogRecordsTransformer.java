@@ -14,9 +14,14 @@ import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.LogEvent;
 import org.hypertrace.core.datamodel.LogEvents;
 import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JaegerSpanToLogRecordsTransformer
     implements Transformer<byte[], PreProcessedSpan, KeyValue<String, LogEvents>> {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(JaegerSpanToLogRecordsTransformer.class);
 
   @Override
   public void init(ProcessorContext context) {
@@ -36,22 +41,27 @@ public class JaegerSpanToLogRecordsTransformer
 
   @VisibleForTesting
   LogEvents buildLogEventRecords(Span value, String tenantId) {
-    ByteBuffer spanId = value.getSpanId().asReadOnlyByteBuffer();
-    ByteBuffer traceId = value.getTraceId().asReadOnlyByteBuffer();
-    return LogEvents.newBuilder()
-        .setLogEvents(
-            value.getLogsList().stream()
-                .map(
-                    log ->
-                        LogEvent.newBuilder()
-                            .setTenantId(tenantId)
-                            .setSpanId(spanId)
-                            .setTraceId(traceId)
-                            .setTimestampNanos(Timestamps.toNanos(log.getTimestamp()))
-                            .setAttributes(buildAttributes(log.getFieldsList()))
-                            .build())
-                .collect(Collectors.toList()))
-        .build();
+    try {
+      ByteBuffer spanId = value.getSpanId().asReadOnlyByteBuffer();
+      ByteBuffer traceId = value.getTraceId().asReadOnlyByteBuffer();
+      return LogEvents.newBuilder()
+          .setLogEvents(
+              value.getLogsList().stream()
+                  .map(
+                      log ->
+                          LogEvent.newBuilder()
+                              .setTenantId(tenantId)
+                              .setSpanId(spanId)
+                              .setTraceId(traceId)
+                              .setTimestampNanos(Timestamps.toNanos(log.getTimestamp()))
+                              .setAttributes(buildAttributes(log.getFieldsList()))
+                              .build())
+                  .collect(Collectors.toList()))
+          .build();
+    } catch (Exception e) {
+      LOG.debug("Exception processing log records", e);
+      return null;
+    }
   }
 
   private Attributes buildAttributes(List<JaegerSpanInternalModel.KeyValue> keyValues) {
