@@ -12,12 +12,12 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
-import org.hypertrace.entity.constants.v1.ApiAttribute;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.client.EdsClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
@@ -96,29 +96,21 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
             .get(BACKEND_HOST_ATTR_NAME)
             .getValue()
             .getString();
-    try {
-      boolean serviceExists =
-          entityCache
-              .getFqnToServiceEntityCache()
-              .get(Pair.of(backendSpan.getCustomerId(), fqn))
-              .isPresent();
-      if (serviceExists) {
-        LOGGER.debug(
-            "BackendEntity {} is actually an Existing service entity.", candidateInfo.getEntity());
-        return false;
-      }
-    } catch (ExecutionException ex) {
-      LOGGER.error(
-          "Error getting service entity using FQN:{} from cache for customerId:{}",
-          fqn,
-          backendSpan.getCustomerId());
+
+    if (checkIfServiceEntityExists(backendSpan.getCustomerId(), fqn, candidateInfo.getEntity())) {
+      return false;
     }
 
-    // if there's no child, but, it is a partial trace, then check if the destination API
-    // is internal to the application
-    return !SpanAttributeUtils.containsAttributeKey(
-        backendSpan, EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_ID));
-    // if it couldn't find a child that's not a service
+    // checks the existence of peer service in case if it is a partial trace, and we are missing
+    // its immediate child span.
+    String peerServiceName = SpanSemanticConventionUtils.getPeerServiceName(backendSpan);
+    if (peerServiceName != null
+        && checkIfServiceEntityExists(
+            backendSpan.getCustomerId(), peerServiceName, candidateInfo.getEntity())) {
+      return false;
+    }
+
+    return true;
   }
 
   private void decorateWithBackendEntity(
@@ -142,6 +134,25 @@ public class BackendEntityEnricher extends AbstractTraceEnricher {
     addEntity(trace, event, avroEntity);
     addEnrichedAttributes(event, getAttributesToEnrich(backend));
     addEnrichedAttributes(event, backendInfo.getAttributes());
+  }
+
+  private boolean checkIfServiceEntityExists(
+      String tenantId, String serviceFqn, Entity candidateBackendEntity) {
+    try {
+      boolean serviceExists =
+          entityCache.getFqnToServiceEntityCache().get(Pair.of(tenantId, serviceFqn)).isPresent();
+      if (serviceExists) {
+        LOGGER.debug(
+            "BackendEntity {} is actually an Existing service entity.", candidateBackendEntity);
+      }
+      return serviceExists;
+    } catch (ExecutionException ex) {
+      LOGGER.error(
+          "Error getting service entity using FQN:{} from cache for customerId:{}",
+          serviceFqn,
+          tenantId);
+      return false;
+    }
   }
 
   private Map<String, org.hypertrace.core.datamodel.AttributeValue> getAttributesToEnrich(
