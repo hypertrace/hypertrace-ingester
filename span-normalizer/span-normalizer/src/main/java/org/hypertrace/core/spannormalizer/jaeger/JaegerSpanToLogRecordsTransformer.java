@@ -30,38 +30,38 @@ public class JaegerSpanToLogRecordsTransformer
 
   @Override
   public KeyValue<String, LogEvents> transform(byte[] key, PreProcessedSpan preProcessedSpan) {
-    Span value = preProcessedSpan.getSpan();
-    String tenantId = preProcessedSpan.getTenantId();
-    if (value.getLogsCount() == 0) {
-      return null;
-    }
-
-    return new KeyValue<>(null, buildLogEventRecords(value, tenantId));
-  }
-
-  @VisibleForTesting
-  LogEvents buildLogEventRecords(Span value, String tenantId) {
     try {
-      ByteBuffer spanId = value.getSpanId().asReadOnlyByteBuffer();
-      ByteBuffer traceId = value.getTraceId().asReadOnlyByteBuffer();
-      return LogEvents.newBuilder()
-          .setLogEvents(
-              value.getLogsList().stream()
-                  .map(
-                      log ->
-                          LogEvent.newBuilder()
-                              .setTenantId(tenantId)
-                              .setSpanId(spanId)
-                              .setTraceId(traceId)
-                              .setTimestampNanos(Timestamps.toNanos(log.getTimestamp()))
-                              .setAttributes(buildAttributes(log.getFieldsList()))
-                              .build())
-                  .collect(Collectors.toList()))
-          .build();
+      Span value = preProcessedSpan.getSpan();
+      String tenantId = preProcessedSpan.getTenantId();
+      if (value.getLogsCount() == 0) {
+        return null;
+      }
+
+      return new KeyValue<>(null, buildLogEventRecords(value, tenantId));
     } catch (Exception e) {
       LOG.error("Exception processing log records", e);
       return null;
     }
+  }
+
+  @VisibleForTesting
+  LogEvents buildLogEventRecords(Span value, String tenantId) {
+    ByteBuffer spanId = value.getSpanId().asReadOnlyByteBuffer();
+    ByteBuffer traceId = value.getTraceId().asReadOnlyByteBuffer();
+    return LogEvents.newBuilder()
+        .setLogEvents(
+            value.getLogsList().stream()
+                .map(
+                    log ->
+                        LogEvent.newBuilder()
+                            .setTenantId(tenantId)
+                            .setSpanId(spanId)
+                            .setTraceId(traceId)
+                            .setTimestampNanos(Timestamps.toNanos(log.getTimestamp()))
+                            .setAttributes(buildAttributes(log.getFieldsList()))
+                            .build())
+                .collect(Collectors.toList()))
+        .build();
   }
 
   private Attributes buildAttributes(List<JaegerSpanInternalModel.KeyValue> keyValues) {

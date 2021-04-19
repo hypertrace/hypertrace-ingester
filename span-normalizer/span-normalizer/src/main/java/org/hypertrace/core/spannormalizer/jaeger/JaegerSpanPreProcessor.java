@@ -72,7 +72,7 @@ public class JaegerSpanPreProcessor
 
       return new KeyValue<>(key, preProcessedSpan);
     } catch (Exception e) {
-      LOG.debug("Error preprocessing span", e);
+      LOG.error("Error preprocessing span", e);
       statusToSpansCounter
           .computeIfAbsent(
               "error",
