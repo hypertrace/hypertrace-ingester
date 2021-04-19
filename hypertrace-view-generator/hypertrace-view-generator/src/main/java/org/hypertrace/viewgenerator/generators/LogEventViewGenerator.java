@@ -38,7 +38,7 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
       }
       return list;
     } catch (Exception e) {
-      LOG.debug("Exception processing log records", e);
+      LOG.error("Exception processing log records", e);
       return null;
     }
   }

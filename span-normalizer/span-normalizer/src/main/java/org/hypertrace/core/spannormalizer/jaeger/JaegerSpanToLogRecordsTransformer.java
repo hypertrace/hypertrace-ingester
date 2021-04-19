@@ -59,7 +59,7 @@ public class JaegerSpanToLogRecordsTransformer
                   .collect(Collectors.toList()))
           .build();
     } catch (Exception e) {
-      LOG.debug("Exception processing log records", e);
+      LOG.error("Exception processing log records", e);
       return null;
     }
   }
