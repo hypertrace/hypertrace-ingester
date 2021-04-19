@@ -1,6 +1,7 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
+import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor.SPANS_COUNTER;
 
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
@@ -18,12 +19,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JaegerSpanToAvroRawSpanTransformer
-    implements Transformer<byte[], Span, KeyValue<TraceIdentity, RawSpan>> {
+    implements Transformer<byte[], PreProcessedSpan, KeyValue<TraceIdentity, RawSpan>> {
 
   private static final Logger LOGGER =
       LoggerFactory.getLogger(JaegerSpanToAvroRawSpanTransformer.class);
 
-  private static final String SPANS_COUNTER = "hypertrace.reported.spans";
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
 
@@ -40,19 +40,12 @@ public class JaegerSpanToAvroRawSpanTransformer
   }
 
   @Override
-  public KeyValue<TraceIdentity, RawSpan> transform(byte[] key, Span value) {
+  public KeyValue<TraceIdentity, RawSpan> transform(byte[] key, PreProcessedSpan preProcessedSpan) {
+    Span value = preProcessedSpan.getSpan();
+    String tenantId = preProcessedSpan.getTenantId();
     try {
-      // this is total spans count received. Irrespective of the fact we are able to parse them, or
-      // they have tenantId or not.
-      statusToSpansCounter
-          .computeIfAbsent(
-              "received",
-              k -> PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k)))
-          .increment();
-
-      RawSpan rawSpan = converter.convert(value);
+      RawSpan rawSpan = converter.convert(tenantId, value);
       if (null != rawSpan) {
-        String tenantId = rawSpan.getCustomerId();
         // these are spans per tenant that we were able to parse / convert, and had tenantId.
         tenantToSpanReceivedCount
             .computeIfAbsent(

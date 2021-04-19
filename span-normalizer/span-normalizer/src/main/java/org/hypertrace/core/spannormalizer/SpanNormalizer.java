@@ -2,6 +2,7 @@ package org.hypertrace.core.spannormalizer;
 
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.INPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.OUTPUT_TOPIC_CONFIG_KEY;
+import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 
 import com.typesafe.config.Config;
@@ -15,8 +16,11 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
+import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToAvroRawSpanTransformer;
+import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToLogRecordsTransformer;
+import org.hypertrace.core.spannormalizer.jaeger.PreProcessedSpan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +41,7 @@ public class SpanNormalizer extends KafkaStreamsApp {
     Config jobConfig = getJobConfig(streamsProperties);
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
+    String outputTopicRawLogs = jobConfig.getString(OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY);
 
     KStream<byte[], Span> inputStream = (KStream<byte[], Span>) inputStreams.get(inputTopic);
     if (inputStream == null) {
@@ -46,8 +51,10 @@ public class SpanNormalizer extends KafkaStreamsApp {
       inputStreams.put(inputTopic, inputStream);
     }
 
-    inputStream.transform(JaegerSpanToAvroRawSpanTransformer::new).to(outputTopic);
-
+    KStream<byte[], PreProcessedSpan> preProcessedStream =
+        inputStream.transform(JaegerSpanPreProcessor::new);
+    preProcessedStream.transform(JaegerSpanToAvroRawSpanTransformer::new).to(outputTopic);
+    preProcessedStream.transform(JaegerSpanToLogRecordsTransformer::new).to(outputTopicRawLogs);
     return streamsBuilder;
   }
 
@@ -70,7 +77,9 @@ public class SpanNormalizer extends KafkaStreamsApp {
   @Override
   public List<String> getOutputTopics(Map<String, Object> properties) {
     Config jobConfig = getJobConfig(properties);
-    return Collections.singletonList(jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY));
+    return List.of(
+        jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY),
+        jobConfig.getString(OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY));
   }
 
   private Config getJobConfig(Map<String, Object> properties) {

@@ -32,13 +32,14 @@ dependencies {
 
   // TODO: migrate in core
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.1.25")
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.14")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.15")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.23")
 
   implementation("org.hypertrace.entity.service:entity-service-api:0.6.4")
 
   implementation("org.apache.avro:avro:1.10.2")
   implementation("org.apache.commons:commons-lang3:3.12.0")
+  implementation("com.fasterxml.jackson.core:jackson-databind:2.12.2")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")

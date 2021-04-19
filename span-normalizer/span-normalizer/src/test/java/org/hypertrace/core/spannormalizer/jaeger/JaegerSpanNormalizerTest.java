@@ -1,4 +1,4 @@
-package org.hypertrace.core.spannormalizer;
+package org.hypertrace.core.spannormalizer.jaeger;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -18,7 +18,7 @@ import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
-import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer;
+import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -132,111 +132,6 @@ public class JaegerSpanNormalizerTest {
   }
 
   @Test
-  public void testServiceNameAddedToEvent_excludeTenantIds() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    String anotherTenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(
-        Map.of(
-            "processor",
-            Map.of("tenantIdTagKey", "tenant-key", "excludeTenantIds", List.of(tenantId))));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
-    Process process = Process.newBuilder().setServiceName("testService").build();
-    Span span1 =
-        Span.newBuilder()
-            .setProcess(process)
-            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
-            .build();
-    RawSpan rawSpan1 = normalizer.convert(span1);
-    Assertions.assertNull(rawSpan1);
-
-    Span span2 =
-        Span.newBuilder()
-            .setProcess(process)
-            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(anotherTenantId).build())
-            .build();
-    RawSpan rawSpan2 = normalizer.convert(span2);
-    Assertions.assertNotNull(rawSpan2);
-  }
-
-  @Test
-  public void testSpanDropCriterion() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(
-        Map.of(
-            "processor",
-            Map.of("tenantIdTagKey", "tenant-key", "spanDropCriterion", List.of("foo:bar,k1:v1"))));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
-    Process process = Process.newBuilder().setServiceName("testService").build();
-    Span span1 =
-        Span.newBuilder()
-            .setProcess(process)
-            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
-            .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
-            .build();
-    RawSpan rawSpan1 = normalizer.convert(span1);
-    Assertions.assertNotNull(rawSpan1);
-
-    Span span2 =
-        Span.newBuilder()
-            .setProcess(process)
-            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
-            .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
-            .addTags(KeyValue.newBuilder().setKey("k1").setVStr("v1").build())
-            .build();
-    RawSpan rawSpan2 = normalizer.convert(span2);
-    Assertions.assertNull(rawSpan2);
-  }
-
-  @Test
-  public void testDropSpanWithMultipleCriterion() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(
-        Map.of(
-            "processor",
-            Map.of(
-                "tenantIdTagKey",
-                "tenant-key",
-                "spanDropCriterion",
-                List.of("foo:bar,k1:v1", "k2:v2"))));
-
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
-    Process process = Process.newBuilder().setServiceName("testService").build();
-    Span span3 =
-        Span.newBuilder()
-            .setProcess(process)
-            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
-            .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
-            .addTags(KeyValue.newBuilder().setKey("k2").setVStr("v2").build())
-            .build();
-    RawSpan rawSpan3 = normalizer.convert(span3);
-    Assertions.assertNull(rawSpan3);
-  }
-
-  @Test
-  public void testDropSpanWithEmptyCriterion() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(
-        Map.of(
-            "processor", Map.of("tenantIdTagKey", "tenant-key", "spanDropCriterion", List.of())));
-
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
-    Process process = Process.newBuilder().setServiceName("testService").build();
-    Span span3 =
-        Span.newBuilder()
-            .setProcess(process)
-            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
-            .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
-            .addTags(KeyValue.newBuilder().setKey("k2").setVStr("v2").build())
-            .build();
-    RawSpan rawSpan3 = normalizer.convert(span3);
-    Assertions.assertNotNull(rawSpan3);
-  }
-
-  @Test
   public void testServiceNameAddedToEvent() throws Exception {
     String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
@@ -244,7 +139,7 @@ public class JaegerSpanNormalizerTest {
     JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span = Span.newBuilder().setProcess(process).build();
-    RawSpan rawSpan = normalizer.convert(span);
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
     Assertions.assertEquals("testService", rawSpan.getEvent().getServiceName());
     Assertions.assertEquals(
         "testService",
@@ -266,7 +161,7 @@ public class JaegerSpanNormalizerTest {
                     .setKey(JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY)
                     .setVStr("testService"))
             .build();
-    rawSpan = normalizer.convert(span);
+    rawSpan = normalizer.convert("tenant-key", span);
     Assertions.assertEquals("testService", rawSpan.getEvent().getServiceName());
     Assertions.assertEquals(
         "testService",
@@ -285,7 +180,7 @@ public class JaegerSpanNormalizerTest {
         Span.newBuilder()
             .addTags(KeyValue.newBuilder().setKey("someKey").setVStr("someValue"))
             .build();
-    rawSpan = normalizer.convert(span);
+    rawSpan = normalizer.convert("tenant-key", span);
     Assertions.assertNull(rawSpan.getEvent().getServiceName());
     Assertions.assertNotNull(rawSpan.getEvent().getAttributes().getAttributeMap());
     Assertions.assertNull(
@@ -305,7 +200,7 @@ public class JaegerSpanNormalizerTest {
     Process process = Process.newBuilder().build();
     Span span = Span.newBuilder().setProcess(process).build();
 
-    RawSpan rawSpan = normalizer.convert(span);
+    RawSpan rawSpan = normalizer.convert(tenantId, span);
     Assertions.assertNull(rawSpan.getEvent().getServiceName());
     Assertions.assertNull(
         rawSpan

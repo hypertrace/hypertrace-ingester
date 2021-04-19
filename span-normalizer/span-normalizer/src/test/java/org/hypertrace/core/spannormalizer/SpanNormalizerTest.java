@@ -3,9 +3,11 @@ package org.hypertrace.core.spannormalizer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Timestamp;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
+import io.jaegertracing.api_v2.JaegerSpanInternalModel.Log;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,12 +19,14 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.hypertrace.core.datamodel.LogEvents;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -75,6 +79,12 @@ class SpanNormalizerTest {
             spanIdentitySerde.deserializer(),
             rawSpanSerde.deserializer());
 
+    TestOutputTopic rawLogOutputTopic =
+        td.createOutputTopic(
+            config.getString(SpanNormalizerConstants.OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY),
+            spanIdentitySerde.deserializer(),
+            new AvroSerde<>().deserializer());
+
     Span span =
         Span.newBuilder()
             .setSpanId(ByteString.copyFrom("1".getBytes()))
@@ -84,6 +94,27 @@ class SpanNormalizerTest {
                     .setKey("jaeger.servicename")
                     .setVStr(SERVICE_NAME)
                     .build())
+            .addLogs(
+                Log.newBuilder()
+                    .setTimestamp(Timestamp.newBuilder().setSeconds(5).build())
+                    .addFields(
+                        JaegerSpanInternalModel.KeyValue.newBuilder()
+                            .setKey("e1")
+                            .setVStr("some event detail")
+                            .build())
+                    .addFields(
+                        JaegerSpanInternalModel.KeyValue.newBuilder()
+                            .setKey("e2")
+                            .setVStr("some event detail")
+                            .build()))
+            .addLogs(
+                Log.newBuilder()
+                    .setTimestamp(Timestamp.newBuilder().setSeconds(10).build())
+                    .addFields(
+                        JaegerSpanInternalModel.KeyValue.newBuilder()
+                            .setKey("z2")
+                            .setVStr("some event detail")
+                            .build()))
             .build();
     inputTopic.pipeInput(span);
 
@@ -95,5 +126,9 @@ class SpanNormalizerTest {
     RawSpan value = kv.value;
     assertEquals(HexUtils.getHex("1".getBytes()), HexUtils.getHex((value).getEvent().getEventId()));
     assertEquals(SERVICE_NAME, value.getEvent().getServiceName());
+
+    KeyValue<String, LogEvents> keyValue = rawLogOutputTopic.readKeyValue();
+    LogEvents logEvents = keyValue.value;
+    Assertions.assertEquals(2, logEvents.getLogEvents().size());
   }
 }
