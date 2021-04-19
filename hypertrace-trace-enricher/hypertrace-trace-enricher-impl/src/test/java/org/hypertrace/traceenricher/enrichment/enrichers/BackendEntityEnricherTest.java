@@ -13,7 +13,10 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
+import org.hypertrace.entity.data.service.v1.AttributeValue;
+import org.hypertrace.entity.data.service.v1.ByTypeAndIdentifyingAttributes;
 import org.hypertrace.entity.data.service.v1.Entity;
+import org.hypertrace.entity.data.service.v1.Value;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
@@ -198,6 +201,196 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
     enricher.enrichTrace(trace);
 
     // assert that backend has been created for above event
+    Assertions.assertNotNull(EnrichedSpanUtils.getBackendId(e));
+    Assertions.assertNotNull(EnrichedSpanUtils.getBackendName(e));
+  }
+
+  @Test
+  public void test_EnrichTrace_ExternalBackendNotResolvedAsServiceExists() {
+    String eventName = "service exists";
+    String backendName = "external-backend";
+    String serviceId = "serviceId";
+
+    AttributeValue fqnAttribute =
+        AttributeValue.newBuilder().setValue(Value.newBuilder().setString(backendName)).build();
+
+    ByTypeAndIdentifyingAttributes request =
+        ByTypeAndIdentifyingAttributes.newBuilder()
+            .setEntityType(EntityType.SERVICE.name())
+            .putIdentifyingAttributes(
+                EntityConstants.getValue(
+                    org.hypertrace.entity.constants.v1.CommonAttribute.COMMON_ATTRIBUTE_FQN),
+                fqnAttribute)
+            .build();
+
+    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(request)))
+        .thenReturn(Entity.newBuilder().setEntityId(serviceId).build());
+
+    // for broken event service and peer service are different
+    Event.Builder eventBuilder =
+        createApiExitEvent(EVENT_ID)
+            .setEventName(eventName)
+            .setEnrichedAttributes(createNewAvroAttributes(Map.of("PROTOCOL", "HTTPS")));
+
+    eventBuilder
+        .getHttpBuilder()
+        .getRequestBuilder()
+        .setHost(backendName)
+        .setScheme("https")
+        .setPath("/abc/v1/book");
+
+    Event e = eventBuilder.build();
+
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+    enricher.enrichTrace(trace);
+
+    // assert that backend has been created
+    Assertions.assertNull(EnrichedSpanUtils.getBackendId(e));
+    Assertions.assertNull(EnrichedSpanUtils.getBackendName(e));
+  }
+
+  @Test
+  public void test_EnrichTrace_ExternalBackendNotResolvedAsPeerServiceExists() {
+    String eventName = "service exists";
+    String backendName = "external-backend";
+    String serviceId = "serviceId";
+    String peerService = "peerService";
+
+    // return false for backend service name identified by http backend resolver
+    AttributeValue fqnAttribute =
+        AttributeValue.newBuilder().setValue(Value.newBuilder().setString(backendName)).build();
+
+    ByTypeAndIdentifyingAttributes request =
+        ByTypeAndIdentifyingAttributes.newBuilder()
+            .setEntityType(EntityType.SERVICE.name())
+            .putIdentifyingAttributes(
+                EntityConstants.getValue(
+                    org.hypertrace.entity.constants.v1.CommonAttribute.COMMON_ATTRIBUTE_FQN),
+                fqnAttribute)
+            .build();
+
+    // check for if service exists for peer service
+    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(request))).thenReturn(null);
+
+    AttributeValue fqnAttributePeerService =
+        AttributeValue.newBuilder().setValue(Value.newBuilder().setString(peerService)).build();
+
+    ByTypeAndIdentifyingAttributes requestPeerService =
+        ByTypeAndIdentifyingAttributes.newBuilder()
+            .setEntityType(EntityType.SERVICE.name())
+            .putIdentifyingAttributes(
+                EntityConstants.getValue(
+                    org.hypertrace.entity.constants.v1.CommonAttribute.COMMON_ATTRIBUTE_FQN),
+                fqnAttributePeerService)
+            .build();
+
+    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(requestPeerService)))
+        .thenReturn(Entity.newBuilder().setEntityId(serviceId).build());
+
+    // for broken event service and peer service are different
+    Event.Builder eventBuilder =
+        createApiExitEvent(EVENT_ID, backendName, peerService)
+            .setEventName(eventName)
+            .setEnrichedAttributes(createNewAvroAttributes(Map.of("PROTOCOL", "HTTPS")));
+
+    eventBuilder
+        .getHttpBuilder()
+        .getRequestBuilder()
+        .setHost(backendName)
+        .setScheme("https")
+        .setPath("/abc/v1/book");
+
+    Event e = eventBuilder.build();
+
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+    enricher.enrichTrace(trace);
+
+    // assert that backend has been created
+    Assertions.assertNull(EnrichedSpanUtils.getBackendId(e));
+    Assertions.assertNull(EnrichedSpanUtils.getBackendName(e));
+  }
+
+  @Test
+  public void test_EnrichTrace_ExternalBackendResolved() {
+    String eventName = "backend created";
+    String backendName = "external-backend";
+    String backendId = "backendId";
+    String peerService = "peerService";
+
+    // return false for backend service name identified by http backend resolver
+    AttributeValue fqnAttribute =
+        AttributeValue.newBuilder().setValue(Value.newBuilder().setString(backendName)).build();
+
+    ByTypeAndIdentifyingAttributes request =
+        ByTypeAndIdentifyingAttributes.newBuilder()
+            .setEntityType(EntityType.SERVICE.name())
+            .putIdentifyingAttributes(
+                EntityConstants.getValue(
+                    org.hypertrace.entity.constants.v1.CommonAttribute.COMMON_ATTRIBUTE_FQN),
+                fqnAttribute)
+            .build();
+
+    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(request))).thenReturn(null);
+
+    // return false for peer service name as part of span
+    AttributeValue fqnAttributePeerService =
+        AttributeValue.newBuilder().setValue(Value.newBuilder().setString(peerService)).build();
+
+    ByTypeAndIdentifyingAttributes requestPeerService =
+        ByTypeAndIdentifyingAttributes.newBuilder()
+            .setEntityType(EntityType.SERVICE.name())
+            .putIdentifyingAttributes(
+                EntityConstants.getValue(
+                    org.hypertrace.entity.constants.v1.CommonAttribute.COMMON_ATTRIBUTE_FQN),
+                fqnAttributePeerService)
+            .build();
+
+    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(requestPeerService)))
+        .thenReturn(null);
+
+    // create backend entity
+    Map<String, String> identifyingAttributes =
+        Map.of(
+            BACKEND_PROTOCOL_ATTR_NAME, "HTTPS",
+            BACKEND_HOST_ATTR_NAME, backendName,
+            BACKEND_PORT_ATTR_NAME, "-1");
+    Map<String, String> attributes =
+        Map.of(
+            "FROM_EVENT",
+            eventName,
+            "FROM_EVENT_ID",
+            HexUtils.getHex(ByteBuffer.wrap(EVENT_ID.getBytes())),
+            "BACKEND_PATH",
+            "/abc/v1/book");
+    Entity backendEntity =
+        createEntity(EntityType.BACKEND, backendName, identifyingAttributes, attributes, TENANT_ID);
+
+    when(edsClient.upsert(eq(backendEntity)))
+        .thenReturn(
+            Entity.newBuilder(backendEntity)
+                .setEntityId(backendId)
+                .putAllAttributes(createEdsAttributes(identifyingAttributes))
+                .build());
+
+    // for broken event service and peer service are different
+    Event.Builder eventBuilder =
+        createApiExitEvent(EVENT_ID, backendName, peerService)
+            .setEventName(eventName)
+            .setEnrichedAttributes(createNewAvroAttributes(Map.of("PROTOCOL", "HTTPS")));
+
+    eventBuilder
+        .getHttpBuilder()
+        .getRequestBuilder()
+        .setHost(backendName)
+        .setScheme("https")
+        .setPath("/abc/v1/book");
+
+    Event e = eventBuilder.build();
+
+    StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
+    enricher.enrichTrace(trace);
+
+    // assert that backend has been created
     Assertions.assertNotNull(EnrichedSpanUtils.getBackendId(e));
     Assertions.assertNotNull(EnrichedSpanUtils.getBackendName(e));
   }
