@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.EventRef;
@@ -58,7 +59,8 @@ public class ViewGeneratorState {
         List<EventRef> eventRefs = eventMap.get(childEventId).getEventRefList();
         if (eventRefs != null) {
           eventRefs.stream()
-              .filter(eventRef -> EventRefType.CHILD_OF == eventRef.getRefType())
+              .filter(eventRef -> EventRefType.CHILD_OF == eventRef.getRefType()
+                  || EventRefType.FOLLOWS_FROM == eventRef.getRefType())
               .forEach(
                   eventRef -> {
                     ByteBuffer parentEventId = eventRef.getEventId();
@@ -70,6 +72,22 @@ public class ViewGeneratorState {
         }
         // expected only 1 childOf relationship
       }
+    }
+
+    private ByteBuffer getParentEventId(Event event) {
+      Map<Boolean, List<EventRef>> referenceSplits = event.getEventRefList().stream()
+          .collect(Collectors.partitioningBy(eventRef -> eventRef.getRefType() == EventRefType.CHILD_OF));
+
+      List<EventRef> childEventRef = referenceSplits.get(true);
+      if (childEventRef != null && childEventRef.size() > 0) {
+        return childEventRef.get(0).getEventId();
+      } else {
+        List<EventRef> followFromEventRef = referenceSplits.get(false);
+        if (followFromEventRef!= null && followFromEventRef.size() == 1) {
+          return followFromEventRef.get(0).getEventId();
+        }
+      }
+      return null;
     }
 
     public StructuredTrace getTrace() {
