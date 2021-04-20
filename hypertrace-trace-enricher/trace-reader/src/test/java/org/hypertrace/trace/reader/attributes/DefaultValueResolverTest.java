@@ -311,4 +311,70 @@ class DefaultValueResolverTest {
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
             .blockingGet());
   }
+
+  @Test
+  void resolvesFirstAttributeProjection() {
+    AttributeMetadata metadata =
+        AttributeMetadata.newBuilder()
+            .setScopeString("TEST_SCOPE")
+            .setType(AttributeType.ATTRIBUTE)
+            .setValueKind(AttributeKind.TYPE_INT64)
+            .setDefinition(
+                AttributeDefinition.newBuilder()
+                    .setFirstValuePresent(
+                        AttributeDefinitions.newBuilder()
+                            .addDefinitions( // Should be empty and skipped
+                                AttributeDefinition.newBuilder().setSourcePath("non.existent"))
+                            .addDefinitions(
+                                AttributeDefinition.newBuilder()
+                                    .setProjection(
+                                        Projection.newBuilder()
+                                            .setLiteral(
+                                                LiteralValue.newBuilder()
+                                                    .setStringValue("expected-value"))))))
+            .build();
+
+    Event span = defaultedEventBuilder().build();
+
+    assertEquals(
+        stringLiteral("expected-value"),
+        this.resolver
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
+            .blockingGet());
+  }
+
+  @Test
+  void resolvesNestedFirstAttribute() {
+    AttributeMetadata metadata =
+        AttributeMetadata.newBuilder()
+            .setScopeString("TEST_SCOPE")
+            .setType(AttributeType.ATTRIBUTE)
+            .setValueKind(AttributeKind.TYPE_INT64)
+            .setDefinition(
+                AttributeDefinition.newBuilder()
+                    .setFirstValuePresent(
+                        AttributeDefinitions.newBuilder()
+                            .addDefinitions( // Should be empty and skipped
+                                AttributeDefinition.newBuilder().setSourcePath("non.existent"))
+                            .addDefinitions(
+                                AttributeDefinition.newBuilder()
+                                    .setFirstValuePresent(
+                                        AttributeDefinitions.newBuilder()
+                                            .addDefinitions(
+                                                AttributeDefinition.newBuilder()
+                                                    .setSourcePath("non.existent.other"))
+                                            .addDefinitions(
+                                                AttributeDefinition.newBuilder()
+                                                    .setSourceField(
+                                                        SourceField.SOURCE_FIELD_START_TIME))))))
+            .build();
+
+    Event span = defaultedEventBuilder().setStartTimeMillis(13).build();
+
+    assertEquals(
+        longLiteral(13),
+        this.resolver
+            .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
+            .blockingGet());
+  }
 }
