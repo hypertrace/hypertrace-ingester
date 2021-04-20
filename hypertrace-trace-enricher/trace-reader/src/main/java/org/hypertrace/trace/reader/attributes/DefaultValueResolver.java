@@ -57,16 +57,13 @@ class DefaultValueResolver implements ValueResolver {
             attributeMetadata.getValueKind(),
             definition.getSourcePath());
       case PROJECTION:
-        return this.resolveProjection(
-            valueSource, attributeMetadata.getDefinition().getProjection());
+        return this.resolveProjection(valueSource, definition.getProjection());
       case SOURCE_FIELD:
         return this.resolveField(
             valueSource, definition.getSourceField(), attributeMetadata.getValueKind());
       case FIRST_VALUE_PRESENT:
         return this.resolveFirstValuePresent(
-            valueSource,
-            attributeMetadata,
-            attributeMetadata.getDefinition().getFirstValuePresent());
+            valueSource, attributeMetadata, definition.getFirstValuePresent());
       case VALUE_NOT_SET:
       default:
         return this.buildError("Unrecognized attribute definition");
