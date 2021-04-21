@@ -56,34 +56,30 @@ public class ViewGeneratorState {
 
       for (Event event : trace.getEventList()) {
         ByteBuffer childEventId = event.getEventId();
-        List<EventRef> eventRefs = eventMap.get(childEventId).getEventRefList();
-        if (eventRefs != null) {
-          eventRefs.stream()
-              .filter(eventRef -> EventRefType.CHILD_OF == eventRef.getRefType()
-                  || EventRefType.FOLLOWS_FROM == eventRef.getRefType())
-              .forEach(
-                  eventRef -> {
-                    ByteBuffer parentEventId = eventRef.getEventId();
-                    parentToChildrenEventIds
-                        .computeIfAbsent(parentEventId, v -> new ArrayList<>())
-                        .add(childEventId);
-                    childToParentEventIds.put(childEventId, parentEventId);
-                  });
+        ByteBuffer parentEventId = getParentEventId(event);
+        if (parentEventId != null) {
+          parentToChildrenEventIds
+              .computeIfAbsent(parentEventId, v -> new ArrayList<>())
+              .add(childEventId);
+          childToParentEventIds.put(childEventId, parentEventId);
         }
-        // expected only 1 childOf relationship
       }
     }
 
+    // expected only 1 childOf relationship
     private ByteBuffer getParentEventId(Event event) {
-      Map<Boolean, List<EventRef>> referenceSplits = event.getEventRefList().stream()
-          .collect(Collectors.partitioningBy(eventRef -> eventRef.getRefType() == EventRefType.CHILD_OF));
+      Map<Boolean, List<EventRef>> referenceSplits =
+          event.getEventRefList().stream()
+              .collect(
+                  Collectors.partitioningBy(
+                      eventRef -> eventRef.getRefType() == EventRefType.CHILD_OF));
 
       List<EventRef> childEventRef = referenceSplits.get(true);
       if (childEventRef != null && childEventRef.size() > 0) {
         return childEventRef.get(0).getEventId();
       } else {
         List<EventRef> followFromEventRef = referenceSplits.get(false);
-        if (followFromEventRef!= null && followFromEventRef.size() == 1) {
+        if (followFromEventRef != null && followFromEventRef.size() == 1) {
           return followFromEventRef.get(0).getEventId();
         }
       }
