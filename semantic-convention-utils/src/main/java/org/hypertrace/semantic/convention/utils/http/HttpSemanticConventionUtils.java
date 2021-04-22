@@ -56,12 +56,6 @@ public class HttpSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTEL_HTTP_TARGET));
   }
 
-  public static Optional<String> getHttpTarget(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForHttpTarget()));
-  }
-
   /**
    * OTel mandates one of the following set to be present for http server span - http.scheme,
    * http.host, http.target - http.scheme, http.server_name, net.host.port, http.target -
