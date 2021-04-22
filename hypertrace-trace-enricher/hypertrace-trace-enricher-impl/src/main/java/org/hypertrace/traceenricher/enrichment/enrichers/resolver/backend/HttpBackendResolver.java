@@ -68,8 +68,7 @@ public class HttpBackendResolver extends AbstractBackendResolver {
       }
 
       if (StringUtils.isNotEmpty(path)) {
-        enrichedAttributes.put(
-            BACKEND_DESTINATION_ATTR, AttributeValueCreator.create(path));
+        enrichedAttributes.put(BACKEND_DESTINATION_ATTR, AttributeValueCreator.create(path));
       }
       return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
     }
