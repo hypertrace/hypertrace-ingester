@@ -92,8 +92,11 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
       return Maybe.empty();
     }
 
-    return this.attributeClient
-        .get(entityType.getAttributeScope(), entityType.getTimestampAttributeKey())
+    return spanTenantContext(span)
+        .wrapSingle(
+            () ->
+                this.attributeClient.get(
+                    entityType.getAttributeScope(), entityType.getTimestampAttributeKey()))
         .filter(this::isEntitySourced)
         .flatMap(
             attribute ->
