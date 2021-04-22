@@ -166,7 +166,9 @@ public class BackendResolverTest extends AbstractAttributeEnricherTest {
 
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(
-        Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("/product/5d644175551847d7408760b1")),
+        Map.of(
+            "BACKEND_DESTINATION",
+            AttributeValueCreator.create("/product/5d644175551847d7408760b1")),
         attributes);
   }
 
