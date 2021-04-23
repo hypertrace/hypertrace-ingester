@@ -41,7 +41,7 @@ dependencies {
   implementation("org.hypertrace.entity.service:entity-service-client:0.6.4")
 
   implementation("com.typesafe:config:1.4.1")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.20")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
   constraints {
     runtimeOnly("io.netty:netty-codec-http2:4.1.63.Final") {
       because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
