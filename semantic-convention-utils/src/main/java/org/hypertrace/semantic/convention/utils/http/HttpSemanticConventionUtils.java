@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
-import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -54,12 +52,6 @@ public class HttpSemanticConventionUtils {
 
   public static List<String> getAttributeKeysForHttpTarget() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_HTTP_TARGET));
-  }
-
-  public static Optional<String> getHttpTarget(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForHttpTarget()));
   }
 
   /**
