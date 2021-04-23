@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.avro.Schema;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -21,6 +22,8 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
   private static final Logger LOG = LoggerFactory.getLogger(LogEventViewGenerator.class);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+  private static final List<String> SUMMARY_KEYS = List.of("message", "body", "event");
+
   @Override
   public List<LogEventView> process(LogEvents logEvents) {
     try {
@@ -33,6 +36,7 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
                 .setTimestampNanos(logEventRecord.getTimestampNanos())
                 .setTenantId(logEventRecord.getTenantId())
                 .setAttributes(convertAttributes(logEventRecord.getAttributes()))
+                .setSummary(getSummary(logEventRecord.getAttributes()))
                 .build();
         list.add(build);
       }
@@ -41,6 +45,19 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
       LOG.error("Exception processing log records", e);
       return null;
     }
+  }
+
+  private String getSummary(Attributes attributes) {
+    if (null == attributes
+        || null == attributes.getAttributeMap()
+        || attributes.getAttributeMap().isEmpty()) {
+      return null;
+    }
+    Map<String, AttributeValue> attributeValueMap = attributes.getAttributeMap();
+    Optional<String> summary =
+        SUMMARY_KEYS.stream().filter(attributeValueMap::containsKey).findFirst();
+    return summary.orElseGet(
+        () -> attributeValueMap.entrySet().stream().findFirst().get().getValue().getValue());
   }
 
   private String convertAttributes(Attributes attributes) throws JsonProcessingException {
