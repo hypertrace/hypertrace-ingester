@@ -22,6 +22,9 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
   private static final Logger LOG = LoggerFactory.getLogger(LogEventViewGenerator.class);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+  // refer following links for attribute keys in log message
+  // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
+  // https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/logs/v1/logs.proto#L108
   private static final List<String> SUMMARY_KEYS = List.of("message", "body", "event");
 
   @Override
@@ -48,9 +51,7 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
   }
 
   private String getSummary(Attributes attributes) {
-    if (null == attributes
-        || null == attributes.getAttributeMap()
-        || attributes.getAttributeMap().isEmpty()) {
+    if (isEmpty(attributes)) {
       return null;
     }
     Map<String, AttributeValue> attributeValueMap = attributes.getAttributeMap();
@@ -61,9 +62,7 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
   }
 
   private String convertAttributes(Attributes attributes) throws JsonProcessingException {
-    if (null == attributes
-        || null == attributes.getAttributeMap()
-        || attributes.getAttributeMap().isEmpty()) {
+    if (isEmpty(attributes)) {
       return null;
     }
     Map<String, String> resultMap = new HashMap<>();
@@ -73,6 +72,12 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
     }
 
     return OBJECT_MAPPER.writeValueAsString(resultMap);
+  }
+
+  private boolean isEmpty(Attributes attributes) {
+    return (null == attributes
+        || null == attributes.getAttributeMap()
+        || attributes.getAttributeMap().isEmpty());
   }
 
   @Override
