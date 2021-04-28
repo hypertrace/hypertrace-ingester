@@ -7,11 +7,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.avro.Schema;
+import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.LogEvent;
 import org.hypertrace.core.datamodel.LogEvents;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.viewgenerator.JavaCodeBasedViewGenerator;
 import org.hypertrace.viewgenerator.api.LogEventView;
 import org.slf4j.Logger;
@@ -21,6 +25,11 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
 
   private static final Logger LOG = LoggerFactory.getLogger(LogEventViewGenerator.class);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+  private static final String LOG_EVENT_ATTRIBUTE_SIZE_METRIC =
+      "hypertrace.log.event.attribute.size";
+  private static final Map<String, AtomicInteger> logEventAttributeSizeGauge =
+      new ConcurrentHashMap<>();
 
   // refer following links for attribute keys in log message
   // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
@@ -32,16 +41,28 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
     try {
       List<LogEventView> list = new ArrayList<>();
       for (LogEvent logEventRecord : logEvents.getLogEvents()) {
-        LogEventView build =
+        String attributes = convertAttributes(logEventRecord.getAttributes());
+        LogEventView logEventView =
             LogEventView.newBuilder()
                 .setSpanId(logEventRecord.getSpanId())
                 .setTraceId(logEventRecord.getTraceId())
                 .setTimestampNanos(logEventRecord.getTimestampNanos())
                 .setTenantId(logEventRecord.getTenantId())
-                .setAttributes(convertAttributes(logEventRecord.getAttributes()))
+                .setAttributes(attributes)
                 .setSummary(getSummary(logEventRecord.getAttributes()))
                 .build();
-        list.add(build);
+        if (!StringUtils.isEmpty(logEventRecord.getTenantId()) && null != attributes) {
+          logEventAttributeSizeGauge
+              .computeIfAbsent(
+                  logEventRecord.getTenantId(),
+                  v ->
+                      PlatformMetricsRegistry.registerGauge(
+                          LOG_EVENT_ATTRIBUTE_SIZE_METRIC,
+                          Map.of("tenantId", logEventRecord.getTenantId()),
+                          new AtomicInteger(0)))
+              .set(attributes.length());
+        }
+        list.add(logEventView);
       }
       return list;
     } catch (Exception e) {
