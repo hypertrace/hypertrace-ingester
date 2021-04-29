@@ -25,6 +25,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +51,7 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
   private static String BACKEND_OPERATION_ATTR =
       EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
 
-  private BackendEntityEnricher enricher;
+  private AbstractBackendEntityEnricher enricher;
   private EntityCache entityCache;
 
   @Mock private EdsCacheClient edsClient;
@@ -58,7 +59,7 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
 
   @BeforeEach
   public void setup() {
-    enricher = new BackendEntityEnricher();
+    enricher = new AbstractBackendEntityEnricher();
     entityCache = new EntityCache(edsClient);
     when(clientRegistry.getEdsCacheClient()).thenReturn(edsClient);
     when(clientRegistry.getEntityCache()).thenReturn(entityCache);
