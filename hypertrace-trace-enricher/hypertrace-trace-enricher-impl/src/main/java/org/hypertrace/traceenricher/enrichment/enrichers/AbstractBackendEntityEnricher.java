@@ -22,8 +22,8 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
-import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.AbstractBackendResolver;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.AbstractBackendResolver;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
 import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
@@ -226,7 +226,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return AttributeValueCreator.create(attr.getValue().getString());
   }
 
-  public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
+  private Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
     for (AbstractBackendResolver backendResolver : getBackendResolvers()) {
       Optional<BackendInfo> backendInfo = backendResolver.resolve(event, structuredTraceGraph);
       if (backendInfo.isPresent()) {
