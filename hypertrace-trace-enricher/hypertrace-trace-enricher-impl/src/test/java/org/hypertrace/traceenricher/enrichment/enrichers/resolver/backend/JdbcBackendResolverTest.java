@@ -25,8 +25,6 @@ import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.hypertrace.traceenricher.enrichment.enrichers.backend.BackendInfo;
-import org.hypertrace.traceenricher.enrichment.enrichers.backend.resolver.JdbcBackendResolver;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

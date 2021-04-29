@@ -16,8 +16,6 @@ import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
-import org.hypertrace.traceenricher.enrichment.enrichers.backend.BackendInfo;
-import org.hypertrace.traceenricher.enrichment.enrichers.backend.resolver.RabbitMqBackendResolver;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
