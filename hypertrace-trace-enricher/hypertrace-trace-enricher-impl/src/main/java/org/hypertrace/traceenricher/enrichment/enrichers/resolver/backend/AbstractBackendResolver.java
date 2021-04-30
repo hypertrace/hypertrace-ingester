@@ -26,7 +26,6 @@ public abstract class AbstractBackendResolver {
   private static final String BACKEND_PORT_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT);
   private static final String DEFAULT_PORT = "-1";
-  private static final String SVC_CLUSTER_LOCAL_SUFFIX = ".svc.cluster.local";
 
   private final FqnResolver fqnResolver;
 
