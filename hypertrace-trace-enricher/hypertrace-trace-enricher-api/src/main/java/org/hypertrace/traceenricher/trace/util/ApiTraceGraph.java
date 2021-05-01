@@ -113,7 +113,6 @@ public class ApiTraceGraph {
     if (!apiNodeIdxToEdges.containsKey(idx)) {
       return Collections.emptyList();
     }
-
     return apiNodeIdxToEdges.get(apiNodeToIndex.get(apiNode)).stream()
         .map(apiNodeEventEdgeList::get)
         .collect(Collectors.toList());
