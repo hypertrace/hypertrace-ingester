@@ -58,20 +58,24 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
   // entity.
   @Override
   public void enrichTrace(StructuredTrace trace) {
-    StructuredTraceGraph structuredTraceGraph = buildGraph(trace);
-    trace.getEventList().stream()
-        // filter leaf exit spans only
-        .filter(
-            event ->
-                EnrichedSpanUtils.isExitSpan(event)
-                    && SpanAttributeUtils.isLeafSpan(structuredTraceGraph, event))
-        // resolve backend entity
-        .map(event -> Pair.of(event, resolve(event, structuredTraceGraph)))
-        .filter(pair -> pair.getRight().isPresent())
-        // check if backend entity is valid
-        .filter(pair -> isValidBackendEntity(pair.getLeft(), pair.getRight().get()))
-        // decorate event/trace with backend entity attributes
-        .forEach(pair -> decorateWithBackendEntity(pair.getRight().get(), pair.getLeft(), trace));
+    try {
+      StructuredTraceGraph structuredTraceGraph = buildGraph(trace);
+      trace.getEventList().stream()
+          // filter leaf exit spans only
+          .filter(
+              event ->
+                  EnrichedSpanUtils.isExitSpan(event)
+                      && SpanAttributeUtils.isLeafSpan(structuredTraceGraph, event))
+          // resolve backend entity
+          .map(event -> Pair.of(event, resolve(event, structuredTraceGraph)))
+          .filter(pair -> pair.getRight().isPresent())
+          // check if backend entity is valid
+          .filter(pair -> isValidBackendEntity(pair.getLeft(), pair.getRight().get()))
+          // decorate event/trace with backend entity attributes
+          .forEach(pair -> decorateWithBackendEntity(pair.getRight().get(), pair.getLeft(), trace));
+    } catch (Exception ex) {
+      LOGGER.error("An error occurred while enriching backend", ex);
+    }
   }
 
   /** Checks if the candidateEntity is indeed a backend Entity */
