@@ -61,7 +61,6 @@ public class HttpBackendResolver extends AbstractBackendResolver {
           EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
           createAttributeValue(path));
     }
-
     entityAttributes.putAll(
         getAttributesForFirstExistingKey(
             event, HttpSemanticConventionUtils.getAttributeKeysForHttpMethod()));
@@ -79,7 +78,7 @@ public class HttpBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<String> getBackendDestination(Event event) {
-    return HttpSemanticConventionUtils.getHttpTarget(event);
+    return getHttpRequest(event).map(Request::getPath).filter(StringUtils::isNotEmpty);
   }
 
   private Protocol getProtocol() {

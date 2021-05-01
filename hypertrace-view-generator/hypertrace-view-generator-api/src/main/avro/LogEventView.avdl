@@ -11,5 +11,7 @@ protocol LogEventViewProtocol {
     union { null, bytes } trace_id = null;
 
     union { null, string } attributes = null;
+
+    union { null, string } summary = null;
   }
 }
