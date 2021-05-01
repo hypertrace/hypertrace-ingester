@@ -106,7 +106,7 @@ public abstract class AbstractBackendResolver {
     String host = hostAndPort[0];
     String port = (hostAndPort.length == 2) ? hostAndPort[1] : DEFAULT_PORT;
     String fqn = fqnResolver.resolve(host, event);
-    String entityName = port.equals(DEFAULT_PORT) ? host : COLON_JOINER.join(host, port);
+    String entityName = port.equals(DEFAULT_PORT) ? fqn : COLON_JOINER.join(fqn, port);
     final Builder entityBuilder =
         org.hypertrace.entity.data.service.v1.Entity.newBuilder()
             .setEntityType(EntityType.BACKEND.name())

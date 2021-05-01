@@ -28,11 +28,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class HttpBackendResolverTest {
-
-  private static final String MONGO_URL = "mongo:27017";
-  private static final String SERVICE_NAME_ATTR =
-      EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
-
   private FqnResolver fqnResolver;
   private HttpBackendResolver backendResolver;
   private StructuredTraceGraph structuredTraceGraph;
