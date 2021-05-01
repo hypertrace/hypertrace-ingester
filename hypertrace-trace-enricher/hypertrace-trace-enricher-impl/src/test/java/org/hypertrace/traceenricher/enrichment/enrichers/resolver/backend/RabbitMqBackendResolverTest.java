@@ -23,12 +23,14 @@ import org.junit.jupiter.api.Test;
 /** Unit test for {@link RabbitMqBackendResolver} */
 public class RabbitMqBackendResolverTest {
 
+  private FqnResolver fqnResolver;
   private RabbitMqBackendResolver rabbitMqBackendResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    rabbitMqBackendResolver = new RabbitMqBackendResolver();
+    fqnResolver = new HypertraceFqnResolver();
+    rabbitMqBackendResolver = new RabbitMqBackendResolver(fqnResolver);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 

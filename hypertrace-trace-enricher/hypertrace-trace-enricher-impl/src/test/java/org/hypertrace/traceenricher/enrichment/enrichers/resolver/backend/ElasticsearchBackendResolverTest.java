@@ -21,12 +21,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class ElasticsearchBackendResolverTest {
+  private FqnResolver fqnResolver;
   private ElasticSearchBackendResolver elasticsSarchBackendResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    elasticsSarchBackendResolver = new ElasticSearchBackendResolver();
+    fqnResolver = new HypertraceFqnResolver();
+    elasticsSarchBackendResolver = new ElasticSearchBackendResolver(fqnResolver);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 

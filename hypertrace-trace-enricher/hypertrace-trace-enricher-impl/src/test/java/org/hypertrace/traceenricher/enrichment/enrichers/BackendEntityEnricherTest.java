@@ -22,7 +22,6 @@ import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
-import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
@@ -47,10 +46,8 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST);
   private static final String BACKEND_PORT_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT);
-  private static String BACKEND_OPERATION_ATTR =
-      EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
 
-  private AbstractBackendEntityEnricher enricher;
+  private BackendEntityEnricher enricher;
   private EntityCache entityCache;
 
   @Mock private EdsCacheClient edsClient;
@@ -58,7 +55,7 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
 
   @BeforeEach
   public void setup() {
-    enricher = new AbstractBackendEntityEnricher();
+    enricher = new BackendEntityEnricher();
     entityCache = new EntityCache(edsClient);
     when(clientRegistry.getEdsCacheClient()).thenReturn(edsClient);
     when(clientRegistry.getEntityCache()).thenReturn(entityCache);

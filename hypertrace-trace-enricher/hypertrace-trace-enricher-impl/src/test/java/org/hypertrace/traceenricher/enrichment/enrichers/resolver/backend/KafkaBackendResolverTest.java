@@ -23,12 +23,14 @@ import org.junit.jupiter.api.Test;
 /** Unit Test for {@link KafkaBackendResolver} */
 public class KafkaBackendResolverTest {
 
+  private FqnResolver fqnResolver;
   private KafkaBackendResolver kafkaBackendResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    kafkaBackendResolver = new KafkaBackendResolver();
+    fqnResolver = new HypertraceFqnResolver();
+    kafkaBackendResolver = new KafkaBackendResolver(fqnResolver);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 

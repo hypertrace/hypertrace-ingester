@@ -33,12 +33,14 @@ import org.junit.jupiter.api.Test;
 /** Unit tests for {@link JdbcBackendResolver} */
 public class JdbcBackendResolverTest {
 
+  private FqnResolver fqnResolver;
   private JdbcBackendResolver jdbcBackendResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    jdbcBackendResolver = new JdbcBackendResolver();
+    this.fqnResolver = new HypertraceFqnResolver();
+    jdbcBackendResolver = new JdbcBackendResolver(fqnResolver);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -420,5 +422,196 @@ public class JdbcBackendResolverTest {
 
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("SELECT")), attributes);
+  }
+
+  @Test
+  public void checkBackendEntityGeneratedFromJdbcEvent() {
+    Event e =
+        Event.newBuilder()
+            .setCustomerId("__default")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "sql.url",
+                            AttributeValue.newBuilder()
+                                .setValue("jdbc:mysql://mysql:3306/shop")
+                                .build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "sql.query",
+                            AttributeValue.newBuilder()
+                                .setValue("insert into audit_message (message, id) values (?, ?)")
+                                .build(),
+                            "k8s.pod_id",
+                            AttributeValue.newBuilder()
+                                .setValue("55636196-c840-11e9-a417-42010a8a0064")
+                                .build(),
+                            "db.operation",
+                            AttributeValue.newBuilder().setValue("select").build(),
+                            "docker.container_id",
+                            AttributeValue.newBuilder()
+                                .setValue(
+                                    "ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f")
+                                .build(),
+                            "FLAGS",
+                            AttributeValue.newBuilder().setValue("0").build()))
+                    .build())
+            .setEventName("jdbc.connection.prepare")
+            .setStartTimeMillis(1566869077746L)
+            .setEndTimeMillis(1566869077750L)
+            .setMetrics(
+                Metrics.newBuilder()
+                    .setMetricMap(
+                        Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build()))
+                    .build())
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    final Entity backendEntity = backendInfo.getEntity();
+    assertEquals("mysql:3306", backendEntity.getEntityName());
+    assertEquals(3, backendEntity.getIdentifyingAttributesCount());
+    Assertions.assertEquals(
+        BackendType.JDBC.name(),
+        backendEntity
+            .getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
+            .getValue()
+            .getString());
+    assertEquals(
+        "mysql",
+        backendEntity
+            .getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST))
+            .getValue()
+            .getString());
+    assertEquals(
+        "3306",
+        backendEntity
+            .getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT))
+            .getValue()
+            .getString());
+    assertEquals(
+        "mysql",
+        backendEntity
+            .getAttributesMap()
+            .get(Constants.getRawSpanConstant(Sql.SQL_DB_TYPE))
+            .getValue()
+            .getString());
+    assertEquals(
+        "jdbc.connection.prepare",
+        backendEntity
+            .getAttributesMap()
+            .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT))
+            .getValue()
+            .getString());
+    assertEquals(
+        "62646630336466616266356337306638",
+        backendEntity
+            .getAttributesMap()
+            .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID))
+            .getValue()
+            .getString());
+
+    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")), attributes);
+  }
+
+  @Test
+  public void testGetBackendEntity() {
+    Event e =
+        Event.newBuilder()
+            .setCustomerId("__default")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "sql.url",
+                            AttributeValue.newBuilder()
+                                .setValue("jdbc:mysql://mysql:3306/shop")
+                                .build(),
+                            "span.kind",
+                            AttributeValue.newBuilder().setValue("client").build(),
+                            "sql.query",
+                            AttributeValue.newBuilder()
+                                .setValue("insert into audit_message (message, id) values (?, ?)")
+                                .build(),
+                            "k8s.pod_id",
+                            AttributeValue.newBuilder()
+                                .setValue("55636196-c840-11e9-a417-42010a8a0064")
+                                .build(),
+                            "docker.container_id",
+                            AttributeValue.newBuilder()
+                                .setValue(
+                                    "ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f")
+                                .build(),
+                            "FLAGS",
+                            AttributeValue.newBuilder().setValue("0").build()))
+                    .build())
+            .setEventName("jdbc.connection.prepare")
+            .setStartTimeMillis(1566869077746L)
+            .setEndTimeMillis(1566869077750L)
+            .setMetrics(
+                Metrics.newBuilder()
+                    .setMetricMap(
+                        Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build()))
+                    .build())
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+    Entity backendEntity = jdbcBackendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    Map<String, org.hypertrace.entity.data.service.v1.AttributeValue> idAttrMap =
+        backendEntity.getIdentifyingAttributesMap();
+    assertEquals(
+        "mysql",
+        idAttrMap
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST))
+            .getValue()
+            .getString());
+    assertEquals(
+        "3306",
+        idAttrMap
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT))
+            .getValue()
+            .getString());
+    assertEquals(
+        "JDBC",
+        idAttrMap
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
+            .getValue()
+            .getString());
+    assertEquals(
+        "mysql",
+        backendEntity
+            .getAttributesMap()
+            .get(Constants.getRawSpanConstant(Sql.SQL_DB_TYPE))
+            .getValue()
+            .getString());
   }
 }

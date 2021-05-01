@@ -22,12 +22,14 @@ import org.junit.jupiter.api.Test;
 
 public class CassandraBackendResolverTest {
 
+  private FqnResolver fqnResolver;
   private CassandraBackendResolver cassandraBackendResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    cassandraBackendResolver = new CassandraBackendResolver();
+    fqnResolver = new HypertraceFqnResolver();
+    cassandraBackendResolver = new CassandraBackendResolver(fqnResolver);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 

@@ -19,6 +19,7 @@ import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.RedisB
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.SqsBackendResolver;
 
 public class BackendEntityEnricher extends AbstractBackendEntityEnricher {
+
   private FqnResolver fqnResolver;
 
   @Override

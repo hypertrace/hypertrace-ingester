@@ -24,12 +24,14 @@ import org.junit.jupiter.api.Test;
 
 public class SqsBackendResolverTest {
 
+  private FqnResolver fqnResolver;
   private SqsBackendResolver sqsBackendResolver;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    sqsBackendResolver = new SqsBackendResolver();
+    fqnResolver = new HypertraceFqnResolver();
+    sqsBackendResolver = new SqsBackendResolver(fqnResolver);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 

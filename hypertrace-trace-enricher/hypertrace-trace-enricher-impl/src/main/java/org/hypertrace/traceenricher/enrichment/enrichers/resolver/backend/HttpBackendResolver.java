@@ -1,82 +1,92 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValue;
-import static org.hypertrace.traceenricher.util.EnricherUtil.setAttributeForFirstExistingKey;
+import static org.hypertrace.traceenricher.util.EnricherUtil.getAttributesForFirstExistingKey;
 
+import com.google.common.base.Suppliers;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
-import org.hypertrace.entity.data.service.v1.Entity.Builder;
+import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
-import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
-import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class HttpBackendResolver extends AbstractBackendResolver {
-  private static final Logger LOGGER = LoggerFactory.getLogger(HttpBackendResolver.class);
-  private static final String BACKEND_OPERATION_ATTR =
-      EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
-  private static final String BACKEND_DESTINATION_ATTR =
-      EnrichedSpanConstants.getValue(Backend.BACKEND_DESTINATION);
-
   public HttpBackendResolver(FqnResolver fqnResolver) {
     super(fqnResolver);
   }
 
+  private Supplier<Protocol> protocolSupplier;
+
   @Override
-  public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
-    Protocol protocol = EnrichedSpanUtils.getProtocol(event);
+  public void init(Event event) {
+    this.protocolSupplier = Suppliers.memoize(() -> EnrichedSpanUtils.getProtocol(event))::get;
+  }
 
-    if (protocol == Protocol.PROTOCOL_HTTP || protocol == Protocol.PROTOCOL_HTTPS) {
-      Optional<Request> httpRequest =
-          Optional.ofNullable(event.getHttp())
-              .map(org.hypertrace.core.datamodel.eventfields.http.Http::getRequest);
-      String backend = httpRequest.map(Request::getHost).orElse(null);
-      String path = httpRequest.map(Request::getPath).orElse(null);
+  @Override
+  public boolean isValidBackend(Event event) {
+    Protocol protocol = getProtocol();
+    return protocol == Protocol.PROTOCOL_HTTP || protocol == Protocol.PROTOCOL_HTTPS;
+  }
 
-      if (StringUtils.isEmpty(backend)) {
-        // Shouldn't reach here.
-        LOGGER.warn("Unable to infer a http backend from event: {}", event);
-        return Optional.empty();
-      }
+  @Override
+  public BackendType getBackendType(Event event) {
+    Protocol protocol = getProtocol();
+    return protocol == Protocol.PROTOCOL_HTTPS ? BackendType.HTTPS : BackendType.HTTP;
+  }
 
-      BackendType type =
-          (protocol == Protocol.PROTOCOL_HTTPS) ? BackendType.HTTPS : BackendType.HTTP;
-      final Builder entityBuilder = getBackendEntityBuilder(type, backend, event);
-      if (StringUtils.isNotEmpty(path)) {
-        entityBuilder.putAttributes(
-            EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
-            createAttributeValue(path));
-      }
-      setAttributeForFirstExistingKey(
-          event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpMethod());
-      setAttributeForFirstExistingKey(
-          event, entityBuilder, HttpSemanticConventionUtils.getAttributeKeysForHttpRequestMethod());
+  @Override
+  public Optional<String> getBackendUri(Event event, StructuredTraceGraph structuredTraceGraph) {
+    return getHttpRequest(event).map(Request::getHost);
+  }
 
-      Map<String, AttributeValue> enrichedAttributes = new HashMap<>();
-      String httpOperation = httpRequest.map(Request::getMethod).orElse(null);
-      if (httpOperation != null) {
-        enrichedAttributes.put(BACKEND_OPERATION_ATTR, AttributeValueCreator.create(httpOperation));
-      }
-      Optional<String> httpDestination = HttpSemanticConventionUtils.getHttpTarget(event);
-      httpDestination.ifPresent(
-          destination ->
-              enrichedAttributes.put(
-                  BACKEND_DESTINATION_ATTR, AttributeValueCreator.create(destination)));
-      return Optional.of(new BackendInfo(entityBuilder.build(), enrichedAttributes));
+  @Override
+  public Map<String, AttributeValue> getEntityAttributes(Event event) {
+    Map<String, AttributeValue> entityAttributes = new HashMap<>();
+
+    String path = getHttpRequest(event).map(Request::getPath).orElse(null);
+    if (StringUtils.isNotEmpty(path)) {
+      entityAttributes.put(
+          EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
+          createAttributeValue(path));
     }
-    return Optional.empty();
+
+    entityAttributes.putAll(
+        getAttributesForFirstExistingKey(
+            event, HttpSemanticConventionUtils.getAttributeKeysForHttpMethod()));
+    entityAttributes.putAll(
+        getAttributesForFirstExistingKey(
+            event, HttpSemanticConventionUtils.getAttributeKeysForHttpRequestMethod()));
+
+    return Collections.unmodifiableMap(entityAttributes);
+  }
+
+  @Override
+  public Optional<String> getBackendOperation(Event event) {
+    return getHttpRequest(event).map(Request::getMethod);
+  }
+
+  @Override
+  public Optional<String> getBackendDestination(Event event) {
+    return HttpSemanticConventionUtils.getHttpTarget(event);
+  }
+
+  private Protocol getProtocol() {
+    return this.protocolSupplier.get();
+  }
+
+  private Optional<Request> getHttpRequest(Event event) {
+    return Optional.ofNullable(event.getHttp()).map(Http::getRequest);
   }
 }
