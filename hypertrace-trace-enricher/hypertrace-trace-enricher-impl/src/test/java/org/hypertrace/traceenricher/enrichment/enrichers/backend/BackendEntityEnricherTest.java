@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.enrichment.enrichers;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -22,9 +22,10 @@ import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
-import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.enrichers.AbstractAttributeEnricherTest;
+import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,8 +48,6 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_HOST);
   private static final String BACKEND_PORT_ATTR_NAME =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PORT);
-  private static String BACKEND_OPERATION_ATTR =
-      EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
 
   private BackendEntityEnricher enricher;
   private EntityCache entityCache;
