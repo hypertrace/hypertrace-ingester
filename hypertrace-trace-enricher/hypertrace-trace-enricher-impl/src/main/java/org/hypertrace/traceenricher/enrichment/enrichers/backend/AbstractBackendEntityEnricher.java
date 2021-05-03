@@ -72,6 +72,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     LOGGER.info("Initialize BackendEntityEnricher with Config: {}", enricherConfig.toString());
     this.edsClient = clientRegistry.getEdsCacheClient();
     this.entityCache = clientRegistry.getEntityCache();
+    setup(enricherConfig, clientRegistry);
     this.fqnResolver = getFqnResolver();
   }
 
