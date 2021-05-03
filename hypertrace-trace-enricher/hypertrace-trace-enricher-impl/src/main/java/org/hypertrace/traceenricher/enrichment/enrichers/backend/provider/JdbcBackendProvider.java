@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValue;
 
@@ -25,15 +25,11 @@ import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JdbcBackendResolver extends AbstractBackendResolver {
-  private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBackendResolver.class);
+public class JdbcBackendProvider implements BackendProvider {
+  private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBackendProvider.class);
   private static final String JDBC_EVENT_PREFIX = "jdbc";
   private static final RateLimiter INVALID_BACKEND_URL_LIMITER = RateLimiter.create(1 / 60d);
   private static final Splitter COLON_SPLITTER = Splitter.on(":");
-
-  public JdbcBackendResolver(FqnResolver fqnResolver) {
-    super(fqnResolver);
-  }
 
   private Supplier<Optional<String>> sqlUriSupplier;
   private Supplier<Optional<String>> backendUriSupplier;

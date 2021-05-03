@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.getAttributesForFirstExistingKey;
 
@@ -11,10 +11,9 @@ import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConven
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 
-public class ElasticSearchBackendResolver extends AbstractBackendResolver {
-  public ElasticSearchBackendResolver(FqnResolver fqnResolver) {
-    super(fqnResolver);
-  }
+public class ElasticSearchBackendProvider implements BackendProvider {
+  @Override
+  public void init(Event event) {}
 
   @Override
   public boolean isValidBackend(Event event) {

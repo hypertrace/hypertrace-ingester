@@ -1,11 +1,14 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.hypertrace.traceenricher.TestUtil.buildAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -22,21 +25,26 @@ import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class MongoBackendResolverTest {
+public class MongoBackendProviderTest {
   private static final String MONGO_URL = "mongo:27017";
 
-  private FqnResolver fqnResolver;
-  private MongoBackendResolver backendResolver;
+  private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    this.fqnResolver = new HypertraceFqnResolver();
-    backendResolver = new MongoBackendResolver(this.fqnResolver);
+    backendEntityEnricher = new MockBackendEntityEnricher();
+    backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
+
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -92,7 +100,8 @@ public class MongoBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity =
+        backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("mongo:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -189,7 +198,8 @@ public class MongoBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    final Entity backendEntity =
+        backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("mongo:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -292,7 +302,7 @@ public class MongoBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final BackendInfo backendInfo = backendResolver.resolve(e, structuredTraceGraph).get();
+    final BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
     assertEquals("mongodb0:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
@@ -354,5 +364,21 @@ public class MongoBackendResolverTest {
             "BACKEND_OPERATION",
             AttributeValueCreator.create("FindOperation")),
         attributes);
+  }
+
+  static class MockBackendEntityEnricher extends AbstractBackendEntityEnricher {
+
+    @Override
+    public void setup(Config enricherConfig, ClientRegistry clientRegistry) {}
+
+    @Override
+    public List<BackendProvider> getBackendProviders() {
+      return List.of(new MongoBackendProvider());
+    }
+
+    @Override
+    public FqnResolver getFqnResolver() {
+      return new HypertraceFqnResolver();
+    }
   }
 }

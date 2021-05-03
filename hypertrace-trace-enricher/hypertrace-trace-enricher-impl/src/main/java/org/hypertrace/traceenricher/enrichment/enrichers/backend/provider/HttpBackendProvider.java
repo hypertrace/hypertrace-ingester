@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.createAttributeValue;
 import static org.hypertrace.traceenricher.util.EnricherUtil.getAttributesForFirstExistingKey;
@@ -22,11 +22,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 
-public class HttpBackendResolver extends AbstractBackendResolver {
-  public HttpBackendResolver(FqnResolver fqnResolver) {
-    super(fqnResolver);
-  }
-
+public class HttpBackendProvider implements BackendProvider {
   private Supplier<Protocol> protocolSupplier;
 
   @Override

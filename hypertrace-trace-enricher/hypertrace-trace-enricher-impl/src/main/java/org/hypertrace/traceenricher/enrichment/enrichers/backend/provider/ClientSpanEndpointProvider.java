@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import com.google.common.base.Suppliers;
 import java.util.Collections;
@@ -14,12 +14,8 @@ import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ClientSpanEndpointResolver extends AbstractBackendResolver {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ClientSpanEndpointResolver.class);
-
-  public ClientSpanEndpointResolver(FqnResolver fqnResolver) {
-    super(fqnResolver);
-  }
+public class ClientSpanEndpointProvider implements BackendProvider {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientSpanEndpointProvider.class);
 
   private Supplier<String> serviceNameSupplier;
 

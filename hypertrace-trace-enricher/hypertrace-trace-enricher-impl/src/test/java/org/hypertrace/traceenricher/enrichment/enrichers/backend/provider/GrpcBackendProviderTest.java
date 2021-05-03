@@ -1,11 +1,14 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import com.google.common.collect.ImmutableMap;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -20,19 +23,24 @@ import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class GrpcBackendResolverTest {
-  private FqnResolver fqnResolver;
-  private GrpcBackendResolver backendResolver;
+public class GrpcBackendProviderTest {
+  private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    this.fqnResolver = new HypertraceFqnResolver();
-    backendResolver = new GrpcBackendResolver(this.fqnResolver);
+    backendEntityEnricher = new MockBackendEntityEnricher();
+    backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
+
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -102,7 +110,7 @@ public class GrpcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final BackendInfo backendInfo = backendResolver.resolve(e, structuredTraceGraph).get();
+    final BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
     assertEquals("productcatalogservice:3550", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
@@ -156,5 +164,21 @@ public class GrpcBackendResolverTest {
             "BACKEND_OPERATION",
             AttributeValueCreator.create("/hipstershop.ProductCatalogService/ListProducts")),
         attributes);
+  }
+
+  static class MockBackendEntityEnricher extends AbstractBackendEntityEnricher {
+
+    @Override
+    public void setup(Config enricherConfig, ClientRegistry clientRegistry) {}
+
+    @Override
+    public List<BackendProvider> getBackendProviders() {
+      return List.of(new GrpcBackendProvider());
+    }
+
+    @Override
+    public FqnResolver getFqnResolver() {
+      return new HypertraceFqnResolver();
+    }
   }
 }

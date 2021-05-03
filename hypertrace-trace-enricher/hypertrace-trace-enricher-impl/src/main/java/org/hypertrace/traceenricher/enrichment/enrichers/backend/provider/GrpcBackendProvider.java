@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.getAttributesForFirstExistingKey;
 
@@ -11,10 +11,10 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 
-public class GrpcBackendResolver extends AbstractBackendResolver {
-  public GrpcBackendResolver(FqnResolver fqnResolver) {
-    super(fqnResolver);
-  }
+public class GrpcBackendProvider implements BackendProvider {
+
+  @Override
+  public void init(Event event) {}
 
   @Override
   public boolean isValidBackend(Event event) {

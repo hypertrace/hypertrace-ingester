@@ -1,10 +1,13 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -16,75 +19,67 @@ import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** Unit test for {@link RabbitMqBackendResolver} */
-public class RabbitMqBackendResolverTest {
-
-  private FqnResolver fqnResolver;
-  private RabbitMqBackendResolver rabbitMqBackendResolver;
+/** Unit Test for {@link KafkaBackendProvider} */
+public class KafkaBackendProviderTest {
+  private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    fqnResolver = new HypertraceFqnResolver();
-    rabbitMqBackendResolver = new RabbitMqBackendResolver(fqnResolver);
+    backendEntityEnricher = new MockBackendEntityEnricher();
+    backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
+
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
   @Test
-  public void testEventResolution() {
-    String routingKey = "routingkey";
+  public void TestOtelBackendEventResolution() {
+    String broker = "kafka-test.hypertrace.com:9092";
     BackendInfo backendInfo =
-        rabbitMqBackendResolver.resolve(getRabbitMqEvent(routingKey), structuredTraceGraph).get();
+        backendEntityEnricher.resolve(getOtelKafkaBackendEvent(broker), structuredTraceGraph).get();
     Entity entity = backendInfo.getEntity();
-    Assertions.assertEquals(routingKey, entity.getEntityName());
+    Assertions.assertEquals(broker, entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
-    assertEquals(
-        Map.of(
-            "BACKEND_OPERATION",
-            AttributeValueCreator.create("receive"),
-            "BACKEND_DESTINATION",
-            AttributeValueCreator.create("routingkey.QueueName")),
-        attributes);
+    assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("receive")), attributes);
   }
 
   @Test
-  public void testBackendOperationAndDestinationResolution() {
-    String routingKey = "routingkey";
-    BackendInfo backendInfo =
-        rabbitMqBackendResolver
-            .resolve(getRabbitMqEventMissingOperation(routingKey), structuredTraceGraph)
-            .get();
-    Entity entity = backendInfo.getEntity();
-    Assertions.assertEquals(routingKey, entity.getEntityName());
-    Map<String, AttributeValue> attributes = backendInfo.getAttributes();
-    assertEquals(
-        Map.of(
-            "BACKEND_OPERATION",
-            AttributeValueCreator.create("basic.publish"),
-            "BACKEND_DESTINATION",
-            AttributeValueCreator.create("routingkey.QueueName")),
-        attributes);
+  public void TestOTBackendEventResolution() {
+    String brokerHost = "kafka-test.hypertrace.com";
+    String brokerPort = "9092";
+    Entity entity =
+        backendEntityEnricher
+            .resolve(getOTKafkaBackendEvent(brokerHost, brokerPort), structuredTraceGraph)
+            .get()
+            .getEntity();
+    Assertions.assertEquals(String.format("%s:%s", brokerHost, brokerPort), entity.getEntityName());
   }
 
   @Test
-  public void testBackendDestinationResolutionWithRoutingKey() {
-    String routingKey = "routingkey";
+  public void TestOtelBackendDestinationResolution() {
+    String broker = "kafka-test.hypertrace.com:9092";
     BackendInfo backendInfo =
-        rabbitMqBackendResolver
-            .resolve(getRabbitMqDestinationWithRoutingKey(routingKey), structuredTraceGraph)
+        backendEntityEnricher
+            .resolve(getOtelKafkaBackendEventForDestination(broker), structuredTraceGraph)
             .get();
     Entity entity = backendInfo.getEntity();
-    Assertions.assertEquals(routingKey, entity.getEntityName());
+    Assertions.assertEquals(broker, entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(
-        Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("routingkey")), attributes);
+        Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("myGroup.QueueName")),
+        attributes);
   }
 
-  private Event getRabbitMqEvent(String routingKey) {
+  private Event getOtelKafkaBackendEvent(String broker) {
     Event event =
         Event.newBuilder()
             .setCustomerId("customer1")
@@ -99,31 +94,18 @@ public class RabbitMqBackendResolverTest {
                 Attributes.newBuilder()
                     .setAttributeMap(
                         Map.of(
-                            "rabbitmq.routing_key",
-                            AttributeValue.newBuilder().setValue(routingKey).build(),
-                            "rabbitmq.message",
-                            AttributeValue.newBuilder()
-                                .setValue("updating user's last session")
-                                .build(),
+                            "messaging.system",
+                            AttributeValue.newBuilder().setValue("kafka").build(),
+                            "messaging.url",
+                            AttributeValue.newBuilder().setValue(broker).build(),
                             "span.kind",
                             AttributeValue.newBuilder().setValue("client").build(),
                             "messaging.operation",
                             AttributeValue.newBuilder().setValue("receive").build(),
-                            "messaging.destination",
-                            AttributeValue.newBuilder().setValue("QueueName").build(),
-                            "k8s.pod_id",
-                            AttributeValue.newBuilder()
-                                .setValue("55636196-c840-11e9-a417-42010a8a0064")
-                                .build(),
-                            "docker.container_id",
-                            AttributeValue.newBuilder()
-                                .setValue(
-                                    "ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f")
-                                .build(),
                             "FLAGS",
                             AttributeValue.newBuilder().setValue("0").build()))
                     .build())
-            .setEventName("rabbitmq.connection")
+            .setEventName("kafka.connection")
             .setStartTimeMillis(1566869077746L)
             .setEndTimeMillis(1566869077750L)
             .setMetrics(
@@ -139,10 +121,11 @@ public class RabbitMqBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
+
     return event;
   }
 
-  private Event getRabbitMqEventMissingOperation(String routingKey) {
+  private Event getOTKafkaBackendEvent(String host, String port) {
     Event event =
         Event.newBuilder()
             .setCustomerId("customer1")
@@ -157,31 +140,13 @@ public class RabbitMqBackendResolverTest {
                 Attributes.newBuilder()
                     .setAttributeMap(
                         Map.of(
-                            "rabbitmq.routing_key",
-                            AttributeValue.newBuilder().setValue(routingKey).build(),
-                            "rabbitmq.message",
-                            AttributeValue.newBuilder()
-                                .setValue("updating user's last session")
-                                .build(),
-                            "span.kind",
-                            AttributeValue.newBuilder().setValue("client").build(),
-                            "rabbitmq.command",
-                            AttributeValue.newBuilder().setValue("basic.publish").build(),
-                            "messaging.destination",
-                            AttributeValue.newBuilder().setValue("QueueName").build(),
-                            "k8s.pod_id",
-                            AttributeValue.newBuilder()
-                                .setValue("55636196-c840-11e9-a417-42010a8a0064")
-                                .build(),
-                            "docker.container_id",
-                            AttributeValue.newBuilder()
-                                .setValue(
-                                    "ee85cf2cfc3b24613a3da411fdbd2f3eabbe729a5c86c5262971c8d8c29dad0f")
-                                .build(),
-                            "FLAGS",
-                            AttributeValue.newBuilder().setValue("0").build()))
+                            "peer.service", AttributeValue.newBuilder().setValue("kafka").build(),
+                            "peer.hostname", AttributeValue.newBuilder().setValue(host).build(),
+                            "peer.port", AttributeValue.newBuilder().setValue(port).build(),
+                            "span.kind", AttributeValue.newBuilder().setValue("client").build(),
+                            "FLAGS", AttributeValue.newBuilder().setValue("0").build()))
                     .build())
-            .setEventName("rabbitmq.connection")
+            .setEventName("kafka.connection")
             .setStartTimeMillis(1566869077746L)
             .setEndTimeMillis(1566869077750L)
             .setMetrics(
@@ -197,10 +162,11 @@ public class RabbitMqBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
+
     return event;
   }
 
-  private Event getRabbitMqDestinationWithRoutingKey(String routingKey) {
+  private Event getOtelKafkaBackendEventForDestination(String broker) {
     Event event =
         Event.newBuilder()
             .setCustomerId("customer1")
@@ -215,18 +181,20 @@ public class RabbitMqBackendResolverTest {
                 Attributes.newBuilder()
                     .setAttributeMap(
                         Map.of(
-                            "rabbitmq.routing_key",
-                            AttributeValue.newBuilder().setValue(routingKey).build(),
-                            "rabbitmq.message",
-                            AttributeValue.newBuilder()
-                                .setValue("updating user's last session")
-                                .build(),
+                            "messaging.system",
+                            AttributeValue.newBuilder().setValue("kafka").build(),
+                            "messaging.url",
+                            AttributeValue.newBuilder().setValue(broker).build(),
                             "span.kind",
                             AttributeValue.newBuilder().setValue("client").build(),
+                            "messaging.destination",
+                            AttributeValue.newBuilder().setValue("QueueName").build(),
+                            "messaging.kafka.consumer_group",
+                            AttributeValue.newBuilder().setValue("myGroup").build(),
                             "FLAGS",
                             AttributeValue.newBuilder().setValue("0").build()))
                     .build())
-            .setEventName("rabbitmq.connection")
+            .setEventName("kafka.connection")
             .setStartTimeMillis(1566869077746L)
             .setEndTimeMillis(1566869077750L)
             .setMetrics(
@@ -242,6 +210,23 @@ public class RabbitMqBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
+
     return event;
+  }
+
+  static class MockBackendEntityEnricher extends AbstractBackendEntityEnricher {
+
+    @Override
+    public void setup(Config enricherConfig, ClientRegistry clientRegistry) {}
+
+    @Override
+    public List<BackendProvider> getBackendProviders() {
+      return List.of(new KafkaBackendProvider());
+    }
+
+    @Override
+    public FqnResolver getFqnResolver() {
+      return new HypertraceFqnResolver();
+    }
   }
 }

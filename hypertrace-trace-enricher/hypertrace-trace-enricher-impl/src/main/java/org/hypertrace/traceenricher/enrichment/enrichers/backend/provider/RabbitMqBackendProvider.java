@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import java.util.Collections;
 import java.util.Map;
@@ -8,11 +8,9 @@ import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.semantic.convention.utils.messaging.MessagingSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 
-public class RabbitMqBackendResolver extends AbstractBackendResolver {
-
-  public RabbitMqBackendResolver(FqnResolver fqnResolver) {
-    super(fqnResolver);
-  }
+public class RabbitMqBackendProvider implements BackendProvider {
+  @Override
+  public void init(Event event) {}
 
   @Override
   public boolean isValidBackend(Event event) {

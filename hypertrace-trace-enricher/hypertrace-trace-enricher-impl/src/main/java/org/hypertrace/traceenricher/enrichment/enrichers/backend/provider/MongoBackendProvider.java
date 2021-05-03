@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.hypertrace.traceenricher.util.EnricherUtil.getAttributesForFirstExistingKey;
 
@@ -12,12 +12,11 @@ import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 
-public class MongoBackendResolver extends AbstractBackendResolver {
+public class MongoBackendProvider implements BackendProvider {
   private static final String RAW_MONGO_NAMESPACE = "NAMESPACE";
 
-  public MongoBackendResolver(FqnResolver fqnResolver) {
-    super(fqnResolver);
-  }
+  @Override
+  public void init(Event event) {}
 
   @Override
   public boolean isValidBackend(Event event) {

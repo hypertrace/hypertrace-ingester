@@ -1,11 +1,14 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -19,23 +22,27 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ClientSpanEndpointResolverTest {
+public class ClientSpanEndpointProviderTest {
   private static final String SERVICE_NAME_ATTR =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
 
-  private FqnResolver fqnResolver;
-  private ClientSpanEndpointResolver backendResolver;
+  private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    this.fqnResolver = new HypertraceFqnResolver();
-    backendResolver = new ClientSpanEndpointResolver(this.fqnResolver);
+    backendEntityEnricher = new MockBackendEntityEnricher();
+    backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
+
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -108,7 +115,7 @@ public class ClientSpanEndpointResolverTest {
             .build();
 
     when(structuredTraceGraph.getParentEvent(e)).thenReturn(parentEvent);
-    Entity backendEntity = backendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    Entity backendEntity = backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals(
         "redis",
         backendEntity
@@ -190,6 +197,22 @@ public class ClientSpanEndpointResolverTest {
     // Since the event serviceName is same as parentServiceName, no new service entity should be
     // created.
     when(structuredTraceGraph.getParentEvent(e)).thenReturn(parentEvent);
-    Assertions.assertTrue(backendResolver.resolve(e, structuredTraceGraph).isEmpty());
+    Assertions.assertTrue(backendEntityEnricher.resolve(e, structuredTraceGraph).isEmpty());
+  }
+
+  static class MockBackendEntityEnricher extends AbstractBackendEntityEnricher {
+
+    @Override
+    public void setup(Config enricherConfig, ClientRegistry clientRegistry) {}
+
+    @Override
+    public List<BackendProvider> getBackendProviders() {
+      return List.of(new ClientSpanEndpointProvider());
+    }
+
+    @Override
+    public FqnResolver getFqnResolver() {
+      return new HypertraceFqnResolver();
+    }
   }
 }

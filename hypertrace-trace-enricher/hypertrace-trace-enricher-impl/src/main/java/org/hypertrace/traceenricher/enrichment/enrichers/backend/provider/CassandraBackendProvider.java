@@ -1,31 +1,31 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.semantic.convention.utils.messaging.MessagingSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 
-public class KafkaBackendResolver extends AbstractBackendResolver {
-  public KafkaBackendResolver(FqnResolver fqnResolver) {
-    super(fqnResolver);
-  }
+public class CassandraBackendProvider implements BackendProvider {
+
+  @Override
+  public void init(Event event) {}
 
   @Override
   public boolean isValidBackend(Event event) {
-    return MessagingSemanticConventionUtils.isKafkaBackend(event);
+    return DbSemanticConventionUtils.isCassandraBackend(event);
   }
 
   @Override
   public BackendType getBackendType(Event event) {
-    return BackendType.KAFKA;
+    return BackendType.CASSANDRA;
   }
 
   @Override
   public Optional<String> getBackendUri(Event event, StructuredTraceGraph structuredTraceGraph) {
-    return MessagingSemanticConventionUtils.getKafkaBackendURI(event);
+    return DbSemanticConventionUtils.getCassandraURI(event);
   }
 
   @Override
@@ -36,11 +36,11 @@ public class KafkaBackendResolver extends AbstractBackendResolver {
 
   @Override
   public Optional<String> getBackendOperation(Event event) {
-    return MessagingSemanticConventionUtils.getMessagingOperation(event);
+    return DbSemanticConventionUtils.getDbOperation(event);
   }
 
   @Override
   public Optional<String> getBackendDestination(Event event) {
-    return MessagingSemanticConventionUtils.getMessagingDestinationForKafka(event);
+    return DbSemanticConventionUtils.getDestinationForCassandra(event);
   }
 }

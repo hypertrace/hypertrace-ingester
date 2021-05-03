@@ -1,12 +1,15 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -18,20 +21,24 @@ import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class SqsBackendResolverTest {
-
-  private FqnResolver fqnResolver;
-  private SqsBackendResolver sqsBackendResolver;
+public class SqsBackendProviderTest {
+  private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    fqnResolver = new HypertraceFqnResolver();
-    sqsBackendResolver = new SqsBackendResolver(fqnResolver);
+    backendEntityEnricher = new MockBackendEntityEnricher();
+    backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
+
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -43,7 +50,7 @@ public class SqsBackendResolverTest {
       sqsURL = new URL(sqsConnectionString);
       String sqsHost = sqsURL.getHost();
       BackendInfo backendInfo =
-          sqsBackendResolver
+          backendEntityEnricher
               .resolve(getOtelSqsBackendEvent(sqsConnectionString), structuredTraceGraph)
               .get();
       Entity entity = backendInfo.getEntity();
@@ -65,7 +72,7 @@ public class SqsBackendResolverTest {
   public void TestOTBackendEventResolution() {
     String sqsHost = "sqs.ap-south-1.amazonaws.com";
     BackendInfo entity =
-        sqsBackendResolver.resolve(getOTSqsBackendEvent(sqsHost), structuredTraceGraph).get();
+        backendEntityEnricher.resolve(getOTSqsBackendEvent(sqsHost), structuredTraceGraph).get();
     Assertions.assertEquals(sqsHost, entity.getEntity().getEntityName());
   }
 
@@ -155,5 +162,21 @@ public class SqsBackendResolverTest {
             .build();
 
     return event;
+  }
+
+  static class MockBackendEntityEnricher extends AbstractBackendEntityEnricher {
+
+    @Override
+    public void setup(Config enricherConfig, ClientRegistry clientRegistry) {}
+
+    @Override
+    public List<BackendProvider> getBackendProviders() {
+      return List.of(new SqsBackendProvider());
+    }
+
+    @Override
+    public FqnResolver getFqnResolver() {
+      return new HypertraceFqnResolver();
+    }
   }
 }

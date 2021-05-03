@@ -1,12 +1,15 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.hypertrace.traceenricher.TestUtil.buildAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -24,23 +27,27 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** Unit tests for {@link JdbcBackendResolver} */
-public class JdbcBackendResolverTest {
-
-  private FqnResolver fqnResolver;
-  private JdbcBackendResolver jdbcBackendResolver;
+/** Unit tests for {@link JdbcBackendProvider} */
+public class JdbcBackendProviderTest {
+  private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    this.fqnResolver = new HypertraceFqnResolver();
-    jdbcBackendResolver = new JdbcBackendResolver(fqnResolver);
+    backendEntityEnricher = new MockBackendEntityEnricher();
+    backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
+
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -100,7 +107,7 @@ public class JdbcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
     assertEquals("dbhost:9001", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
@@ -194,7 +201,7 @@ public class JdbcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("insert")), attributes);
   }
@@ -235,7 +242,7 @@ public class JdbcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("insert")), attributes);
   }
@@ -276,7 +283,7 @@ public class JdbcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(
         Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("customer.orders")), attributes);
@@ -316,7 +323,7 @@ public class JdbcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(
         Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("customer")), attributes);
@@ -373,7 +380,7 @@ public class JdbcBackendResolverTest {
                         .build()))
             .build();
 
-    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
 
     assertEquals("127.0.0.1:3306", backendEntity.getEntityName());
@@ -480,7 +487,7 @@ public class JdbcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = jdbcBackendResolver.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
     assertEquals("mysql:3306", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
@@ -585,7 +592,7 @@ public class JdbcBackendResolverTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    Entity backendEntity = jdbcBackendResolver.resolve(e, structuredTraceGraph).get().getEntity();
+    Entity backendEntity = backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
     Map<String, org.hypertrace.entity.data.service.v1.AttributeValue> idAttrMap =
         backendEntity.getIdentifyingAttributesMap();
     assertEquals(
@@ -613,5 +620,21 @@ public class JdbcBackendResolverTest {
             .get(Constants.getRawSpanConstant(Sql.SQL_DB_TYPE))
             .getValue()
             .getString());
+  }
+
+  static class MockBackendEntityEnricher extends AbstractBackendEntityEnricher {
+
+    @Override
+    public void setup(Config enricherConfig, ClientRegistry clientRegistry) {}
+
+    @Override
+    public List<BackendProvider> getBackendProviders() {
+      return List.of(new JdbcBackendProvider());
+    }
+
+    @Override
+    public FqnResolver getFqnResolver() {
+      return new HypertraceFqnResolver();
+    }
   }
 }
