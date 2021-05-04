@@ -1,10 +1,13 @@
-package org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend;
+package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -16,19 +19,25 @@ import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** Unit Test for {@link KafkaBackendResolver} */
-public class KafkaBackendResolverTest {
-
-  private KafkaBackendResolver kafkaBackendResolver;
+/** Unit Test for {@link KafkaBackendProvider} */
+public class KafkaBackendProviderTest {
+  private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
 
   @BeforeEach
   public void setup() {
-    kafkaBackendResolver = new KafkaBackendResolver();
+    backendEntityEnricher = new MockBackendEntityEnricher();
+    backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
+
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -36,7 +45,7 @@ public class KafkaBackendResolverTest {
   public void TestOtelBackendEventResolution() {
     String broker = "kafka-test.hypertrace.com:9092";
     BackendInfo backendInfo =
-        kafkaBackendResolver.resolve(getOtelKafkaBackendEvent(broker), structuredTraceGraph).get();
+        backendEntityEnricher.resolve(getOtelKafkaBackendEvent(broker), structuredTraceGraph).get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals(broker, entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
@@ -48,7 +57,7 @@ public class KafkaBackendResolverTest {
     String brokerHost = "kafka-test.hypertrace.com";
     String brokerPort = "9092";
     Entity entity =
-        kafkaBackendResolver
+        backendEntityEnricher
             .resolve(getOTKafkaBackendEvent(brokerHost, brokerPort), structuredTraceGraph)
             .get()
             .getEntity();
@@ -59,7 +68,7 @@ public class KafkaBackendResolverTest {
   public void TestOtelBackendDestinationResolution() {
     String broker = "kafka-test.hypertrace.com:9092";
     BackendInfo backendInfo =
-        kafkaBackendResolver
+        backendEntityEnricher
             .resolve(getOtelKafkaBackendEventForDestination(broker), structuredTraceGraph)
             .get();
     Entity entity = backendInfo.getEntity();
@@ -203,5 +212,21 @@ public class KafkaBackendResolverTest {
             .build();
 
     return event;
+  }
+
+  static class MockBackendEntityEnricher extends AbstractBackendEntityEnricher {
+
+    @Override
+    public void setup(Config enricherConfig, ClientRegistry clientRegistry) {}
+
+    @Override
+    public List<BackendProvider> getBackendProviders() {
+      return List.of(new KafkaBackendProvider());
+    }
+
+    @Override
+    public FqnResolver getFqnResolver() {
+      return new HypertraceFqnResolver();
+    }
   }
 }

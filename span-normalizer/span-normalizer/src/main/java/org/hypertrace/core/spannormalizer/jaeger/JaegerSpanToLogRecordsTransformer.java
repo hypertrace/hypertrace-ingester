@@ -4,8 +4,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.util.Timestamps;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
+import io.micrometer.core.instrument.Counter;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
@@ -13,6 +17,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.LogEvent;
 import org.hypertrace.core.datamodel.LogEvents;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +27,12 @@ public class JaegerSpanToLogRecordsTransformer
 
   private static final Logger LOG =
       LoggerFactory.getLogger(JaegerSpanToLogRecordsTransformer.class);
+
+  private static final String VALID_SPAN_WITH_LOGS_RECEIVED_COUNT =
+      "hypertrace.reported.span.with.logs.processed";
+
+  private static final ConcurrentMap<String, Counter> tenantToSpanWithLogsReceivedCount =
+      new ConcurrentHashMap<>();
 
   @Override
   public void init(ProcessorContext context) {
@@ -36,6 +47,14 @@ public class JaegerSpanToLogRecordsTransformer
       if (value.getLogsCount() == 0) {
         return null;
       }
+
+      tenantToSpanWithLogsReceivedCount
+          .computeIfAbsent(
+              tenantId,
+              tenant ->
+                  PlatformMetricsRegistry.registerCounter(
+                      VALID_SPAN_WITH_LOGS_RECEIVED_COUNT, Map.of("tenantId", tenantId)))
+          .increment();
 
       return new KeyValue<>(null, buildLogEventRecords(value, tenantId));
     } catch (Exception e) {

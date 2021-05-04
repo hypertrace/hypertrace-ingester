@@ -1,6 +1,9 @@
 package org.hypertrace.traceenricher.util;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -19,6 +22,21 @@ public class EnricherUtil {
           createAttributeValue(
               event.getAttributes().getAttributeMap().get(attributeKey).getValue()));
     }
+  }
+
+  public static Map<String, AttributeValue> getAttributesForFirstExistingKey(
+      Event event, List<String> attributeKeys) {
+    Map<String, AttributeValue> attributes = new HashMap<>();
+    for (String attributeKey : attributeKeys) {
+      if (event.getAttributes().getAttributeMap().get(attributeKey) != null) {
+        attributes.put(
+            attributeKey,
+            createAttributeValue(
+                event.getAttributes().getAttributeMap().get(attributeKey).getValue()));
+      }
+    }
+
+    return Collections.unmodifiableMap(attributes);
   }
 
   public static void setAttributeForFirstExistingKey(
