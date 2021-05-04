@@ -3,10 +3,10 @@ package org.hypertrace.core.rawspansgrouper;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_TRIGGER_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
 
@@ -15,9 +15,11 @@ import io.micrometer.core.instrument.Counter;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.Cancellable;
@@ -26,35 +28,35 @@ import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.ValueAndTimestamp;
+import org.apache.kafka.streams.state.WindowStore;
 import org.hypertrace.core.datamodel.RawSpan;
-import org.hypertrace.core.datamodel.RawSpans;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
+import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
+import org.hypertrace.core.spannormalizer.TraceState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Receives spans keyed by trace_id and stores them. A {@link TraceEmitPunctuator} is scheduled to
- * run after the {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs} interval to emit the
- * trace. If any spans for the trace arrive within the {@link
- * RawSpansGroupingTransformer#groupingWindowTimeoutMs} interval then the {@link
- * RawSpansGroupingTransformer#groupingWindowTimeoutMs} will get reset and the trace will get an
- * additional {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs} time to accept spans.
+ * run after the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval to emit the trace. If
+ * any spans for the trace arrive within the {@link RawSpansProcessor#groupingWindowTimeoutMs}
+ * interval then the {@link RawSpansProcessor#groupingWindowTimeoutMs} will get reset and the trace
+ * will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs} time to accept spans.
  */
-public class RawSpansGroupingTransformer
+public class RawSpansProcessor
     implements Transformer<TraceIdentity, RawSpan, KeyValue<String, StructuredTrace>> {
 
-  private static final Logger logger = LoggerFactory.getLogger(RawSpansGroupingTransformer.class);
+  private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
   private ProcessorContext context;
-  private KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>> inflightTraceStore;
-  private KeyValueStore<TraceIdentity, Long> traceEmitTriggerStore;
+  private WindowStore<SpanIdentity, RawSpan> spanWindowStore;
+  private KeyValueStore<TraceIdentity, TraceState> traceEmitTriggerStore;
   private long groupingWindowTimeoutMs;
   private To outputTopic;
   private double dataflowSamplingPercent = -1;
-  private Map<String, Long> maxSpanCountMap = new HashMap<>();
+  private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
 
   // counter for number of spans dropped per tenant
   private static final ConcurrentMap<String, Counter> droppedSpansCounter =
@@ -67,11 +69,10 @@ public class RawSpansGroupingTransformer
   @Override
   public void init(ProcessorContext context) {
     this.context = context;
-    this.inflightTraceStore =
-        (KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>>)
-            context.getStateStore(INFLIGHT_TRACE_STORE);
+    this.spanWindowStore =
+        (WindowStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_WINDOW_STORE);
     this.traceEmitTriggerStore =
-        (KeyValueStore<TraceIdentity, Long>) context.getStateStore(TRACE_EMIT_TRIGGER_STORE);
+        (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_EMIT_TRIGGER_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
     this.groupingWindowTimeoutMs =
         jobConfig.getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
@@ -95,19 +96,69 @@ public class RawSpansGroupingTransformer
     restorePunctuators();
   }
 
-  @Override
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
-    ValueAndTimestamp<RawSpans> rawSpans = inflightTraceStore.get(key);
-    RawSpans agg = rawSpans != null ? rawSpans.value() : RawSpans.newBuilder().build();
-    if (maxSpanCountMap.containsKey(key.getTenantId())
-        && agg.getRawSpans().size() >= maxSpanCountMap.get(key.getTenantId())) {
+    long currentTimeMs = System.currentTimeMillis();
+
+    TraceState traceState = traceEmitTriggerStore.get(key);
+    boolean firstEntry = (traceState == null);
+
+    if (shouldDropSpan(key, traceState)) {
+      return null;
+    }
+
+    // add the new span to window store
+    spanWindowStore.put(
+        new SpanIdentity(key.getTenantId(), key.getTraceId(), value.getEvent().getEventId()),
+        value,
+        currentTimeMs);
+
+    /*
+     the trace emit ts is essentially currentTs + groupingWindowTimeoutMs
+     i.e. if there is no span added in the next 'groupingWindowTimeoutMs' interval
+     then the trace can be finalized and emitted
+    */
+    long traceEmitTs = currentTimeMs + groupingWindowTimeoutMs;
+    if (logger.isDebugEnabled()) {
+      logger.debug(
+          "Updating trigger_ts=[{}] for for tenant_id=[{}], trace_id=[{}]",
+          Instant.ofEpochMilli(traceEmitTs),
+          key.getTenantId(),
+          HexUtils.getHex(key.getTraceId()));
+    }
+
+    if (firstEntry) {
+      traceState =
+          TraceState.newBuilder()
+              .setTraceStartTimestamp(currentTimeMs)
+              .setTraceEndTimestamp(currentTimeMs)
+              .setEmitTs(traceEmitTs)
+              .setTenantId(key.getTenantId())
+              .setTraceId(key.getTraceId())
+              .setSpanIds(List.of(value.getEvent().getEventId()))
+              .build();
+      schedulePunctuator(key);
+    } else {
+      traceState.getSpanIds().add(value.getEvent().getEventId());
+      traceState.setTraceEndTimestamp(currentTimeMs);
+      traceState.setEmitTs(traceEmitTs);
+    }
+    traceEmitTriggerStore.put(key, traceState);
+
+    // the punctuator will emit the trace
+    return null;
+  }
+
+  private boolean shouldDropSpan(TraceIdentity key, TraceState traceState) {
+    if (traceState != null
+        && maxSpanCountMap.containsKey(key.getTenantId())
+        && traceState.getSpanIds().size() >= maxSpanCountMap.get(key.getTenantId())) {
       if (logger.isDebugEnabled()) {
         logger.debug(
             "Dropping span [{}] from tenant_id={}, trace_id={} after grouping {} spans",
-            value,
+            traceState.getSpanIds().stream().map(HexUtils::getHex).collect(Collectors.toList()),
             key.getTenantId(),
             HexUtils.getHex(key.getTraceId()),
-            agg.getRawSpans().size());
+            traceState.getSpanIds().size());
       }
       // increment the counter for dropped spans
       droppedSpansCounter
@@ -117,15 +168,12 @@ public class RawSpansGroupingTransformer
                   PlatformMetricsRegistry.registerCounter(
                       DROPPED_SPANS_COUNTER, Map.of("tenantId", k)))
           .increment();
-      return null;
+      return true;
     }
-
-    // add the new span
-    agg.getRawSpans().add(value);
-
-    // increment the counter when the trace size reaches the max.span.count limit.
-    if (maxSpanCountMap.containsKey(key.getTenantId())
-        && agg.getRawSpans().size() == maxSpanCountMap.get(key.getTenantId())) {
+    // increment the counter when the number of spans reaches the max.span.count limit.
+    if (traceState != null
+        && maxSpanCountMap.containsKey(key.getTenantId())
+        && traceState.getSpanIds().size() == maxSpanCountMap.get(key.getTenantId())) {
       truncatedTracesCounter
           .computeIfAbsent(
               key.getTenantId(),
@@ -134,47 +182,7 @@ public class RawSpansGroupingTransformer
                       TRUNCATED_TRACES_COUNTER, Map.of("tenantId", k)))
           .increment();
     }
-
-    long currentTimeMs = System.currentTimeMillis();
-
-    if (logger.isDebugEnabled()) {
-      logger.debug(
-          "Updating ts=[{}] for tenant_id=[{}], trace_id=[{}]",
-          Instant.ofEpochMilli(currentTimeMs),
-          key.getTenantId(),
-          HexUtils.getHex(key.getTraceId()));
-    }
-    // store the current system time as the last update timestamp
-    inflightTraceStore.put(key, ValueAndTimestamp.make(agg, currentTimeMs));
-
-    /*
-     check if any prior trace emit ts was stored. It is stored when an entry for a trace doesn't exist.
-     See the {@link TraceEmitPunctuator} for details on how the traceEmitTs is updated
-    */
-    Long triggerTs = traceEmitTriggerStore.get(key);
-    boolean firstEntry = (triggerTs == null);
-    /*
-     the trace emit ts is essentially currentTs + groupingWindowTimeoutMs
-     i.e. if there is no span added in the next 'groupingWindowTimeoutMs' interval
-     then the trace can be finalized and emitted
-    */
-
-    long traceEmitTs = currentTimeMs + groupingWindowTimeoutMs;
-    if (logger.isDebugEnabled()) {
-      logger.debug(
-          "Updating trigger_ts=[{}] for for tenant_id=[{}], trace_id=[{}]",
-          Instant.ofEpochMilli(traceEmitTs),
-          key.getTenantId(),
-          HexUtils.getHex(key.getTraceId()));
-    }
-    traceEmitTriggerStore.put(key, traceEmitTs);
-
-    // if no prior emitTs is found then add it.
-    if (firstEntry) {
-      schedulePunctuator(key);
-    }
-    // the punctuator will emit the trace
-    return null;
+    return false;
   }
 
   private void schedulePunctuator(TraceIdentity key) {
@@ -182,7 +190,7 @@ public class RawSpansGroupingTransformer
         new TraceEmitPunctuator(
             key,
             context,
-            inflightTraceStore,
+            spanWindowStore,
             traceEmitTriggerStore,
             outputTopic,
             groupingWindowTimeoutMs,
@@ -204,12 +212,12 @@ public class RawSpansGroupingTransformer
 
   /**
    * Punctuators are not persisted - so on restart we recover punctuators and schedule them to run
-   * after {@link RawSpansGroupingTransformer#groupingWindowTimeoutMs}
+   * after {@link RawSpansProcessor#groupingWindowTimeoutMs}
    */
   void restorePunctuators() {
     long count = 0;
     Instant start = Instant.now();
-    try (KeyValueIterator<TraceIdentity, Long> it = traceEmitTriggerStore.all()) {
+    try (KeyValueIterator<TraceIdentity, TraceState> it = traceEmitTriggerStore.all()) {
       while (it.hasNext()) {
         schedulePunctuator(it.next().key);
         count++;

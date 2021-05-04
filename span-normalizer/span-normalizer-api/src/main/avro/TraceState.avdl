@@ -1,0 +1,11 @@
+@namespace("org.hypertrace.core.spannormalizer")
+protocol TraceStateProtocol {
+  record TraceState {
+    long traceStartTimestamp;
+    long traceEndTimestamp;
+    long emit_ts;
+    string tenant_id;
+    bytes trace_id;
+    array<bytes> span_ids;
+  }
+}
