@@ -95,13 +95,15 @@ class TraceEmitPunctuator implements Punctuator {
     cancellable.cancel();
 
     TraceState traceState = traceEmitTriggerStore.get(key);
-    if (null == traceState) {
+    if (null == traceState
+        || null == traceState.getSpanIds()
+        || traceState.getSpanIds().isEmpty()) {
       /*
        todo - debug why this happens .
        Typically seen when punctuators are created via {@link RawSpansGroupingTransformer.restorePunctuators}
       */
       logger.warn(
-          "emitTs for tenant_id=[{}], trace_id=[{}] is missing.",
+          "TraceState for tenant_id=[{}], trace_id=[{}] is missing.",
           key.getTenantId(),
           HexUtils.getHex(key.getTraceId()));
       return;
@@ -110,41 +112,48 @@ class TraceEmitPunctuator implements Punctuator {
     long emitTs = traceState.getEmitTs();
     if (emitTs <= timestamp) {
       // we can emit this trace so just delete the entry for this 'key'
-      traceEmitTriggerStore.delete(key);
       // Implies that no new spans for the trace have arrived within the last
       // 'groupingWindowTimeoutMs' interval
       // so the trace can be finalized and emitted
+      traceEmitTriggerStore.delete(key);
 
       ByteBuffer traceId = traceState.getTraceId();
       String tenantId = traceState.getTenantId();
 
-      TreeSet<ByteBuffer> set =
+      TreeSet<ByteBuffer> spanIdsSet =
           new TreeSet<>(
-              (v1, v2) -> {
+              (spanId1, spanId2) -> {
+                // the sort order for this set is determined by comparing the corresponding {@code
+                // SpanIdentifier}
                 Serde<SpanIdentity> serde = (Serde<SpanIdentity>) context.keySerde();
-                byte[] b1 =
-                    serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, v1));
-                byte[] b2 =
-                    serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, v2));
-                return ByteBuffer.wrap(b1).compareTo(ByteBuffer.wrap(b2));
+                byte[] spanIdentityBytes1 =
+                    serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, spanId1));
+                byte[] spanIdentityBytes2 =
+                    serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, spanId2));
+                return ByteBuffer.wrap(spanIdentityBytes1)
+                    .compareTo(ByteBuffer.wrap(spanIdentityBytes2));
               });
-      set.addAll(traceState.getSpanIds());
+      spanIdsSet.addAll(traceState.getSpanIds());
 
-      KeyValueIterator<Windowed<SpanIdentity>, RawSpan> iterator =
-          spanWindowStore.fetch(
-              new SpanIdentity(tenantId, traceId, set.first()),
-              new SpanIdentity(tenantId, traceId, set.last()),
-              Instant.ofEpochMilli(traceState.getTraceStartTimestamp()),
-              Instant.ofEpochMilli(traceState.getTraceEndTimestamp()));
       List<RawSpan> rawSpanList = new ArrayList<>();
-      iterator.forEachRemaining(
-          v -> {
-            // range search could returns extra spans as well, filter them
-            if (set.contains(v.value.getEvent().getEventId())) {
-              rawSpanList.add(v.value);
-            }
-          });
-
+      try (KeyValueIterator<Windowed<SpanIdentity>, RawSpan> iterator =
+          spanWindowStore.fetch(
+              new SpanIdentity(tenantId, traceId, spanIdsSet.first()),
+              new SpanIdentity(tenantId, traceId, spanIdsSet.last()),
+              Instant.ofEpochMilli(traceState.getTraceStartTimestamp()),
+              Instant.ofEpochMilli(traceState.getTraceEndTimestamp()))) {
+        iterator.forEachRemaining(
+            keyValue -> {
+              // range search could return extra span ids as well, filter them
+              // one scenario when this could occur is when some spanIdentifier for another trace
+              // has byte value which is within the {@code spanIdsSet.first()} & {@code
+              // spanIdsSet.last()}
+              // and was received in the same time range
+              if (spanIdsSet.contains(keyValue.value.getEvent().getEventId())) {
+                rawSpanList.add(keyValue.value);
+              }
+            });
+      }
       recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
       Timestamps timestamps =
           trackEndToEndLatencyTimestamps(timestamp, traceState.getTraceStartTimestamp());
@@ -152,11 +161,13 @@ class TraceEmitPunctuator implements Punctuator {
           StructuredTraceBuilder.buildStructuredTraceFromRawSpans(
               rawSpanList, traceId, tenantId, timestamps);
 
-      logger.debug(
-          "Emit tenant_id=[{}], trace_id=[{}], spans_count=[{}]",
-          tenantId,
-          HexUtils.getHex(traceId),
-          rawSpanList.size());
+      if (logger.isDebugEnabled()) {
+        logger.debug(
+            "Emit tenant_id=[{}], trace_id=[{}], spans_count=[{}]",
+            tenantId,
+            HexUtils.getHex(traceId),
+            rawSpanList.size());
+      }
 
       tenantToTraceEmittedCounter
           .computeIfAbsent(

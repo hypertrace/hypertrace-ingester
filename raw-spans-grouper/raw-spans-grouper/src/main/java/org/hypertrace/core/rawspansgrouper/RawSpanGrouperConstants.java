@@ -16,4 +16,8 @@ public class RawSpanGrouperConstants {
   public static final String INFLIGHT_TRACE_MAX_SPAN_COUNT = "max.span.count";
   public static final String DROPPED_SPANS_COUNTER = "hypertrace.dropped.spans";
   public static final String TRUNCATED_TRACES_COUNTER = "hypertrace.truncated.traces";
+  public static final String SPAN_WINDOW_STORE_RETENTION_TIME_MINS =
+      "span.window.store.retention.time.mins";
+  public static final String SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS =
+      "span.window.store.segment.size.mins";
 }
