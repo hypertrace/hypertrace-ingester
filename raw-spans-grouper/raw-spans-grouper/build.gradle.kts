@@ -34,6 +34,9 @@ tasks.test {
 }
 
 dependencies {
+    implementation("org.glassfish.jersey.core:jersey-common:2.34") {
+        because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
+    }
     implementation(project(":span-normalizer:span-normalizer-api"))
     implementation("org.hypertrace.core.datamodel:data-model:0.1.15")
     implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.23")

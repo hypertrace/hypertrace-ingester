@@ -23,6 +23,7 @@ import org.apache.kafka.streams.TopologyTestDriver;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.junit.jupiter.api.Test;
@@ -158,13 +159,13 @@ public class RawSpansGrouperTest {
     // trace1 should have 2 span span1, span2
     StructuredTrace trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(2, trace.getEventList().size());
-    assertEquals(ByteBuffer.wrap("event-1".getBytes()), trace.getEventList().get(0).getEventId());
-    assertEquals(ByteBuffer.wrap("event-2".getBytes()), trace.getEventList().get(1).getEventId());
+    assertEquals("event-1", HexUtils.getHex(trace.getEventList().get(0).getEventId()));
+    assertEquals("event-2", HexUtils.getHex(trace.getEventList().get(1).getEventId()));
 
     // trace2 should have 1 span span3
     trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
-    assertEquals(ByteBuffer.wrap("event-4".getBytes()), trace.getEventList().get(0).getEventId());
+    assertEquals("event-4", HexUtils.getHex(trace.getEventList().get(0).getEventId()));
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span3);
     td.advanceWallClockTime(Duration.ofSeconds(45));
@@ -175,12 +176,12 @@ public class RawSpansGrouperTest {
     // trace1 should have 1 span i.e. span3
     trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
-    assertEquals(ByteBuffer.wrap("event-3".getBytes()), trace.getEventList().get(0).getEventId());
+    assertEquals("event-3", HexUtils.getHex(trace.getEventList().get(0).getEventId()));
 
     // trace2 should have 1 span i.e. span4
     trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
-    assertEquals(ByteBuffer.wrap("event-5".getBytes()), trace.getEventList().get(0).getEventId());
+    assertEquals("event-5", HexUtils.getHex(trace.getEventList().get(0).getEventId()));
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span6);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span7);
