@@ -7,7 +7,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SP
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_RETENTION_TIME_MINS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_TRIGGER_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 
 import com.typesafe.config.Config;
 import java.time.Duration;
@@ -79,7 +79,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
                 SPAN_WINDOW_STORE,
                 // retention period of window
                 // so data older than 1 hour will be cleaned up
-                Duration.ofHours(spanWindowStoreRetentionTimeMins).toMillis(),
+                Duration.ofMinutes(spanWindowStoreRetentionTimeMins).toMillis(),
                 // length of a segment in rocksdb, so if segment size is 5mins and retention is
                 // 60mins
                 // there will be 12 segments in rocksdb
@@ -95,7 +95,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
 
     StoreBuilder<KeyValueStore<TraceIdentity, TraceState>> traceEmitTriggerStoreBuilder =
         Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(TRACE_EMIT_TRIGGER_STORE), keySerde, valueSerde)
+                Stores.persistentKeyValueStore(TRACE_STATE_STORE), keySerde, valueSerde)
             .withCachingEnabled();
 
     streamsBuilder.addStateStore(spanWindowStoreBuilder);
@@ -109,7 +109,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
             RawSpansProcessor::new,
             Named.as(RawSpansProcessor.class.getSimpleName()),
             SPAN_WINDOW_STORE,
-            TRACE_EMIT_TRIGGER_STORE)
+            TRACE_STATE_STORE)
         .to(outputTopic, outputTopicProducer);
 
     return streamsBuilder;

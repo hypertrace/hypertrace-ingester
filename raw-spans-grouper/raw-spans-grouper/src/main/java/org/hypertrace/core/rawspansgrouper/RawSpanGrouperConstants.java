@@ -7,7 +7,7 @@ public class RawSpanGrouperConstants {
       "span.groupby.session.window.interval";
   public static final String RAW_SPANS_GROUPER_JOB_CONFIG = "raw-spans-grouper-job-config";
   public static final String SPAN_WINDOW_STORE = "span-window-store";
-  public static final String TRACE_EMIT_TRIGGER_STORE = "trace-emit-trigger-store";
+  public static final String TRACE_STATE_STORE = "trace-state-store";
   public static final String OUTPUT_TOPIC_PRODUCER = "output-topic-producer";
   public static final String SPANS_PER_TRACE_METRIC = "spans_per_trace";
   public static final String TRACE_CREATION_TIME = "trace.creation.time";

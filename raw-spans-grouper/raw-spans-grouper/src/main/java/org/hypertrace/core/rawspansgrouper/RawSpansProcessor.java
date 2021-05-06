@@ -7,7 +7,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_TRIGGER_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
 
 import com.typesafe.config.Config;
@@ -52,7 +52,7 @@ public class RawSpansProcessor
   private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
   private ProcessorContext context;
   private WindowStore<SpanIdentity, RawSpan> spanWindowStore;
-  private KeyValueStore<TraceIdentity, TraceState> traceEmitTriggerStore;
+  private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private long groupingWindowTimeoutMs;
   private To outputTopic;
   private double dataflowSamplingPercent = -1;
@@ -71,8 +71,8 @@ public class RawSpansProcessor
     this.context = context;
     this.spanWindowStore =
         (WindowStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_WINDOW_STORE);
-    this.traceEmitTriggerStore =
-        (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_EMIT_TRIGGER_STORE);
+    this.traceStateStore =
+        (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
     this.groupingWindowTimeoutMs =
         jobConfig.getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
@@ -99,7 +99,7 @@ public class RawSpansProcessor
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
     long currentTimeMs = System.currentTimeMillis();
 
-    TraceState traceState = traceEmitTriggerStore.get(key);
+    TraceState traceState = traceStateStore.get(key);
     boolean firstEntry = (traceState == null);
 
     if (shouldDropSpan(key, traceState)) {
@@ -142,7 +142,7 @@ public class RawSpansProcessor
       traceState.setTraceEndTimestamp(currentTimeMs);
       traceState.setEmitTs(traceEmitTs);
     }
-    traceEmitTriggerStore.put(key, traceState);
+    traceStateStore.put(key, traceState);
 
     // the punctuator will emit the trace
     return null;
@@ -191,7 +191,7 @@ public class RawSpansProcessor
             key,
             context,
             spanWindowStore,
-            traceEmitTriggerStore,
+            traceStateStore,
             outputTopic,
             groupingWindowTimeoutMs,
             dataflowSamplingPercent);
@@ -217,7 +217,7 @@ public class RawSpansProcessor
   void restorePunctuators() {
     long count = 0;
     Instant start = Instant.now();
-    try (KeyValueIterator<TraceIdentity, TraceState> it = traceEmitTriggerStore.all()) {
+    try (KeyValueIterator<TraceIdentity, TraceState> it = traceStateStore.all()) {
       while (it.hasNext()) {
         schedulePunctuator(it.next().key);
         count++;

@@ -58,7 +58,7 @@ class TraceEmitPunctuator implements Punctuator {
   private final TraceIdentity key;
   private final ProcessorContext context;
   private final WindowStore<SpanIdentity, RawSpan> spanWindowStore;
-  private final KeyValueStore<TraceIdentity, TraceState> traceEmitTriggerStore;
+  private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
   private Cancellable cancellable;
@@ -71,14 +71,14 @@ class TraceEmitPunctuator implements Punctuator {
       TraceIdentity key,
       ProcessorContext context,
       WindowStore<SpanIdentity, RawSpan> spanWindowStore,
-      KeyValueStore<TraceIdentity, TraceState> traceEmitTriggerStore,
+      KeyValueStore<TraceIdentity, TraceState> traceStateStore,
       To outputTopicProducer,
       long groupingWindowTimeoutMs,
       double dataflowSamplingPercent) {
     this.key = key;
     this.context = context;
     this.spanWindowStore = spanWindowStore;
-    this.traceEmitTriggerStore = traceEmitTriggerStore;
+    this.traceStateStore = traceStateStore;
     this.outputTopicProducer = outputTopicProducer;
     this.groupingWindowTimeoutMs = groupingWindowTimeoutMs;
     this.dataflowSamplingPercent = dataflowSamplingPercent;
@@ -94,7 +94,7 @@ class TraceEmitPunctuator implements Punctuator {
     // always cancel the punctuator else it will get re-scheduled automatically
     cancellable.cancel();
 
-    TraceState traceState = traceEmitTriggerStore.get(key);
+    TraceState traceState = traceStateStore.get(key);
     if (null == traceState
         || null == traceState.getSpanIds()
         || traceState.getSpanIds().isEmpty()) {
@@ -115,7 +115,7 @@ class TraceEmitPunctuator implements Punctuator {
       // Implies that no new spans for the trace have arrived within the last
       // 'groupingWindowTimeoutMs' interval
       // so the trace can be finalized and emitted
-      traceEmitTriggerStore.delete(key);
+      traceStateStore.delete(key);
 
       ByteBuffer traceId = traceState.getTraceId();
       String tenantId = traceState.getTenantId();

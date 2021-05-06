@@ -33,7 +33,7 @@ class TraceEmitPunctuatorTest {
 
   private TraceEmitPunctuator underTest;
   private WindowStore<SpanIdentity, RawSpan> spanStore;
-  private KeyValueStore<TraceIdentity, TraceState> traceEmitTriggerStore;
+  private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
 
   @BeforeEach
   public void setUp() {
@@ -41,7 +41,7 @@ class TraceEmitPunctuatorTest {
     ProcessorContext context = mock(ProcessorContext.class);
     when(context.keySerde()).thenReturn(avroSerde);
     spanStore = mock(WindowStore.class);
-    traceEmitTriggerStore = mock(KeyValueStore.class);
+    traceStateStore = mock(KeyValueStore.class);
     To outputTopicProducer = mock(To.class);
     underTest =
         new TraceEmitPunctuator(
@@ -51,7 +51,7 @@ class TraceEmitPunctuatorTest {
                 .build(),
             context,
             spanStore,
-            traceEmitTriggerStore,
+            traceStateStore,
             outputTopicProducer,
             100,
             -1);
@@ -60,7 +60,7 @@ class TraceEmitPunctuatorTest {
 
   @Test
   public void whenPunctuatorIsRescheduledExpectNoChangesToTraceEmitTriggerStore() {
-    when(traceEmitTriggerStore.get(
+    when(traceStateStore.get(
             eq(
                 TraceIdentity.newBuilder()
                     .setTenantId("__default")
@@ -77,13 +77,13 @@ class TraceEmitPunctuatorTest {
                 .build());
     underTest.punctuate(200);
     // the above when() call should be the only interaction
-    verify(traceEmitTriggerStore, times(1)).get(any());
+    verify(traceStateStore, times(1)).get(any());
   }
 
   @Test
   public void whenTraceIsEmittedExpectDeleteOperationOnTraceStateStore() {
 
-    when(traceEmitTriggerStore.get(
+    when(traceStateStore.get(
             eq(
                 TraceIdentity.newBuilder()
                     .setTenantId("__default")
@@ -141,9 +141,9 @@ class TraceEmitPunctuatorTest {
               }
             });
     underTest.punctuate(200); // the above when() call should be the only interaction
-    verify(traceEmitTriggerStore, times(1)).get(any());
+    verify(traceStateStore, times(1)).get(any());
     verify(spanStore, times(1)).fetch(any(), any(), any(), any());
-    verify(traceEmitTriggerStore)
+    verify(traceStateStore)
         .delete(
             eq(
                 TraceIdentity.newBuilder()
