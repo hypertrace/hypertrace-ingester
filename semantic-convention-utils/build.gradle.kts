@@ -6,6 +6,7 @@ tasks.test {
     useJUnitPlatform()
 }
 
+
 dependencies {
     implementation(project(":hypertrace-trace-enricher:enriched-span-constants"))
     implementation(project(":span-normalizer:raw-span-constants"))
