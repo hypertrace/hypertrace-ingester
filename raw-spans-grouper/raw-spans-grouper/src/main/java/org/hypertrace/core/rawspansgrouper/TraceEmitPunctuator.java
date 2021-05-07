@@ -196,6 +196,4 @@ public class TraceEmitPunctuator implements Punctuator {
       summary.record(count);
     }
   }
-
-  private void reportLatency(String tenantId, Instant startTime) {}
 }
