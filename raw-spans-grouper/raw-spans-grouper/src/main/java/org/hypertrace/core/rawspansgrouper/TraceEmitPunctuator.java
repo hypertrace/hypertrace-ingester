@@ -47,7 +47,8 @@ public class TraceEmitPunctuator implements Punctuator {
   private double dataflowSamplingPercent;
   private static final Timer spansGrouperArrivalLagTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
-  private static final String PUNCTUATE_LATENCY_TIMER = "hypertrace.rawspansgrouper.punctuate.latency";
+  private static final String PUNCTUATE_LATENCY_TIMER =
+      "hypertrace.rawspansgrouper.punctuate.latency";
   private static final ConcurrentMap<String, Timer> tenantToPunctuateLatencyTimer =
       new ConcurrentHashMap<>();
 
@@ -196,7 +197,8 @@ public class TraceEmitPunctuator implements Punctuator {
         .computeIfAbsent(
             tenantId,
             k ->
-                PlatformMetricsRegistry.registerTimer(PUNCTUATE_LATENCY_TIMER, Map.of("tenantId", k)))
+                PlatformMetricsRegistry.registerTimer(
+                    PUNCTUATE_LATENCY_TIMER, Map.of("tenantId", k)))
         .record(Duration.between(startTime, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
   }
 }

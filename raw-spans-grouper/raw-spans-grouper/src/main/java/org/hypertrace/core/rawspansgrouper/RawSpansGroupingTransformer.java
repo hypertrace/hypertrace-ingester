@@ -50,7 +50,8 @@ public class RawSpansGroupingTransformer
     implements Transformer<TraceIdentity, RawSpan, KeyValue<String, StructuredTrace>> {
 
   private static final Logger logger = LoggerFactory.getLogger(RawSpansGroupingTransformer.class);
-  private static final String PROCESSING_LATENCY_TIMER = "hypertrace.rawspansgrouper.processing.latency";
+  private static final String PROCESSING_LATENCY_TIMER =
+      "hypertrace.rawspansgrouper.processing.latency";
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
       new ConcurrentHashMap<>();
 
@@ -185,7 +186,8 @@ public class RawSpansGroupingTransformer
         .computeIfAbsent(
             value.getCustomerId(),
             k ->
-                PlatformMetricsRegistry.registerTimer(PROCESSING_LATENCY_TIMER, Map.of("tenantId", k)))
+                PlatformMetricsRegistry.registerTimer(
+                    PROCESSING_LATENCY_TIMER, Map.of("tenantId", k)))
         .record(Duration.between(start, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
     // the punctuator will emit the trace
     return null;
