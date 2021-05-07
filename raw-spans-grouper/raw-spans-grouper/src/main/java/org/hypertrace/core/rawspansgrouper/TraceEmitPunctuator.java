@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -130,8 +131,8 @@ class TraceEmitPunctuator implements Punctuator {
                     serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, spanId1));
                 byte[] spanIdentityBytes2 =
                     serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, spanId2));
-                return ByteBuffer.wrap(spanIdentityBytes1)
-                    .compareTo(ByteBuffer.wrap(spanIdentityBytes2));
+                return Bytes.BYTES_LEXICO_COMPARATOR.compare(
+                    spanIdentityBytes1, spanIdentityBytes2);
               });
       spanIdsSet.addAll(traceState.getSpanIds());
 
