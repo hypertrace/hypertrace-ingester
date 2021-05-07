@@ -12,6 +12,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCA
 
 import com.typesafe.config.Config;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
@@ -50,6 +52,10 @@ public class RawSpansProcessor
     implements Transformer<TraceIdentity, RawSpan, KeyValue<String, StructuredTrace>> {
 
   private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
+  private static final String PROCESSING_LATENCY_TIMER =
+      "hypertrace.rawspansgrouper.processing.latency";
+  private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
+      new ConcurrentHashMap<>();
   private ProcessorContext context;
   private WindowStore<SpanIdentity, RawSpan> spanWindowStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
@@ -97,6 +103,7 @@ public class RawSpansProcessor
   }
 
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
+    Instant start = Instant.now();
     long currentTimeMs = System.currentTimeMillis();
 
     TraceState traceState = traceStateStore.get(key);
@@ -142,8 +149,16 @@ public class RawSpansProcessor
       traceState.setTraceEndTimestamp(currentTimeMs);
       traceState.setEmitTs(traceEmitTs);
     }
+
     traceStateStore.put(key, traceState);
 
+    tenantToSpansGroupingTimer
+        .computeIfAbsent(
+            value.getCustomerId(),
+            k ->
+                PlatformMetricsRegistry.registerTimer(
+                    PROCESSING_LATENCY_TIMER, Map.of("tenantId", k)))
+        .record(Duration.between(start, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
     // the punctuator will emit the trace
     return null;
   }
