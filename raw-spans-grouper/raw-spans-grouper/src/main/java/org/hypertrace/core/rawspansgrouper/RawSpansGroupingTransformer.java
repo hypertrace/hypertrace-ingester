@@ -12,12 +12,14 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCA
 
 import com.typesafe.config.Config;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.Cancellable;
@@ -48,6 +50,10 @@ public class RawSpansGroupingTransformer
     implements Transformer<TraceIdentity, RawSpan, KeyValue<String, StructuredTrace>> {
 
   private static final Logger logger = LoggerFactory.getLogger(RawSpansGroupingTransformer.class);
+  private static final String PROCESSING_LATENCY_TIMER = "hypertrace.rawspansgrouper.processing.latency";
+  private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
+      new ConcurrentHashMap<>();
+
   private ProcessorContext context;
   private KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>> inflightTraceStore;
   private KeyValueStore<TraceIdentity, Long> traceEmitTriggerStore;
@@ -97,6 +103,7 @@ public class RawSpansGroupingTransformer
 
   @Override
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
+    Instant start = Instant.now();
     ValueAndTimestamp<RawSpans> rawSpans = inflightTraceStore.get(key);
     RawSpans agg = rawSpans != null ? rawSpans.value() : RawSpans.newBuilder().build();
     if (maxSpanCountMap.containsKey(key.getTenantId())
@@ -173,6 +180,13 @@ public class RawSpansGroupingTransformer
     if (firstEntry) {
       schedulePunctuator(key);
     }
+
+    tenantToSpansGroupingTimer
+        .computeIfAbsent(
+            value.getCustomerId(),
+            k ->
+                PlatformMetricsRegistry.registerTimer(PROCESSING_LATENCY_TIMER, Map.of("tenantId", k)))
+        .record(Duration.between(start, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
     // the punctuator will emit the trace
     return null;
   }
