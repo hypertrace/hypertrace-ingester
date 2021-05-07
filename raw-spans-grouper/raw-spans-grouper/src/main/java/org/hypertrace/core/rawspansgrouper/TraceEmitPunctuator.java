@@ -141,7 +141,13 @@ public class TraceEmitPunctuator implements Punctuator {
                         TRACES_EMITTER_COUNTER, Map.of("tenantId", k)))
             .increment();
 
-        reportLatency(key.getTenantId(), startTime);
+        tenantToPunctuateLatencyTimer
+            .computeIfAbsent(
+                tenantId,
+                k ->
+                    PlatformMetricsRegistry.registerTimer(
+                        PUNCTUATE_LATENCY_TIMER, Map.of("tenantId", k)))
+            .record(Duration.between(startTime, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
         context.forward(null, trace, outputTopicProducer);
       }
     } else {
@@ -159,7 +165,6 @@ public class TraceEmitPunctuator implements Punctuator {
       long duration = Math.max(100, newEmitTs - timestamp);
       cancellable =
           context.schedule(Duration.ofMillis(duration), PunctuationType.WALL_CLOCK_TIME, this);
-      reportLatency(key.getTenantId(), startTime);
     }
   }
 
@@ -192,13 +197,5 @@ public class TraceEmitPunctuator implements Punctuator {
     }
   }
 
-  private void reportLatency(String tenantId, Instant startTime) {
-    tenantToPunctuateLatencyTimer
-        .computeIfAbsent(
-            tenantId,
-            k ->
-                PlatformMetricsRegistry.registerTimer(
-                    PUNCTUATE_LATENCY_TIMER, Map.of("tenantId", k)))
-        .record(Duration.between(startTime, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
-  }
+  private void reportLatency(String tenantId, Instant startTime) {}
 }
