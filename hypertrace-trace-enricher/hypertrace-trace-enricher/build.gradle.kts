@@ -49,6 +49,9 @@ dependencies {
     runtimeOnly("io.netty:netty-handler-proxy:4.1.63.Final") {
       because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
     }
+    implementation("org.glassfish.jersey.core:jersey-common:2.34") {
+      because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
+    }
   }
 
   // Required for the GRPC clients.
