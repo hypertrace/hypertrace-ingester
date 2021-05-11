@@ -153,20 +153,6 @@ kafka-topic-creator:
           - retention.bytes=8589934592 # default = -1
           - retention.ms=43200000 # default = 604800000 (7 days)
           - max.message.bytes=10485760 # default = 1048588
-      - name: raw-spans-to-structured-traces-grouping-job-trace-state-store-changelog
-        replicationFactor: 3
-        partitions: 8
-        configs:
-          - retention.bytes=8589934592 # default = -1
-          - retention.ms=43200000 # default = 604800000 (7 days)
-          - max.message.bytes=10485760 # default = 1048588
-      - name: raw-spans-to-structured-traces-grouping-job-span-window-store-changelog
-        replicationFactor: 3
-        partitions: 8
-        configs:
-          - retention.bytes=8589934592 # default = -1
-          - retention.ms=43200000 # default = 604800000 (7 days)
-          - max.message.bytes=10485760 # default = 1048588
 
   zookeeper:
     address: zookeeper:2181
