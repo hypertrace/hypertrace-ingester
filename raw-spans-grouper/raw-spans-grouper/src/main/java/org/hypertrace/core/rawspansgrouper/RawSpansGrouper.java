@@ -1,13 +1,16 @@
 package org.hypertrace.core.rawspansgrouper;
 
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_TRIGGER_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_RETENTION_TIME_MINS;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 
 import com.typesafe.config.Config;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serde;
@@ -20,14 +23,15 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
-import org.apache.kafka.streams.state.ValueAndTimestamp;
-import org.apache.kafka.streams.state.internals.ValueAndTimestampSerde;
+import org.apache.kafka.streams.state.WindowStore;
+import org.apache.kafka.streams.state.internals.RocksDbWindowBytesStoreSupplier;
 import org.hypertrace.core.datamodel.RawSpan;
-import org.hypertrace.core.datamodel.RawSpans;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
+import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
+import org.hypertrace.core.spannormalizer.TraceState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,21 +63,42 @@ public class RawSpansGrouper extends KafkaStreamsApp {
 
     // Retrieve the default value serde defined in config and use it
     Serde valueSerde = defaultValueSerde(properties);
-    StoreBuilder<KeyValueStore<TraceIdentity, ValueAndTimestamp<RawSpans>>> traceStoreBuilder =
+    Serde keySerde = defaultKeySerde(properties);
+
+    long spanWindowStoreRetentionTimeMins =
+        getAppConfig().hasPath(SPAN_WINDOW_STORE_RETENTION_TIME_MINS)
+            ? getAppConfig().getLong(SPAN_WINDOW_STORE_RETENTION_TIME_MINS)
+            : 60;
+    long spanWindowStoreSegmentSizeMins =
+        getAppConfig().hasPath(SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS)
+            ? getAppConfig().getLong(SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS)
+            : 20;
+    StoreBuilder<WindowStore<SpanIdentity, RawSpan>> spanWindowStoreBuilder =
+        Stores.windowStoreBuilder(
+            new RocksDbWindowBytesStoreSupplier(
+                SPAN_WINDOW_STORE,
+                // retention period of window
+                // so data older than 1 hour will be cleaned up
+                Duration.ofMinutes(spanWindowStoreRetentionTimeMins).toMillis(),
+                // length of a segment in rocksdb, so if segment size is 5mins and retention is
+                // 60mins
+                // there will be 12 segments in rocksdb
+                Duration.ofMinutes(spanWindowStoreSegmentSizeMins).toMillis(),
+                // duration of a window,
+                // this param doesn't play any role in actual persistence of data
+                // and is more of a logical construct used while returning the data
+                Duration.ofMinutes(1).toMillis(),
+                false,
+                false),
+            keySerde,
+            valueSerde);
+
+    StoreBuilder<KeyValueStore<TraceIdentity, TraceState>> traceEmitTriggerStoreBuilder =
         Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(INFLIGHT_TRACE_STORE),
-                (Serde<TraceIdentity>) null,
-                new ValueAndTimestampSerde<>(valueSerde))
+                Stores.persistentKeyValueStore(TRACE_STATE_STORE), keySerde, valueSerde)
             .withCachingEnabled();
 
-    StoreBuilder<KeyValueStore<TraceIdentity, Long>> traceEmitTriggerStoreBuilder =
-        Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(TRACE_EMIT_TRIGGER_STORE),
-                (Serde<TraceIdentity>) null,
-                Serdes.Long())
-            .withCachingEnabled();
-
-    streamsBuilder.addStateStore(traceStoreBuilder);
+    streamsBuilder.addStateStore(spanWindowStoreBuilder);
     streamsBuilder.addStateStore(traceEmitTriggerStoreBuilder);
 
     Produced<String, StructuredTrace> outputTopicProducer = Produced.with(Serdes.String(), null);
@@ -81,10 +106,10 @@ public class RawSpansGrouper extends KafkaStreamsApp {
 
     inputStream
         .transform(
-            RawSpansGroupingTransformer::new,
-            Named.as(RawSpansGroupingTransformer.class.getSimpleName()),
-            INFLIGHT_TRACE_STORE,
-            TRACE_EMIT_TRIGGER_STORE)
+            RawSpansProcessor::new,
+            Named.as(RawSpansProcessor.class.getSimpleName()),
+            SPAN_WINDOW_STORE,
+            TRACE_STATE_STORE)
         .to(outputTopic, outputTopicProducer);
 
     return streamsBuilder;
@@ -117,5 +142,10 @@ public class RawSpansGrouper extends KafkaStreamsApp {
   private Serde defaultValueSerde(Map<String, Object> properties) {
     StreamsConfig config = new StreamsConfig(properties);
     return config.defaultValueSerde();
+  }
+
+  private Serde defaultKeySerde(Map<String, Object> properties) {
+    StreamsConfig config = new StreamsConfig(properties);
+    return config.defaultKeySerde();
   }
 }
