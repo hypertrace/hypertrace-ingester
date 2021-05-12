@@ -13,6 +13,8 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -158,8 +160,12 @@ public class RawSpansGrouperTest {
     // trace1 should have 2 span span1, span2
     StructuredTrace trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(2, trace.getEventList().size());
-    assertEquals("event-1", new String(trace.getEventList().get(0).getEventId().array()));
-    assertEquals("event-2", new String(trace.getEventList().get(1).getEventId().array()));
+    Set<String> traceEventIds =
+        trace.getEventList().stream()
+            .map(id -> new String(id.getEventId().array()))
+            .collect(Collectors.toSet());
+    assertTrue(traceEventIds.contains("event-1"));
+    assertTrue(traceEventIds.contains("event-2"));
 
     // trace2 should have 1 span span3
     trace = (StructuredTrace) outputTopic.readValue();
