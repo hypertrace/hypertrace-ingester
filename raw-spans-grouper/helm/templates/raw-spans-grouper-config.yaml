@@ -57,6 +57,7 @@ data:
     span.groupby.session.window.interval = {{ .Values.rawSpansGrouperConfig.span.groupby.internal }}
     span.window.store.retention.time.mins = {{ .Values.rawSpansGrouperConfig.spanWindowStoreRetentionTimeMins }}
     span.window.store.segment.size.mins = {{ .Values.rawSpansGrouperConfig.spanWindowStoreSegmentSizeMins }}
+    span.window.store.caching.enabled = {{ .Values.rawSpansGrouperConfig.spanWindowStoreCachingEnabled }}
 
     {{- if hasKey .Values.rawSpansGrouperConfig "maxSpanCount" }}
     max.span.count = {

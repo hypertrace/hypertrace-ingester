@@ -20,4 +20,6 @@ public class RawSpanGrouperConstants {
       "span.window.store.retention.time.mins";
   public static final String SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS =
       "span.window.store.segment.size.mins";
+  public static final String SPAN_WINDOW_STORE_CHACHING_ENABLED =
+      "span.window.store.caching.enabled";
 }
