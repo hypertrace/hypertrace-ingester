@@ -158,13 +158,13 @@ public class RawSpansGrouperTest {
     // trace1 should have 2 span span1, span2
     StructuredTrace trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(2, trace.getEventList().size());
-    assertEquals(ByteBuffer.wrap("event-1".getBytes()), trace.getEventList().get(0).getEventId());
-    assertEquals(ByteBuffer.wrap("event-2".getBytes()), trace.getEventList().get(1).getEventId());
+    assertEquals("event-1", new String(trace.getEventList().get(0).getEventId().array()));
+    assertEquals("event-2", new String(trace.getEventList().get(1).getEventId().array()));
 
     // trace2 should have 1 span span3
     trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
-    assertEquals(ByteBuffer.wrap("event-4".getBytes()), trace.getEventList().get(0).getEventId());
+    assertEquals("event-4", new String(trace.getEventList().get(0).getEventId().array()));
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span3);
     td.advanceWallClockTime(Duration.ofSeconds(45));
@@ -175,12 +175,12 @@ public class RawSpansGrouperTest {
     // trace1 should have 1 span i.e. span3
     trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
-    assertEquals(ByteBuffer.wrap("event-3".getBytes()), trace.getEventList().get(0).getEventId());
+    assertEquals("event-3", new String(trace.getEventList().get(0).getEventId().array()));
 
     // trace2 should have 1 span i.e. span4
     trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
-    assertEquals(ByteBuffer.wrap("event-5".getBytes()), trace.getEventList().get(0).getEventId());
+    assertEquals("event-5", new String(trace.getEventList().get(0).getEventId().array()));
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span6);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span7);
