@@ -28,7 +28,6 @@ import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.To;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.WindowStore;
 import org.hypertrace.core.datamodel.RawSpan;
@@ -72,6 +71,8 @@ public class RawSpansProcessor
   private static final ConcurrentMap<String, Counter> truncatedTracesCounter =
       new ConcurrentHashMap<>();
 
+  // private final TraceStateStoreWrapper traceStateStoreWrapper;
+
   @Override
   public void init(ProcessorContext context) {
     this.context = context;
@@ -79,6 +80,8 @@ public class RawSpansProcessor
         (WindowStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_WINDOW_STORE);
     this.traceStateStore =
         (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_STATE_STORE);
+    // this.traceStateStoreWrapper = new TraceStateStoreWrapper();
+
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
     this.groupingWindowTimeoutMs =
         jobConfig.getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
@@ -99,7 +102,9 @@ public class RawSpansProcessor
     }
 
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
-    restorePunctuators();
+
+    setPunctuator();
+    // restorePunctuators();
   }
 
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
@@ -143,7 +148,7 @@ public class RawSpansProcessor
               .setTraceId(key.getTraceId())
               .setSpanIds(List.of(value.getEvent().getEventId()))
               .build();
-      schedulePunctuator(key);
+      // schedulePunctuator(key);
     } else {
       traceState.getSpanIds().add(value.getEvent().getEventId());
       traceState.setTraceEndTimestamp(currentTimeMs);
@@ -200,6 +205,25 @@ public class RawSpansProcessor
     return false;
   }
 
+  private void setPunctuator() {
+    PeriodicPunctuator punctuator =
+        new PeriodicPunctuator(
+            context,
+            spanWindowStore,
+            traceStateStore,
+            outputTopic,
+            groupingWindowTimeoutMs,
+            dataflowSamplingPercent);
+    Cancellable cancellable =
+        context.schedule(
+            Duration.ofMillis(groupingWindowTimeoutMs),
+            PunctuationType.WALL_CLOCK_TIME,
+            punctuator);
+    punctuator.setCancellable(cancellable);
+    logger.debug(
+        "Scheduled a punctuator to emit trace  to run after [{}] ms", groupingWindowTimeoutMs);
+  }
+
   private void schedulePunctuator(TraceIdentity key) {
     TraceEmitPunctuator punctuator =
         new TraceEmitPunctuator(
@@ -229,18 +253,11 @@ public class RawSpansProcessor
    * Punctuators are not persisted - so on restart we recover punctuators and schedule them to run
    * after {@link RawSpansProcessor#groupingWindowTimeoutMs}
    */
-  void restorePunctuators() {
-    long count = 0;
-    Instant start = Instant.now();
-    try (KeyValueIterator<TraceIdentity, TraceState> it = traceStateStore.all()) {
-      while (it.hasNext()) {
-        schedulePunctuator(it.next().key);
-        count++;
-      }
-      logger.info(
-          "Restored=[{}] punctuators, Duration=[{}]",
-          count,
-          Duration.between(start, Instant.now()));
-    }
-  }
+
+  /**
+   * void restorePunctuators() { long count = 0; Instant start = Instant.now(); try
+   * (KeyValueIterator<TraceIdentity, TraceState> it = traceStateStore.all()) { while (it.hasNext())
+   * { schedulePunctuator(it.next().key); count++; } logger.info( "Restored=[{}] punctuators,
+   * Duration=[{}]", count, Duration.between(start, Instant.now())); } }
+   */
 }
