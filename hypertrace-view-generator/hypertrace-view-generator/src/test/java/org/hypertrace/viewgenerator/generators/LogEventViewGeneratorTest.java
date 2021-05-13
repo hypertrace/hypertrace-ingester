@@ -115,24 +115,25 @@ class LogEventViewGeneratorTest {
   void testSummaryField() {
     LogEvents logEvents =
         getLogEventsWithAttribute(
-            Map.of("message", "message", "body", "body", "event", "event", "other", "other"));
+            Map.of(
+                "message", "message-v", "body", "body-v", "event", "event-v", "other", "other-v"));
 
     LogEventViewGenerator logEventViewGenerator = new LogEventViewGenerator();
     List<LogEventView> list = logEventViewGenerator.process(logEvents);
-    assertEquals("message", list.get(0).getSummary());
+    assertEquals("message-v", list.get(0).getSummary());
 
     logEvents =
-        getLogEventsWithAttribute(Map.of("body", "body", "event", "event", "other", "other"));
+        getLogEventsWithAttribute(Map.of("body", "body-v", "event", "event-v", "other", "other-v"));
     list = logEventViewGenerator.process(logEvents);
-    assertEquals("body", list.get(0).getSummary());
+    assertEquals("body-v", list.get(0).getSummary());
 
-    logEvents = getLogEventsWithAttribute(Map.of("event", "event", "other", "other"));
+    logEvents = getLogEventsWithAttribute(Map.of("event", "event-v", "other", "other-v"));
     list = logEventViewGenerator.process(logEvents);
-    assertEquals("event", list.get(0).getSummary());
+    assertEquals("event-v", list.get(0).getSummary());
 
-    logEvents = getLogEventsWithAttribute(Map.of("other", "other"));
+    logEvents = getLogEventsWithAttribute(Map.of("other", "other-v"));
     list = logEventViewGenerator.process(logEvents);
-    assertEquals("other", list.get(0).getSummary());
+    assertEquals("other-v", list.get(0).getSummary());
 
     logEvents = getLogEventsWithAttribute(Map.of());
     list = logEventViewGenerator.process(logEvents);

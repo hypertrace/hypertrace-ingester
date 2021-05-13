@@ -34,7 +34,8 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
   // refer following links for attribute keys in log message
   // https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
   // https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/logs/v1/logs.proto#L108
-  private static final List<String> SUMMARY_KEYS = List.of("message", "body", "event");
+  private static final List<String> SUMMARY_KEYS =
+      List.of("message", "exception.message", "exception.type", "event", "body");
 
   @Override
   public List<LogEventView> process(LogEvents logEvents) {
@@ -76,10 +77,12 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
       return null;
     }
     Map<String, AttributeValue> attributeValueMap = attributes.getAttributeMap();
-    Optional<String> summary =
+    Optional<String> summaryKey =
         SUMMARY_KEYS.stream().filter(attributeValueMap::containsKey).findFirst();
-    return summary.orElseGet(
-        () -> attributeValueMap.entrySet().stream().findFirst().get().getValue().getValue());
+
+    return summaryKey.isPresent()
+        ? attributeValueMap.get(summaryKey.get()).getValue()
+        : attributeValueMap.entrySet().stream().findFirst().get().getValue().getValue();
   }
 
   private String convertAttributes(Attributes attributes) throws JsonProcessingException {
