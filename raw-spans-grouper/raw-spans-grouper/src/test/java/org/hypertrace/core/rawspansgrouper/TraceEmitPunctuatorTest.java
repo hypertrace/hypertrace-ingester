@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 class TraceEmitPunctuatorTest {
 
   private TraceEmitPunctuator underTest;
-  private WindowStore<SpanIdentity, RawSpan> spanStore;
+  private WindowStore<SpanIdentity, byte[]> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
 
   @BeforeEach

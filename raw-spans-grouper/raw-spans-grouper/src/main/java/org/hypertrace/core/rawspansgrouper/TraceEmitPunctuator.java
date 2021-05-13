@@ -36,6 +36,7 @@ import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
+import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -62,11 +63,12 @@ class TraceEmitPunctuator implements Punctuator {
   private final double dataflowSamplingPercent;
   private final TraceIdentity key;
   private final ProcessorContext context;
-  private final WindowStore<SpanIdentity, RawSpan> spanWindowStore;
+  private final WindowStore<SpanIdentity, byte[]> spanWindowStore;
   private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
   private Cancellable cancellable;
+  private final AvroSerde<RawSpan> rawSpanAvroSerde;
 
   private static final String TRACES_EMITTER_COUNTER = "hypertrace.emitted.traces";
   private static final ConcurrentMap<String, Counter> tenantToTraceEmittedCounter =
@@ -75,7 +77,7 @@ class TraceEmitPunctuator implements Punctuator {
   TraceEmitPunctuator(
       TraceIdentity key,
       ProcessorContext context,
-      WindowStore<SpanIdentity, RawSpan> spanWindowStore,
+      WindowStore<SpanIdentity, byte[]> spanWindowStore,
       KeyValueStore<TraceIdentity, TraceState> traceStateStore,
       To outputTopicProducer,
       long groupingWindowTimeoutMs,
@@ -87,6 +89,7 @@ class TraceEmitPunctuator implements Punctuator {
     this.outputTopicProducer = outputTopicProducer;
     this.groupingWindowTimeoutMs = groupingWindowTimeoutMs;
     this.dataflowSamplingPercent = dataflowSamplingPercent;
+    this.rawSpanAvroSerde = (AvroSerde<RawSpan>) context.valueSerde();
   }
 
   public void setCancellable(Cancellable cancellable) {
@@ -142,7 +145,7 @@ class TraceEmitPunctuator implements Punctuator {
       spanIdsSet.addAll(traceState.getSpanIds());
 
       List<RawSpan> rawSpanList = new ArrayList<>();
-      try (KeyValueIterator<Windowed<SpanIdentity>, RawSpan> iterator =
+      try (KeyValueIterator<Windowed<SpanIdentity>, byte[]> iterator =
           spanWindowStore.fetch(
               new SpanIdentity(tenantId, traceId, spanIdsSet.first()),
               new SpanIdentity(tenantId, traceId, spanIdsSet.last()),
@@ -155,8 +158,8 @@ class TraceEmitPunctuator implements Punctuator {
               // has byte value which is within the {@code spanIdsSet.first()} & {@code
               // spanIdsSet.last()}
               // and was received in the same time range
-              if (spanIdsSet.contains(keyValue.value.getEvent().getEventId())) {
-                rawSpanList.add(keyValue.value);
+              if (spanIdsSet.contains(keyValue.key.key().getSpanId())) {
+                rawSpanList.add(rawSpanAvroSerde.deserializer().deserialize("", keyValue.value));
               }
             });
       }

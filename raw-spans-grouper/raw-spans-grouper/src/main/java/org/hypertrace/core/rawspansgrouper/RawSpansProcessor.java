@@ -32,6 +32,7 @@ import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.WindowStore;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.datamodel.RawSpanWrapper;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
@@ -49,7 +50,7 @@ import org.slf4j.LoggerFactory;
  * will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs} time to accept spans.
  */
 public class RawSpansProcessor
-    implements Transformer<TraceIdentity, RawSpan, KeyValue<String, StructuredTrace>> {
+    implements Transformer<TraceIdentity, RawSpanWrapper, KeyValue<String, StructuredTrace>> {
 
   private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
   private static final String PROCESSING_LATENCY_TIMER =
@@ -57,7 +58,7 @@ public class RawSpansProcessor
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
       new ConcurrentHashMap<>();
   private ProcessorContext context;
-  private WindowStore<SpanIdentity, RawSpan> spanWindowStore;
+  private WindowStore<SpanIdentity, byte[]> spanWindowStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private long groupingWindowTimeoutMs;
   private To outputTopic;
@@ -76,7 +77,7 @@ public class RawSpansProcessor
   public void init(ProcessorContext context) {
     this.context = context;
     this.spanWindowStore =
-        (WindowStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_WINDOW_STORE);
+        (WindowStore<SpanIdentity, byte[]>) context.getStateStore(SPAN_WINDOW_STORE);
     this.traceStateStore =
         (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
@@ -102,7 +103,7 @@ public class RawSpansProcessor
     restorePunctuators();
   }
 
-  public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
+  public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpanWrapper value) {
     Instant start = Instant.now();
     long currentTimeMs = System.currentTimeMillis();
 
@@ -115,8 +116,8 @@ public class RawSpansProcessor
 
     // add the new span to window store
     spanWindowStore.put(
-        new SpanIdentity(key.getTenantId(), key.getTraceId(), value.getEvent().getEventId()),
-        value,
+        new SpanIdentity(key.getTenantId(), key.getTraceId(), value.getSpanId()),
+        value.getRawSpan().array(),
         currentTimeMs);
 
     /*
@@ -141,11 +142,11 @@ public class RawSpansProcessor
               .setEmitTs(traceEmitTs)
               .setTenantId(key.getTenantId())
               .setTraceId(key.getTraceId())
-              .setSpanIds(List.of(value.getEvent().getEventId()))
+              .setSpanIds(List.of(value.getSpanId()))
               .build();
       schedulePunctuator(key);
     } else {
-      traceState.getSpanIds().add(value.getEvent().getEventId());
+      traceState.getSpanIds().add(value.getSpanId());
       traceState.setTraceEndTimestamp(currentTimeMs);
       traceState.setEmitTs(traceEmitTs);
     }
@@ -154,7 +155,7 @@ public class RawSpansProcessor
 
     tenantToSpansGroupingTimer
         .computeIfAbsent(
-            value.getCustomerId(),
+            key.getTenantId(),
             k ->
                 PlatformMetricsRegistry.registerTimer(
                     PROCESSING_LATENCY_TIMER, Map.of("tenantId", k)))

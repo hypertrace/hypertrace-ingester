@@ -78,7 +78,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     boolean spanWindowStoreCachingEnabled =
         !getAppConfig().hasPath(SPAN_WINDOW_STORE_CHACHING_ENABLED)
             || getAppConfig().getBoolean(SPAN_WINDOW_STORE_CHACHING_ENABLED);
-    StoreBuilder<WindowStore<SpanIdentity, RawSpan>> spanWindowStoreBuilder =
+    StoreBuilder<WindowStore<SpanIdentity, byte[]>> spanWindowStoreBuilder =
         Stores.windowStoreBuilder(
             new RocksDbWindowBytesStoreSupplier(
                 SPAN_WINDOW_STORE,
@@ -96,7 +96,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
                 false,
                 false),
             keySerde,
-            valueSerde);
+            Serdes.ByteArray());
 
     if (spanWindowStoreCachingEnabled) {
       spanWindowStoreBuilder.withCachingEnabled();
