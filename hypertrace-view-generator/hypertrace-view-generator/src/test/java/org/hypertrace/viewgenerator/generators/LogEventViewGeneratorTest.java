@@ -1,16 +1,17 @@
 package org.hypertrace.viewgenerator.generators;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -113,31 +114,18 @@ class LogEventViewGeneratorTest {
 
   @Test
   void testSummaryField() {
-    LogEvents logEvents =
-        getLogEventsWithAttribute(
-            Map.of(
-                "message", "message-v", "body", "body-v", "event", "event-v", "other", "other-v"));
-
     LogEventViewGenerator logEventViewGenerator = new LogEventViewGenerator();
-    List<LogEventView> list = logEventViewGenerator.process(logEvents);
-    assertEquals("message-v", list.get(0).getSummary());
+    Map<String, String> attributes = new HashMap<>();
+    List<String> summaryKeys = new ArrayList<>(LogEventViewGenerator.SUMMARY_KEYS);
+    AtomicInteger attributeVal = new AtomicInteger();
+    summaryKeys.forEach(key -> attributes.put(key, String.valueOf(attributeVal.getAndIncrement())));
 
-    logEvents =
-        getLogEventsWithAttribute(Map.of("body", "body-v", "event", "event-v", "other", "other-v"));
-    list = logEventViewGenerator.process(logEvents);
-    assertEquals("body-v", list.get(0).getSummary());
-
-    logEvents = getLogEventsWithAttribute(Map.of("event", "event-v", "other", "other-v"));
-    list = logEventViewGenerator.process(logEvents);
-    assertEquals("event-v", list.get(0).getSummary());
-
-    logEvents = getLogEventsWithAttribute(Map.of("other", "other-v"));
-    list = logEventViewGenerator.process(logEvents);
-    assertEquals("other-v", list.get(0).getSummary());
-
-    logEvents = getLogEventsWithAttribute(Map.of());
-    list = logEventViewGenerator.process(logEvents);
-    assertNull(list.get(0).getSummary());
+    for (String summaryKey : LogEventViewGenerator.SUMMARY_KEYS) {
+      LogEvents logEvents = getLogEventsWithAttribute(attributes);
+      List<LogEventView> list = logEventViewGenerator.process(logEvents);
+      assertEquals(attributes.get(summaryKey), list.get(0).getSummary());
+      attributes.remove(summaryKey);
+    }
   }
 
   private LogEvents getLogEventsWithAttribute(Map<String, String> attributes) {
