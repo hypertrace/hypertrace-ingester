@@ -80,9 +80,13 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
     Optional<String> summaryKey =
         SUMMARY_KEYS.stream().filter(attributeValueMap::containsKey).findFirst();
 
-    return summaryKey.isPresent()
-        ? attributeValueMap.get(summaryKey.get()).getValue()
-        : attributeValueMap.entrySet().stream().findFirst().get().getValue().getValue();
+    return summaryKey
+        .map(summary -> attributeValueMap.get(summaryKey.get()).getValue())
+        .orElse(
+            attributeValueMap.entrySet().stream()
+                .findFirst()
+                .map(attribute -> attribute.getValue().getValue())
+                .orElse(null));
   }
 
   private String convertAttributes(Attributes attributes) throws JsonProcessingException {
