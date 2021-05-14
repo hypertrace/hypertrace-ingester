@@ -13,6 +13,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCA
 import com.typesafe.config.Config;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -112,10 +113,11 @@ public class RawSpansProcessor
       return null;
     }
 
-    // add the new span to window store
-    spanStore.put(
-        new SpanIdentity(key.getTenantId(), key.getTraceId(), value.getEvent().getEventId()),
-        value);
+    String tenantId = key.getTenantId();
+    ByteBuffer traceId = value.getTraceId();
+    ByteBuffer spanId = value.getEvent().getEventId();
+    // add the new span to store
+    spanStore.put(new SpanIdentity(key.getTenantId(), traceId, spanId), value);
 
     /*
      the trace emit ts is essentially currentTs + groupingWindowTimeoutMs
@@ -128,7 +130,7 @@ public class RawSpansProcessor
           "Updating trigger_ts=[{}] for for tenant_id=[{}], trace_id=[{}]",
           Instant.ofEpochMilli(traceEmitTs),
           key.getTenantId(),
-          HexUtils.getHex(key.getTraceId()));
+          HexUtils.getHex(traceId));
     }
 
     if (firstEntry) {
@@ -137,13 +139,13 @@ public class RawSpansProcessor
               .setTraceStartTimestamp(currentTimeMs)
               .setTraceEndTimestamp(currentTimeMs)
               .setEmitTs(traceEmitTs)
-              .setTenantId(key.getTenantId())
-              .setTraceId(key.getTraceId())
-              .setSpanIds(List.of(value.getEvent().getEventId()))
+              .setTenantId(tenantId)
+              .setTraceId(traceId)
+              .setSpanIds(List.of(spanId))
               .build();
       schedulePunctuator(key);
     } else {
-      traceState.getSpanIds().add(value.getEvent().getEventId());
+      traceState.getSpanIds().add(spanId);
       traceState.setTraceEndTimestamp(currentTimeMs);
       traceState.setEmitTs(traceEmitTs);
     }

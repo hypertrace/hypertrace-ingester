@@ -122,9 +122,17 @@ class TraceEmitPunctuator implements Punctuator {
       List<RawSpan> rawSpanList = new ArrayList<>();
 
       for (ByteBuffer spanId : traceState.getSpanIds()) {
-        rawSpanList.add(spanStore.delete(new SpanIdentity(tenantId, traceId, spanId)));
+        RawSpan rawSpan = spanStore.delete(new SpanIdentity(tenantId, traceId, spanId));
+        if (null != rawSpan) {
+          rawSpanList.add(rawSpan);
+        }
       }
 
+      if (rawSpanList.size() != traceState.getSpanIds().size()) {
+        logger.info("Fetched spanIds: [{}] not matching requested spanIds: [{}] for tenant: [{}] trace: [{}]",
+            rawSpanList.size(), traceState.getSpanIds().size(), tenantId,
+            HexUtils.getHex(traceId));
+      }
       recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
       Timestamps timestamps =
           trackEndToEndLatencyTimestamps(timestamp, traceState.getTraceStartTimestamp());
