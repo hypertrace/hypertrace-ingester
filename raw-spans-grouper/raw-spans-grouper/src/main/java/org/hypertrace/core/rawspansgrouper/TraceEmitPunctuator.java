@@ -14,21 +14,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.processor.To;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.WindowStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.TimestampRecord;
@@ -62,7 +56,7 @@ class TraceEmitPunctuator implements Punctuator {
   private final double dataflowSamplingPercent;
   private final TraceIdentity key;
   private final ProcessorContext context;
-  private final WindowStore<SpanIdentity, RawSpan> spanWindowStore;
+  private final KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
@@ -75,14 +69,14 @@ class TraceEmitPunctuator implements Punctuator {
   TraceEmitPunctuator(
       TraceIdentity key,
       ProcessorContext context,
-      WindowStore<SpanIdentity, RawSpan> spanWindowStore,
+      KeyValueStore<SpanIdentity, RawSpan> spanStore,
       KeyValueStore<TraceIdentity, TraceState> traceStateStore,
       To outputTopicProducer,
       long groupingWindowTimeoutMs,
       double dataflowSamplingPercent) {
     this.key = key;
     this.context = context;
-    this.spanWindowStore = spanWindowStore;
+    this.spanStore = spanStore;
     this.traceStateStore = traceStateStore;
     this.outputTopicProducer = outputTopicProducer;
     this.groupingWindowTimeoutMs = groupingWindowTimeoutMs;
@@ -125,41 +119,12 @@ class TraceEmitPunctuator implements Punctuator {
 
       ByteBuffer traceId = traceState.getTraceId();
       String tenantId = traceState.getTenantId();
-
-      TreeSet<ByteBuffer> spanIdsSet =
-          new TreeSet<>(
-              (spanId1, spanId2) -> {
-                // the sort order for this set is determined by comparing the corresponding {@code
-                // SpanIdentifier}
-                Serde<SpanIdentity> serde = (Serde<SpanIdentity>) context.keySerde();
-                byte[] spanIdentityBytes1 =
-                    serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, spanId1));
-                byte[] spanIdentityBytes2 =
-                    serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, spanId2));
-                return Bytes.BYTES_LEXICO_COMPARATOR.compare(
-                    spanIdentityBytes1, spanIdentityBytes2);
-              });
-      spanIdsSet.addAll(traceState.getSpanIds());
-
       List<RawSpan> rawSpanList = new ArrayList<>();
-      try (KeyValueIterator<Windowed<SpanIdentity>, RawSpan> iterator =
-          spanWindowStore.fetch(
-              new SpanIdentity(tenantId, traceId, spanIdsSet.first()),
-              new SpanIdentity(tenantId, traceId, spanIdsSet.last()),
-              Instant.ofEpochMilli(traceState.getTraceStartTimestamp()),
-              Instant.ofEpochMilli(traceState.getTraceEndTimestamp()))) {
-        iterator.forEachRemaining(
-            keyValue -> {
-              // range search could return extra span ids as well, filter them
-              // one scenario when this could occur is when some spanIdentifier for another trace
-              // has byte value which is within the {@code spanIdsSet.first()} & {@code
-              // spanIdsSet.last()}
-              // and was received in the same time range
-              if (spanIdsSet.contains(keyValue.value.getEvent().getEventId())) {
-                rawSpanList.add(keyValue.value);
-              }
-            });
+
+      for (ByteBuffer spanId : traceState.getSpanIds()) {
+        rawSpanList.add(spanStore.delete(new SpanIdentity(tenantId, traceId, spanId)));
       }
+
       recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
       Timestamps timestamps =
           trackEndToEndLatencyTimestamps(timestamp, traceState.getTraceStartTimestamp());

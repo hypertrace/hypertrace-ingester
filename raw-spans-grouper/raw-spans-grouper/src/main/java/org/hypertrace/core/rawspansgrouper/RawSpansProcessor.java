@@ -6,7 +6,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIG
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_KV_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
 
@@ -30,7 +30,6 @@ import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.WindowStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
@@ -57,7 +56,7 @@ public class RawSpansProcessor
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
       new ConcurrentHashMap<>();
   private ProcessorContext context;
-  private WindowStore<SpanIdentity, RawSpan> spanWindowStore;
+  private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private long groupingWindowTimeoutMs;
   private To outputTopic;
@@ -75,8 +74,8 @@ public class RawSpansProcessor
   @Override
   public void init(ProcessorContext context) {
     this.context = context;
-    this.spanWindowStore =
-        (WindowStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_WINDOW_STORE);
+    this.spanStore =
+        (KeyValueStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_KV_STORE);
     this.traceStateStore =
         (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
@@ -114,10 +113,9 @@ public class RawSpansProcessor
     }
 
     // add the new span to window store
-    spanWindowStore.put(
+    spanStore.put(
         new SpanIdentity(key.getTenantId(), key.getTraceId(), value.getEvent().getEventId()),
-        value,
-        currentTimeMs);
+        value);
 
     /*
      the trace emit ts is essentially currentTs + groupingWindowTimeoutMs
@@ -205,7 +203,7 @@ public class RawSpansProcessor
         new TraceEmitPunctuator(
             key,
             context,
-            spanWindowStore,
+            spanStore,
             traceStateStore,
             outputTopic,
             groupingWindowTimeoutMs,

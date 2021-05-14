@@ -4,14 +4,13 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INPUT_
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_KV_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_CHACHING_ENABLED;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_RETENTION_TIME_MINS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 
 import com.typesafe.config.Config;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serde;
@@ -24,8 +23,6 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
-import org.apache.kafka.streams.state.WindowStore;
-import org.apache.kafka.streams.state.internals.RocksDbWindowBytesStoreSupplier;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
@@ -78,36 +75,41 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     boolean spanWindowStoreCachingEnabled =
         !getAppConfig().hasPath(SPAN_WINDOW_STORE_CHACHING_ENABLED)
             || getAppConfig().getBoolean(SPAN_WINDOW_STORE_CHACHING_ENABLED);
-    StoreBuilder<WindowStore<SpanIdentity, RawSpan>> spanWindowStoreBuilder =
-        Stores.windowStoreBuilder(
-            new RocksDbWindowBytesStoreSupplier(
-                SPAN_WINDOW_STORE,
-                // retention period of window
-                // so data older than 1 hour will be cleaned up
-                Duration.ofMinutes(spanWindowStoreRetentionTimeMins).toMillis(),
-                // length of a segment in rocksdb, so if segment size is 5mins and retention is
-                // 60mins
-                // there will be 12 segments in rocksdb
-                Duration.ofMinutes(spanWindowStoreSegmentSizeMins).toMillis(),
-                // duration of a window,
-                // this param doesn't play any role in actual persistence of data
-                // and is more of a logical construct used while returning the data
-                Duration.ofMinutes(1).toMillis(),
-                false,
-                false),
-            keySerde,
-            valueSerde);
-
-    if (spanWindowStoreCachingEnabled) {
-      spanWindowStoreBuilder.withCachingEnabled();
-    }
+//    StoreBuilder<WindowStore<SpanIdentity, RawSpan>> spanWindowStoreBuilder =
+//        Stores.windowStoreBuilder(
+//            new RocksDbWindowBytesStoreSupplier(
+//                SPAN_WINDOW_STORE,
+//                // retention period of window
+//                // so data older than 1 hour will be cleaned up
+//                Duration.ofMinutes(spanWindowStoreRetentionTimeMins).toMillis(),
+//                // length of a segment in rocksdb, so if segment size is 5mins and retention is
+//                // 60mins
+//                // there will be 12 segments in rocksdb
+//                Duration.ofMinutes(spanWindowStoreSegmentSizeMins).toMillis(),
+//                // duration of a window,
+//                // this param doesn't play any role in actual persistence of data
+//                // and is more of a logical construct used while returning the data
+//                Duration.ofMinutes(1).toMillis(),
+//                false,
+//                false),
+//            keySerde,
+//            valueSerde)
+//    if (spanWindowStoreCachingEnabled) {
+//      spanWindowStoreBuilder.withCachingEnabled();
+//    }
+// streamsBuilder.addStateStore(spanWindowStoreBuilder);
 
     StoreBuilder<KeyValueStore<TraceIdentity, TraceState>> traceStateStoreBuilder =
         Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(TRACE_STATE_STORE), keySerde, valueSerde)
             .withCachingEnabled();
 
-    streamsBuilder.addStateStore(spanWindowStoreBuilder);
+    StoreBuilder<KeyValueStore<SpanIdentity, RawSpan>> spanStoreBuilder =
+        Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore(SPAN_KV_STORE), keySerde, valueSerde)
+            .withCachingEnabled();
+
+    streamsBuilder.addStateStore(spanStoreBuilder);
     streamsBuilder.addStateStore(traceStateStoreBuilder);
 
     Produced<String, StructuredTrace> outputTopicProducer = Produced.with(Serdes.String(), null);
@@ -117,7 +119,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
         .transform(
             RawSpansProcessor::new,
             Named.as(RawSpansProcessor.class.getSimpleName()),
-            SPAN_WINDOW_STORE,
+            SPAN_KV_STORE,
             TRACE_STATE_STORE)
         .to(outputTopic, outputTopicProducer);
 
