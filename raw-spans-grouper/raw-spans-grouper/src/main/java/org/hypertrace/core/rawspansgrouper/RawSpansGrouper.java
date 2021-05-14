@@ -5,7 +5,6 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_CHACHING_ENABLED;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_RETENTION_TIME_MINS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
@@ -74,10 +73,6 @@ public class RawSpansGrouper extends KafkaStreamsApp {
         getAppConfig().hasPath(SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS)
             ? getAppConfig().getLong(SPAN_WINDOW_STORE_SEGMENT_SIZE_MINS)
             : 20;
-
-    boolean spanWindowStoreCachingEnabled =
-        !getAppConfig().hasPath(SPAN_WINDOW_STORE_CHACHING_ENABLED)
-            || getAppConfig().getBoolean(SPAN_WINDOW_STORE_CHACHING_ENABLED);
     StoreBuilder<WindowStore<SpanIdentity, RawSpan>> spanWindowStoreBuilder =
         Stores.windowStoreBuilder(
             new RocksDbWindowBytesStoreSupplier(
@@ -98,17 +93,13 @@ public class RawSpansGrouper extends KafkaStreamsApp {
             keySerde,
             valueSerde);
 
-    if (spanWindowStoreCachingEnabled) {
-      spanWindowStoreBuilder.withCachingEnabled();
-    }
-
-    StoreBuilder<KeyValueStore<TraceIdentity, TraceState>> traceStateStoreBuilder =
+    StoreBuilder<KeyValueStore<TraceIdentity, TraceState>> traceEmitTriggerStoreBuilder =
         Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(TRACE_STATE_STORE), keySerde, valueSerde)
             .withCachingEnabled();
 
     streamsBuilder.addStateStore(spanWindowStoreBuilder);
-    streamsBuilder.addStateStore(traceStateStoreBuilder);
+    streamsBuilder.addStateStore(traceEmitTriggerStoreBuilder);
 
     Produced<String, StructuredTrace> outputTopicProducer = Produced.with(Serdes.String(), null);
     outputTopicProducer = outputTopicProducer.withName(OUTPUT_TOPIC_PRODUCER);
