@@ -122,9 +122,11 @@ class TraceEmitPunctuator implements Punctuator {
       List<RawSpan> rawSpanList = new ArrayList<>();
 
       for (ByteBuffer spanId : traceState.getSpanIds()) {
-        RawSpan rawSpan = spanStore.delete(new SpanIdentity(tenantId, traceId, spanId));
+        SpanIdentity spanIdentity = new SpanIdentity(tenantId, traceId, spanId);
+        RawSpan rawSpan = spanStore.get(spanIdentity);
         if (null != rawSpan) {
           rawSpanList.add(rawSpan);
+          spanStore.delete(spanIdentity);
         }
       }
 
