@@ -8,18 +8,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.kstream.internals.TimeWindow;
 import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.To;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.WindowStore;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
@@ -31,8 +24,6 @@ import org.junit.jupiter.api.Test;
 
 class TraceEmitPunctuatorTest {
 
-  /**
-
   private TraceEmitPunctuator underTest;
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
@@ -42,7 +33,7 @@ class TraceEmitPunctuatorTest {
     AvroSerde avroSerde = new AvroSerde();
     ProcessorContext context = mock(ProcessorContext.class);
     when(context.keySerde()).thenReturn(avroSerde);
-    spanStore = mock(WindowStore.class);
+    spanStore = mock(KeyValueStore.class);
     traceStateStore = mock(KeyValueStore.class);
     To outputTopicProducer = mock(To.class);
     underTest =
@@ -100,16 +91,9 @@ class TraceEmitPunctuatorTest {
                 .setTenantId("tenant")
                 .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
                 .build());
-    List<KeyValue<Windowed<SpanIdentity>, RawSpan>> list = new ArrayList<>();
-    list.add(
-        new KeyValue<>(
-            new Windowed<>(
-                SpanIdentity.newBuilder()
-                    .setSpanId(ByteBuffer.wrap("span-1".getBytes()))
-                    .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
-                    .setTenantId("__default")
-                    .build(),
-                new TimeWindow(100, 130)),
+
+    when(spanStore.delete(any()))
+        .thenReturn(
             RawSpan.newBuilder()
                 .setCustomerId("__default")
                 .setEvent(
@@ -118,33 +102,10 @@ class TraceEmitPunctuatorTest {
                         .setCustomerId("__default")
                         .build())
                 .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
-                .build()));
-
-    Iterator<KeyValue<Windowed<SpanIdentity>, RawSpan>> iterator = list.iterator();
-    when(spanStore.fetch(any(), any(), any(), any()))
-        .thenReturn(
-            new KeyValueIterator<Windowed<SpanIdentity>, RawSpan>() {
-              @Override
-              public void close() {}
-
-              @Override
-              public Windowed<SpanIdentity> peekNextKey() {
-                return null;
-              }
-
-              @Override
-              public boolean hasNext() {
-                return iterator.hasNext();
-              }
-
-              @Override
-              public KeyValue<Windowed<SpanIdentity>, RawSpan> next() {
-                return iterator.next();
-              }
-            });
+                .build());
     underTest.punctuate(200); // the above when() call should be the only interaction
     verify(traceStateStore, times(1)).get(any());
-    verify(spanStore, times(1)).fetch(any(), any(), any(), any());
+    verify(spanStore, times(1)).delete(any());
     verify(traceStateStore)
         .delete(
             eq(
@@ -152,5 +113,5 @@ class TraceEmitPunctuatorTest {
                     .setTenantId("__default")
                     .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
                     .build()));
-  } **/
+  }
 }

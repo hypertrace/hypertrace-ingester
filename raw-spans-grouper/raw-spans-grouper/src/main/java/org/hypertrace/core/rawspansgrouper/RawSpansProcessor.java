@@ -6,7 +6,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIG
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_KV_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
 
@@ -76,7 +76,7 @@ public class RawSpansProcessor
   public void init(ProcessorContext context) {
     this.context = context;
     this.spanStore =
-        (KeyValueStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_KV_STORE);
+        (KeyValueStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_STATE_STORE_NAME);
     this.traceStateStore =
         (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));

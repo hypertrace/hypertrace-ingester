@@ -128,10 +128,6 @@ rawSpansGrouperConfig:
     groupby:
       internal: 30
 
-  spanWindowStoreRetentionTimeMins: 60
-  spanWindowStoreSegmentSizeMins: 20
-  spanWindowStoreCachingEnabled: false
-
 logConfig:
   name: raw-spans-grouper-log-config
   monitorInterval: 30
