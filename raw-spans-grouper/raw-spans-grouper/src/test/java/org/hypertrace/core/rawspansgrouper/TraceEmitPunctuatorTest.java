@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class TraceEmitPunctuatorTest {
-
+/**
   private TraceEmitPunctuator underTest;
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
@@ -113,5 +113,5 @@ class TraceEmitPunctuatorTest {
                     .setTenantId("__default")
                     .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
                     .build()));
-  }
+  } **/
 }

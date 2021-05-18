@@ -5,8 +5,9 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPE
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPANS_CHUNK_STATE_STORE_NAME;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPANS_CHUNK_STORE_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
 
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.Cancellable;
@@ -34,10 +36,13 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
+import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
-import org.hypertrace.core.spannormalizer.SpanIdentity;
+import org.hypertrace.core.spannormalizer.RawSpansChunk;
+import org.hypertrace.core.spannormalizer.RawSpansChunkIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.hypertrace.core.spannormalizer.TraceState;
+import org.hypertrace.core.spannormalizer.TraceStateV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,36 +54,37 @@ import org.slf4j.LoggerFactory;
  * will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs} time to accept spans.
  */
 public class RawSpansProcessor
-    implements Transformer<TraceIdentity, RawSpan, KeyValue<String, StructuredTrace>> {
+    implements Transformer<TraceIdentity, byte[], KeyValue<String, StructuredTrace>> {
 
   private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
   private static final String PROCESSING_LATENCY_TIMER =
       "hypertrace.rawspansgrouper.processing.latency";
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
       new ConcurrentHashMap<>();
-  private ProcessorContext context;
-  private KeyValueStore<SpanIdentity, RawSpan> spanStore;
-  private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
-  private long groupingWindowTimeoutMs;
-  private To outputTopic;
-  private double dataflowSamplingPercent = -1;
   private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
-
   // counter for number of spans dropped per tenant
   private static final ConcurrentMap<String, Counter> droppedSpansCounter =
       new ConcurrentHashMap<>();
-
   // counter for number of truncated traces per tenant
   private static final ConcurrentMap<String, Counter> truncatedTracesCounter =
       new ConcurrentHashMap<>();
 
+  private ProcessorContext context;
+  private KeyValueStore<RawSpansChunkIdentity, RawSpansChunk> spansChunkStore;
+  private KeyValueStore<TraceIdentity, TraceStateV2> traceStateStore;
+  private long groupingWindowTimeoutMs;
+  private To outputTopic;
+  private double dataflowSamplingPercent = -1;
+  private int spansChunkStoreSpanCount;
+  private Serde<RawSpan> rawSpanAvroSerde;
+
   @Override
   public void init(ProcessorContext context) {
     this.context = context;
-    this.spanStore =
-        (KeyValueStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_STATE_STORE_NAME);
+    this.spansChunkStore =
+        (KeyValueStore<RawSpansChunkIdentity, RawSpansChunk>) context.getStateStore(SPANS_CHUNK_STATE_STORE_NAME);
     this.traceStateStore =
-        (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_STATE_STORE);
+        (KeyValueStore<TraceIdentity, TraceStateV2>) context.getStateStore(TRACE_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
     this.groupingWindowTimeoutMs =
         jobConfig.getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
@@ -98,15 +104,22 @@ public class RawSpansProcessor
               });
     }
 
+    if (jobConfig.hasPath(SPANS_CHUNK_STORE_SPAN_COUNT)) {
+      this.spansChunkStoreSpanCount = jobConfig.getInt(SPANS_CHUNK_STATE_STORE_NAME);
+    } else {
+      this.spansChunkStoreSpanCount = 1;
+    }
+
+    rawSpanAvroSerde = (Serde<RawSpan>) context.valueSerde();
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
     restorePunctuators();
   }
 
-  public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
+  public KeyValue<String, StructuredTrace> transform(TraceIdentity key, byte[] rawSpan) {
     Instant start = Instant.now();
     long currentTimeMs = System.currentTimeMillis();
 
-    TraceState traceState = traceStateStore.get(key);
+    TraceStateV2 traceState = traceStateStore.get(key);
     boolean firstEntry = (traceState == null);
 
     if (shouldDropSpan(key, traceState)) {
@@ -114,9 +127,7 @@ public class RawSpansProcessor
     }
 
     String tenantId = key.getTenantId();
-    ByteBuffer traceId = value.getTraceId();
-    ByteBuffer spanId = value.getEvent().getEventId();
-    spanStore.put(new SpanIdentity(tenantId, traceId, spanId), value);
+    ByteBuffer traceId = key.getTraceId();
 
     /*
      the trace emit ts is essentially currentTs + groupingWindowTimeoutMs
@@ -134,17 +145,42 @@ public class RawSpansProcessor
 
     if (firstEntry) {
       traceState =
-          TraceState.newBuilder()
+          TraceStateV2.newBuilder()
               .setTraceStartTimestamp(currentTimeMs)
               .setTraceEndTimestamp(currentTimeMs)
               .setEmitTs(traceEmitTs)
               .setTenantId(tenantId)
               .setTraceId(traceId)
-              .setSpanIds(List.of(spanId))
+              .setLastChunkId(0)
+              .setLastChunkSpanCount(1)
+              .setChunkIds(List.of(0))
               .build();
+      RawSpansChunk rawSpansChunk = RawSpansChunk.newBuilder()
+          .setRawSpans(List.of(ByteBuffer.wrap(rawSpan)))
+          .build();
+      spansChunkStore.put(
+          RawSpansChunkIdentity.newBuilder().setChunkId(0).setTenantId(tenantId).setTraceId(traceId).build(),
+          rawSpansChunk);
       schedulePunctuator(key);
     } else {
-      traceState.getSpanIds().add(spanId);
+      if (traceState.getLastChunkSpanCount() < spansChunkStoreSpanCount) {
+        // add span to existing chunk
+        traceState.setLastChunkSpanCount(traceState.getLastChunkSpanCount() + 1);
+        RawSpansChunkIdentity rawSpansChunkIdentity = RawSpansChunkIdentity.newBuilder().setChunkId(traceState.getLastChunkId()).setTenantId(tenantId).setTraceId(traceId).build();
+        RawSpansChunk rawSpansChunk = spansChunkStore.get(rawSpansChunkIdentity);
+        rawSpansChunk.getRawSpans().add(ByteBuffer.wrap(rawSpan));
+        spansChunkStore.put(rawSpansChunkIdentity, rawSpansChunk);
+      } else {
+        // create new chunk
+        traceState.setLastChunkSpanCount(1);
+        traceState.setLastChunkId(traceState.getLastChunkId() + 1);
+        traceState.getChunkIds().add(traceState.getLastChunkId());
+        spansChunkStore.put(
+            RawSpansChunkIdentity.newBuilder().setChunkId(traceState.getLastChunkId()).setTenantId(tenantId).setTraceId(traceId).build(),
+            RawSpansChunk.newBuilder()
+                .setRawSpans(List.of(ByteBuffer.wrap(rawSpan)))
+                .build());
+      }
       traceState.setTraceEndTimestamp(currentTimeMs);
       traceState.setEmitTs(traceEmitTs);
     }
@@ -153,7 +189,7 @@ public class RawSpansProcessor
 
     tenantToSpansGroupingTimer
         .computeIfAbsent(
-            value.getCustomerId(),
+            tenantId,
             k ->
                 PlatformMetricsRegistry.registerTimer(
                     PROCESSING_LATENCY_TIMER, Map.of("tenantId", k)))
@@ -162,17 +198,19 @@ public class RawSpansProcessor
     return null;
   }
 
-  private boolean shouldDropSpan(TraceIdentity key, TraceState traceState) {
-    if (traceState != null
-        && maxSpanCountMap.containsKey(key.getTenantId())
-        && traceState.getSpanIds().size() >= maxSpanCountMap.get(key.getTenantId())) {
+  private boolean shouldDropSpan(TraceIdentity key, TraceStateV2 traceState) {
+    if (null == traceState) {
+      return false;
+    }
+    int totalSpanInTrace = getTotalSpansInTrace(traceState);
+    if (maxSpanCountMap.containsKey(key.getTenantId())
+        && totalSpanInTrace >= maxSpanCountMap.get(key.getTenantId())) {
       if (logger.isDebugEnabled()) {
         logger.debug(
-            "Dropping span [{}] from tenant_id={}, trace_id={} after grouping {} spans",
-            traceState.getSpanIds().stream().map(HexUtils::getHex).collect(Collectors.toList()),
+            "Dropping span from tenant_id={}, trace_id={} after grouping {} spans",
             key.getTenantId(),
             HexUtils.getHex(key.getTraceId()),
-            traceState.getSpanIds().size());
+            totalSpanInTrace);
       }
       // increment the counter for dropped spans
       droppedSpansCounter
@@ -185,9 +223,8 @@ public class RawSpansProcessor
       return true;
     }
     // increment the counter when the number of spans reaches the max.span.count limit.
-    if (traceState != null
-        && maxSpanCountMap.containsKey(key.getTenantId())
-        && traceState.getSpanIds().size() == maxSpanCountMap.get(key.getTenantId())) {
+    if (maxSpanCountMap.containsKey(key.getTenantId())
+        && getTotalSpansInTrace(traceState) == maxSpanCountMap.get(key.getTenantId())) {
       truncatedTracesCounter
           .computeIfAbsent(
               key.getTenantId(),
@@ -199,16 +236,21 @@ public class RawSpansProcessor
     return false;
   }
 
+  private int getTotalSpansInTrace(TraceStateV2 traceState) {
+    return (traceState.getChunkIds().size() - 1) * spansChunkStoreSpanCount + traceState.getLastChunkSpanCount();
+  }
+
   private void schedulePunctuator(TraceIdentity key) {
     TraceEmitPunctuator punctuator =
         new TraceEmitPunctuator(
             key,
             context,
-            spanStore,
+            spansChunkStore,
             traceStateStore,
             outputTopic,
             groupingWindowTimeoutMs,
-            dataflowSamplingPercent);
+            dataflowSamplingPercent,
+            rawSpanAvroSerde);
     Cancellable cancellable =
         context.schedule(
             Duration.ofMillis(groupingWindowTimeoutMs),
@@ -231,7 +273,7 @@ public class RawSpansProcessor
   void restorePunctuators() {
     long count = 0;
     Instant start = Instant.now();
-    try (KeyValueIterator<TraceIdentity, TraceState> it = traceStateStore.all()) {
+    try (KeyValueIterator<TraceIdentity, TraceStateV2> it = traceStateStore.all()) {
       while (it.hasNext()) {
         schedulePunctuator(it.next().key);
         count++;

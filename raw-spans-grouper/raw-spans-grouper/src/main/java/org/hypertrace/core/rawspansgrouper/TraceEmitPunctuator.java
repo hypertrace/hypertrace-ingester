@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
@@ -33,10 +34,14 @@ import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
+import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
+import org.hypertrace.core.spannormalizer.RawSpansChunk;
+import org.hypertrace.core.spannormalizer.RawSpansChunkIdentity;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.hypertrace.core.spannormalizer.TraceState;
+import org.hypertrace.core.spannormalizer.TraceStateV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,27 +78,30 @@ class TraceEmitPunctuator implements Punctuator {
   private final double dataflowSamplingPercent;
   private final TraceIdentity key;
   private final ProcessorContext context;
-  private final KeyValueStore<SpanIdentity, RawSpan> spanStore;
-  private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
+  private final KeyValueStore<RawSpansChunkIdentity, RawSpansChunk> spansChunkStore;
+  private final KeyValueStore<TraceIdentity, TraceStateV2> traceStateStore;
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
   private Cancellable cancellable;
+  private Serde<RawSpan> rawSpanAvroSerde;
 
   TraceEmitPunctuator(
       TraceIdentity key,
       ProcessorContext context,
-      KeyValueStore<SpanIdentity, RawSpan> spanStore,
-      KeyValueStore<TraceIdentity, TraceState> traceStateStore,
+      KeyValueStore<RawSpansChunkIdentity, RawSpansChunk> spansChunkStore,
+      KeyValueStore<TraceIdentity, TraceStateV2> traceStateStore,
       To outputTopicProducer,
       long groupingWindowTimeoutMs,
-      double dataflowSamplingPercent) {
+      double dataflowSamplingPercent,
+      Serde<RawSpan> rawSpanAvroSerde) {
     this.key = key;
     this.context = context;
-    this.spanStore = spanStore;
+    this.spansChunkStore = spansChunkStore;
     this.traceStateStore = traceStateStore;
     this.outputTopicProducer = outputTopicProducer;
     this.groupingWindowTimeoutMs = groupingWindowTimeoutMs;
     this.dataflowSamplingPercent = dataflowSamplingPercent;
+    this.rawSpanAvroSerde = rawSpanAvroSerde;
   }
 
   public void setCancellable(Cancellable cancellable) {
@@ -107,10 +115,8 @@ class TraceEmitPunctuator implements Punctuator {
     // always cancel the punctuator else it will get re-scheduled automatically
     cancellable.cancel();
 
-    TraceState traceState = traceStateStore.get(key);
-    if (null == traceState
-        || null == traceState.getSpanIds()
-        || traceState.getSpanIds().isEmpty()) {
+    TraceStateV2 traceState = traceStateStore.get(key);
+    if (null == traceState) {
       /*
        todo - debug why this happens .
        Typically seen when punctuators are created via {@link RawSpansGroupingTransformer.restorePunctuators}
@@ -134,34 +140,17 @@ class TraceEmitPunctuator implements Punctuator {
       String tenantId = traceState.getTenantId();
       List<RawSpan> rawSpanList = new ArrayList<>();
 
-      Set<ByteBuffer> spanIds = new HashSet<>(traceState.getSpanIds());
-      spanIds.forEach(
+      traceState.getChunkIds().forEach(
           v -> {
-            SpanIdentity spanIdentity = new SpanIdentity(tenantId, traceId, v);
-            RawSpan rawSpan = spanStore.delete(spanIdentity);
+            RawSpansChunkIdentity rawSpansChunkIdentity = new RawSpansChunkIdentity(tenantId, traceId, v);
+            RawSpansChunk rawSpansChunk = spansChunkStore.delete(rawSpansChunkIdentity);
             // ideally this shouldn't happen
-            if (rawSpan != null) {
-              rawSpanList.add(rawSpan);
+            if (rawSpansChunk != null) {
+              rawSpansChunk.getRawSpans().forEach(
+                  rawSpan -> rawSpanList.add(
+                      rawSpanAvroSerde.deserializer().deserialize("", rawSpan.array())));
             }
           });
-
-      if (traceState.getSpanIds().size() != spanIds.size()) {
-        tenantToTraceWithDuplicateSpansCounter
-            .computeIfAbsent(
-                tenantId,
-                k ->
-                    PlatformMetricsRegistry.registerCounter(
-                        TRACE_WITH_DUPLICATE_SPANS, Map.of("tenantId", k)))
-            .increment();
-        if (logger.isDebugEnabled()) {
-          logger.debug(
-              "Duplicate spanIds: [{}], unique spanIds count: [{}] for tenant: [{}] trace: [{}]",
-              traceState.getSpanIds().size(),
-              spanIds.size(),
-              tenantId,
-              HexUtils.getHex(traceId));
-        }
-      }
 
       recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
       Timestamps timestamps =
@@ -186,15 +175,8 @@ class TraceEmitPunctuator implements Punctuator {
                 k ->
                     PlatformMetricsRegistry.registerCounter(
                         SPAN_STORE_COUNT, Map.of("tenantId", k)))
-            .increment(spanStore.approximateNumEntries() * 1.0);
+            .increment(spansChunkStore.approximateNumEntries() * 1.0);
       }
-
-      // report count of spanIds per trace
-      tenantToSpanPerTraceCounter
-          .computeIfAbsent(
-              tenantId,
-              k -> PlatformMetricsRegistry.registerCounter(SPANS_PER_TRACE, Map.of("tenantId", k)))
-          .increment(spanIds.size() * 1.0);
 
       // report trace emitted count
       tenantToTraceEmittedCounter

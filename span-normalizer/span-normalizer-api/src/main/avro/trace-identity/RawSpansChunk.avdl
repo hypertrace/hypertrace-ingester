@@ -1,0 +1,6 @@
+@namespace("org.hypertrace.core.spannormalizer")
+protocol RawSpansChunkProtocol {
+  record RawSpansChunk {
+    array<bytes> rawSpans;
+  }
+}

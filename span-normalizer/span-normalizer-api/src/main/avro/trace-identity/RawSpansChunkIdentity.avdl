@@ -1,0 +1,8 @@
+@namespace("org.hypertrace.core.spannormalizer")
+protocol RawSpansChunkIdentityProtocol {
+  record RawSpansChunkIdentity {
+    string tenant_id;
+    bytes trace_id;
+    int chunk_id;
+  }
+}

@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.Serdes.ByteArraySerde;
+import org.apache.kafka.common.serialization.Serdes.BytesSerde;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TestInputTopic;
@@ -54,6 +56,7 @@ public class RawSpansGrouperTest {
 
     StreamsBuilder streamsBuilder =
         underTest.buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
+    System.out.println(streamsBuilder.build().toString());
 
     Properties props = new Properties();
     mergedProps.forEach(props::put);
@@ -63,11 +66,11 @@ public class RawSpansGrouperTest {
     Serde<TraceIdentity> traceIdentitySerde = new StreamsConfig(mergedProps).defaultKeySerde();
 
     TopologyTestDriver td = new TopologyTestDriver(streamsBuilder.build(), props);
-    TestInputTopic<TraceIdentity, RawSpan> inputTopic =
+    TestInputTopic<TraceIdentity, byte[]> inputTopic =
         td.createInputTopic(
             config.getString(RawSpanGrouperConstants.INPUT_TOPIC_CONFIG_KEY),
             traceIdentitySerde.serializer(),
-            defaultValueSerde.serializer());
+            new ByteArraySerde().serializer());
 
     TestOutputTopic outputTopic =
         td.createOutputTopic(
@@ -144,10 +147,10 @@ public class RawSpansGrouperTest {
             .setEvent(createEvent("event-11", "tenant1"))
             .build();
 
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span1);
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span4);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), defaultValueSerde.serializer().serialize("", span1));
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), defaultValueSerde.serializer().serialize("", span4));
     td.advanceWallClockTime(Duration.ofSeconds(1));
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span2);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), defaultValueSerde.serializer().serialize("", span2));
 
     // select a value < 30s (groupingWindowTimeoutInMs)
     // this shouldn't trigger a punctuate call
@@ -172,9 +175,9 @@ public class RawSpansGrouperTest {
     assertEquals(1, trace.getEventList().size());
     assertEquals("event-4", new String(trace.getEventList().get(0).getEventId().array()));
 
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span3);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), defaultValueSerde.serializer().serialize("", span3));
     td.advanceWallClockTime(Duration.ofSeconds(45));
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span5);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), defaultValueSerde.serializer().serialize("", span5));
     // the next advance should trigger a punctuate call and emit a trace with 2 spans
     td.advanceWallClockTime(Duration.ofSeconds(35));
 
@@ -188,12 +191,12 @@ public class RawSpansGrouperTest {
     assertEquals(1, trace.getEventList().size());
     assertEquals("event-5", new String(trace.getEventList().get(0).getEventId().array()));
 
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span6);
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span7);
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span8);
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span9);
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span10);
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span11);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), defaultValueSerde.serializer().serialize("", span6));
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), defaultValueSerde.serializer().serialize("", span7));
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), defaultValueSerde.serializer().serialize("", span8));
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), defaultValueSerde.serializer().serialize("", span9));
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), defaultValueSerde.serializer().serialize("", span10));
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), defaultValueSerde.serializer().serialize("", span11));
     td.advanceWallClockTime(Duration.ofSeconds(35));
 
     // trace should be truncated with 5 spans

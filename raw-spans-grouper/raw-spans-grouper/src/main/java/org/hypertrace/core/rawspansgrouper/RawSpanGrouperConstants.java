@@ -7,6 +7,7 @@ public class RawSpanGrouperConstants {
       "span.groupby.session.window.interval";
   public static final String RAW_SPANS_GROUPER_JOB_CONFIG = "raw-spans-grouper-job-config";
   public static final String SPAN_STATE_STORE_NAME = "span-data-store";
+  public static final String SPANS_CHUNK_STATE_STORE_NAME = "spans-chunk-data-store";
   public static final String TRACE_STATE_STORE = "trace-state-store";
   public static final String OUTPUT_TOPIC_PRODUCER = "output-topic-producer";
   public static final String SPANS_PER_TRACE_METRIC = "spans_per_trace";
@@ -16,4 +17,5 @@ public class RawSpanGrouperConstants {
   public static final String INFLIGHT_TRACE_MAX_SPAN_COUNT = "max.span.count";
   public static final String DROPPED_SPANS_COUNTER = "hypertrace.dropped.spans";
   public static final String TRUNCATED_TRACES_COUNTER = "hypertrace.truncated.traces";
+  public static final String SPANS_CHUNK_STORE_SPAN_COUNT = "spans.chunk.store.span.count";
 }

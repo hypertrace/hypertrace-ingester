@@ -1,5 +1,6 @@
 package org.hypertrace.core.rawspansgrouper;
 
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPANS_CHUNK_STATE_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
@@ -12,8 +13,11 @@ import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.Serdes.ByteArraySerde;
+import org.apache.kafka.common.serialization.Serdes.BytesSerde;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Named;
 import org.apache.kafka.streams.kstream.Produced;
@@ -24,9 +28,10 @@ import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
-import org.hypertrace.core.spannormalizer.SpanIdentity;
+import org.hypertrace.core.spannormalizer.RawSpansChunk;
+import org.hypertrace.core.spannormalizer.RawSpansChunkIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
-import org.hypertrace.core.spannormalizer.TraceState;
+import org.hypertrace.core.spannormalizer.TraceStateV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,28 +51,29 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
 
-    KStream<TraceIdentity, RawSpan> inputStream =
-        (KStream<TraceIdentity, RawSpan>) inputStreams.get(inputTopic);
+    KStream<TraceIdentity, byte[]> inputStream =
+        (KStream<TraceIdentity, byte[]>) inputStreams.get(inputTopic);
+    Serde valueSerde = defaultValueSerde(properties);
+    Serde keySerde = defaultKeySerde(properties);
+
     if (inputStream == null) {
       inputStream =
           streamsBuilder
               // read the input topic
-              .stream(inputTopic);
+              .stream(inputTopic, Consumed.with(keySerde, new ByteArraySerde()));
       inputStreams.put(inputTopic, inputStream);
     }
 
     // Retrieve the default value serde defined in config and use it
-    Serde valueSerde = defaultValueSerde(properties);
-    Serde keySerde = defaultKeySerde(properties);
 
-    StoreBuilder<KeyValueStore<TraceIdentity, TraceState>> traceStateStoreBuilder =
+    StoreBuilder<KeyValueStore<TraceIdentity, TraceStateV2>> traceStateStoreBuilder =
         Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(TRACE_STATE_STORE), keySerde, valueSerde)
             .withCachingEnabled();
 
-    StoreBuilder<KeyValueStore<SpanIdentity, RawSpan>> spanStoreBuilder =
+    StoreBuilder<KeyValueStore<RawSpansChunkIdentity, RawSpansChunk>> spanStoreBuilder =
         Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(SPAN_STATE_STORE_NAME), keySerde, valueSerde)
+                Stores.persistentKeyValueStore(SPANS_CHUNK_STATE_STORE_NAME), keySerde, valueSerde)
             .withCachingEnabled();
 
     streamsBuilder.addStateStore(spanStoreBuilder);
@@ -80,10 +86,11 @@ public class RawSpansGrouper extends KafkaStreamsApp {
         .transform(
             RawSpansProcessor::new,
             Named.as(RawSpansProcessor.class.getSimpleName()),
-            SPAN_STATE_STORE_NAME,
+            SPANS_CHUNK_STATE_STORE_NAME,
             TRACE_STATE_STORE)
         .to(outputTopic, outputTopicProducer);
 
+    System.out.println(streamsBuilder.build().toString());
     return streamsBuilder;
   }
 
