@@ -105,7 +105,7 @@ public class RawSpansProcessor
     }
 
     if (jobConfig.hasPath(SPANS_CHUNK_STORE_SPAN_COUNT)) {
-      this.spansChunkStoreSpanCount = jobConfig.getInt(SPANS_CHUNK_STATE_STORE_NAME);
+      this.spansChunkStoreSpanCount = jobConfig.getInt(SPANS_CHUNK_STORE_SPAN_COUNT);
     } else {
       this.spansChunkStoreSpanCount = 1;
     }
