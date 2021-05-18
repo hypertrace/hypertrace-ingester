@@ -139,6 +139,7 @@ class TraceEmitPunctuator implements Punctuator {
           v -> {
             SpanIdentity spanIdentity = new SpanIdentity(tenantId, traceId, v);
             RawSpan rawSpan = spanStore.delete(spanIdentity);
+            // ideally this shouldn't happen
             if (rawSpan != null) {
               rawSpanList.add(rawSpan);
             }

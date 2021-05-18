@@ -116,8 +116,7 @@ public class RawSpansProcessor
     String tenantId = key.getTenantId();
     ByteBuffer traceId = value.getTraceId();
     ByteBuffer spanId = value.getEvent().getEventId();
-    // add the new span to store
-    spanStore.put(new SpanIdentity(key.getTenantId(), traceId, spanId), value);
+    spanStore.put(new SpanIdentity(tenantId, traceId, spanId), value);
 
     /*
      the trace emit ts is essentially currentTs + groupingWindowTimeoutMs
