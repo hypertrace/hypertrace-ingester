@@ -51,8 +51,8 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
 
-    KStream<TraceIdentity, byte[]> inputStream =
-        (KStream<TraceIdentity, byte[]>) inputStreams.get(inputTopic);
+    KStream<TraceIdentity, RawSpan> inputStream =
+        (KStream<TraceIdentity, RawSpan>) inputStreams.get(inputTopic);
     Serde valueSerde = defaultValueSerde(properties);
     Serde keySerde = defaultKeySerde(properties);
 
@@ -60,7 +60,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
       inputStream =
           streamsBuilder
               // read the input topic
-              .stream(inputTopic, Consumed.with(keySerde, new ByteArraySerde()));
+              .stream(inputTopic, Consumed.with(keySerde, valueSerde));
       inputStreams.put(inputTopic, inputStream);
     }
 

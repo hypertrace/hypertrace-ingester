@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
  * will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs} time to accept spans.
  */
 public class RawSpansProcessor
-    implements Transformer<TraceIdentity, byte[], KeyValue<String, StructuredTrace>> {
+    implements Transformer<TraceIdentity, RawSpan, KeyValue<String, StructuredTrace>> {
 
   private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
   private static final String PROCESSING_LATENCY_TIMER =
@@ -115,7 +115,7 @@ public class RawSpansProcessor
     restorePunctuators();
   }
 
-  public KeyValue<String, StructuredTrace> transform(TraceIdentity key, byte[] rawSpan) {
+  public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan rawSpan) {
     Instant start = Instant.now();
     long currentTimeMs = System.currentTimeMillis();
 
@@ -156,7 +156,7 @@ public class RawSpansProcessor
               .setChunkIds(List.of(0))
               .build();
       RawSpansChunk rawSpansChunk = RawSpansChunk.newBuilder()
-          .setRawSpans(List.of(ByteBuffer.wrap(rawSpan)))
+          .setRawSpans(List.of(convert(rawSpan)))
           .build();
       spansChunkStore.put(
           RawSpansChunkIdentity.newBuilder().setChunkId(0).setTenantId(tenantId).setTraceId(traceId).build(),
@@ -168,7 +168,7 @@ public class RawSpansProcessor
         traceState.setLastChunkSpanCount(traceState.getLastChunkSpanCount() + 1);
         RawSpansChunkIdentity rawSpansChunkIdentity = RawSpansChunkIdentity.newBuilder().setChunkId(traceState.getLastChunkId()).setTenantId(tenantId).setTraceId(traceId).build();
         RawSpansChunk rawSpansChunk = spansChunkStore.get(rawSpansChunkIdentity);
-        rawSpansChunk.getRawSpans().add(ByteBuffer.wrap(rawSpan));
+        rawSpansChunk.getRawSpans().add(convert(rawSpan));
         spansChunkStore.put(rawSpansChunkIdentity, rawSpansChunk);
       } else {
         // create new chunk
@@ -178,7 +178,7 @@ public class RawSpansProcessor
         spansChunkStore.put(
             RawSpansChunkIdentity.newBuilder().setChunkId(traceState.getLastChunkId()).setTenantId(tenantId).setTraceId(traceId).build(),
             RawSpansChunk.newBuilder()
-                .setRawSpans(List.of(ByteBuffer.wrap(rawSpan)))
+                .setRawSpans(List.of(convert(rawSpan)))
                 .build());
       }
       traceState.setTraceEndTimestamp(currentTimeMs);
@@ -196,6 +196,10 @@ public class RawSpansProcessor
         .record(Duration.between(start, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
     // the punctuator will emit the trace
     return null;
+  }
+
+  ByteBuffer convert(RawSpan rawSpan) {
+    return ByteBuffer.wrap(rawSpanAvroSerde.serializer().serialize("", rawSpan));
   }
 
   private boolean shouldDropSpan(TraceIdentity key, TraceStateV2 traceState) {
