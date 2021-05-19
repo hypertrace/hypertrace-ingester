@@ -3,6 +3,7 @@ package org.hypertrace.core.rawspansgrouper;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPANS_PER_TRACE_METRIC;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_CREATION_TIME;
 
+import com.google.common.util.concurrent.RateLimiter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Tag;
@@ -12,23 +13,19 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.kstream.Windowed;
 import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.processor.To;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.WindowStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.TimestampRecord;
@@ -50,39 +47,49 @@ import org.slf4j.LoggerFactory;
 class TraceEmitPunctuator implements Punctuator {
 
   private static final Logger logger = LoggerFactory.getLogger(TraceEmitPunctuator.class);
+  private static final Object mutex = new Object();
 
   private static final Timer spansGrouperArrivalLagTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
-  private static final Object mutex = new Object();
+  private static final String TRACES_EMITTER_COUNTER = "hypertrace.emitted.traces";
+  private static final ConcurrentMap<String, Counter> tenantToTraceEmittedCounter =
+      new ConcurrentHashMap<>();
   private static final String PUNCTUATE_LATENCY_TIMER =
       "hypertrace.rawspansgrouper.punctuate.latency";
   private static final ConcurrentMap<String, Timer> tenantToPunctuateLatencyTimer =
+      new ConcurrentHashMap<>();
+  private static final String SPANS_PER_TRACE = "hypertrace.rawspansgrouper.spans.per.trace";
+  private static final ConcurrentMap<String, Counter> tenantToSpanPerTraceCounter =
+      new ConcurrentHashMap<>();
+  private static final RateLimiter spanStoreCountRateLimiter = RateLimiter.create(1 / 60d);
+  private static final String SPAN_STORE_COUNT = "hypertrace.rawspansgrouper.span.store.count";
+  private static final ConcurrentMap<String, Counter> tenantToSpanStoreCountCounter =
+      new ConcurrentHashMap<>();
+  private static final String TRACE_WITH_DUPLICATE_SPANS =
+      "hypertrace.rawspansgrouper.trace.with.duplicate.spans";
+  private static final ConcurrentMap<String, Counter> tenantToTraceWithDuplicateSpansCounter =
       new ConcurrentHashMap<>();
 
   private final double dataflowSamplingPercent;
   private final TraceIdentity key;
   private final ProcessorContext context;
-  private final WindowStore<SpanIdentity, RawSpan> spanWindowStore;
+  private final KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
   private Cancellable cancellable;
 
-  private static final String TRACES_EMITTER_COUNTER = "hypertrace.emitted.traces";
-  private static final ConcurrentMap<String, Counter> tenantToTraceEmittedCounter =
-      new ConcurrentHashMap<>();
-
   TraceEmitPunctuator(
       TraceIdentity key,
       ProcessorContext context,
-      WindowStore<SpanIdentity, RawSpan> spanWindowStore,
+      KeyValueStore<SpanIdentity, RawSpan> spanStore,
       KeyValueStore<TraceIdentity, TraceState> traceStateStore,
       To outputTopicProducer,
       long groupingWindowTimeoutMs,
       double dataflowSamplingPercent) {
     this.key = key;
     this.context = context;
-    this.spanWindowStore = spanWindowStore;
+    this.spanStore = spanStore;
     this.traceStateStore = traceStateStore;
     this.outputTopicProducer = outputTopicProducer;
     this.groupingWindowTimeoutMs = groupingWindowTimeoutMs;
@@ -125,41 +132,37 @@ class TraceEmitPunctuator implements Punctuator {
 
       ByteBuffer traceId = traceState.getTraceId();
       String tenantId = traceState.getTenantId();
-
-      TreeSet<ByteBuffer> spanIdsSet =
-          new TreeSet<>(
-              (spanId1, spanId2) -> {
-                // the sort order for this set is determined by comparing the corresponding {@code
-                // SpanIdentifier}
-                Serde<SpanIdentity> serde = (Serde<SpanIdentity>) context.keySerde();
-                byte[] spanIdentityBytes1 =
-                    serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, spanId1));
-                byte[] spanIdentityBytes2 =
-                    serde.serializer().serialize("", new SpanIdentity(tenantId, traceId, spanId2));
-                return Bytes.BYTES_LEXICO_COMPARATOR.compare(
-                    spanIdentityBytes1, spanIdentityBytes2);
-              });
-      spanIdsSet.addAll(traceState.getSpanIds());
-
       List<RawSpan> rawSpanList = new ArrayList<>();
-      try (KeyValueIterator<Windowed<SpanIdentity>, RawSpan> iterator =
-          spanWindowStore.fetch(
-              new SpanIdentity(tenantId, traceId, spanIdsSet.first()),
-              new SpanIdentity(tenantId, traceId, spanIdsSet.last()),
-              Instant.ofEpochMilli(traceState.getTraceStartTimestamp()),
-              Instant.ofEpochMilli(traceState.getTraceEndTimestamp()))) {
-        iterator.forEachRemaining(
-            keyValue -> {
-              // range search could return extra span ids as well, filter them
-              // one scenario when this could occur is when some spanIdentifier for another trace
-              // has byte value which is within the {@code spanIdsSet.first()} & {@code
-              // spanIdsSet.last()}
-              // and was received in the same time range
-              if (spanIdsSet.contains(keyValue.value.getEvent().getEventId())) {
-                rawSpanList.add(keyValue.value);
-              }
-            });
+
+      Set<ByteBuffer> spanIds = new HashSet<>(traceState.getSpanIds());
+      spanIds.forEach(
+          v -> {
+            SpanIdentity spanIdentity = new SpanIdentity(tenantId, traceId, v);
+            RawSpan rawSpan = spanStore.delete(spanIdentity);
+            // ideally this shouldn't happen
+            if (rawSpan != null) {
+              rawSpanList.add(rawSpan);
+            }
+          });
+
+      if (traceState.getSpanIds().size() != spanIds.size()) {
+        tenantToTraceWithDuplicateSpansCounter
+            .computeIfAbsent(
+                tenantId,
+                k ->
+                    PlatformMetricsRegistry.registerCounter(
+                        TRACE_WITH_DUPLICATE_SPANS, Map.of("tenantId", k)))
+            .increment();
+        if (logger.isDebugEnabled()) {
+          logger.debug(
+              "Duplicate spanIds: [{}], unique spanIds count: [{}] for tenant: [{}] trace: [{}]",
+              traceState.getSpanIds().size(),
+              spanIds.size(),
+              tenantId,
+              HexUtils.getHex(traceId));
+        }
       }
+
       recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
       Timestamps timestamps =
           trackEndToEndLatencyTimestamps(timestamp, traceState.getTraceStartTimestamp());
@@ -175,6 +178,25 @@ class TraceEmitPunctuator implements Punctuator {
             rawSpanList.size());
       }
 
+      // report entries in spanStore
+      if (spanStoreCountRateLimiter.tryAcquire()) {
+        tenantToSpanStoreCountCounter
+            .computeIfAbsent(
+                tenantId,
+                k ->
+                    PlatformMetricsRegistry.registerCounter(
+                        SPAN_STORE_COUNT, Map.of("tenantId", k)))
+            .increment(spanStore.approximateNumEntries() * 1.0);
+      }
+
+      // report count of spanIds per trace
+      tenantToSpanPerTraceCounter
+          .computeIfAbsent(
+              tenantId,
+              k -> PlatformMetricsRegistry.registerCounter(SPANS_PER_TRACE, Map.of("tenantId", k)))
+          .increment(spanIds.size() * 1.0);
+
+      // report trace emitted count
       tenantToTraceEmittedCounter
           .computeIfAbsent(
               tenantId,
@@ -183,6 +205,7 @@ class TraceEmitPunctuator implements Punctuator {
                       TRACES_EMITTER_COUNTER, Map.of("tenantId", k)))
           .increment();
 
+      // report punctuate latency
       tenantToPunctuateLatencyTimer
           .computeIfAbsent(
               tenantId,
@@ -190,6 +213,7 @@ class TraceEmitPunctuator implements Punctuator {
                   PlatformMetricsRegistry.registerTimer(
                       PUNCTUATE_LATENCY_TIMER, Map.of("tenantId", k)))
           .record(Duration.between(startTime, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
+
       context.forward(null, trace, outputTopicProducer);
     } else {
       // implies spans for the trace have arrived within the last 'sessionTimeoutMs' interval

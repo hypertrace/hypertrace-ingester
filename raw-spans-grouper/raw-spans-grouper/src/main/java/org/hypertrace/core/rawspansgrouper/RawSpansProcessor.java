@@ -6,13 +6,14 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIG
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_WINDOW_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
 
 import com.typesafe.config.Config;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -30,7 +31,6 @@ import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.WindowStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
@@ -57,7 +57,7 @@ public class RawSpansProcessor
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
       new ConcurrentHashMap<>();
   private ProcessorContext context;
-  private WindowStore<SpanIdentity, RawSpan> spanWindowStore;
+  private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private long groupingWindowTimeoutMs;
   private To outputTopic;
@@ -75,8 +75,8 @@ public class RawSpansProcessor
   @Override
   public void init(ProcessorContext context) {
     this.context = context;
-    this.spanWindowStore =
-        (WindowStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_WINDOW_STORE);
+    this.spanStore =
+        (KeyValueStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_STATE_STORE_NAME);
     this.traceStateStore =
         (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
@@ -113,11 +113,10 @@ public class RawSpansProcessor
       return null;
     }
 
-    // add the new span to window store
-    spanWindowStore.put(
-        new SpanIdentity(key.getTenantId(), key.getTraceId(), value.getEvent().getEventId()),
-        value,
-        currentTimeMs);
+    String tenantId = key.getTenantId();
+    ByteBuffer traceId = value.getTraceId();
+    ByteBuffer spanId = value.getEvent().getEventId();
+    spanStore.put(new SpanIdentity(tenantId, traceId, spanId), value);
 
     /*
      the trace emit ts is essentially currentTs + groupingWindowTimeoutMs
@@ -130,7 +129,7 @@ public class RawSpansProcessor
           "Updating trigger_ts=[{}] for for tenant_id=[{}], trace_id=[{}]",
           Instant.ofEpochMilli(traceEmitTs),
           key.getTenantId(),
-          HexUtils.getHex(key.getTraceId()));
+          HexUtils.getHex(traceId));
     }
 
     if (firstEntry) {
@@ -139,13 +138,13 @@ public class RawSpansProcessor
               .setTraceStartTimestamp(currentTimeMs)
               .setTraceEndTimestamp(currentTimeMs)
               .setEmitTs(traceEmitTs)
-              .setTenantId(key.getTenantId())
-              .setTraceId(key.getTraceId())
-              .setSpanIds(List.of(value.getEvent().getEventId()))
+              .setTenantId(tenantId)
+              .setTraceId(traceId)
+              .setSpanIds(List.of(spanId))
               .build();
       schedulePunctuator(key);
     } else {
-      traceState.getSpanIds().add(value.getEvent().getEventId());
+      traceState.getSpanIds().add(spanId);
       traceState.setTraceEndTimestamp(currentTimeMs);
       traceState.setEmitTs(traceEmitTs);
     }
@@ -205,7 +204,7 @@ public class RawSpansProcessor
         new TraceEmitPunctuator(
             key,
             context,
-            spanWindowStore,
+            spanStore,
             traceStateStore,
             outputTopic,
             groupingWindowTimeoutMs,
