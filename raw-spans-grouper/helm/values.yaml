@@ -110,7 +110,7 @@ rawSpansGrouperConfig:
     replicationFactor: 3
     # RocksDB state store configs
     rocksdbCacheTotalCapacity: 134217728
-    rocksdbCacheWriteBuffersRatio: 0.5
+    rocksdbCacheWriteBuffersRatio: 0.3
     rocksdbCacheHighPriorityPoolRatio: 0.1
     rocksdbWriteBufferSize: 8388608
     rocksdbMaxWriteBuffers: 2
