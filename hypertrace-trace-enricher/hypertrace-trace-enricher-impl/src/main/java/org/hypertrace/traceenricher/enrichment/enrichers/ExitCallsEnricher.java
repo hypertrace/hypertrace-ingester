@@ -18,6 +18,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
+import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
 
 public class ExitCallsEnricher extends AbstractTraceEnricher {
 
@@ -56,7 +57,7 @@ public class ExitCallsEnricher extends AbstractTraceEnricher {
    * </ul>
    */
   Map<ByteBuffer, ApiExitCallInfo> computeApiExitCallCount(StructuredTrace trace) {
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
     // event -> api exit call count for the corresponding api_node
     Map<ByteBuffer, ApiExitCallInfo> eventToExitInfo = Maps.newHashMap();
 

@@ -4,22 +4,21 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StructuredTraceGraphBuilder {
-  public static final Logger LOG = LoggerFactory.getLogger(StructuredTraceGraphBuilder.class);
+public class ApiTraceGraphBuilder {
+  public static final Logger LOG = LoggerFactory.getLogger(ApiTraceGraphBuilder.class);
 
-  private static ThreadLocal<StructuredTraceGraph> cachedGraph = new ThreadLocal<>();
+  private static ThreadLocal<ApiTraceGraph> cachedGraph = new ThreadLocal<>();
   private static ThreadLocal<StructuredTrace> cachedTrace = new ThreadLocal<>();
 
-  public static StructuredTraceGraph buildGraph(StructuredTrace trace) {
+  public static ApiTraceGraph buildGraph(StructuredTrace trace) {
     if (!GraphBuilderUtil.isSameStructuredTrace(cachedTrace.get(), trace)) {
       Instant start = Instant.now();
-      StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
+      ApiTraceGraph graph = new ApiTraceGraph(trace);
       LOG.debug(
-          "Time taken in building StructuredTraceGraph:{} for tenantId:{}",
+          "Time taken in building ApiTraceGraph:{} for tenantId:{}",
           Duration.between(start, Instant.now()).toMillis(),
           TimeUnit.MILLISECONDS,
           trace.getCustomerId());

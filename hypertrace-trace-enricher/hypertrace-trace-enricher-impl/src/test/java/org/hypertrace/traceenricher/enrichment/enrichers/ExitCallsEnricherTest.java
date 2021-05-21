@@ -20,6 +20,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.enrichers.ExitCallsEnricher.ApiExitCallInfo;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
+import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
 import org.junit.jupiter.api.Test;
 
 public class ExitCallsEnricherTest {
@@ -42,7 +43,7 @@ public class ExitCallsEnricherTest {
 
   private void verifyComputeApiExitInfo_HotrodTrace(
       StructuredTrace trace, ExitCallsEnricher exitCallsEnricher) {
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
     // this trace has 12 api nodes
     // api edges
     // 0 -> [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
