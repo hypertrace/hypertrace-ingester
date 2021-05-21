@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class StructuredTraceGraphBuilder {
-  public static final Logger LOG = LoggerFactory.getLogger(StructuredTraceGraphBuilder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(StructuredTraceGraphBuilder.class);
 
   private static ThreadLocal<StructuredTraceGraph> cachedGraph = new ThreadLocal<>();
   private static ThreadLocal<StructuredTrace> cachedTrace = new ThreadLocal<>();

@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ApiTraceGraphBuilder {
-  public static final Logger LOG = LoggerFactory.getLogger(ApiTraceGraphBuilder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ApiTraceGraphBuilder.class);
 
   private static ThreadLocal<ApiTraceGraph> cachedGraph = new ThreadLocal<>();
   private static ThreadLocal<StructuredTrace> cachedTrace = new ThreadLocal<>();

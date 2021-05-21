@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class GraphBuilderUtil {
-  public static final Logger LOG = LoggerFactory.getLogger(GraphBuilderUtil.class);
+  private static final Logger LOG = LoggerFactory.getLogger(GraphBuilderUtil.class);
 
   /**
    * optimistic method of comparing two trace for considering rebuilding of entire graph structure.
