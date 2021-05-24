@@ -42,10 +42,15 @@ public class ApiTraceGraph {
   // set of outbound edges for apiNode
   private final Map<Integer, Set<Integer>> apiNodeIdxToEdges;
   private final Map<ByteBuffer, Integer> eventIdToIndexInTrace;
-  // map of api node to index in api nodes list, since we want to build edges between api nodes
-  private final Map<ApiNode<Event>, Integer> apiNodeToIndex;
-  // map of entry boundary event to api node. each api node has one entry boundary event
-  private final Map<Event, ApiNode<Event>> entryBoundaryToApiNode;
+
+  // map of head event id of api node to index in api node list, helps in building edges between api
+  // nodes
+  private final Map<ByteBuffer, Integer> apiNodeHeadEventIdToIndex;
+
+  // map of event id of entry api boundary event to api node. each api node has at most one entry
+  // boundary event
+  private final Map<ByteBuffer, ApiNode<Event>> entryApiBoundaryEventIdToApiNode;
+
   private final Table<Integer, Integer, Edge> traceEdgeTable;
   // set of exit boundary events of apiNode, with no outgoing edge to any apiNode
   private final Set<Integer> apiExitBoundaryEventIdxWithNoOutgoingEdge;
@@ -64,8 +69,8 @@ public class ApiTraceGraph {
     apiNodeIdxToEdges = Maps.newHashMap();
     eventIdToIndexInTrace = Maps.newHashMap();
 
-    apiNodeToIndex = Maps.newHashMap();
-    entryBoundaryToApiNode = Maps.newHashMap();
+    apiNodeHeadEventIdToIndex = Maps.newHashMap();
+    entryApiBoundaryEventIdToApiNode = Maps.newHashMap();
     traceEdgeTable = HashBasedTable.create();
 
     apiExitBoundaryEventIdxWithNoOutgoingEdge = Sets.newHashSet();
@@ -109,11 +114,13 @@ public class ApiTraceGraph {
   }
 
   public List<ApiNodeEventEdge> getOutboundEdgesForApiNode(ApiNode<Event> apiNode) {
-    int idx = apiNodeToIndex.get(apiNode);
+    int idx = apiNodeHeadEventIdToIndex.get(apiNode.getHeadEvent().getEventId());
     if (!apiNodeIdxToEdges.containsKey(idx)) {
       return Collections.emptyList();
     }
-    return apiNodeIdxToEdges.get(apiNodeToIndex.get(apiNode)).stream()
+    return apiNodeIdxToEdges
+        .get(apiNodeHeadEventIdToIndex.get(apiNode.getHeadEvent().getEventId()))
+        .stream()
         .map(apiNodeEventEdgeList::get)
         .collect(Collectors.toList());
   }
@@ -281,7 +288,7 @@ public class ApiTraceGraph {
             if (EnrichedSpanUtils.isEntryApiBoundary(exitBoundaryEventChild)) {
               // get the api node exit boundary event is connecting to
               ApiNode<Event> destinationApiNode =
-                  entryBoundaryToApiNode.get(exitBoundaryEventChild);
+                  entryApiBoundaryEventIdToApiNode.get(exitBoundaryEventChild.getEventId());
 
               Optional<ApiNodeEventEdge> edgeBetweenApiNodes =
                   createEdgeBetweenApiNodes(
@@ -292,7 +299,9 @@ public class ApiTraceGraph {
                     apiExitBoundaryEventIdxWithOutgoingEdge.add(edge.getSrcEventIndex());
                     apiEntryBoundaryEventIdxWithIncomingEdge.add(edge.getTgtEventIndex());
                     apiNodeIdxToEdges
-                        .computeIfAbsent(apiNodeToIndex.get(apiNode), v -> Sets.newHashSet())
+                        .computeIfAbsent(
+                            apiNodeHeadEventIdToIndex.get(apiNode.getHeadEvent().getEventId()),
+                            v -> Sets.newHashSet())
                         .add(apiNodeEventEdgeList.size() - 1);
                   });
             } else {
@@ -322,8 +331,9 @@ public class ApiTraceGraph {
       Event entryBoundaryEventOfDestinationApiNode) {
     if (destinationApiNode != null) {
       // get the indexes in apiNodes list to create an edge
-      Integer srcIndex = apiNodeToIndex.get(srcApiNode);
-      Integer targetIndex = apiNodeToIndex.get(destinationApiNode);
+      Integer srcIndex = apiNodeHeadEventIdToIndex.get(srcApiNode.getHeadEvent().getEventId());
+      Integer targetIndex =
+          apiNodeHeadEventIdToIndex.get(destinationApiNode.getHeadEvent().getEventId());
 
       // Get the actual edge from trace connecting exitBoundaryEvent and child
       Integer srcIndexInTrace =
@@ -381,8 +391,10 @@ public class ApiTraceGraph {
   private void buildApiNodeToIndexMap() {
     for (int i = 0; i < apiNodeList.size(); i++) {
       ApiNode<Event> apiNode = apiNodeList.get(i);
-      apiNode.getEntryApiBoundaryEvent().ifPresent(e -> entryBoundaryToApiNode.put(e, apiNode));
-      apiNodeToIndex.put(apiNode, i);
+      apiNode
+          .getEntryApiBoundaryEvent()
+          .ifPresent(e -> entryApiBoundaryEventIdToApiNode.put(e.getEventId(), apiNode));
+      apiNodeHeadEventIdToIndex.put(apiNode.getHeadEvent().getEventId(), i);
     }
   }
 
