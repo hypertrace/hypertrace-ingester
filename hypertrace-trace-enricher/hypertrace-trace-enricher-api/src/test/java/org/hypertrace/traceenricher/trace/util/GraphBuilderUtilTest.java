@@ -49,7 +49,7 @@ public class GraphBuilderUtilTest {
     when(cachedTrace.getTraceId()).thenReturn(ByteBuffer.wrap("2ebbc19b6428510f".getBytes()));
 
     underTestTrace = mock(StructuredTrace.class);
-    when(underTestTrace.getCustomerId()).thenReturn("__defaultTenantUnder");
+    when(underTestTrace.getCustomerId()).thenReturn("__defaultTenant");
     when(underTestTrace.getTraceId()).thenReturn(ByteBuffer.wrap("2ebbc19b6428511f".getBytes()));
 
     result = GraphBuilderUtil.isSameStructuredTrace(cachedTrace, underTestTrace);

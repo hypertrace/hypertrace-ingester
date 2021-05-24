@@ -44,9 +44,8 @@ public class StructuredTraceGraphBuilderTest {
           .when(() -> StructuredTrace.newBuilder(underTestTrace))
           .thenReturn(builder);
 
-      // mock createGraph method of structured trace graph
+      // make two calls, and check that first call create cache entries, and second call uses same
       StructuredTraceGraph mockedStructuredTraceGraph = mock(StructuredTraceGraph.class);
-
       try (MockedStatic<StructuredTraceGraph> structuredTraceGraphMockedStatic =
           mockStatic(StructuredTraceGraph.class)) {
         structuredTraceGraphMockedStatic

@@ -44,7 +44,7 @@ public class ApiTraceGraphBuilderTest {
           .when(() -> StructuredTrace.newBuilder(underTestTrace))
           .thenReturn(builder);
 
-      // check if we get a new
+      // make two calls, and check that first call create cache entries, and second call uses same
       try (MockedConstruction<ApiTraceGraph> mockedConstruction =
           mockConstruction(ApiTraceGraph.class)) {
         // first call
