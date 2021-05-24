@@ -55,6 +55,8 @@ public class StructuredTraceGraphBuilderTest {
         // calls first time
         StructuredTraceGraph actual = StructuredTraceGraphBuilder.buildGraph(underTestTrace);
         Assertions.assertEquals(mockedStructuredTraceGraph, actual);
+        structuredTraceGraphMockedStatic.verify(
+            () -> StructuredTraceGraph.createGraph(underTestTrace), times(1));
 
         // calls second time, this time it returns from cache
         StructuredTraceGraphBuilder.buildGraph(underTestTrace);
