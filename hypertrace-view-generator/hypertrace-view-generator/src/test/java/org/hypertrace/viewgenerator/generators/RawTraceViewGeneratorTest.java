@@ -22,7 +22,15 @@ public class RawTraceViewGeneratorTest {
   }
 
   @Test
-  public void testGenerateView_HotrodTrace() throws IOException {
+  public void testGenerateView_SampleHotrodTrace() throws IOException {
+    RawTraceViewGenerator rawTraceViewGenerator = new RawTraceViewGenerator();
+    List<RawTraceView> rawTraceViews = rawTraceViewGenerator.process(createSampleTrace());
+    assertEquals(1, rawTraceViews.size());
+    assertEquals(4, rawTraceViews.get(0).getNumServices());
+    assertEquals(50, rawTraceViews.get(0).getNumSpans());
+  }
+
+  private static StructuredTrace createSampleTrace() throws IOException {
     URL resource =
         Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
     SpecificDatumReader<StructuredTrace> datumReader =
@@ -31,10 +39,6 @@ public class RawTraceViewGeneratorTest {
         new DataFileReader<>(new File(resource.getPath()), datumReader);
     StructuredTrace trace = dfrStructuredTrace.next();
     dfrStructuredTrace.close();
-    RawTraceViewGenerator rawTraceViewGenerator = new RawTraceViewGenerator();
-    List<RawTraceView> rawTraceViews = rawTraceViewGenerator.process(trace);
-    assertEquals(1, rawTraceViews.size());
-    assertEquals(4, rawTraceViews.get(0).getNumServices());
-    assertEquals(50, rawTraceViews.get(0).getNumSpans());
+    return trace;
   }
 }
