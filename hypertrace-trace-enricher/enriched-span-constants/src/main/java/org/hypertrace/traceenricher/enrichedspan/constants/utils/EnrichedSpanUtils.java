@@ -319,8 +319,8 @@ public class EnrichedSpanUtils {
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getUrl());
     }
-
-    return Optional.empty();
+    String httpUrl = getStringAttribute(event, EnrichedSpanConstants.getValue(Http.HTTP_URL));
+    return Optional.ofNullable(httpUrl);
   }
 
   public static Optional<String> getPath(Event event) {
