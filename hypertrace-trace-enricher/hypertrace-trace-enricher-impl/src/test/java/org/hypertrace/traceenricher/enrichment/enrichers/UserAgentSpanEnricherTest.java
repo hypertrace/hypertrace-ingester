@@ -11,6 +11,8 @@ import org.hypertrace.core.datamodel.eventfields.grpc.RequestMetadata;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.eventfields.http.RequestHeaders;
+import org.hypertrace.core.span.constants.RawSpanConstants;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.UserAgent;
@@ -428,7 +430,12 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                 .setRequest(Request.newBuilder().setUserAgent(userAgent).build())
                 .build());
     mockProtocol(e, Protocol.PROTOCOL_HTTP);
-    enricher.enrichEvent(null, e);
+
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue(userAgent);
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), attributeValue);
+
+  enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();
     assertEquals(7, map.size());

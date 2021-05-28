@@ -16,6 +16,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.UserAgent;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 
 public class UserAgentSpanEnricher extends AbstractTraceEnricher {
 
@@ -69,6 +70,8 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
   private Optional<String> getUserAgent(Event event) {
     Protocol protocol = EnrichedSpanUtils.getProtocol(event);
     if (Protocol.PROTOCOL_HTTP == protocol || Protocol.PROTOCOL_HTTPS == protocol) {
+      return HttpMigration.getHttpUserAgent(event);
+      /*
       if (event.getHttp() != null && event.getHttp().getRequest() != null) {
         // prefer user agent from headers
         if (event.getHttp().getRequest().getHeaders() != null
@@ -81,6 +84,7 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
           return Optional.of(event.getHttp().getRequest().getUserAgent());
         }
       }
+      */
     } else if (Protocol.PROTOCOL_GRPC == protocol) {
       if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
         Request request = event.getGrpc().getRequest();
