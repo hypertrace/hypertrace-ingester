@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
 
 public class JaegerSpanNormalizerTest {
   private final Random random = new Random();
@@ -160,6 +161,9 @@ public class JaegerSpanNormalizerTest {
                 KeyValue.newBuilder()
                     .setKey(JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY)
                     .setVStr("testService"))
+                .addTags(KeyValue.newBuilder()
+                        .setKey(RawSpanConstants.getValue(HTTP_REQUEST_METHOD))
+                        .setVStr("GET"))
             .build();
     rawSpan = normalizer.convert("tenant-key", span);
     Assertions.assertEquals("testService", rawSpan.getEvent().getServiceName());
