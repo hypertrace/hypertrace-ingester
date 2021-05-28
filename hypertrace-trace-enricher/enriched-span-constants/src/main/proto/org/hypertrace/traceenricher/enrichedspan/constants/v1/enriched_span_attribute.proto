@@ -19,7 +19,6 @@ enum Http {
     HTTP_REQUEST_QUERY_PARAM = 2 [(string_value) = "http.request.query.param"];
     HTTP_HOST = 3 [(string_value) = "HTTP_HOST"]; // We should probably stick to a standard of keeping all enriched attributes in capital letters.
     HTTP_REQUEST_PATH_PARAM = 4 [(string_value) = "http.request.path.param"];
-    HTTP_URL = 5 [(string_value) = "http.url"];
 }
 
 enum Api {
