@@ -7,7 +7,6 @@ import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemantic
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Error;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
-import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
 
 /** Utility class for fetching error related attributes */
 public class ErrorSemanticConventionUtils {
