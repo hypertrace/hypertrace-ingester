@@ -7,7 +7,6 @@ tasks.test {
 }
 
 dependencies {
-    implementation(project(":hypertrace-trace-enricher:enriched-span-constants"))
     implementation(project(":span-normalizer:raw-span-constants"))
     implementation(project(":span-normalizer:span-normalizer-constants"))
 

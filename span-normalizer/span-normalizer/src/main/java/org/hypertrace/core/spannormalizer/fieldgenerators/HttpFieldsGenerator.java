@@ -36,6 +36,9 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_METHOD;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
+import static org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils.getHttpUrlForOTelFormat;
+import static org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils.getNormalizedUrl;
+import static org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils.isValidUrl;
 
 import com.google.common.util.concurrent.RateLimiter;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
@@ -53,7 +56,6 @@ import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +75,6 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
   private static final String RESPONSE_COOKIE_PREFIX =
       RawSpanConstants.getValue(HTTP_RESPONSE_COOKIE) + DOT;
   private static final String SLASH = "/";
-  private static final String RELATIVE_URL_CONTEXT = "http://hypertrace.org";
 
   private static final List<String> FULL_URL_ATTRIBUTES =
       List.of(
@@ -519,22 +520,6 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         .ifPresent(statusCode -> httpBuilder.getResponseBuilder().setStatusCode(statusCode));
   }
 
-  /**
-   * accepts any absolute or relative URL. e.g. absolute URL:
-   * http://hypertrace.org/customer?customer=392 relative URL: /customer?customer=392
-   */
-  private static boolean isValidUrl(String url) {
-    try {
-      getNormalizedUrl(url);
-    } catch (MalformedURLException e) {
-      if (LOG_LIMITER.tryAcquire()) {
-        LOGGER.warn("Received invalid URL : {}, {}", url, e.getMessage());
-      }
-      return false;
-    }
-    return true;
-  }
-
   private void setPathFromUrl(Request.Builder requestBuilder, URL url) {
     if (requestBuilder.hasPath()) { // If path was previously set, no need to set it again.
       return;
@@ -575,10 +560,6 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     }
   }
 
-  private static URL getNormalizedUrl(String url) throws MalformedURLException {
-    return new URL(new URL(RELATIVE_URL_CONTEXT), url);
-  }
-
   /**
    * If the requestBuilder already has absolute url, do nothing if not, try building url based on
    * otel attributes and overwrite
@@ -588,7 +569,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     if (requestBuilder.hasUrl() && isAbsoluteUrl(requestBuilder.getUrl())) {
       return;
     }
-    Optional<String> url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(attributeValueMap);
+    Optional<String> url = getHttpUrlForOTelFormat(attributeValueMap);
     url.ifPresent(requestBuilder::setUrl);
   }
 
