@@ -308,35 +308,48 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getHttpMethod(Event event) {
+    return EnrichedSpanConstants.getHttpMethod(event);
+
+    /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getMethod());
     }
 
     return Optional.empty();
+     */
   }
 
   public static Optional<String> getFullHttpUrl(Event event) {
+    return EnrichedSpanConstants.getHttpUrl(event);
+    /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getUrl());
     }
 
     return Optional.empty();
+     */
   }
 
   public static Optional<String> getPath(Event event) {
+    return EnrichedSpanConstants.getHttpPath(event);
+    /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getPath());
     }
 
     return Optional.empty();
+     */
   }
 
   public static Optional<String> getQueryString(Event event) {
+    return EnrichedSpanConstants.getHttpQueryString(event);
+    /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getQueryString());
     }
 
     return Optional.empty();
+     */
   }
 
   public static Optional<Integer> getRequestSize(Event event) {
@@ -348,10 +361,13 @@ public class EnrichedSpanUtils {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
+        return EnrichedSpanConstants.getHttpRequestSize(event);
+        /*
         if (event.getHttp() != null && event.getHttp().getRequest() != null) {
           return Optional.of(event.getHttp().getRequest().getSize());
         }
         break;
+         */
       case PROTOCOL_GRPC:
         if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
           return Optional.of(event.getGrpc().getRequest().getSize());
@@ -371,10 +387,13 @@ public class EnrichedSpanUtils {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
+        return EnrichedSpanConstants.getHttpResponseSize(event);
+        /*
         if (event.getHttp() != null && event.getHttp().getResponse() != null) {
           return Optional.of(event.getHttp().getResponse().getSize());
         }
         break;
+         */
       case PROTOCOL_GRPC:
         if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
           return Optional.of(event.getGrpc().getResponse().getSize());

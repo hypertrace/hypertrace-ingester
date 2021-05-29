@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 
 import static java.util.Collections.emptyList;
+import static org.hypertrace.core.span.constants.v1.Http.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -9,10 +10,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
+
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -20,6 +19,7 @@ import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.eventfields.http.Response;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.entity.constants.v1.ApiAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.junit.jupiter.api.Test;
@@ -213,6 +213,12 @@ public class EnrichedSpanUtilsTest {
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(Request.newBuilder().setMethod("GET").build())
                 .build());
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue("GET");
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_METHOD), attributeValue);
 
     Optional<String> method = EnrichedSpanUtils.getHttpMethod(e);
     assertFalse(method.isEmpty());
@@ -222,6 +228,8 @@ public class EnrichedSpanUtilsTest {
   @Test
   public void should_getNullMethod_noHttpFields() {
     Event e = mock(Event.class);
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<String> method = EnrichedSpanUtils.getHttpMethod(e);
     assertTrue(method.isEmpty());
@@ -230,12 +238,18 @@ public class EnrichedSpanUtilsTest {
   @Test
   public void should_getFullUrl() {
     Event e = mock(Event.class);
+    String testurl="http://hipstershop.com?order=1";
     when(e.getHttp())
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
-                .setRequest(Request.newBuilder().setUrl("http://hipstershop.com?order=1").build())
+                .setRequest(Request.newBuilder().setUrl(testurl).build())
                 .build());
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue(testurl);
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_URL), attributeValue);
     Optional<String> url = EnrichedSpanUtils.getFullHttpUrl(e);
     assertFalse(url.isEmpty());
     assertEquals("http://hipstershop.com?order=1", url.get());
@@ -244,6 +258,8 @@ public class EnrichedSpanUtilsTest {
   @Test
   public void should_getNullUrl_noHttpFields() {
     Event e = mock(Event.class);
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<String> url = EnrichedSpanUtils.getFullHttpUrl(e);
     assertTrue(url.isEmpty());
@@ -262,6 +278,12 @@ public class EnrichedSpanUtilsTest {
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(Request.newBuilder().setSize(64).build())
                 .build());
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue(String.valueOf(64));
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), attributeValue);
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertFalse(requestSize.isEmpty());
@@ -306,6 +328,8 @@ public class EnrichedSpanUtilsTest {
             Attributes.newBuilder()
                 .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("HTTP")))
                 .build());
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertTrue(requestSize.isEmpty());
@@ -324,6 +348,14 @@ public class EnrichedSpanUtilsTest {
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setResponse(Response.newBuilder().setSize(64).build())
                 .build());
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue(String.valueOf(64));
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), attributeValue);
+
+
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
     assertFalse(responseSize.isEmpty());
@@ -360,6 +392,8 @@ public class EnrichedSpanUtilsTest {
             Attributes.newBuilder()
                 .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("HTTP")))
                 .build());
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getResponseSize(e);
     assertTrue(requestSize.isEmpty());
