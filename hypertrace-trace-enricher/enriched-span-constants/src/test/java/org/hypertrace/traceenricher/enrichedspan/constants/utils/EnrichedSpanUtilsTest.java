@@ -253,6 +253,24 @@ public class EnrichedSpanUtilsTest {
     Optional<String> url = EnrichedSpanUtils.getFullHttpUrl(e);
     assertFalse(url.isEmpty());
     assertEquals("http://hipstershop.com?order=1", url.get());
+
+    // When it is present in attributemap
+    e = mock(Event.class);
+    when(e.getEnrichedAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "http.url", AttributeValueCreator.create("http://hypertrace.com?order=2")))
+                .build());
+    url = EnrichedSpanUtils.getFullHttpUrl(e);
+    assertFalse(url.isEmpty());
+    assertEquals("http://hypertrace.com?order=2", url.get());
+
+    // Check when url is not present
+    e = mock(Event.class);
+    url = EnrichedSpanUtils.getFullHttpUrl(e);
+    assertTrue(url.isEmpty());
   }
 
   @Test

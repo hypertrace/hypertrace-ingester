@@ -18,6 +18,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
+import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
 import org.hypertrace.traceenricher.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +99,7 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
     //  has errored out but the entry span in transaction might be fine (server responded but
     //  client couldn't process it). Those cases should be handled in future.
 
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
     for (ApiNode<Event> apiNode : apiTraceGraph.getApiNodeList()) {
       Optional<Event> entryEvent = apiNode.getEntryApiBoundaryEvent();
       int apiTraceErrorCount =

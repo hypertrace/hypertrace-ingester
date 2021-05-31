@@ -19,7 +19,7 @@ import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
-import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
+import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,7 +155,7 @@ public class EndpointEnricher extends AbstractTraceEnricher {
    */
   @Override
   public void enrichTrace(StructuredTrace trace) {
-    List<ApiNode<Event>> apiNodes = new ApiTraceGraph(trace).getApiNodeList();
+    List<ApiNode<Event>> apiNodes = ApiTraceGraphBuilder.buildGraph(trace).getApiNodeList();
     for (ApiNode<Event> apiNode : apiNodes) {
       Optional<Event> optionalEvent = apiNode.getEntryApiBoundaryEvent();
       if (optionalEvent.isEmpty()) {
