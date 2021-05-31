@@ -19,6 +19,7 @@ import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -198,6 +199,10 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTP/1.1").build(),
                             Constants.getRawSpanConstant(Http.HTTP_METHOD),
                             AttributeValue.newBuilder().setValue("GET").build(),
+                            Constants.getRawSpanConstant((Http.HTTP_HOST)),
+                            AttributeValue.newBuilder().setValue("dataservice:9394").build(),
+                                Constants.getRawSpanConstant((Http.HTTP_PATH)),
+                                AttributeValue.newBuilder().setValue("product/5d644175551847d7408760b4").build(),
                             "http.url",
                             AttributeValue.newBuilder()
                                 .setValue(
@@ -231,6 +236,10 @@ public class HttpBackendProviderTest {
                             .build())
                     .build())
             .build();
+
+//    AttributeValue attributeValue = new AttributeValue();
+//    attributeValue.setValue("dataservice:9394");
+//    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(Http.HTTP_HOST), attributeValue);
 
     final Entity backendEntity =
         backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
