@@ -1,5 +1,7 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_URL;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -25,6 +27,7 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -58,6 +61,11 @@ public class SpanEventViewGeneratorTest {
             Http.newBuilder()
                 .setRequest(Request.newBuilder().setUrl("http://www.example.com").build())
                 .build());
+    when(event.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+    setmanualurl(event,"http://www.example.com");
+
+    String s =spanEventViewGenerator.getRequestUrl(event,Protocol.PROTOCOL_HTTP);
     assertEquals(
         "http://www.example.com",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
@@ -71,6 +79,9 @@ public class SpanEventViewGeneratorTest {
             Http.newBuilder()
                 .setRequest(Request.newBuilder().setUrl("https://www.example.com").build())
                 .build());
+    when(event.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+    setmanualurl(event,"https://www.example.com");
     assertEquals(
         "https://www.example.com",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTPS));
@@ -93,6 +104,9 @@ public class SpanEventViewGeneratorTest {
             Http.newBuilder()
                 .setRequest(Request.newBuilder().setPath("/api/v1/gatekeeper/check").build())
                 .build());
+    when(event.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+    setmanualurl(event,"/api/v1/gatekeeper/check");
     assertEquals(
         "/api/v1/gatekeeper/check",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
@@ -285,4 +299,14 @@ public class SpanEventViewGeneratorTest {
     list = spanEventViewGenerator.process(trace);
     assertEquals(5, list.get(0).getApiTraceErrorSpanCount());
   }
-}
+
+  private static void setmanualurl(Event event, String url) {
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue(url);
+    event
+            .getAttributes()
+            .getAttributeMap()
+            .put(RawSpanConstants.getValue(HTTP_URL), attributeValue);
+
+  }
+ }
