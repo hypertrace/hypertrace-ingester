@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -214,7 +213,7 @@ public class EnrichedSpanUtilsTest {
                 .setRequest(Request.newBuilder().setMethod("GET").build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("GET");
@@ -229,7 +228,7 @@ public class EnrichedSpanUtilsTest {
   public void should_getNullMethod_noHttpFields() {
     Event e = mock(Event.class);
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<String> method = EnrichedSpanUtils.getHttpMethod(e);
     assertTrue(method.isEmpty());
@@ -238,14 +237,14 @@ public class EnrichedSpanUtilsTest {
   @Test
   public void should_getFullUrl() {
     Event e = mock(Event.class);
-    String testurl="http://hipstershop.com?order=1";
+    String testurl = "http://hipstershop.com?order=1";
     when(e.getHttp())
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(Request.newBuilder().setUrl(testurl).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue(testurl);
@@ -277,7 +276,7 @@ public class EnrichedSpanUtilsTest {
   public void should_getNullUrl_noHttpFields() {
     Event e = mock(Event.class);
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<String> url = EnrichedSpanUtils.getFullHttpUrl(e);
     assertTrue(url.isEmpty());
@@ -297,11 +296,13 @@ public class EnrichedSpanUtilsTest {
                 .setRequest(Request.newBuilder().setSize(64).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue(String.valueOf(64));
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), attributeValue);
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), attributeValue);
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertFalse(requestSize.isEmpty());
@@ -347,7 +348,7 @@ public class EnrichedSpanUtilsTest {
                 .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("HTTP")))
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertTrue(requestSize.isEmpty());
@@ -367,13 +368,13 @@ public class EnrichedSpanUtilsTest {
                 .setResponse(Response.newBuilder().setSize(64).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue(String.valueOf(64));
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), attributeValue);
-
-
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), attributeValue);
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
     assertFalse(responseSize.isEmpty());
@@ -411,7 +412,7 @@ public class EnrichedSpanUtilsTest {
                 .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("HTTP")))
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getResponseSize(e);
     assertTrue(requestSize.isEmpty());

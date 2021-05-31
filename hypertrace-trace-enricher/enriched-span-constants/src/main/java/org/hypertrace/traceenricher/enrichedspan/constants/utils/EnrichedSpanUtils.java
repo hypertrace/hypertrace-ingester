@@ -19,7 +19,6 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
-import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;

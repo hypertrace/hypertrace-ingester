@@ -33,18 +33,15 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
   @Test
   public void test_withAValidUrl_shouldEnrichHttpPathAndParams() {
     Event e = createMockEvent();
-    String query_string="action=checkout&age=23&location=";
+    String query_string = "action=checkout&age=23&location=";
     when(e.getHttp())
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(
-                    Request.newBuilder()
-                        .setPath("/users")
-                        .setQueryString(query_string)
-                        .build())
+                    Request.newBuilder().setPath("/users").setQueryString(query_string).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("/users");
@@ -52,7 +49,9 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
     AttributeValue attributeValue2 = new AttributeValue();
     attributeValue2.setValue(query_string);
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
 
     enricher.enrichEvent(mockTrace, e);
 
@@ -79,19 +78,16 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
   @Test
   public void testMultipleValuedQueryParam() {
-    String query_string="action=checkout&action=a&age=2&age=3&location=";
+    String query_string = "action=checkout&action=a&age=2&age=3&location=";
     Event e = createMockEvent();
     when(e.getHttp())
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(
-                    Request.newBuilder()
-                        .setPath("/users")
-                        .setQueryString(query_string)
-                        .build())
+                    Request.newBuilder().setPath("/users").setQueryString(query_string).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("/users");
@@ -99,7 +95,9 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
     AttributeValue attributeValue2 = new AttributeValue();
     attributeValue2.setValue(query_string);
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
     enricher.enrichEvent(mockTrace, e);
 
     String httpPathEnrichedValue =
@@ -127,7 +125,7 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
   @Test
   public void testGetQueryParamsFromUrl() {
-    String query_string="action=checkout&cat=1dog=2&action=a&age=2&age=3;&location=&area&&";
+    String query_string = "action=checkout&cat=1dog=2&action=a&age=2&age=3;&location=&area&&";
     Event e = createMockEvent();
     // ; in url should not be treated as an splitting character.
     // Url in this test also contains successive & and param with no value.
@@ -135,13 +133,10 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(
-                    Request.newBuilder()
-                        .setPath("/users")
-                        .setQueryString(query_string)
-                        .build())
+                    Request.newBuilder().setPath("/users").setQueryString(query_string).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("/users");
@@ -149,7 +144,9 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
     AttributeValue attributeValue2 = new AttributeValue();
     attributeValue2.setValue(query_string);
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
 
     enricher.enrichEvent(mockTrace, e);
 
@@ -189,19 +186,16 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
   @Test
   public void testSemicolonInQueryParam() {
-    String query_string="action=checkout;age=2";
+    String query_string = "action=checkout;age=2";
     Event e = createMockEvent();
     when(e.getHttp())
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(
-                    Request.newBuilder()
-                        .setPath("/users")
-                        .setQueryString(query_string)
-                        .build())
+                    Request.newBuilder().setPath("/users").setQueryString(query_string).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("/users");
@@ -209,7 +203,9 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
     AttributeValue attributeValue2 = new AttributeValue();
     attributeValue2.setValue(query_string);
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
 
     enricher.enrichEvent(mockTrace, e);
 
@@ -222,19 +218,16 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
   @Test
   public void testDecodeQueryParams() {
-    String query_string="action=check%20out&location=hello%3Dworld";
+    String query_string = "action=check%20out&location=hello%3Dworld";
     Event e = createMockEvent();
     when(e.getHttp())
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(
-                    Request.newBuilder()
-                        .setPath("/users")
-                        .setQueryString(query_string)
-                        .build())
+                    Request.newBuilder().setPath("/users").setQueryString(query_string).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("/users");
@@ -242,7 +235,9 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
     AttributeValue attributeValue2 = new AttributeValue();
     attributeValue2.setValue(query_string);
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
 
     enricher.enrichEvent(mockTrace, e);
 
@@ -262,19 +257,16 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
   @Test
   public void testDecodeQueryParamsInvalidInput() {
     // Try putting invalid encoded string in both query param key and value.
-    String query_string="action=check%!mout&loca%.Ption=hello%3Dworld";
+    String query_string = "action=check%!mout&loca%.Ption=hello%3Dworld";
     Event e = createMockEvent();
     when(e.getHttp())
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(
-                    Request.newBuilder()
-                        .setPath("/users")
-                        .setQueryString(query_string)
-                        .build())
+                    Request.newBuilder().setPath("/users").setQueryString(query_string).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("/users");
@@ -282,7 +274,9 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
     AttributeValue attributeValue2 = new AttributeValue();
     attributeValue2.setValue(query_string);
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
 
     enricher.enrichEvent(mockTrace, e);
 
@@ -303,19 +297,16 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
   @Test
   public void testDecodeQueryParamsWithSquareBrackets() {
     // Url with query params not encoded
-    String query_string="action[]=checkout&age=2&[]=test";
+    String query_string = "action[]=checkout&age=2&[]=test";
     Event e = createMockEvent();
     when(e.getHttp())
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(
-                    Request.newBuilder()
-                        .setPath("/users")
-                        .setQueryString(query_string)
-                        .build())
+                    Request.newBuilder().setPath("/users").setQueryString(query_string).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("/users");
@@ -323,7 +314,9 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
     AttributeValue attributeValue2 = new AttributeValue();
     attributeValue2.setValue(query_string);
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
 
     enricher.enrichEvent(mockTrace, e);
 
@@ -347,19 +340,16 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
     assertEquals(List.of("test"), onlySquareBracketParam.getValueList());
 
     // Create event with URL encoded query params
-    query_string="action%5B%5D%3Dcheckout%26age%3D2%26%5B%5D%3Dtest";
+    query_string = "action%5B%5D%3Dcheckout%26age%3D2%26%5B%5D%3Dtest";
     e = createMockEvent();
     when(e.getHttp())
         .thenReturn(
             org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
                 .setRequest(
-                    Request.newBuilder()
-                        .setPath("/users")
-                        .setQueryString(query_string)
-                        .build())
+                    Request.newBuilder().setPath("/users").setQueryString(query_string).build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     attributeValue = new AttributeValue();
     attributeValue.setValue("/users");
@@ -367,7 +357,9 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
     attributeValue2 = new AttributeValue();
     attributeValue2.setValue(query_string);
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
+    e.getAttributes()
+        .getAttributeMap()
+        .put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), attributeValue2);
 
     enricher.enrichEvent(mockTrace, e);
     assertEquals("checkout", actionParam.getValue());
@@ -389,7 +381,7 @@ public class HttpAttributeEnricherTest extends AbstractAttributeEnricherTest {
                 .setRequest(Request.newBuilder().setPath("/users").build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("/users");

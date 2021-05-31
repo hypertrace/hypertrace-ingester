@@ -11,12 +11,12 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.grpc.Request;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.UserAgent;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 
 public class UserAgentSpanEnricher extends AbstractTraceEnricher {
 
