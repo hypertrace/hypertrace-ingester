@@ -25,6 +25,7 @@ import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.viewgenerator.api.ServiceCallView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 
 public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView> {
 
@@ -175,7 +176,9 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
           Optional.ofNullable(event.getHttp())
               .map(org.hypertrace.core.datamodel.eventfields.http.Http::getRequest);
       // Set request related attributes.
-      builder.setRequestUrl(httpRequest.map(Request::getUrl).orElse(null));
+      builder.setRequestUrl(HttpMigration.getHttpUrl(event).toString());
+//      builder.setRequestUrl(httpRequest.map(Request::getUrl).orElse(null));
+      builder.setRequestMethod(HttpMigration.getHttpMethod(event).toString());
       builder.setRequestMethod(httpRequest.map(Request::getMethod).orElse(null));
     }
 
