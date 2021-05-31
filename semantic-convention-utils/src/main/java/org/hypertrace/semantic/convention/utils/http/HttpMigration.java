@@ -4,6 +4,8 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
+
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +38,10 @@ public class HttpMigration{
                     RawSpanConstants.getValue(HTTP_REQUEST_METHOD),
                     RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD),
                     OTelHttpSemanticConventions.HTTP_METHOD.getValue());
+
+    private static final List<String> SCHEME_ATTRIBUTES =
+            List.of(
+                    OTelHttpSemanticConventions.HTTP_SCHEME.getValue());
 
     public static Optional<String> getHttpUserAgent(Event event) {
         Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
@@ -72,6 +78,17 @@ public class HttpMigration{
         for(String method: METHOD_ATTRIBUTES){
             if((attributeValueMap.get(method) != null) && ("" != attributeValueMap.get(method).getValue())){
                 return Optional.of(attributeValueMap.get(method).getValue());
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Nullable
+    public static Optional<String> getHttpScheme(Event event) {
+        Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+        for(String scheme: SCHEME_ATTRIBUTES){
+            if((attributeValueMap.get(scheme) != null) && ("" != attributeValueMap.get(scheme).getValue())){
+                return Optional.of(attributeValueMap.get(scheme).getValue());
             }
         }
         return Optional.empty();

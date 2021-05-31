@@ -27,6 +27,7 @@ import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 
 /**
  * Enricher that figures out if an event is an entry event and by adding EVENT_TYPE attribute.
@@ -234,8 +235,8 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
 
   @Nonnull
   public static Protocol getHttpProtocol(Event event) {
-    Optional<String> scheme =
-        Optional.ofNullable(event.getHttp()).map(Http::getRequest).map(Request::getScheme);
+    Optional<String> scheme = HttpMigration.getHttpScheme(event);
+//     Optional.ofNullable(event.getHttp()).map(Http::getRequest).map(Request::getScheme);
     if (scheme.isPresent()) {
       Protocol protocol = NAME_TO_PROTOCOL_MAP.get(scheme.get().toUpperCase());
       if (protocol != null) {
