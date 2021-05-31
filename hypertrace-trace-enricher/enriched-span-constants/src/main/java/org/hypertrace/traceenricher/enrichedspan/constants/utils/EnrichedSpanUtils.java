@@ -26,6 +26,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
+import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 
 /**
  * Utility class to easily read named attributes from an enriched span. This is equivalent of an
@@ -308,7 +309,7 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getHttpMethod(Event event) {
-    return EnrichedSpanConstants.getHttpMethod(event);
+    return HttpMigration.getHttpMethod(event);
 
     /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
@@ -320,7 +321,7 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getFullHttpUrl(Event event) {
-    return EnrichedSpanConstants.getHttpUrl(event);
+    return HttpMigration.getHttpUrl(event);
     /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getUrl());
@@ -331,7 +332,7 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getPath(Event event) {
-    return EnrichedSpanConstants.getHttpPath(event);
+    return HttpMigration.getHttpPath(event);
     /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getPath());
@@ -342,7 +343,7 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getQueryString(Event event) {
-    return EnrichedSpanConstants.getHttpQueryString(event);
+    return HttpMigration.getHttpQueryString(event);
     /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getQueryString());
@@ -361,7 +362,7 @@ public class EnrichedSpanUtils {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        return EnrichedSpanConstants.getHttpRequestSize(event);
+        return HttpMigration.getHttpRequestSize(event);
         /*
         if (event.getHttp() != null && event.getHttp().getRequest() != null) {
           return Optional.of(event.getHttp().getRequest().getSize());
@@ -387,7 +388,7 @@ public class EnrichedSpanUtils {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        return EnrichedSpanConstants.getHttpResponseSize(event);
+        return HttpMigration.getHttpResponseSize(event);
         /*
         if (event.getHttp() != null && event.getHttp().getResponse() != null) {
           return Optional.of(event.getHttp().getResponse().getSize());
