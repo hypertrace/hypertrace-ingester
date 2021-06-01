@@ -30,7 +30,9 @@ public class HttpMigration {
           RawSpanConstants.getValue(HTTP_USER_AGENT),
           OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue());
 
-  private static final List<String> HOST_ATTRIBUTES = List.of(RawSpanConstants.getValue(HTTP_HOST));
+  private static final List<String> HOST_ATTRIBUTES = List.of(
+          RawSpanConstants.getValue(HTTP_HOST),
+          OTelHttpSemanticConventions.HTTP_HOST.getValue());
 
   private static final List<String> URL_PATH_ATTRIBUTES =
       List.of(
@@ -85,9 +87,14 @@ public class HttpMigration {
   }
 
   public static Optional<String> getHttpHost(Event event) {
+
+    if(event.getAttributes()==null || event.getAttributes().getAttributeMap()==null) {
+      return Optional.empty();
+    };
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String host : HOST_ATTRIBUTES) {
-      if ((attributeValueMap.get(host) != null) && ("" != attributeValueMap.get(host).getValue())) {
+      if (attributeValueMap.get(host) != null) {
         return Optional.of(attributeValueMap.get(host).getValue());
       }
     }
