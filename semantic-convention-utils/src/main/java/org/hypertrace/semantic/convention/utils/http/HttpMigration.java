@@ -102,6 +102,11 @@ public class HttpMigration {
   }
 
   public static Optional<String> getHttpPath(Event event) {
+
+    if(event.getAttributes()==null || event.getAttributes().getAttributeMap()==null) {
+      return Optional.empty();
+    };
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String path : URL_PATH_ATTRIBUTES) {
       if (attributeValueMap.get(path) != null) {
@@ -115,6 +120,11 @@ public class HttpMigration {
   }
 
   public static Optional<String> getHttpMethod(Event event) {
+
+    if(event.getAttributes()==null || event.getAttributes().getAttributeMap()==null) {
+      return Optional.empty();
+    };
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String method : METHOD_ATTRIBUTES) {
       if ((attributeValueMap.get(method) != null)

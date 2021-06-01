@@ -28,6 +28,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 
 public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
@@ -310,6 +311,10 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
 
     Event e = createEvent(map, new HashMap<>());
     e.setRpc(Rpc.newBuilder().setSystem("grpc").build());
+
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue("grpc");
+    e.getAttributes().getAttributeMap().put(OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),attributeValue);
 
     Assertions.assertEquals(Protocol.PROTOCOL_GRPC, SpanTypeAttributeEnricher.getProtocolName(e));
   }

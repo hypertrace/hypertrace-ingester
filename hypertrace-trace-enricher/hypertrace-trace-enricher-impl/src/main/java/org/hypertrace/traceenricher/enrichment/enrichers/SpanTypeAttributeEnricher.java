@@ -27,6 +27,8 @@ import org.hypertrace.traceenricher.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
+
 /**
  * Enricher that figures out if an event is an entry event and by adding EVENT_TYPE attribute.
  * "EXIT" means calls going out. "ENTRY" means calls coming in or code executing in the server.
@@ -196,10 +198,20 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
       return Protocol.PROTOCOL_GRPC;
     }
 
-    if (event.getRpc() != null && event.getRpc().getSystem() != null) {
-      String rpcSystem = event.getRpc().getSystem();
-      if (GRPC_PROTOCOL_VALUE.equalsIgnoreCase(rpcSystem)) {
-        return Protocol.PROTOCOL_GRPC;
+//    if (event.getRpc() != null && event.getRpc().getSystem() != null) {
+//      String rpcSystem = event.getRpc().getSystem();
+//      if (GRPC_PROTOCOL_VALUE.equalsIgnoreCase(rpcSystem)) {
+//        return Protocol.PROTOCOL_GRPC;
+//      }
+//    }
+
+    if(event.getAttributes()!=null && event.getAttributes().getAttributeMap()!=null) {
+      Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+      if(attributeValueMap.get(OTEL_SPAN_TAG_RPC_SYSTEM)!=null) {
+        String rpcSystem = attributeMap.get(OTEL_SPAN_TAG_RPC_SYSTEM).getValue();
+        if (GRPC_PROTOCOL_VALUE.equalsIgnoreCase(rpcSystem)) {
+          return Protocol.PROTOCOL_GRPC;
+        }
       }
     }
 
