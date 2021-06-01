@@ -70,10 +70,14 @@ public class HttpMigration {
                   OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue());
 
   public static Optional<String> getHttpUserAgent(Event event) {
+
+    if(event.getAttributes()==null || event.getAttributes().getAttributeMap()==null) {
+      return Optional.empty();
+    };
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String useragent : USER_AGENT_ATTRIBUTES) {
-      if ((attributeValueMap.get(useragent) != null)
-          && ("" != attributeValueMap.get(useragent).getValue())) {
+      if (attributeValueMap.get(useragent) != null && !StringUtils.isEmpty(attributeValueMap.get(useragent).getValue())) {
         return Optional.of(attributeValueMap.get(useragent).getValue());
       }
     }
