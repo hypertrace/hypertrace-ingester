@@ -80,14 +80,25 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
 
   private static String getGrpcStatusMessage(Event event, String statusCode) {
     String statusMessage = null;
-    if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-      Response response = event.getGrpc().getResponse();
-      if (StringUtils.isNotBlank(response.getStatusMessage())) {
-        statusMessage = response.getStatusMessage();
-      } else if (StringUtils.isNotBlank(response.getErrorMessage())) {
-        statusMessage = response.getErrorMessage();
+    if(event.getAttributes()!=null && event.getAttributes().getAttributeMap()!=null) {
+      if(StringUtils.isNotBlank(GrpcMigration.getGrpcStatusMsg(event))) {
+          statusMessage = GrpcMigration.getGrpcStatusMsg(event);
       }
-    } else {
+      else if(StringUtils.isNotBlank(GrpcMigration.getGrpcErrorMsg(event))) {
+        statusMessage = GrpcMigration.getGrpcErrorMsg(event);
+      }
+    }
+//
+//
+//    if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
+//      Response response = event.getGrpc().getResponse();
+//      if (StringUtils.isNotBlank(response.getStatusMessage())) {
+//        statusMessage = response.getStatusMessage();
+//      } else if (StringUtils.isNotBlank(response.getErrorMessage())) {
+//        statusMessage = response.getErrorMessage();
+//      }
+//    }
+    else {
       statusMessage =
           SpanAttributeUtils.getFirstAvailableStringAttribute(event, grpcStatusMessageKeys);
     }
