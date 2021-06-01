@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -7,6 +8,7 @@ import static org.mockito.Mockito.when;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.eventfields.grpc.Response;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
@@ -100,6 +102,11 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
     org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc =
         mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
     when(e.getGrpc()).thenReturn(grpc);
+
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue("5");
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE), attributeValue);
+
     Response response = mock(Response.class);
     when(grpc.getResponse()).thenReturn(response);
     when(response.getStatusCode()).thenReturn(5);
@@ -117,6 +124,11 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
     org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc =
         mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
     when(e.getGrpc()).thenReturn(grpc);
+
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue("0");
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE), attributeValue);
+
     Response response = mock(Response.class);
     when(grpc.getResponse()).thenReturn(response);
     when(response.getStatusCode()).thenReturn(0);
@@ -135,6 +147,11 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
     org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc =
         mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
     when(e.getGrpc()).thenReturn(grpc);
+
+    AttributeValue attributeValue = new AttributeValue();
+    attributeValue.setValue("5");
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE), attributeValue);
+
     Response response = mock(Response.class);
     when(grpc.getResponse()).thenReturn(response);
     when(response.getStatusCode()).thenReturn(5);

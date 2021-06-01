@@ -9,6 +9,7 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.grpc.Response;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
+import org.hypertrace.semantic.convention.utils.http.GrpcMigration;
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.CensusResponse;
@@ -60,8 +61,10 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
   private static String getStatusCode(Event event, Protocol protocol) {
     List<String> statusCodeKeys = Lists.newArrayList();
     if (Protocol.PROTOCOL_GRPC == protocol) {
-      if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-        int statusCode = event.getGrpc().getResponse().getStatusCode();
+//      if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
+//        int statusCode = event.getGrpc().getResponse().getStatusCode();
+        if(event.getAttributes()!=null && event.getAttributes().getAttributeMap()!=null){
+          int statusCode = GrpcMigration.getGrpcStatusCode(event);
         // Checking for the default value for status code field
         if (statusCode != -1) {
           return Integer.toString(statusCode);
