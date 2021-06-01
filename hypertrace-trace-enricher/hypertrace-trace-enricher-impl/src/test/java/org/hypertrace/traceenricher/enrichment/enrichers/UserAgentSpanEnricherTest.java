@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -233,7 +234,7 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                 .build());
     mockProtocol(e, Protocol.PROTOCOL_GRPC);
     manualSetUserAgnt(e, userAgent);
-
+    e.getAttributes().getAttributeMap().put(RPC_REQUEST_METADATA_USER_AGENT.getValue(), AttributeValue.newBuilder().setValue(userAgent).build());
     enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();

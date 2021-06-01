@@ -7,10 +7,12 @@ import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_GRPC_STATUS_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 
 public class GrpcMigration {
 
@@ -45,6 +47,17 @@ public class GrpcMigration {
             return attributeValueMap.get(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE)).getValue();
         }
         return "";
+    }
+
+    public static Optional<String> getGrpcUserAgent(Event event) {
+        if(event.getAttributes()==null || event.getAttributes().getAttributeMap()==null) {
+            return Optional.empty();
+        };
+        Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+        if(attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue())!=null) {
+            return Optional.of(RPC_REQUEST_METADATA_USER_AGENT.getValue());
+        }
+        return Optional.empty();
     }
 
 
