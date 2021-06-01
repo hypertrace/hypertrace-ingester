@@ -19,6 +19,7 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.semantic.convention.utils.http.GrpcMigration;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
@@ -370,10 +371,13 @@ public class EnrichedSpanUtils {
         break;
          */
       case PROTOCOL_GRPC:
+        return GrpcMigration.getGrpcRequestSize(event);
+        /*
         if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
           return Optional.of(event.getGrpc().getRequest().getSize());
         }
         break;
+        */
     }
 
     return Optional.empty();
@@ -396,10 +400,13 @@ public class EnrichedSpanUtils {
         break;
          */
       case PROTOCOL_GRPC:
+        return GrpcMigration.getGrpcResponseSize(event);
+        /*
         if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
           return Optional.of(event.getGrpc().getResponse().getSize());
         }
         break;
+        */
     }
 
     return Optional.empty();

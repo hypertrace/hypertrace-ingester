@@ -1,6 +1,8 @@
 package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 
 import static java.util.Collections.emptyList;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -307,6 +309,10 @@ public class EnrichedSpanUtilsTest {
                         .setSize(64)
                         .build())
                 .build());
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(GRPC_REQUEST_BODY), AttributeValue.newBuilder().setValue("64").build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertFalse(requestSize.isEmpty());
@@ -379,6 +385,10 @@ public class EnrichedSpanUtilsTest {
                         .setSize(64)
                         .build())
                 .build());
+    when(e.getAttributes())
+            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+
+    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(GRPC_RESPONSE_BODY), AttributeValue.newBuilder().setValue("64").build());
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
     assertFalse(responseSize.isEmpty());
