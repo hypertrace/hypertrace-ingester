@@ -47,8 +47,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
   public void spanKindExists() {
     SpanTypeAttributeEnricher enricher = new SpanTypeAttributeEnricher();
     Event e = createMockEvent();
-    Map<String, AttributeValue> attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(SPAN_KIND_KEY, AttributeValueCreator.create(SERVER_VALUE));
+    addAttribute(e,SPAN_KIND_KEY,SERVER_VALUE);
     enricher.enrichEvent(null, e);
     Map<String, AttributeValue> enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -56,11 +55,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         Constants.getEnrichedSpanConstant(ENTRY));
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(
-        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
-        AttributeValueCreator.create(
-            OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE.getValue()));
+    addAttribute(e,OTelSpanSemanticConventions.SPAN_KIND.getValue(),OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE.getValue());
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -68,10 +63,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue());
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(
-        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
-        AttributeValueCreator.create(OtelMessagingSemanticConventions.CONSUMER.getValue()));
+    addAttribute(e,OTelSpanSemanticConventions.SPAN_KIND.getValue(),OtelMessagingSemanticConventions.CONSUMER.getValue());
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -79,10 +71,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue());
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(
-        SPAN_KIND_KEY,
-        AttributeValueCreator.create(OtelMessagingSemanticConventions.CONSUMER.getValue()));
+    addAttribute(e,SPAN_KIND_KEY,OtelMessagingSemanticConventions.CONSUMER.getValue());
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -90,8 +79,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue());
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(SPAN_KIND_KEY, AttributeValueCreator.create(CLIENT_VALUE));
+    addAttribute(e,SPAN_KIND_KEY,CLIENT_VALUE);
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -99,11 +87,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         Constants.getEnrichedSpanConstant(EXIT));
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(
-        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
-        AttributeValueCreator.create(
-            OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE.getValue()));
+    addAttribute(e,OTelSpanSemanticConventions.SPAN_KIND.getValue(),OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE.getValue());
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -111,10 +95,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         Constants.getEnrichedSpanConstant(EXIT));
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(
-        OTelSpanSemanticConventions.SPAN_KIND.getValue(),
-        AttributeValueCreator.create(OtelMessagingSemanticConventions.PRODUCER.getValue()));
+    addAttribute(e,OTelSpanSemanticConventions.SPAN_KIND.getValue(),OtelMessagingSemanticConventions.PRODUCER.getValue());
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -122,10 +103,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         Constants.getEnrichedSpanConstant(EXIT));
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(
-        SPAN_KIND_KEY,
-        AttributeValueCreator.create(OtelMessagingSemanticConventions.PRODUCER.getValue()));
+    addAttribute(e,SPAN_KIND_KEY,OtelMessagingSemanticConventions.PRODUCER.getValue());
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -133,8 +111,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         Constants.getEnrichedSpanConstant(EXIT));
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(SPAN_KIND_KEY, AttributeValueCreator.create("unknown"));
+    addAttribute(e,SPAN_KIND_KEY,"unknown");
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -146,8 +123,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
   public void clientExists() {
     SpanTypeAttributeEnricher enricher = new SpanTypeAttributeEnricher();
     Event e = createMockEvent();
-    Map<String, AttributeValue> attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(CLIENT_KEY, AttributeValueCreator.create("false"));
+    addAttribute(e,CLIENT_KEY,"false");
     enricher.enrichEvent(null, e);
     Map<String, AttributeValue> enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -155,8 +131,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         Constants.getEnrichedSpanConstant(ENTRY));
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(CLIENT_KEY, AttributeValueCreator.create("true"));
+    addAttribute(e,CLIENT_KEY,"true");
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -164,8 +139,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
         Constants.getEnrichedSpanConstant(EXIT));
 
     e = createMockEvent();
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(CLIENT_KEY, AttributeValueCreator.create("unknown"));
+    addAttribute(e,CLIENT_KEY,"unknown");
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -236,9 +210,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
     // span.kind takes precedence
     Event e = createMockEvent();
     when(e.getEventName()).thenReturn("Sent./api/10");
-    Map<String, AttributeValue> attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(SPAN_KIND_KEY, AttributeValueCreator.create(SERVER_VALUE));
-    attributeValueMap.put(CLIENT_KEY, AttributeValueCreator.create("true"));
+    addAttribute(e,SPAN_KIND_KEY,SERVER_VALUE);
     enricher.enrichEvent(null, e);
     Map<String, AttributeValue> enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -247,11 +219,8 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
 
     // Then Client
     e = createMockEvent();
+    addAttribute(e,CLIENT_KEY,"false");
     when(e.getEventName()).thenReturn("Sent./api/10");
-    attributeValueMap = e.getAttributes().getAttributeMap();
-    attributeValueMap.put(CLIENT_KEY, AttributeValueCreator.create("false"));
-    when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(attributeValueMap).build());
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
     Assertions.assertEquals(
@@ -261,10 +230,8 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
     // Finally span name convention
     e = createMockEvent();
     when(e.getEventName()).thenReturn("Sent./api/10");
-    attributeValueMap = e.getAttributes().getAttributeMap();
     enricher.enrichEvent(null, e);
     enrichedAttributes = e.getEnrichedAttributes().getAttributeMap();
-    Assertions.assertEquals(e.getAttributes().getAttributeMap(), attributeValueMap);
     Assertions.assertEquals(
         enrichedAttributes.get(Constants.getEnrichedSpanConstant(SPAN_TYPE)).getValue(),
         Constants.getEnrichedSpanConstant(EXIT));
@@ -311,11 +278,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
 
     Event e = createEvent(map, new HashMap<>());
     e.setRpc(Rpc.newBuilder().setSystem("grpc").build());
-
-    AttributeValue attributeValue = new AttributeValue();
-    attributeValue.setValue("grpc");
-    e.getAttributes().getAttributeMap().put(OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), attributeValue);
-
+    addAttribute(e,OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),"grpc");
     Assertions.assertEquals(Protocol.PROTOCOL_GRPC, SpanTypeAttributeEnricher.getProtocolName(e));
   }
 
@@ -408,5 +371,9 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
     e.setEventName("ingress");
     Assertions.assertEquals(
         Protocol.PROTOCOL_UNSPECIFIED, SpanTypeAttributeEnricher.getProtocolName(e));
+  }
+
+  private void addAttribute(Event event,String key,String val) {
+    event.getAttributes().getAttributeMap().put(key, AttributeValue.newBuilder().setValue(val).build());
   }
 }
