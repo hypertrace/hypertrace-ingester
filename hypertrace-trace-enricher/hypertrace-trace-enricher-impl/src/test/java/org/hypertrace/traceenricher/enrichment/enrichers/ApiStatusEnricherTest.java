@@ -35,12 +35,7 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
     String expectedStatusCode = "200";
     Event event = createMockEvent();
     mockProtocol(event, Protocol.PROTOCOL_HTTP);
-    event
-        .getAttributes()
-        .getAttributeMap()
-        .put(
-            Constants.getRawSpanConstant(OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE),
-            AttributeValue.newBuilder().setValue(expectedStatusCode).build());
+    addAttribute(event,Constants.getRawSpanConstant(OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE),expectedStatusCode);
 
     target.enrichEvent(null, event);
 
@@ -54,13 +49,7 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
     String expectedStatusCode = "0";
     Event event = createMockEvent();
     mockProtocol(event, Protocol.PROTOCOL_GRPC);
-    event
-        .getAttributes()
-        .getAttributeMap()
-        .put(
-            Constants.getRawSpanConstant(Grpc.GRPC_STATUS_CODE),
-            AttributeValue.newBuilder().setValue(expectedStatusCode).build());
-
+    addAttribute(event,Constants.getRawSpanConstant(Grpc.GRPC_STATUS_CODE),expectedStatusCode);
     target.enrichEvent(null, event);
 
     assertEquals(expectedStatusCode, getStatusCode(event));
@@ -73,11 +62,7 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
     Event e = createMockEvent();
     mockProtocol(e, Protocol.PROTOCOL_HTTP);
     // First try with http response size attribute.
-    e.getAttributes()
-        .getAttributeMap()
-        .put(
-            Constants.getRawSpanConstant(Http.HTTP_RESPONSE_STATUS_CODE),
-            AttributeValue.newBuilder().setValue("200").build());
+    addAttribute(e,Constants.getRawSpanConstant(Http.HTTP_RESPONSE_STATUS_CODE),"200");
     target.enrichEvent(null, e);
     assertEquals("200", getStatusCode(e));
   }
@@ -87,11 +72,7 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
     // Try the GRPC response length parsing.
     Event e = createMockEvent();
     mockProtocol(e, Protocol.PROTOCOL_GRPC);
-    e.getAttributes()
-        .getAttributeMap()
-        .put(
-            Constants.getRawSpanConstant(Grpc.GRPC_STATUS_CODE),
-            AttributeValue.newBuilder().setValue("5").build());
+    addAttribute(e,Constants.getRawSpanConstant(Grpc.GRPC_STATUS_CODE),"5");
     target.enrichEvent(null, e);
     assertEquals("5", getStatusCode(e));
   }
@@ -100,18 +81,9 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
   public void test_enrich_statusCode_grpc_fields_default() {
     // Try the GRPC response length parsing.
     Event e = createMockEvent();
-    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc =
-        mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
-    when(e.getGrpc()).thenReturn(grpc);
-
-    AttributeValue attributeValue = new AttributeValue();
-    attributeValue.setValue("5");
-    e.getAttributes()
-        .getAttributeMap()
-        .put(RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE), attributeValue);
+    addAttribute(e,RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),"5");
 
     Response response = mock(Response.class);
-    when(grpc.getResponse()).thenReturn(response);
     when(response.getStatusCode()).thenReturn(5);
     mockProtocol(e, Protocol.PROTOCOL_GRPC);
     target.enrichEvent(null, e);
@@ -124,22 +96,10 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
   public void test_enrich_statusCode_grpc_fields_success() {
     // Try the GRPC response length parsing.
     Event e = createMockEvent();
-    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc =
-        mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
-    when(e.getGrpc()).thenReturn(grpc);
+    addAttribute(e,RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),"0");
+    addAttribute(e,RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),"Call was successful");
 
-    e.getAttributes()
-        .getAttributeMap()
-        .put(
-            RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),
-            AttributeValue.newBuilder().setValue("0").build());
-    e.getAttributes()
-        .getAttributeMap()
-        .put(
-            RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
-            AttributeValue.newBuilder().setValue("Call was successful").build());
     Response response = mock(Response.class);
-    when(grpc.getResponse()).thenReturn(response);
     when(response.getStatusCode()).thenReturn(0);
     when(response.getStatusMessage()).thenReturn("Call was successful");
     mockProtocol(e, Protocol.PROTOCOL_GRPC);
@@ -153,23 +113,10 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
   public void test_enrich_statusCode_grpc_fields_failure() {
     // Try the GRPC response length parsing.
     Event e = createMockEvent();
-    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc =
-        mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
-    when(e.getGrpc()).thenReturn(grpc);
-
-    e.getAttributes()
-        .getAttributeMap()
-        .put(
-            RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),
-            AttributeValue.newBuilder().setValue("5").build());
-    e.getAttributes()
-        .getAttributeMap()
-        .put(
-            RawSpanConstants.getValue(GRPC_ERROR_MESSAGE),
-            AttributeValue.newBuilder().setValue("Call was a failure").build());
+    addAttribute(e,RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),"5");
+    addAttribute(e,RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),"Call was a failure");
 
     Response response = mock(Response.class);
-    when(grpc.getResponse()).thenReturn(response);
     when(response.getStatusCode()).thenReturn(5);
     when(response.getErrorMessage()).thenReturn("Call was a failure");
     mockProtocol(e, Protocol.PROTOCOL_GRPC);
@@ -183,11 +130,7 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
   public void test_enrich_statusCode_grpc_fields_unset() {
     // Try the GRPC response length parsing.
     Event e = createMockEvent();
-    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc =
-        mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
-    when(e.getGrpc()).thenReturn(grpc);
     Response response = mock(Response.class);
-    when(grpc.getResponse()).thenReturn(response);
     when(response.getStatusCode()).thenReturn(-1);
     mockProtocol(e, Protocol.PROTOCOL_GRPC);
     target.enrichEvent(null, e);
@@ -231,5 +174,9 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
             AttributeValue.newBuilder()
                 .setValue(Constants.getEnrichedSpanConstant(protocol))
                 .build());
+  }
+
+  private void addAttribute(Event event,String key,String val) {
+    event.getAttributes().getAttributeMap().put(key, AttributeValue.newBuilder().setValue(val).build());
   }
 }
