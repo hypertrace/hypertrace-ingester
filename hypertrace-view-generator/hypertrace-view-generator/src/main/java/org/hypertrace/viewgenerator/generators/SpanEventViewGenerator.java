@@ -6,13 +6,11 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.hypertrace.core.datamodel.*;
-import org.hypertrace.core.datamodel.eventfields.http.Http;
-import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
+import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -20,8 +18,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.viewgenerator.api.SpanEventView;
-import org.hypertrace.semantic.convention.utils.http.HttpMigration;
-
 
 public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
 
@@ -313,13 +309,12 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       case PROTOCOL_HTTPS:
         return EnrichedSpanUtils.getFullHttpUrl(event)
             .orElse(
-//                Optional.ofNullable(event.getHttp())
-//                    .map(Http::getRequest)
-//                    .map(Request::getPath)
-//                    .orElse(null));
-                HttpMigration.getHttpPath(event).orElse(null)
+                //                Optional.ofNullable(event.getHttp())
+                //                    .map(Http::getRequest)
+                //                    .map(Request::getPath)
+                //                    .orElse(null));
+                HttpMigration.getHttpPath(event).orElse(null));
 
-                );
       case PROTOCOL_GRPC:
         return event.getEventName();
     }

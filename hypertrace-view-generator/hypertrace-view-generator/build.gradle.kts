@@ -31,7 +31,6 @@ dependencies {
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   implementation(project(":semantic-convention-utils"))
 
-
   // TODO: migrate in core
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.3.0")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.15")

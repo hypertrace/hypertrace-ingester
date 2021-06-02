@@ -310,9 +310,13 @@ public class EnrichedSpanUtilsTest {
                         .build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(GRPC_REQUEST_BODY), AttributeValue.newBuilder().setValue("64").build());
+    e.getAttributes()
+        .getAttributeMap()
+        .put(
+            RawSpanConstants.getValue(GRPC_REQUEST_BODY),
+            AttributeValue.newBuilder().setValue("64").build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertFalse(requestSize.isEmpty());
@@ -386,9 +390,13 @@ public class EnrichedSpanUtilsTest {
                         .build())
                 .build());
     when(e.getAttributes())
-            .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
-    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(GRPC_RESPONSE_BODY), AttributeValue.newBuilder().setValue("64").build());
+    e.getAttributes()
+        .getAttributeMap()
+        .put(
+            RawSpanConstants.getValue(GRPC_RESPONSE_BODY),
+            AttributeValue.newBuilder().setValue("64").build());
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
     assertFalse(responseSize.isEmpty());

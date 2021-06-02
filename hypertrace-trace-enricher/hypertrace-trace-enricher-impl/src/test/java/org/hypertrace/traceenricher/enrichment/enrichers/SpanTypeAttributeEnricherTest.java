@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.traceenricher.enrichment.enrichers.SpanTypeAttributeEnricher.CLIENT_KEY;
 import static org.hypertrace.traceenricher.enrichment.enrichers.SpanTypeAttributeEnricher.CLIENT_VALUE;
 import static org.hypertrace.traceenricher.enrichment.enrichers.SpanTypeAttributeEnricher.SERVER_VALUE;
@@ -28,7 +29,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 
 public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest {
 
@@ -314,7 +314,7 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
 
     AttributeValue attributeValue = new AttributeValue();
     attributeValue.setValue("grpc");
-    e.getAttributes().getAttributeMap().put(OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),attributeValue);
+    e.getAttributes().getAttributeMap().put(OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), attributeValue);
 
     Assertions.assertEquals(Protocol.PROTOCOL_GRPC, SpanTypeAttributeEnricher.getProtocolName(e));
   }

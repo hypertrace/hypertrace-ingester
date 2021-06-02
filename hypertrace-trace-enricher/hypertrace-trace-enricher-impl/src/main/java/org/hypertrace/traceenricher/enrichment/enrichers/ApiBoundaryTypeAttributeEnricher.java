@@ -11,8 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.eventfields.grpc.Request;
-import org.hypertrace.core.datamodel.eventfields.grpc.RequestMetadata;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -146,16 +144,15 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
   }
 
   private Optional<String> getGrpcAuthority(Event event) {
-//    if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
-//      Request request = event.getGrpc().getRequest();
-//      RequestMetadata requestMetadata = request.getRequestMetadata();
-//      if (requestMetadata != null) {
-//        return getSanitizedHostValue(requestMetadata.getAuthority());
-//      }
-//    }
+    //    if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
+    //      Request request = event.getGrpc().getRequest();
+    //      RequestMetadata requestMetadata = request.getRequestMetadata();
+    //      if (requestMetadata != null) {
+    //        return getSanitizedHostValue(requestMetadata.getAuthority());
+    //      }
+    //    }
     Optional<String> opt = GrpcMigration.getGrpcAuthority(event);
-    if(opt.isPresent())
-      return getSanitizedHostValue(opt.get());
+    if (opt.isPresent()) return getSanitizedHostValue(opt.get());
     return Optional.empty();
   }
 

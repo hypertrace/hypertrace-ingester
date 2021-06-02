@@ -5,14 +5,12 @@ import java.util.Optional;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
-import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.eventfields.grpc.Request;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
-import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 import org.hypertrace.semantic.convention.utils.http.GrpcMigration;
+import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
@@ -88,13 +86,13 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
       */
     } else if (Protocol.PROTOCOL_GRPC == protocol) {
       return GrpcMigration.getGrpcUserAgent(event);
-//      if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
-//        Request request = event.getGrpc().getRequest();
-//        if (request.getRequestMetadata() != null
-//            && !StringUtils.isEmpty(request.getRequestMetadata().getUserAgent())) {
-//          return Optional.of(request.getRequestMetadata().getUserAgent());
-//        }
-//      }
+      //      if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
+      //        Request request = event.getGrpc().getRequest();
+      //        if (request.getRequestMetadata() != null
+      //            && !StringUtils.isEmpty(request.getRequestMetadata().getUserAgent())) {
+      //          return Optional.of(request.getRequestMetadata().getUserAgent());
+      //        }
+      //      }
     }
 
     return Optional.empty();
