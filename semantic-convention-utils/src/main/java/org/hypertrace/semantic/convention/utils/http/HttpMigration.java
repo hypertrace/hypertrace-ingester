@@ -148,6 +148,9 @@ public class HttpMigration {
   }
 
   public static Optional<String> getHttpUrl(Event event) {
+    if(event.getAttributes()==null || event.getAttributes().getAttributeMap()==null) {
+      return Optional.empty();
+    };
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String url : FULL_URL_ATTRIBUTES) {
       if ((attributeValueMap.get(url) != null) && ("" != attributeValueMap.get(url).getValue())) {

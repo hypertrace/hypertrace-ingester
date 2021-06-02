@@ -317,7 +317,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
 //                    .map(Http::getRequest)
 //                    .map(Request::getPath)
 //                    .orElse(null));
-                Optional.ofNullable(HttpMigration.getHttpPath(event).toString()).orElse(null)
+                HttpMigration.getHttpPath(event).orElse(null)
 
                 );
       case PROTOCOL_GRPC:
