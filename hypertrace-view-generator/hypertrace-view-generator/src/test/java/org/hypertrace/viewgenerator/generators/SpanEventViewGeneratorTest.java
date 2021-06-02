@@ -54,17 +54,7 @@ public class SpanEventViewGeneratorTest {
 
   @Test
   public void test_getRequestUrl_httpProtocol_shouldReturnFullUrl() {
-    Event event = mock(Event.class);
-    when(event.getHttp())
-        .thenReturn(
-            Http.newBuilder()
-                .setRequest(Request.newBuilder().setUrl("http://www.example.com").build())
-                .build());
-    when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    setmanualurl(event, "http://www.example.com");
-
-    String s = spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP);
+    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL),"http://www.example.com");
     assertEquals(
         "http://www.example.com",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
@@ -72,15 +62,7 @@ public class SpanEventViewGeneratorTest {
 
   @Test
   public void test_getRequestUrl_httpsProtocol_shouldReturnFullUrl() {
-    Event event = mock(Event.class);
-    when(event.getHttp())
-        .thenReturn(
-            Http.newBuilder()
-                .setRequest(Request.newBuilder().setUrl("https://www.example.com").build())
-                .build());
-    when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    setmanualurl(event, "https://www.example.com");
+    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL),"https://www.example.com");
     assertEquals(
         "https://www.example.com",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTPS));
@@ -97,15 +79,7 @@ public class SpanEventViewGeneratorTest {
 
   @Test
   public void testGetRequestUrl_fullUrlIsAbsent() {
-    Event event = mock(Event.class);
-    when(event.getHttp())
-        .thenReturn(
-            Http.newBuilder()
-                .setRequest(Request.newBuilder().setPath("/api/v1/gatekeeper/check").build())
-                .build());
-    when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    setmanualurl(event, "/api/v1/gatekeeper/check");
+    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL),"/api/v1/gatekeeper/check");
     assertEquals(
         "/api/v1/gatekeeper/check",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
@@ -114,8 +88,6 @@ public class SpanEventViewGeneratorTest {
   @Test
   public void testGetRequestUrl_urlAndPathIsAbsent() {
     Event event = mock(Event.class);
-    when(event.getHttp())
-        .thenReturn(Http.newBuilder().setRequest(Request.newBuilder().build()).build());
     Assertions.assertNull(spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
   }
 
@@ -306,5 +278,16 @@ public class SpanEventViewGeneratorTest {
         .getAttributes()
         .getAttributeMap()
         .put(RawSpanConstants.getValue(HTTP_URL), attributeValue);
+  }
+
+  private Event createMockEventWithAttribute(String key, String value) {
+    Event e = mock(Event.class);
+    when(e.getAttributes())
+            .thenReturn(
+                    Attributes.newBuilder()
+                            .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
+                            .build());
+    when(e.getEnrichedAttributes()).thenReturn(null);
+    return e;
   }
 }
