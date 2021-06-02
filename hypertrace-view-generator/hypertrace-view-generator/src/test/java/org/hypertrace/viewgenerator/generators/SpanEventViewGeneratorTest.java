@@ -23,8 +23,6 @@ import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.eventfields.http.Http;
-import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
@@ -54,7 +52,8 @@ public class SpanEventViewGeneratorTest {
 
   @Test
   public void test_getRequestUrl_httpProtocol_shouldReturnFullUrl() {
-    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL),"http://www.example.com");
+    Event event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL), "http://www.example.com");
     assertEquals(
         "http://www.example.com",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
@@ -62,7 +61,9 @@ public class SpanEventViewGeneratorTest {
 
   @Test
   public void test_getRequestUrl_httpsProtocol_shouldReturnFullUrl() {
-    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL),"https://www.example.com");
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_URL), "https://www.example.com");
     assertEquals(
         "https://www.example.com",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTPS));
@@ -79,7 +80,9 @@ public class SpanEventViewGeneratorTest {
 
   @Test
   public void testGetRequestUrl_fullUrlIsAbsent() {
-    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL),"/api/v1/gatekeeper/check");
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_URL), "/api/v1/gatekeeper/check");
     assertEquals(
         "/api/v1/gatekeeper/check",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
@@ -283,10 +286,10 @@ public class SpanEventViewGeneratorTest {
   private Event createMockEventWithAttribute(String key, String value) {
     Event e = mock(Event.class);
     when(e.getAttributes())
-            .thenReturn(
-                    Attributes.newBuilder()
-                            .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
-                            .build());
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
+                .build());
     when(e.getEnrichedAttributes()).thenReturn(null);
     return e;
   }

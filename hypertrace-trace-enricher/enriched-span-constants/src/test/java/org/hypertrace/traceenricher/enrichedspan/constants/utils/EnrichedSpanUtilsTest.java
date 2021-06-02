@@ -16,8 +16,6 @@ import java.util.*;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.eventfields.http.Request;
-import org.hypertrace.core.datamodel.eventfields.http.Response;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -66,9 +64,13 @@ public class EnrichedSpanUtilsTest {
     assertTrue(SpanAttributeUtils.getBooleanAttribute(event, key));
   }
 
-  private void addAttribute(Event event,String key,String val) {
-    event.getAttributes().getAttributeMap().put(key, AttributeValue.newBuilder().setValue(val).build());
+  private void addAttribute(Event event, String key, String val) {
+    event
+        .getAttributes()
+        .getAttributeMap()
+        .put(key, AttributeValue.newBuilder().setValue(val).build());
   }
+
   private Event createMockEventWithNoAttributes() {
     Event e = mock(Event.class);
     when(e.getAttributes()).thenReturn(null);
@@ -196,13 +198,13 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void should_getApiDiscoveryState_enrichedAttribute() {
-    Event e = createMockEventWithEnrichedAttribute(API_DISCOVERY_STATE_ATTR,"DISCOVERED");
+    Event e = createMockEventWithEnrichedAttribute(API_DISCOVERY_STATE_ATTR, "DISCOVERED");
     assertEquals("DISCOVERED", EnrichedSpanUtils.getApiDiscoveryState(e));
   }
 
   @Test
   public void should_getHttpMethod() {
-    Event e=createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_METHOD),"GET");
+    Event e = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_METHOD), "GET");
     Optional<String> method = EnrichedSpanUtils.getHttpMethod(e);
     assertFalse(method.isEmpty());
     assertEquals("GET", method.get());
@@ -221,7 +223,7 @@ public class EnrichedSpanUtilsTest {
   @Test
   public void should_getFullUrl() {
     String testurl = "http://hipstershop.com?order=1";
-    Event e=createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL),testurl);
+    Event e = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL), testurl);
     Optional<String> url = EnrichedSpanUtils.getFullHttpUrl(e);
     assertFalse(url.isEmpty());
     assertEquals(testurl, url.get());
@@ -239,10 +241,10 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getRequestSize_httpProtocol() {
-    Event e=createMockEventWithEnrichedAttribute("PROTOCOL","HTTP");
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    addAttribute(e,RawSpanConstants.getValue(HTTP_REQUEST_SIZE),"64");
+    addAttribute(e, RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "64");
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertFalse(requestSize.isEmpty());
@@ -251,10 +253,10 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getRequestSize_grpcProtocol() {
-    Event e=createMockEventWithEnrichedAttribute("PROTOCOL","GRPC");
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "GRPC");
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    addAttribute(e,RawSpanConstants.getValue(GRPC_REQUEST_BODY),"64");
+    addAttribute(e, RawSpanConstants.getValue(GRPC_REQUEST_BODY), "64");
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertFalse(requestSize.isEmpty());
@@ -271,7 +273,7 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getRequestSize_httpProtocol_noSize() {
-    Event e=createMockEventWithEnrichedAttribute("PROTOCOL","HTTP");
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
@@ -281,10 +283,10 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getResponseSize_httpProtocol() {
-    Event e=createMockEventWithEnrichedAttribute("PROTOCOL","HTTP");
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    addAttribute(e,RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),"64");
+    addAttribute(e, RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "64");
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
     assertFalse(responseSize.isEmpty());
@@ -293,10 +295,10 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getResponseSize_grpcProtocol() {
-    Event e=createMockEventWithEnrichedAttribute("PROTOCOL","GRPC");
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "GRPC");
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    addAttribute(e,RawSpanConstants.getValue(GRPC_RESPONSE_BODY),"64");
+    addAttribute(e, RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "64");
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
     assertFalse(responseSize.isEmpty());
@@ -305,7 +307,7 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getResponseSize_httpProtocol_noSize() {
-    Event e=createMockEventWithEnrichedAttribute("PROTOCOL","HTTP");
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
@@ -339,7 +341,7 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void testGetBackendOperation_withData() {
-    Event e=createMockEventWithEnrichedAttribute("BACKEND_OPERATION","select");
+    Event e = createMockEventWithEnrichedAttribute("BACKEND_OPERATION", "select");
 
     assertEquals("select", EnrichedSpanUtils.getBackendOperation(e));
   }
@@ -354,7 +356,7 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void testGetBackendDestination_withData() {
-    Event e=createMockEventWithEnrichedAttribute("BACKEND_DESTINATION","tableName");
+    Event e = createMockEventWithEnrichedAttribute("BACKEND_DESTINATION", "tableName");
 
     assertEquals("tableName", EnrichedSpanUtils.getBackendDestination(e));
   }

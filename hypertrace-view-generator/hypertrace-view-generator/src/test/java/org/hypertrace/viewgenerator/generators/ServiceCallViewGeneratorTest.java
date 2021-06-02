@@ -119,11 +119,11 @@ public class ServiceCallViewGeneratorTest {
 
   private static StructuredTrace createSampleTrace() throws IOException {
     URL resource =
-            Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
+        Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
     SpecificDatumReader<StructuredTrace> datumReader =
-            new SpecificDatumReader<>(StructuredTrace.getClassSchema());
+        new SpecificDatumReader<>(StructuredTrace.getClassSchema());
     DataFileReader<StructuredTrace> dfrStructuredTrace =
-            new DataFileReader<>(new File(resource.getPath()), datumReader);
+        new DataFileReader<>(new File(resource.getPath()), datumReader);
     StructuredTrace trace = dfrStructuredTrace.next();
     dfrStructuredTrace.close();
     return trace;

@@ -6,11 +6,10 @@ import static org.hypertrace.core.span.constants.v1.Grpc.*;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 
+import io.micrometer.core.instrument.util.StringUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import io.micrometer.core.instrument.util.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -57,7 +56,9 @@ public class GrpcMigration {
     }
     ;
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    if (attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()) != null && !StringUtils.isEmpty(attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()).getValue())) {
+    if (attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()) != null
+        && !StringUtils.isEmpty(
+            attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()).getValue())) {
       return Optional.of(
           attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()).getValue());
     }
