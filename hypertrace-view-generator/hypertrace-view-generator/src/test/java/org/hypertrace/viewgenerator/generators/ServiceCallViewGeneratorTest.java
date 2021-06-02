@@ -22,16 +22,7 @@ public class ServiceCallViewGeneratorTest {
 
   @Test
   public void testServiceCallViewGenerator_HotrodTrace() throws IOException {
-    URL resource =
-        Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
-
-    SpecificDatumReader<StructuredTrace> datumReader =
-        new SpecificDatumReader<>(StructuredTrace.getClassSchema());
-    DataFileReader<StructuredTrace> dfrStructuredTrace =
-        new DataFileReader<>(new File(resource.getPath()), datumReader);
-    StructuredTrace trace = dfrStructuredTrace.next();
-    dfrStructuredTrace.close();
-
+    StructuredTrace trace = createSampleTrace();
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     ServiceCallViewGenerator serviceCallViewGenerator = new ServiceCallViewGenerator();
     List<ServiceCallView> individuallyComputedServiceCalls = Lists.newArrayList();
@@ -124,5 +115,17 @@ public class ServiceCallViewGeneratorTest {
         serviceCallViewRecords);
     assertEquals(0, serviceCallViewRecords.size());
     return serviceCallViewRecords;
+  }
+
+  private static StructuredTrace createSampleTrace() throws IOException {
+    URL resource =
+            Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
+    SpecificDatumReader<StructuredTrace> datumReader =
+            new SpecificDatumReader<>(StructuredTrace.getClassSchema());
+    DataFileReader<StructuredTrace> dfrStructuredTrace =
+            new DataFileReader<>(new File(resource.getPath()), datumReader);
+    StructuredTrace trace = dfrStructuredTrace.next();
+    dfrStructuredTrace.close();
+    return trace;
   }
 }
