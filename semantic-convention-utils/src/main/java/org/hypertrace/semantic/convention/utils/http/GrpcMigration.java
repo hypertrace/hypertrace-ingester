@@ -56,7 +56,8 @@ public class GrpcMigration {
     ;
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()) != null) {
-      return Optional.of(RPC_REQUEST_METADATA_USER_AGENT.getValue());
+      return Optional.of(
+          attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()).getValue());
     }
     return Optional.empty();
   }
@@ -68,7 +69,8 @@ public class GrpcMigration {
     ;
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RPC_REQUEST_METADATA_AUTHORITY.getValue()) != null) {
-      return Optional.of(RPC_REQUEST_METADATA_AUTHORITY.getValue());
+      return Optional.of(
+          attributeValueMap.get(RPC_REQUEST_METADATA_AUTHORITY.getValue()).getValue());
     }
     return Optional.empty();
   }

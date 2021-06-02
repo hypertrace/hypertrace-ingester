@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -248,6 +249,13 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
         innerEntrySpan,
         RawSpanConstants.getValue(org.hypertrace.core.span.constants.v1.Http.HTTP_HOST),
         AttributeValueCreator.create("localhost:443"));
+
+    innerEntrySpan
+        .getAttributes()
+        .getAttributeMap()
+        .put(
+            RPC_REQUEST_METADATA_AUTHORITY.getValue(),
+            AttributeValue.newBuilder().setValue("testHost").build());
 
     target.enrichEvent(trace, innerEntrySpan);
     Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");

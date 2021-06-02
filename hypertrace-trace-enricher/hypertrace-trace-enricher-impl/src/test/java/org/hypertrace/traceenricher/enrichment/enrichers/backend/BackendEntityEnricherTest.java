@@ -9,7 +9,9 @@ import java.util.Map;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
+import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.Mongo;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
@@ -222,8 +224,8 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
                 fqnAttribute)
             .build();
 
-    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(request)))
-        .thenReturn(Entity.newBuilder().setEntityId(serviceId).build());
+    //    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(request)))
+    //        .thenReturn(Entity.newBuilder().setEntityId(serviceId).build());
 
     // for broken event service and peer service are different
     Event.Builder eventBuilder =
@@ -385,6 +387,25 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
         .setPath("/abc/v1/book");
 
     Event e = eventBuilder.build();
+    e.getAttributes()
+        .getAttributeMap()
+        .put(
+            RawSpanConstants.getValue(Http.HTTP_HOST),
+            org.hypertrace.core.datamodel.AttributeValue.newBuilder()
+                .setValue(backendName)
+                .build());
+    e.getAttributes()
+        .getAttributeMap()
+        .put(
+            RawSpanConstants.getValue(Http.HTTP_PATH),
+            org.hypertrace.core.datamodel.AttributeValue.newBuilder()
+                .setValue("/abc/v1/book")
+                .build());
+    e.getAttributes()
+        .getAttributeMap()
+        .put(
+            OTelHttpSemanticConventions.HTTP_SCHEME.getValue(),
+            org.hypertrace.core.datamodel.AttributeValue.newBuilder().setValue("https").build());
 
     StructuredTrace trace = createStructuredTrace(TENANT_ID, e);
     enricher.enrichTrace(trace);
