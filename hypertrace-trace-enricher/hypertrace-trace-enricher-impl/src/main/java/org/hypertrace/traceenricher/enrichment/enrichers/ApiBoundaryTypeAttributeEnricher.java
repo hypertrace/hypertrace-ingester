@@ -16,7 +16,7 @@ import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.semantic.convention.utils.http.GrpcMigration;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -151,7 +151,7 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
     //        return getSanitizedHostValue(requestMetadata.getAuthority());
     //      }
     //    }
-    Optional<String> opt = GrpcMigration.getGrpcAuthority(event);
+    Optional<String> opt = RpcSemanticConventionUtils.getGrpcAuthority(event);
     if (opt.isPresent()) return getSanitizedHostValue(opt.get());
     return Optional.empty();
   }

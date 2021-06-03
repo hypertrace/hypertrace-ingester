@@ -18,7 +18,7 @@ import org.hypertrace.core.span.constants.v1.OCAttribute;
 import org.hypertrace.core.span.constants.v1.OCSpanKind;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.core.span.constants.v1.SpanNamePrefix;
-import org.hypertrace.semantic.convention.utils.http.HttpMigration;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
@@ -245,7 +245,7 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
 
   @Nonnull
   public static Protocol getHttpProtocol(Event event) {
-    Optional<String> scheme = HttpMigration.getHttpScheme(event);
+    Optional<String> scheme = HttpSemanticConventionUtils.getHttpScheme(event);
     //     Optional.ofNullable(event.getHttp()).map(Http::getRequest).map(Request::getScheme);
     if (scheme.isPresent()) {
       Protocol protocol = NAME_TO_PROTOCOL_MAP.get(scheme.get().toUpperCase());

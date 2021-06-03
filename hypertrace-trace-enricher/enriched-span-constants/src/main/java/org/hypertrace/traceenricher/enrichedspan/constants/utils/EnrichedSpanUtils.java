@@ -19,8 +19,8 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
-import org.hypertrace.semantic.convention.utils.http.GrpcMigration;
-import org.hypertrace.semantic.convention.utils.http.HttpMigration;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
@@ -310,7 +310,7 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getHttpMethod(Event event) {
-    return HttpMigration.getHttpMethod(event);
+    return HttpSemanticConventionUtils.getHttpMethod(event);
 
     /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
@@ -322,11 +322,11 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getFullHttpUrl(Event event) {
-    return HttpMigration.getHttpUrl(event);
+    return HttpSemanticConventionUtils.getHttpUrl(event);
   }
 
   public static Optional<String> getPath(Event event) {
-    return HttpMigration.getHttpPath(event);
+    return HttpSemanticConventionUtils.getHttpPath(event);
     /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getPath());
@@ -337,7 +337,7 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getQueryString(Event event) {
-    return HttpMigration.getHttpQueryString(event);
+    return HttpSemanticConventionUtils.getHttpQueryString(event);
     /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getQueryString());
@@ -356,7 +356,7 @@ public class EnrichedSpanUtils {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        return HttpMigration.getHttpRequestSize(event);
+        return HttpSemanticConventionUtils.getHttpRequestSize(event);
         /*
         if (event.getHttp() != null && event.getHttp().getRequest() != null) {
           return Optional.of(event.getHttp().getRequest().getSize());
@@ -364,7 +364,7 @@ public class EnrichedSpanUtils {
         break;
          */
       case PROTOCOL_GRPC:
-        return GrpcMigration.getGrpcRequestSize(event);
+        return RpcSemanticConventionUtils.getGrpcRequestSize(event);
         /*
         if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
           return Optional.of(event.getGrpc().getRequest().getSize());
@@ -385,7 +385,7 @@ public class EnrichedSpanUtils {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        return HttpMigration.getHttpResponseSize(event);
+        return HttpSemanticConventionUtils.getHttpResponseSize(event);
         /*
         if (event.getHttp() != null && event.getHttp().getResponse() != null) {
           return Optional.of(event.getHttp().getResponse().getSize());
@@ -393,7 +393,7 @@ public class EnrichedSpanUtils {
         break;
          */
       case PROTOCOL_GRPC:
-        return GrpcMigration.getGrpcResponseSize(event);
+        return RpcSemanticConventionUtils.getGrpcResponseSize(event);
         /*
         if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
           return Optional.of(event.getGrpc().getResponse().getSize());

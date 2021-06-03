@@ -15,7 +15,7 @@ import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
-import org.hypertrace.semantic.convention.utils.http.HttpMigration;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
@@ -174,9 +174,9 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
       //          Optional.ofNullable(event.getHttp())
       //              .map(org.hypertrace.core.datamodel.eventfields.http.Http::getRequest);
       // Set request related attributes.
-      builder.setRequestUrl(HttpMigration.getHttpUrl(event).orElse(null));
+      builder.setRequestUrl(HttpSemanticConventionUtils.getHttpUrl(event).orElse(null));
       //      builder.setRequestUrl(httpRequest.map(Request::getUrl).orElse(null));
-      builder.setRequestMethod(HttpMigration.getHttpMethod(event).orElse(null));
+      builder.setRequestMethod(HttpSemanticConventionUtils.getHttpMethod(event).orElse(null));
       //      builder.setRequestMethod(httpRequest.map(Request::getMethod).orElse(null));
     }
 

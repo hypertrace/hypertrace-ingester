@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.hypertrace.core.datamodel.*;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
-import org.hypertrace.semantic.convention.utils.http.HttpMigration;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -313,7 +313,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
                 //                    .map(Http::getRequest)
                 //                    .map(Request::getPath)
                 //                    .orElse(null));
-                HttpMigration.getHttpPath(event).orElse(null));
+                HttpSemanticConventionUtils.getHttpPath(event).orElse(null));
 
       case PROTOCOL_GRPC:
         return event.getEventName();

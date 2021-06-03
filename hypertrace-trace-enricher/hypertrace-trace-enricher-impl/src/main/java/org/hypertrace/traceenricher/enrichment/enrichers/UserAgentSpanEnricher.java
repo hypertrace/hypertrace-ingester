@@ -9,8 +9,8 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
-import org.hypertrace.semantic.convention.utils.http.GrpcMigration;
-import org.hypertrace.semantic.convention.utils.http.HttpMigration;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
@@ -69,7 +69,7 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
   private Optional<String> getUserAgent(Event event) {
     Protocol protocol = EnrichedSpanUtils.getProtocol(event);
     if (Protocol.PROTOCOL_HTTP == protocol || Protocol.PROTOCOL_HTTPS == protocol) {
-      return HttpMigration.getHttpUserAgent(event);
+      return HttpSemanticConventionUtils.getHttpUserAgent(event);
       /*
       if (event.getHttp() != null && event.getHttp().getRequest() != null) {
         // prefer user agent from headers
@@ -85,7 +85,7 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
       }
       */
     } else if (Protocol.PROTOCOL_GRPC == protocol) {
-      return GrpcMigration.getGrpcUserAgent(event);
+      return RpcSemanticConventionUtils.getGrpcUserAgent(event);
       //      if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
       //        Request request = event.getGrpc().getRequest();
       //        if (request.getRequestMetadata() != null

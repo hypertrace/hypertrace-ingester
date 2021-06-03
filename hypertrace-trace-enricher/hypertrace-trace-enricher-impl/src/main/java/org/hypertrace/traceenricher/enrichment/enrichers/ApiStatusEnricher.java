@@ -15,7 +15,7 @@ import org.hypertrace.core.span.constants.v1.Envoy;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
-import org.hypertrace.semantic.convention.utils.http.GrpcMigration;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -63,7 +63,7 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
       //      if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
       //        int statusCode = event.getGrpc().getResponse().getStatusCode();
       if (event.getAttributes() != null && event.getAttributes().getAttributeMap() != null) {
-        int statusCode = GrpcMigration.getGrpcStatusCode(event);
+        int statusCode = RpcSemanticConventionUtils.getGrpcStatusCode(event);
         // Checking for the default value for status code field
         if (statusCode != -1) {
           return Integer.toString(statusCode);
@@ -80,10 +80,10 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
   private static String getGrpcStatusMessage(Event event, String statusCode) {
     String statusMessage = null;
     if (event.getAttributes() != null && event.getAttributes().getAttributeMap() != null) {
-      if (StringUtils.isNotBlank(GrpcMigration.getGrpcStatusMsg(event))) {
-        statusMessage = GrpcMigration.getGrpcStatusMsg(event);
-      } else if (StringUtils.isNotBlank(GrpcMigration.getGrpcErrorMsg(event))) {
-        statusMessage = GrpcMigration.getGrpcErrorMsg(event);
+      if (StringUtils.isNotBlank(RpcSemanticConventionUtils.getGrpcStatusMsg(event))) {
+        statusMessage = RpcSemanticConventionUtils.getGrpcStatusMsg(event);
+      } else if (StringUtils.isNotBlank(RpcSemanticConventionUtils.getGrpcErrorMsg(event))) {
+        statusMessage = RpcSemanticConventionUtils.getGrpcErrorMsg(event);
       }
     }
     //

@@ -15,7 +15,6 @@ import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.service.constants.EntityConstants;
-import org.hypertrace.semantic.convention.utils.http.HttpMigration;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
@@ -43,7 +42,7 @@ public class HttpBackendProvider implements BackendProvider {
 
   @Override
   public Optional<String> getBackendUri(Event event, StructuredTraceGraph structuredTraceGraph) {
-    return HttpMigration.getHttpHost(event);
+    return HttpSemanticConventionUtils.getHttpHost(event);
     //    return getHttpRequest(event).map(Request::getHost);
   }
 
@@ -51,7 +50,7 @@ public class HttpBackendProvider implements BackendProvider {
   public Map<String, AttributeValue> getEntityAttributes(Event event) {
     Map<String, AttributeValue> entityAttributes = new HashMap<>();
 
-    String path = HttpMigration.getHttpPath(event).orElse(null);
+    String path = HttpSemanticConventionUtils.getHttpPath(event).orElse(null);
     //    String path = getHttpRequest(event).map(Request::getPath).orElse(null);
     if (StringUtils.isNotEmpty(path)) {
       entityAttributes.put(
@@ -70,7 +69,7 @@ public class HttpBackendProvider implements BackendProvider {
 
   @Override
   public Optional<String> getBackendOperation(Event event) {
-    return HttpMigration.getHttpMethod(event);
+    return HttpSemanticConventionUtils.getHttpMethod(event);
   }
   //  public Optional<String> getBackendOperation(Event event) {
   //    return getHttpRequest(event).map(Request::getMethod);
@@ -78,7 +77,7 @@ public class HttpBackendProvider implements BackendProvider {
 
   @Override
   public Optional<String> getBackendDestination(Event event) {
-    return HttpMigration.getHttpPath(event).filter(StringUtils::isNotEmpty);
+    return HttpSemanticConventionUtils.getHttpPath(event).filter(StringUtils::isNotEmpty);
     //    return getHttpRequest(event).map(Request::getPath).filter(StringUtils::isNotEmpty);
   }
 
