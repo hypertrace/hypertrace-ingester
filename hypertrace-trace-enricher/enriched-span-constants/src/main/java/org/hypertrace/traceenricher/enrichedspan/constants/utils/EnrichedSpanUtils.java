@@ -322,10 +322,17 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getFullHttpUrl(Event event) {
+//<<<<<<< HEAD
     return HttpMigration.getHttpUrl(event);
     /*
     if (event.getHttp() != null && event.getHttp().getRequest() != null) {
       return Optional.ofNullable(event.getHttp().getRequest().getUrl());
+=======
+    if (event.getHttp() != null
+        && event.getHttp().getRequest() != null
+        && event.getHttp().getRequest().getUrl() != null) {
+      return Optional.of(event.getHttp().getRequest().getUrl());
+>>>>>>> origin/main
     }
 
     return Optional.empty();
