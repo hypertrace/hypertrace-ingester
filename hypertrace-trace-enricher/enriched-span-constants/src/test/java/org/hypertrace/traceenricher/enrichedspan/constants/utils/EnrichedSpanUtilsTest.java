@@ -16,8 +16,6 @@ import java.util.*;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.eventfields.http.Http;
-import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -228,28 +226,7 @@ public class EnrichedSpanUtilsTest {
     Event e = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL), testurl);
     Optional<String> url = EnrichedSpanUtils.getFullHttpUrl(e);
     assertFalse(url.isEmpty());
-//    assertEquals(testurl, url.get());
-    assertEquals("http://hipstershop.com?order=1", url.get());
-
-    // When it is present in attributemap
-    e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(
-                    Map.of(
-                        "http.url", AttributeValueCreator.create("http://hypertrace.com?order=2")))
-                .build());
-    url = EnrichedSpanUtils.getFullHttpUrl(e);
-    assertFalse(url.isEmpty());
-    assertEquals("http://hypertrace.com?order=2", url.get());
-
-    // Check when url is not present
-    e = mock(Event.class);
-    when(e.getHttp())
-        .thenReturn(Http.newBuilder().setRequest(Request.newBuilder().build()).build());
-    url = EnrichedSpanUtils.getFullHttpUrl(e);
-    assertTrue(url.isEmpty());
+    assertEquals(testurl, url.get());
   }
 
   @Test
