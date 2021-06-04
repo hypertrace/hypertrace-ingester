@@ -38,8 +38,8 @@ public class BackendEntityViewGeneratorTest {
 
     private void assertEntity(List<BackendEntityView> backendViews,List<Event> backendEntity){
         //asserting only for 1 element, as with sample trace, only 1 backend exists (redis)
-        assertEquals(backendViews.size(),backendEntity.size());
-        assertEquals(backendViews.get(0).getBackendId(),backendEntity.get(0).getEnrichedAttributes().getAttributeMap().get("BACKEND_ENTITY_ID").getValue());
-        assertEquals(backendViews.get(0).getBackendName(),backendEntity.get(0).getEnrichedAttributes().getAttributeMap().get("BACKEND_ENTITY_NAME").getValue());
+        assertEquals(backendViews.size(), backendEntity.size());
+        assertEquals(backendViews.get(0).getBackendId(), backendEntity.get(0).getEnrichedAttributes().getAttributeMap().get("BACKEND_ENTITY_ID").getValue());
+        assertEquals(backendViews.get(0).getBackendName(), backendEntity.get(0).getEnrichedAttributes().getAttributeMap().get("BACKEND_ENTITY_NAME").getValue());
     }
 }
