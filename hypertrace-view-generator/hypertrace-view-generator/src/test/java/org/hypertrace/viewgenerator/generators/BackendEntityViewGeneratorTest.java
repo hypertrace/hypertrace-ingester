@@ -26,8 +26,8 @@ public class BackendEntityViewGeneratorTest {
         dfrStructuredTrace.close();
         BackendEntityViewGenerator backendEntityViewGenerator = new BackendEntityViewGenerator();
         List<BackendEntityView> backendEntityViews = backendEntityViewGenerator.process(trace);
-        List<Event> computedBakcendEvents = getEventsWithBackendEntity(trace);
-        assertEntity(backendEntityViews,computedBakcendEvents);
+        List<Event> computedBackendEvents = getEventsWithBackendEntity(trace);
+        assertEntity(backendEntityViews,computedBackendEvents);
     }
 
     private List<Event> getEventsWithBackendEntity(StructuredTrace trace){
