@@ -243,11 +243,6 @@ public class HttpBackendProviderTest {
                     .build())
             .build();
 
-    //    AttributeValue attributeValue = new AttributeValue();
-    //    attributeValue.setValue("dataservice:9394");
-    //    e.getAttributes().getAttributeMap().put(RawSpanConstants.getValue(Http.HTTP_HOST),
-    // attributeValue);
-
     final Entity backendEntity =
         backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
     assertEquals("dataservice:9394", backendEntity.getEntityName());
@@ -354,18 +349,6 @@ public class HttpBackendProviderTest {
                         .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
-            //            .setHttp(
-            //                org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
-            //                    .setRequest(
-            //                        Request.newBuilder()
-            //                            .setUrl(
-            //
-            // "http://dataservice:9394/userreview?productId=5d644175551847d7408760b4")
-            //                            .setHost("dataservice:9394")
-            //                            .setPath("/userreview")
-            //                            .setQueryString("productId=5d644175551847d7408760b4")
-            //                            .build())
-            //                    .build())
             .build();
 
     final Entity backendEntity =

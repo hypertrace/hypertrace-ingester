@@ -311,14 +311,6 @@ public class EnrichedSpanUtils {
 
   public static Optional<String> getHttpMethod(Event event) {
     return HttpSemanticConventionUtils.getHttpMethod(event);
-
-    /*
-    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-      return Optional.ofNullable(event.getHttp().getRequest().getMethod());
-    }
-
-    return Optional.empty();
-     */
   }
 
   public static Optional<String> getFullHttpUrl(Event event) {
@@ -327,24 +319,10 @@ public class EnrichedSpanUtils {
 
   public static Optional<String> getPath(Event event) {
     return HttpSemanticConventionUtils.getHttpPath(event);
-    /*
-    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-      return Optional.ofNullable(event.getHttp().getRequest().getPath());
-    }
-
-    return Optional.empty();
-     */
   }
 
   public static Optional<String> getQueryString(Event event) {
     return HttpSemanticConventionUtils.getHttpQueryString(event);
-    /*
-    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-      return Optional.ofNullable(event.getHttp().getRequest().getQueryString());
-    }
-
-    return Optional.empty();
-     */
   }
 
   public static Optional<Integer> getRequestSize(Event event) {
@@ -357,20 +335,8 @@ public class EnrichedSpanUtils {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
         return HttpSemanticConventionUtils.getHttpRequestSize(event);
-        /*
-        if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-          return Optional.of(event.getHttp().getRequest().getSize());
-        }
-        break;
-         */
       case PROTOCOL_GRPC:
         return RpcSemanticConventionUtils.getGrpcRequestSize(event);
-        /*
-        if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
-          return Optional.of(event.getGrpc().getRequest().getSize());
-        }
-        break;
-        */
     }
 
     return Optional.empty();
@@ -386,20 +352,8 @@ public class EnrichedSpanUtils {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
         return HttpSemanticConventionUtils.getHttpResponseSize(event);
-        /*
-        if (event.getHttp() != null && event.getHttp().getResponse() != null) {
-          return Optional.of(event.getHttp().getResponse().getSize());
-        }
-        break;
-         */
       case PROTOCOL_GRPC:
         return RpcSemanticConventionUtils.getGrpcResponseSize(event);
-        /*
-        if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-          return Optional.of(event.getGrpc().getResponse().getSize());
-        }
-        break;
-        */
     }
 
     return Optional.empty();

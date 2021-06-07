@@ -60,8 +60,6 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
   private static String getStatusCode(Event event, Protocol protocol) {
     List<String> statusCodeKeys = Lists.newArrayList();
     if (Protocol.PROTOCOL_GRPC == protocol) {
-      //      if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-      //        int statusCode = event.getGrpc().getResponse().getStatusCode();
       if (event.getAttributes() != null && event.getAttributes().getAttributeMap() != null) {
         int statusCode = RpcSemanticConventionUtils.getGrpcStatusCode(event);
         // Checking for the default value for status code field
@@ -85,18 +83,7 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
       } else if (StringUtils.isNotBlank(RpcSemanticConventionUtils.getGrpcErrorMsg(event))) {
         statusMessage = RpcSemanticConventionUtils.getGrpcErrorMsg(event);
       }
-    }
-    //
-    //
-    //    if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-    //      Response response = event.getGrpc().getResponse();
-    //      if (StringUtils.isNotBlank(response.getStatusMessage())) {
-    //        statusMessage = response.getStatusMessage();
-    //      } else if (StringUtils.isNotBlank(response.getErrorMessage())) {
-    //        statusMessage = response.getErrorMessage();
-    //      }
-    //    }
-    else {
+    } else {
       statusMessage =
           SpanAttributeUtils.getFirstAvailableStringAttribute(event, grpcStatusMessageKeys);
     }

@@ -144,13 +144,6 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
   }
 
   private Optional<String> getGrpcAuthority(Event event) {
-    //    if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
-    //      Request request = event.getGrpc().getRequest();
-    //      RequestMetadata requestMetadata = request.getRequestMetadata();
-    //      if (requestMetadata != null) {
-    //        return getSanitizedHostValue(requestMetadata.getAuthority());
-    //      }
-    //    }
     Optional<String> opt = RpcSemanticConventionUtils.getGrpcAuthority(event);
     if (opt.isPresent()) return getSanitizedHostValue(opt.get());
     return Optional.empty();

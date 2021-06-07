@@ -71,21 +71,13 @@ public class HttpBackendProvider implements BackendProvider {
   public Optional<String> getBackendOperation(Event event) {
     return HttpSemanticConventionUtils.getHttpMethod(event);
   }
-  //  public Optional<String> getBackendOperation(Event event) {
-  //    return getHttpRequest(event).map(Request::getMethod);
-  //  }
 
   @Override
   public Optional<String> getBackendDestination(Event event) {
     return HttpSemanticConventionUtils.getHttpPath(event).filter(StringUtils::isNotEmpty);
-    //    return getHttpRequest(event).map(Request::getPath).filter(StringUtils::isNotEmpty);
   }
 
   private Protocol getProtocol() {
     return this.protocolSupplier.get();
   }
-
-  //  private Optional<Request> getHttpRequest(Event event) {
-  //    return Optional.ofNullable(event.getHttp()).map(Http::getRequest);
-  //  }
 }

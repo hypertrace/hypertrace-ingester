@@ -70,29 +70,8 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
     Protocol protocol = EnrichedSpanUtils.getProtocol(event);
     if (Protocol.PROTOCOL_HTTP == protocol || Protocol.PROTOCOL_HTTPS == protocol) {
       return HttpSemanticConventionUtils.getHttpUserAgent(event);
-      /*
-      if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-        // prefer user agent from headers
-        if (event.getHttp().getRequest().getHeaders() != null
-            && !StringUtils.isEmpty(event.getHttp().getRequest().getHeaders().getUserAgent())) {
-          return Optional.of(event.getHttp().getRequest().getHeaders().getUserAgent());
-        }
-
-        // fallback to user agent on the request
-        if (!StringUtils.isEmpty(event.getHttp().getRequest().getUserAgent())) {
-          return Optional.of(event.getHttp().getRequest().getUserAgent());
-        }
-      }
-      */
     } else if (Protocol.PROTOCOL_GRPC == protocol) {
       return RpcSemanticConventionUtils.getGrpcUserAgent(event);
-      //      if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
-      //        Request request = event.getGrpc().getRequest();
-      //        if (request.getRequestMetadata() != null
-      //            && !StringUtils.isEmpty(request.getRequestMetadata().getUserAgent())) {
-      //          return Optional.of(request.getRequestMetadata().getUserAgent());
-      //        }
-      //      }
     }
 
     return Optional.empty();

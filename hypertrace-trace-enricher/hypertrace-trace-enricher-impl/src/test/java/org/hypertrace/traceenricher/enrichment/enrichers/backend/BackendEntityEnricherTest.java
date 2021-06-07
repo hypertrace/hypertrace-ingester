@@ -224,9 +224,6 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
                 fqnAttribute)
             .build();
 
-    //    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(request)))
-    //        .thenReturn(Entity.newBuilder().setEntityId(serviceId).build());
-
     // for broken event service and peer service are different
     Event.Builder eventBuilder =
         createApiExitEvent(EVENT_ID)

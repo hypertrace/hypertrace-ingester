@@ -170,14 +170,8 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
 
     // If this is a HTTP request, parse the http response status code.
     if (protocol == Protocol.PROTOCOL_HTTP || protocol == Protocol.PROTOCOL_HTTPS) {
-      //      Optional<Request> httpRequest =
-      //          Optional.ofNullable(event.getHttp())
-      //              .map(org.hypertrace.core.datamodel.eventfields.http.Http::getRequest);
-      // Set request related attributes.
       builder.setRequestUrl(HttpSemanticConventionUtils.getHttpUrl(event).orElse(null));
-      //      builder.setRequestUrl(httpRequest.map(Request::getUrl).orElse(null));
       builder.setRequestMethod(HttpSemanticConventionUtils.getHttpMethod(event).orElse(null));
-      //      builder.setRequestMethod(httpRequest.map(Request::getMethod).orElse(null));
     }
 
     String statusValue = EnrichedSpanUtils.getStatusCode(event);
