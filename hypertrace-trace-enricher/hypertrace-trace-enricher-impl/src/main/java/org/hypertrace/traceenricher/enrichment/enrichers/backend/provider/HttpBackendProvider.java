@@ -43,7 +43,6 @@ public class HttpBackendProvider implements BackendProvider {
   @Override
   public Optional<String> getBackendUri(Event event, StructuredTraceGraph structuredTraceGraph) {
     return HttpSemanticConventionUtils.getHttpHost(event);
-    //    return getHttpRequest(event).map(Request::getHost);
   }
 
   @Override
@@ -51,7 +50,6 @@ public class HttpBackendProvider implements BackendProvider {
     Map<String, AttributeValue> entityAttributes = new HashMap<>();
 
     String path = HttpSemanticConventionUtils.getHttpPath(event).orElse(null);
-    //    String path = getHttpRequest(event).map(Request::getPath).orElse(null);
     if (StringUtils.isNotEmpty(path)) {
       entityAttributes.put(
           EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),

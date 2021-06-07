@@ -239,7 +239,6 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
   @Nonnull
   public static Protocol getHttpProtocol(Event event) {
     Optional<String> scheme = HttpSemanticConventionUtils.getHttpScheme(event);
-    //     Optional.ofNullable(event.getHttp()).map(Http::getRequest).map(Request::getScheme);
     if (scheme.isPresent()) {
       Protocol protocol = NAME_TO_PROTOCOL_MAP.get(scheme.get().toUpperCase());
       if (protocol != null) {

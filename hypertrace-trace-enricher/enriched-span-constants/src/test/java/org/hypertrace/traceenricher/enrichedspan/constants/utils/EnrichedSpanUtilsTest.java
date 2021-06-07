@@ -12,7 +12,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -62,42 +66,6 @@ public class EnrichedSpanUtilsTest {
 
     event = createMockEventWithAttribute(key, "true");
     assertTrue(SpanAttributeUtils.getBooleanAttribute(event, key));
-  }
-
-  private void addAttribute(Event event, String key, String val) {
-    event
-        .getAttributes()
-        .getAttributeMap()
-        .put(key, AttributeValue.newBuilder().setValue(val).build());
-  }
-
-  private Event createMockEventWithNoAttributes() {
-    Event e = mock(Event.class);
-    when(e.getAttributes()).thenReturn(null);
-    when(e.getEnrichedAttributes()).thenReturn(null);
-    return e;
-  }
-
-  private Event createMockEventWithAttribute(String key, String value) {
-    Event e = mock(Event.class);
-    when(e.getAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
-                .build());
-    when(e.getEnrichedAttributes()).thenReturn(null);
-    return e;
-  }
-
-  private Event createMockEventWithEnrichedAttribute(String key, String value) {
-    Event e = mock(Event.class);
-    when(e.getAttributes()).thenReturn(null);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
-                .build());
-    return e;
   }
 
   @Test
@@ -372,5 +340,41 @@ public class EnrichedSpanUtilsTest {
                 .build());
 
     assertEquals(spaceIds, EnrichedSpanUtils.getSpaceIds(e));
+  }
+
+  private void addAttribute(Event event, String key, String val) {
+    event
+        .getAttributes()
+        .getAttributeMap()
+        .put(key, AttributeValue.newBuilder().setValue(val).build());
+  }
+
+  private Event createMockEventWithNoAttributes() {
+    Event e = mock(Event.class);
+    when(e.getAttributes()).thenReturn(null);
+    when(e.getEnrichedAttributes()).thenReturn(null);
+    return e;
+  }
+
+  private Event createMockEventWithAttribute(String key, String value) {
+    Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
+                .build());
+    when(e.getEnrichedAttributes()).thenReturn(null);
+    return e;
+  }
+
+  private Event createMockEventWithEnrichedAttribute(String key, String value) {
+    Event e = mock(Event.class);
+    when(e.getAttributes()).thenReturn(null);
+    when(e.getEnrichedAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
+                .build());
+    return e;
   }
 }
