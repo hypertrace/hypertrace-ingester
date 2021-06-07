@@ -2,14 +2,10 @@ package org.hypertrace.viewgenerator.generators;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.avro.file.DataFileReader;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.viewgenerator.api.BackendEntityView;
@@ -19,14 +15,7 @@ public class BackendEntityViewGeneratorTest {
 
   @Test
   public void testBackendEntityViewGenerator_HotrodTrace() throws IOException {
-    URL resource =
-        Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
-    SpecificDatumReader<StructuredTrace> datumReader =
-        new SpecificDatumReader<>(StructuredTrace.getClassSchema());
-    DataFileReader<StructuredTrace> dfrStructuredTrace =
-        new DataFileReader<>(new File(resource.getPath()), datumReader);
-    StructuredTrace trace = dfrStructuredTrace.next();
-    dfrStructuredTrace.close();
+    StructuredTrace trace = TestUtilities.getSampleHotRodTrace();
     BackendEntityViewGenerator backendEntityViewGenerator = new BackendEntityViewGenerator();
     List<BackendEntityView> backendEntityViews = backendEntityViewGenerator.process(trace);
     List<Event> computedBackendEvents = getEventsWithBackendEntity(trace);
