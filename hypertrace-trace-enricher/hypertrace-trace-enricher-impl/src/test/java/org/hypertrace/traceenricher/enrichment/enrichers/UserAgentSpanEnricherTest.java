@@ -499,13 +499,4 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
         .getAttributeMap()
         .put(key, AttributeValue.newBuilder().setValue(val).build());
   }
-
-  private void manualSetUserAgnt(Event event, String userAgent) {
-    AttributeValue attributeValue = new AttributeValue();
-    attributeValue.setValue(userAgent);
-    event
-        .getAttributes()
-        .getAttributeMap()
-        .put(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), attributeValue);
-  }
 }

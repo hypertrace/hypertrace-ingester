@@ -53,7 +53,7 @@ public class RpcSemanticConventionUtils {
   private static final String OTEL_RPC_SERVICE =
       OTelRpcSemanticConventions.RPC_SYSTEM_SERVICE.getValue();
 
-  private static final List<String> Status_Msg_Att =
+  private static final List<String> STATUS_MSG_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
           RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE));
@@ -144,7 +144,7 @@ public class RpcSemanticConventionUtils {
 
   public static String getGrpcStatusMsg(Event event) {
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    for (String statusmsg : Status_Msg_Att) {
+    for (String statusmsg : STATUS_MSG_ATTRIBUTES) {
       if (attributeValueMap.get(statusmsg) != null) {
         return attributeValueMap.get(statusmsg).getValue();
       }
