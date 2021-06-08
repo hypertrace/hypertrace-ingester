@@ -185,6 +185,22 @@ public class HttpSemanticConventionUtilsTest {
   }
 
   @Test
+  public void testGetHttpUserAgentFromHeader() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 1");
+    assertEquals(
+        Optional.of("Chrome 1"), HttpSemanticConventionUtils.getHttpUserAgentFromHeader(event));
+
+    event = mock(Event.class);
+    assertTrue(HttpSemanticConventionUtils.getHttpUserAgentFromHeader(event).isEmpty());
+
+    event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "Chrome 1");
+    assertTrue(HttpSemanticConventionUtils.getHttpUserAgentFromHeader(event).isEmpty());
+  }
+
+  @Test
   public void testGetHttpHost() {
     Event event = createMockEventWithAttribute(RawSpanConstants.getValue(Http.HTTP_HOST), "abc.ai");
     assertEquals(Optional.of("abc.ai"), HttpSemanticConventionUtils.getHttpHost(event));

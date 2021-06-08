@@ -275,6 +275,22 @@ public class HttpSemanticConventionUtils {
     return Optional.empty();
   }
 
+  public static Optional<String> getHttpUserAgentFromHeader(Event event) {
+
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+    String userAgentKey = RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER);
+    if (attributeValueMap.get(userAgentKey) != null
+        && !StringUtils.isEmpty(attributeValueMap.get(userAgentKey).getValue())) {
+      return Optional.of(attributeValueMap.get(userAgentKey).getValue());
+    }
+
+    return Optional.empty();
+  }
+
   public static Optional<String> getHttpHost(Event event) {
 
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {

@@ -309,6 +309,17 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
   }
 
   @Test
+  public void test_getProtocolName_grpcAttributes_shouldReturnGrpc() {
+    Map<String, AttributeValue> map = new HashMap<>();
+
+    map.put(
+        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), AttributeValue.newBuilder().setValue("grpc").build());
+    Event e = createEvent(map, new HashMap<>());
+
+    Assertions.assertEquals(Protocol.PROTOCOL_GRPC, SpanTypeAttributeEnricher.getProtocolName(e));
+  }
+
+  @Test
   public void test_getProtocolName_HttpFromUrl_shouldReturnHttp() {
     Map<String, AttributeValue> map = new HashMap<>();
 

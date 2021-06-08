@@ -69,7 +69,10 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
   private Optional<String> getUserAgent(Event event) {
     Protocol protocol = EnrichedSpanUtils.getProtocol(event);
     if (Protocol.PROTOCOL_HTTP == protocol || Protocol.PROTOCOL_HTTPS == protocol) {
-      return HttpSemanticConventionUtils.getHttpUserAgent(event);
+      Optional<String> userAgent = HttpSemanticConventionUtils.getHttpUserAgentFromHeader(event);
+      return userAgent.isPresent()
+          ? userAgent
+          : HttpSemanticConventionUtils.getHttpUserAgent(event);
     } else if (Protocol.PROTOCOL_GRPC == protocol) {
       return RpcSemanticConventionUtils.getGrpcUserAgent(event);
     }
