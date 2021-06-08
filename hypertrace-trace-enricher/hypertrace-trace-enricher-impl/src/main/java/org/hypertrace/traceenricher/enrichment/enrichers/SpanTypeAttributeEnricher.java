@@ -198,13 +198,10 @@ public class SpanTypeAttributeEnricher extends AbstractTraceEnricher {
       return Protocol.PROTOCOL_GRPC;
     }
 
-    if (event.getAttributes() != null && event.getAttributes().getAttributeMap() != null) {
-      Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-      if (attributeValueMap.get(OTEL_SPAN_TAG_RPC_SYSTEM) != null) {
-        String rpcSystem = attributeMap.get(OTEL_SPAN_TAG_RPC_SYSTEM).getValue();
-        if (GRPC_PROTOCOL_VALUE.equalsIgnoreCase(rpcSystem)) {
-          return Protocol.PROTOCOL_GRPC;
-        }
+    if (attributeMap.containsKey(OTEL_SPAN_TAG_RPC_SYSTEM)) {
+      String rpcSystem = attributeMap.get(OTEL_SPAN_TAG_RPC_SYSTEM).getValue();
+      if (GRPC_PROTOCOL_VALUE.equalsIgnoreCase(rpcSystem)) {
+        return Protocol.PROTOCOL_GRPC;
       }
     }
 

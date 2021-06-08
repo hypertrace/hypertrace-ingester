@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -77,6 +78,21 @@ public class ApiStatusEnricherTest extends AbstractAttributeEnricherTest {
     addAttribute(e, Constants.getRawSpanConstant(Grpc.GRPC_STATUS_CODE), "5");
     target.enrichEvent(null, e);
     assertEquals("5", getStatusCode(e));
+  }
+
+  @Test
+  public void test_enrich_statusMessage_grpc() {
+    Event e = createMockEvent();
+    mockProtocol(e, Protocol.PROTOCOL_GRPC);
+    addAttribute(e, RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE), "Success");
+    target.enrichEvent(null, e);
+    assertEquals("Success", getStatusMessage(e));
+
+    e = createMockEvent();
+    mockProtocol(e, Protocol.PROTOCOL_GRPC);
+    addAttribute(e, RawSpanConstants.getValue(GRPC_ERROR_MESSAGE), "error");
+    target.enrichEvent(null, e);
+    assertEquals("error", getStatusMessage(e));
   }
 
   @Test
