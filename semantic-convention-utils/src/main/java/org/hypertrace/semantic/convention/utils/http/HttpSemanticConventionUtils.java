@@ -32,7 +32,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
@@ -340,8 +339,12 @@ public class HttpSemanticConventionUtils {
     return Optional.empty();
   }
 
-  @Nullable
   public static Optional<String> getHttpScheme(Event event) {
+
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String scheme : SCHEME_ATTRIBUTES) {
       if ((attributeValueMap.get(scheme) != null)
@@ -367,6 +370,10 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<String> getHttpQueryString(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String query_string : QUERY_STRING_ATTRIBUTES) {
       if ((attributeValueMap.get(query_string) != null)
@@ -378,6 +385,10 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<Integer> getHttpRequestSize(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String reqsa : REQUEST_SIZE_ATTRIBUTES) {
       if ((attributeValueMap.get(reqsa) != null)
@@ -389,6 +400,10 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<Integer> getHttpResponseSize(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String rsa : RESPONSE_SIZE_ATTRIBUTES) {
       if ((attributeValueMap.get(rsa) != null) && ("" != attributeValueMap.get(rsa).getValue())) {

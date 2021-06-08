@@ -145,7 +145,9 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
 
   private Optional<String> getGrpcAuthority(Event event) {
     Optional<String> grpcAuthority = RpcSemanticConventionUtils.getGrpcAuthority(event);
-    if (grpcAuthority.isPresent()) return getSanitizedHostValue(grpcAuthority.get());
+    if (grpcAuthority.isPresent()) {
+      return getSanitizedHostValue(grpcAuthority.get());
+    }
     return Optional.empty();
   }
 

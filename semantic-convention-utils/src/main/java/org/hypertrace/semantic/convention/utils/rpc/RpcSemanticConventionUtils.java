@@ -167,7 +167,7 @@ public class RpcSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()) != null
-        && !io.micrometer.core.instrument.util.StringUtils.isEmpty(
+        && !StringUtils.isEmpty(
             attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()).getValue())) {
       return Optional.of(
           attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()).getValue());

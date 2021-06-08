@@ -1,6 +1,9 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
-import static org.hypertrace.core.span.constants.v1.Http.*;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HOST;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRING;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
