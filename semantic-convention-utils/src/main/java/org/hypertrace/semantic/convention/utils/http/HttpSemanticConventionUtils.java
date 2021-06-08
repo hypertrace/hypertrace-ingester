@@ -332,7 +332,7 @@ public class HttpSemanticConventionUtils {
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String method : METHOD_ATTRIBUTES) {
       if ((attributeValueMap.get(method) != null)
-          && ("" != attributeValueMap.get(method).getValue())) {
+          && (!StringUtils.isEmpty(attributeValueMap.get(method).getValue()))) {
         return Optional.of(attributeValueMap.get(method).getValue());
       }
     }
@@ -348,7 +348,7 @@ public class HttpSemanticConventionUtils {
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String scheme : SCHEME_ATTRIBUTES) {
       if ((attributeValueMap.get(scheme) != null)
-          && ("" != attributeValueMap.get(scheme).getValue())) {
+          && (!StringUtils.isEmpty(attributeValueMap.get(scheme).getValue()))) {
         return Optional.of(attributeValueMap.get(scheme).getValue());
       }
     }
@@ -362,7 +362,7 @@ public class HttpSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String url : FULL_URL_ATTRIBUTES) {
-      if ((attributeValueMap.get(url) != null) && ("" != attributeValueMap.get(url).getValue())) {
+      if ((attributeValueMap.get(url) != null) && (!StringUtils.isEmpty(attributeValueMap.get(url).getValue()))) {
         return Optional.of(attributeValueMap.get(url).getValue());
       }
     }
@@ -377,7 +377,7 @@ public class HttpSemanticConventionUtils {
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String query_string : QUERY_STRING_ATTRIBUTES) {
       if ((attributeValueMap.get(query_string) != null)
-          && ("" != attributeValueMap.get(query_string).getValue())) {
+          && (!StringUtils.isEmpty(attributeValueMap.get(query_string).getValue()))) {
         return Optional.of(attributeValueMap.get(query_string).getValue());
       }
     }
@@ -392,7 +392,7 @@ public class HttpSemanticConventionUtils {
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String reqsa : REQUEST_SIZE_ATTRIBUTES) {
       if ((attributeValueMap.get(reqsa) != null)
-          && ("" != attributeValueMap.get(reqsa).getValue())) {
+          && !StringUtils.isEmpty(attributeValueMap.get(reqsa).getValue())) {
         return Optional.of(Integer.parseInt(attributeValueMap.get(reqsa).getValue()));
       }
     }
@@ -406,7 +406,7 @@ public class HttpSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String rsa : RESPONSE_SIZE_ATTRIBUTES) {
-      if ((attributeValueMap.get(rsa) != null) && ("" != attributeValueMap.get(rsa).getValue())) {
+      if ((attributeValueMap.get(rsa) != null) && !StringUtils.isEmpty(attributeValueMap.get(rsa).getValue())) {
         return Optional.of(Integer.parseInt(attributeValueMap.get(rsa).getValue()));
       }
     }
