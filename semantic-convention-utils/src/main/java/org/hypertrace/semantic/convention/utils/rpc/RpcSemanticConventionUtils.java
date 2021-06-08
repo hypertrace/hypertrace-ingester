@@ -164,7 +164,7 @@ public class RpcSemanticConventionUtils {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
-    ;
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()) != null
         && !io.micrometer.core.instrument.util.StringUtils.isEmpty(
@@ -179,7 +179,7 @@ public class RpcSemanticConventionUtils {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
-    ;
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RPC_REQUEST_METADATA_AUTHORITY.getValue()) != null) {
       return Optional.of(
@@ -192,7 +192,7 @@ public class RpcSemanticConventionUtils {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
-    ;
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null) {
       return Optional.of(
@@ -206,7 +206,7 @@ public class RpcSemanticConventionUtils {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
-    ;
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null) {
       return Optional.of(

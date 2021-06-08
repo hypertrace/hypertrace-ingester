@@ -264,7 +264,6 @@ public class HttpSemanticConventionUtils {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
-    ;
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String useragent : USER_AGENT_ATTRIBUTES) {
@@ -281,7 +280,6 @@ public class HttpSemanticConventionUtils {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
-    ;
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String host : HOST_ATTRIBUTES) {
@@ -297,7 +295,6 @@ public class HttpSemanticConventionUtils {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
-    ;
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String path : URL_PATH_ATTRIBUTES) {
@@ -316,7 +313,6 @@ public class HttpSemanticConventionUtils {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
-    ;
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String method : METHOD_ATTRIBUTES) {
@@ -344,7 +340,7 @@ public class HttpSemanticConventionUtils {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
-    ;
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String url : FULL_URL_ATTRIBUTES) {
       if ((attributeValueMap.get(url) != null) && ("" != attributeValueMap.get(url).getValue())) {
