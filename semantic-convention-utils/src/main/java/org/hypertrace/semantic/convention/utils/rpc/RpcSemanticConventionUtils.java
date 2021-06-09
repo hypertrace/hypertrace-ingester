@@ -133,6 +133,10 @@ public class RpcSemanticConventionUtils {
   }
 
   public static int getGrpcStatusCode(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return -1;
+    }
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String statuscode : RpcSemanticConventionUtils.getAttributeKeysForGrpcStatusCode()) {
       if (attributeValueMap.get(statuscode) != null) {
@@ -143,6 +147,10 @@ public class RpcSemanticConventionUtils {
   }
 
   public static String getGrpcStatusMsg(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return "";
+    }
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String statusmsg : STATUS_MSG_ATTRIBUTES) {
       if (attributeValueMap.get(statusmsg) != null) {
@@ -153,6 +161,10 @@ public class RpcSemanticConventionUtils {
   }
 
   public static String getGrpcErrorMsg(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return "";
+    }
+
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE)) != null) {
       return attributeValueMap.get(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE)).getValue();
