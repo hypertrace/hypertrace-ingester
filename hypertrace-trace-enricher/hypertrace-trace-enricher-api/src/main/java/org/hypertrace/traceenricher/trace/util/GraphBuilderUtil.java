@@ -7,9 +7,7 @@ import org.slf4j.LoggerFactory;
 public class GraphBuilderUtil {
   private static final Logger LOG = LoggerFactory.getLogger(GraphBuilderUtil.class);
 
-  /**
-   * Check if the new trace is a different trace
-   */
+  /** Check if the new trace is a different trace */
   static boolean isDifferentTrace(StructuredTrace cachedTrace, StructuredTrace trace) {
     if (cachedTrace == null || trace == null) {
       LOG.debug("Cached and Input trace are not same. Reason: one of the input is null");
@@ -25,18 +23,17 @@ public class GraphBuilderUtil {
   }
 
   static boolean isStructuredTraceChanged(StructuredTrace cachedTrace, StructuredTrace trace) {
-      return isDifferentTrace(cachedTrace, trace)
-          || isTraceEventsChanged(cachedTrace, trace)
-          || isTraceEntitiesChanged(cachedTrace, trace);
+    return isDifferentTrace(cachedTrace, trace)
+        || isTraceEventsChanged(cachedTrace, trace)
+        || isTraceEntitiesChanged(cachedTrace, trace);
   }
 
-  /**
-   * Check if the events or theirs edges has changed
-   */
+  /** Check if the events or theirs edges has changed */
   static boolean isTraceEventsChanged(StructuredTrace cachedTrace, StructuredTrace trace) {
     // trace events internally changed (full trace comparison is costly, so we are doing only with
     // required fields)
-    if (null == cachedTrace || null == trace
+    if (null == cachedTrace
+        || null == trace
         || cachedTrace.getEventList().size() != trace.getEventList().size()
         || cachedTrace.getEventEdgeList().size() != trace.getEventEdgeList().size()) {
       LOG.debug(
@@ -46,14 +43,13 @@ public class GraphBuilderUtil {
     return false;
   }
 
-  /**
-   * Check if the entities or theirs edges has changed
-   */
+  /** Check if the entities or theirs edges has changed */
   static boolean isTraceEntitiesChanged(StructuredTrace cachedTrace, StructuredTrace trace) {
 
     // trace entities internally changed (full trace comparison is costly, so we are doing only with
     // required fields)
-    if (null == cachedTrace || null == trace
+    if (null == cachedTrace
+        || null == trace
         || cachedTrace.getEntityList().size() != trace.getEntityList().size()
         || cachedTrace.getEntityEdgeList().size() != trace.getEntityEdgeList().size()) {
       LOG.debug(
