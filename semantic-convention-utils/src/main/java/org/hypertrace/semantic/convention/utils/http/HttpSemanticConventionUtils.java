@@ -362,13 +362,20 @@ public class HttpSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String url : FULL_URL_ATTRIBUTES) {
-      if (attributeValueMap.get(url) != null
-          && !StringUtils.isBlank(attributeValueMap.get(url).getValue())
-          && isValidUrl(attributeValueMap.get(url).getValue())) {
-        return Optional.of(attributeValueMap.get(url).getValue());
+      if (attributeValueMap.get(url) != null) {
+        String urlVal = attributeValueMap.get(url).getValue();
+        if (!StringUtils.isBlank(urlVal) && isValidUrl(urlVal)) {
+          if (isAbsoluteUrl(urlVal)) {
+            return Optional.of(urlVal);
+          } else {
+            Optional<String> url2 = getHttpUrlForOTelFormat(attributeValueMap);
+            return url2.isPresent() ? url2 : Optional.of(urlVal);
+          }
+        }
       }
     }
-    return Optional.empty();
+
+    return getHttpUrlForOTelFormat(attributeValueMap);
   }
 
   public static Optional<String> getHttpQueryString(Event event) {
@@ -426,5 +433,15 @@ public class HttpSemanticConventionUtils {
   private static String removeTrailingSlash(String s) {
     // Ends with "/" and it's not home page path
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
+  }
+
+  private static boolean isAbsoluteUrl(String urlStr) {
+    try {
+      URL url = getNormalizedUrl(urlStr);
+      return url.toString().equals(urlStr);
+    } catch (MalformedURLException e) {
+      // ignore
+    }
+    return false;
   }
 }
