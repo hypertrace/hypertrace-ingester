@@ -291,6 +291,18 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<String> getHttpHost(Event event) {
+    Optional<String> url = getHttpUrlUtil(event);
+    if (url.isPresent() && isAbsoluteUrl(url.get())) {
+      try {
+        return Optional.of(getNormalizedUrl(url.get()).getAuthority());
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
+      }
+    }
+    return getHttpHostUtil(event);
+  }
+
+  private static Optional<String> getHttpHostUtil(Event event) {
 
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
@@ -306,6 +318,24 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<String> getHttpPath(Event event) {
+    Optional<String> path = getHttpPathUtil(event);
+    Optional<String> url = getHttpUrlUtil(event);
+    if (url.isPresent() && path.isEmpty()) {
+
+      try {
+        String pathval = getNormalizedUrl(url.get()).getPath();
+        if (StringUtils.isBlank(pathval)) {
+          pathval = SLASH;
+          return Optional.of(removeTrailingSlash(pathval));
+        }
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
+      }
+    }
+    return path;
+  }
+
+  private static Optional<String> getHttpPathUtil(Event event) {
 
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
@@ -341,6 +371,19 @@ public class HttpSemanticConventionUtils {
 
   public static Optional<String> getHttpScheme(Event event) {
 
+    Optional<String> url = getHttpUrlUtil(event);
+    if (url.isPresent() && isAbsoluteUrl(url.get())) {
+      try {
+        return Optional.of(getNormalizedUrl(url.get()).getProtocol());
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
+      }
+    }
+    return getHttpSchemeUtil(event);
+  }
+
+  private static Optional<String> getHttpSchemeUtil(Event event) {
+
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
@@ -356,6 +399,15 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<String> getHttpUrl(Event event) {
+    Optional<String> url = getHttpUrlUtil(event);
+    if (url.isPresent() && !isAbsoluteUrl(url.get())) {
+      return Optional.empty();
+    }
+    return getHttpUrlUtil(event);
+  }
+
+  //  input url to populateurlparts
+  private static Optional<String> getHttpUrlUtil(Event event) {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
@@ -379,6 +431,20 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<String> getHttpQueryString(Event event) {
+
+    Optional<String> queryString = getHttpQueryStringUtil(event);
+    Optional<String> url = getHttpUrlUtil(event);
+    if (url.isPresent() && queryString.isEmpty()) {
+      try {
+        return Optional.of(getNormalizedUrl(url.get()).getQuery());
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
+      }
+    }
+    return queryString;
+  }
+
+  private static Optional<String> getHttpQueryStringUtil(Event event) {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }

@@ -1,5 +1,6 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -82,7 +83,7 @@ public class SpanEventViewGeneratorTest {
   public void testGetRequestUrl_fullUrlIsAbsent() {
     Event event =
         createMockEventWithAttribute(
-            RawSpanConstants.getValue(HTTP_URL), "/api/v1/gatekeeper/check");
+            RawSpanConstants.getValue(HTTP_PATH), "/api/v1/gatekeeper/check");
     assertEquals(
         "/api/v1/gatekeeper/check",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
