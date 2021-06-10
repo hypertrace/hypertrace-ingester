@@ -7,9 +7,13 @@ import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSem
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_SERVER_NAME;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_TARGET;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_URL;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
+import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +45,14 @@ public class HttpSemanticConventionUtils {
   private static final String OTHER_HTTP_RESPONSE_STATUS_MESSAGE =
       RawSpanConstants.getValue(Http.HTTP_RESPONSE_STATUS_MESSAGE);
   private static final String OTEL_HTTP_TARGET = OTelHttpSemanticConventions.HTTP_TARGET.getValue();
+  private static final String RELATIVE_URL_CONTEXT = "http://hypertrace.org";
+
+  private static final List<String> FULL_URL_ATTRIBUTES =
+      List.of(
+          RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL),
+          RawSpanConstants.getValue(HTTP_REQUEST_URL),
+          RawSpanConstants.getValue(Http.HTTP_URL),
+          OTelHttpSemanticConventions.HTTP_URL.getValue());
 
   /** @return attribute keys for http method */
   public static List<String> getAttributeKeysForHttpMethod() {
@@ -54,12 +66,6 @@ public class HttpSemanticConventionUtils {
 
   public static List<String> getAttributeKeysForHttpTarget() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_HTTP_TARGET));
-  }
-
-  public static Optional<String> getHttpTarget(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, getAttributeKeysForHttpTarget()));
   }
 
   /**
@@ -162,5 +168,32 @@ public class HttpSemanticConventionUtils {
       return Optional.of(url);
     }
     return Optional.empty();
+  }
+
+  public static Optional<AttributeValue> getValidHttpUrl(Event event) {
+    for (String key : FULL_URL_ATTRIBUTES) {
+      AttributeValue value = SpanAttributeUtils.getAttributeValue(event, key);
+      if (value != null && isValidUrl(value.getValue())) {
+        return Optional.of(value);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * accepts any absolute or relative URL. e.g. absolute URL:
+   * http://hypertrace.org/customer?customer=392 relative URL: /customer?customer=392
+   */
+  public static boolean isValidUrl(String url) {
+    try {
+      getNormalizedUrl(url);
+    } catch (MalformedURLException e) {
+      return false;
+    }
+    return true;
+  }
+
+  public static URL getNormalizedUrl(String url) throws MalformedURLException {
+    return new URL(new URL(RELATIVE_URL_CONTEXT), url);
   }
 }

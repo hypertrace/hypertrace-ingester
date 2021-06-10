@@ -19,6 +19,7 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
@@ -316,11 +317,13 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getFullHttpUrl(Event event) {
-    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-      return Optional.ofNullable(event.getHttp().getRequest().getUrl());
+    if (event.getHttp() != null
+        && event.getHttp().getRequest() != null
+        && event.getHttp().getRequest().getUrl() != null) {
+      return Optional.of(event.getHttp().getRequest().getUrl());
     }
-
-    return Optional.empty();
+    Optional<AttributeValue> httpUrl = HttpSemanticConventionUtils.getValidHttpUrl(event);
+    return httpUrl.map(AttributeValue::getValue);
   }
 
   public static Optional<String> getPath(Event event) {

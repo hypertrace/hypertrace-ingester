@@ -101,7 +101,7 @@ public class AbstractAttributeEnricherTest {
     return e;
   }
 
-  StructuredTrace createStructuredTrace(String tenantId, Event... events) {
+  public StructuredTrace createStructuredTrace(String tenantId, Event... events) {
     return StructuredTrace.newBuilder()
         .setCustomerId(tenantId)
         .setTraceId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
@@ -133,7 +133,7 @@ public class AbstractAttributeEnricherTest {
     event.getEnrichedAttributes().getAttributeMap().put(attribute, value);
   }
 
-  Attributes createNewAvroAttributes() {
+  public Attributes createNewAvroAttributes() {
     return createNewAvroAttributes(Maps.newHashMap());
   }
 
