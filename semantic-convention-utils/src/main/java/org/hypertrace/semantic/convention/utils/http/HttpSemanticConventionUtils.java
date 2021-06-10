@@ -316,7 +316,7 @@ public class HttpSemanticConventionUtils {
       if (attributeValueMap.get(path) != null) {
         String s = attributeValueMap.get(path).getValue();
         if (StringUtils.isNotBlank(s) && s.startsWith(SLASH)) {
-          return Optional.of(s);
+          return getPathFromUrlObject(s).map(str -> removeTrailingSlash(str));
         }
       }
     }
@@ -332,7 +332,7 @@ public class HttpSemanticConventionUtils {
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String method : METHOD_ATTRIBUTES) {
       if (attributeValueMap.get(method) != null
-          && !StringUtils.isEmpty(attributeValueMap.get(method).getValue())) {
+          && !StringUtils.isBlank(attributeValueMap.get(method).getValue())) {
         return Optional.of(attributeValueMap.get(method).getValue());
       }
     }
@@ -363,7 +363,8 @@ public class HttpSemanticConventionUtils {
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String url : FULL_URL_ATTRIBUTES) {
       if (attributeValueMap.get(url) != null
-          && !StringUtils.isEmpty(attributeValueMap.get(url).getValue())) {
+          && !StringUtils.isBlank(attributeValueMap.get(url).getValue())
+          && isValidUrl(attributeValueMap.get(url).getValue())) {
         return Optional.of(attributeValueMap.get(url).getValue());
       }
     }
@@ -377,8 +378,7 @@ public class HttpSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String query_string : QUERY_STRING_ATTRIBUTES) {
-      if (attributeValueMap.get(query_string) != null
-          && !StringUtils.isEmpty(attributeValueMap.get(query_string).getValue())) {
+      if (attributeValueMap.get(query_string) != null) {
         return Optional.of(attributeValueMap.get(query_string).getValue());
       }
     }
@@ -392,8 +392,7 @@ public class HttpSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String reqsa : REQUEST_SIZE_ATTRIBUTES) {
-      if (attributeValueMap.get(reqsa) != null
-          && !StringUtils.isEmpty(attributeValueMap.get(reqsa).getValue())) {
+      if (attributeValueMap.get(reqsa) != null) {
         return Optional.of(Integer.parseInt(attributeValueMap.get(reqsa).getValue()));
       }
     }
@@ -407,11 +406,25 @@ public class HttpSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     for (String rsa : RESPONSE_SIZE_ATTRIBUTES) {
-      if (attributeValueMap.get(rsa) != null
-          && !StringUtils.isEmpty(attributeValueMap.get(rsa).getValue())) {
+      if (attributeValueMap.get(rsa) != null) {
         return Optional.of(Integer.parseInt(attributeValueMap.get(rsa).getValue()));
       }
     }
     return Optional.empty();
+  }
+
+  private static Optional<String> getPathFromUrlObject(String urlPath) {
+    try {
+      URL url = getNormalizedUrl(urlPath);
+      return Optional.of(url.getPath());
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
+    return Optional.empty();
+  }
+
+  private static String removeTrailingSlash(String s) {
+    // Ends with "/" and it's not home page path
+    return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
   }
 }

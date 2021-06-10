@@ -332,18 +332,12 @@ public class HttpSemanticConventionUtilsTest {
         createMockEventWithAttribute(
             RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), "a1=v1&a2=v2");
     assertEquals(Optional.of("a1=v1&a2=v2"), HttpSemanticConventionUtils.getHttpQueryString(event));
-
-    event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), "");
-    assertTrue(HttpSemanticConventionUtils.getHttpScheme(event).isEmpty());
   }
 
   @Test
   public void testGetHttpRequestSize() {
     Event event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "100");
     assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpRequestSize(event));
-
-    event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "");
-    assertTrue(HttpSemanticConventionUtils.getHttpRequestSize(event).isEmpty());
 
     event = mock(Event.class);
     when(event.getAttributes())
@@ -366,9 +360,6 @@ public class HttpSemanticConventionUtilsTest {
     Event event =
         createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "100");
     assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpResponseSize(event));
-
-    event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "");
-    assertTrue(HttpSemanticConventionUtils.getHttpResponseSize(event).isEmpty());
 
     event = mock(Event.class);
     when(event.getAttributes())
