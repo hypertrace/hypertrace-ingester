@@ -166,8 +166,10 @@ class RpcSemanticConventionUtilsTest {
 
   @Test
   public void testGetGrpcRequestSize() {
-    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(GRPC_REQUEST_BODY), "4");
-    assertEquals(Optional.of(4), RpcSemanticConventionUtils.getGrpcRequestSize(event));
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(GRPC_REQUEST_BODY), "some grpc request body");
+    assertEquals(Optional.of(22), RpcSemanticConventionUtils.getGrpcRequestSize(event));
 
     event = mock(Event.class);
     assertTrue(RpcSemanticConventionUtils.getGrpcRequestSize(event).isEmpty());
@@ -175,8 +177,10 @@ class RpcSemanticConventionUtilsTest {
 
   @Test
   public void testGetGrpcResponseSize() {
-    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "4");
-    assertEquals(Optional.of(4), RpcSemanticConventionUtils.getGrpcResponseSize(event));
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "some grpc response body");
+    assertEquals(Optional.of(23), RpcSemanticConventionUtils.getGrpcResponseSize(event));
 
     event = mock(Event.class);
     assertTrue(RpcSemanticConventionUtils.getGrpcResponseSize(event).isEmpty());

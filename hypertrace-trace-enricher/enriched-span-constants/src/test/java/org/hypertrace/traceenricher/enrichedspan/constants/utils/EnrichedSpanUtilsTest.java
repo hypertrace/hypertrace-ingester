@@ -227,11 +227,11 @@ public class EnrichedSpanUtilsTest {
     Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "GRPC");
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    addAttribute(e, RawSpanConstants.getValue(GRPC_REQUEST_BODY), "64");
+    addAttribute(e, RawSpanConstants.getValue(GRPC_REQUEST_BODY), "some grpc response body");
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertFalse(requestSize.isEmpty());
-    assertEquals(64, requestSize.get().intValue());
+    assertEquals(23, requestSize.get().intValue());
   }
 
   @Test
@@ -269,11 +269,11 @@ public class EnrichedSpanUtilsTest {
     Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "GRPC");
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    addAttribute(e, RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "64");
+    addAttribute(e, RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "some grpc request body");
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
     assertFalse(responseSize.isEmpty());
-    assertEquals(64, responseSize.get().intValue());
+    assertEquals(22, responseSize.get().intValue());
   }
 
   @Test
