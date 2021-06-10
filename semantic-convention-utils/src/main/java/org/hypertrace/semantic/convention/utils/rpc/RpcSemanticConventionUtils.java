@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
+import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.CensusResponse;
@@ -165,6 +166,15 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (isRpcTypeGrpcForOTelFormat(attributeValueMap)
+        && attributeValueMap.get(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue())
+            != null) {
+      return attributeValueMap
+          .get(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue())
+          .getValue();
+    }
+
     if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE)) != null) {
       return attributeValueMap.get(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE)).getValue();
     }
