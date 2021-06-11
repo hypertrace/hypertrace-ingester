@@ -22,7 +22,6 @@ public class ServiceCallViewGeneratorTest {
     StructuredTrace trace = TestUtilities.getSampleHotRodTrace();
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     ServiceCallViewGenerator serviceCallViewGenerator = new ServiceCallViewGenerator();
-
     List<ServiceCallView> individuallyComputedServiceCalls = Lists.newArrayList();
     individuallyComputedServiceCalls.addAll(
         verifyEdgesCreatedFromApiNodeEdge_HotrodTrace(
