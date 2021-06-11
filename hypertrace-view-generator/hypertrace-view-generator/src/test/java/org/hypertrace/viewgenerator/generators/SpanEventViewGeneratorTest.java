@@ -275,15 +275,6 @@ public class SpanEventViewGeneratorTest {
     assertEquals(5, list.get(0).getApiTraceErrorSpanCount());
   }
 
-  private static void setmanualurl(Event event, String url) {
-    AttributeValue attributeValue = new AttributeValue();
-    attributeValue.setValue(url);
-    event
-        .getAttributes()
-        .getAttributeMap()
-        .put(RawSpanConstants.getValue(HTTP_URL), attributeValue);
-  }
-
   private Event createMockEventWithAttribute(String key, String value) {
     Event e = mock(Event.class);
     when(e.getAttributes())

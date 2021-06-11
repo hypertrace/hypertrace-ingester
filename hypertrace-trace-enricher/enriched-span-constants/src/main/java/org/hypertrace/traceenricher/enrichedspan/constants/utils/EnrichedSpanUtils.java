@@ -314,7 +314,10 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getFullHttpUrl(Event event) {
-    return HttpSemanticConventionUtils.getHttpUrl(event);
+    Optional<String> fullHttpUrl = HttpSemanticConventionUtils.getHttpUrl(event);
+    return fullHttpUrl.isPresent()
+        ? fullHttpUrl
+        : HttpSemanticConventionUtils.getValidHttpUrl(event).map(AttributeValue::getValue);
   }
 
   public static Optional<String> getPath(Event event) {
