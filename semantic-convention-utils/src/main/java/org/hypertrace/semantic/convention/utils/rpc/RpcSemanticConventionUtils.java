@@ -1,7 +1,9 @@
 package org.hypertrace.semantic.convention.utils.rpc;
 
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE;
-import static org.hypertrace.core.span.constants.v1.Envoy.*;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_GRPC_STATUS_MESSAGE;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
@@ -242,10 +244,6 @@ public class RpcSemanticConventionUtils {
         String requestBody = attributeValueMap.get(RPC_REQUEST_BODY.getValue()).getValue();
         return Optional.of(requestBody.length());
       }
-      //      return Optional.of(
-      //          Integer.parseInt(
-      //
-      // attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)).getValue()));
     }
     return Optional.empty();
   }
@@ -270,10 +268,6 @@ public class RpcSemanticConventionUtils {
         String requestBody = attributeValueMap.get(RPC_RESPONSE_BODY.getValue()).getValue();
         return Optional.of(requestBody.length());
       }
-      //      return Optional.of(
-      //          Integer.parseInt(
-      //
-      // attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)).getValue()));
     }
     return Optional.empty();
   }
