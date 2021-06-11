@@ -112,16 +112,4 @@ public class ServiceCallViewGeneratorTest {
     assertEquals(0, serviceCallViewRecords.size());
     return serviceCallViewRecords;
   }
-
-  private static StructuredTrace createSampleTrace() throws IOException {
-    URL resource =
-        Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
-    SpecificDatumReader<StructuredTrace> datumReader =
-        new SpecificDatumReader<>(StructuredTrace.getClassSchema());
-    DataFileReader<StructuredTrace> dfrStructuredTrace =
-        new DataFileReader<>(new File(resource.getPath()), datumReader);
-    StructuredTrace trace = dfrStructuredTrace.next();
-    dfrStructuredTrace.close();
-    return trace;
-  }
 }
