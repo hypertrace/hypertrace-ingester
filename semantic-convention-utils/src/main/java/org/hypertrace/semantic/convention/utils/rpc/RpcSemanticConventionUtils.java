@@ -5,6 +5,7 @@ import static org.hypertrace.core.span.constants.v1.Envoy.*;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.*;
 
 import com.google.common.collect.Lists;
@@ -21,6 +22,7 @@ import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConv
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.CensusResponse;
 import org.hypertrace.core.span.constants.v1.Grpc;
+import org.hypertrace.core.span.normalizer.constants.OTelRpcSystem;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
 /**
@@ -40,6 +42,7 @@ public class RpcSemanticConventionUtils {
       OTelRpcSemanticConventions.RPC_STATUS_CODE.getValue();
   private static final String OTEL_RPC_SYSTEM_GRPC =
       OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue();
+  private static final String OTEL_SPAN_TAG_RPC_SYSTEM_ATTR = OTEL_SPAN_TAG_RPC_SYSTEM.getValue();
 
   private static final String OTHER_GRPC_HOST_PORT = RawSpanConstants.getValue(Grpc.GRPC_HOST_PORT);
   private static final String OTHER_GRPC_METHOD = RawSpanConstants.getValue(Grpc.GRPC_METHOD);
@@ -187,6 +190,11 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (!check(attributeValueMap)) {
+      return Optional.empty();
+    }
+
     if (attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()) != null
         && !StringUtils.isEmpty(
             attributeValueMap.get(RPC_REQUEST_METADATA_USER_AGENT.getValue()).getValue())) {
@@ -202,6 +210,11 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (!check(attributeValueMap)) {
+      return Optional.empty();
+    }
+
     if (attributeValueMap.get(RPC_REQUEST_METADATA_AUTHORITY.getValue()) != null) {
       return Optional.of(
           attributeValueMap.get(RPC_REQUEST_METADATA_AUTHORITY.getValue()).getValue());
@@ -263,5 +276,17 @@ public class RpcSemanticConventionUtils {
       // attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)).getValue()));
     }
     return Optional.empty();
+  }
+
+  private static Boolean check(Map<String, AttributeValue> avm) {
+
+    if (avm.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR) != null) {
+      String val = avm.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR).getValue();
+      if (StringUtils.isNotBlank(val)
+          && StringUtils.equals(val, OTelRpcSystem.OTEL_RPC_SYSTEM_GRPC.getValue())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

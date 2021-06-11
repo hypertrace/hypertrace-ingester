@@ -2,6 +2,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -225,18 +226,9 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
     String userAgent = "grpc-java-okhttp/1.19.0";
 
     Event e = createMockEvent();
-    when(e.getGrpc())
-        .thenReturn(
-            Grpc.newBuilder()
-                .setRequest(
-                    org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder()
-                        .setRequestMetadata(
-                            RequestMetadata.newBuilder().setUserAgent(userAgent).build())
-                        .build())
-                .build());
     mockProtocol(e, Protocol.PROTOCOL_GRPC);
     addAttribute(e, RPC_REQUEST_METADATA_USER_AGENT.getValue(), userAgent);
-
+    addAttribute(e, OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), "grpc");
     enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();

@@ -6,6 +6,7 @@ import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPON
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -145,22 +146,65 @@ class RpcSemanticConventionUtilsTest {
 
   @Test
   public void testGetGrpcUserAgent() {
-    Event event = createMockEventWithAttribute(RPC_REQUEST_METADATA_USER_AGENT.getValue(), "abc");
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RPC_REQUEST_METADATA_USER_AGENT.getValue(),
+                        AttributeValue.newBuilder().setValue("abc").build(),
+                        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build()))
+                .build());
     assertEquals(Optional.of("abc"), RpcSemanticConventionUtils.getGrpcUserAgent(event));
 
     event = mock(Event.class);
     assertTrue(RpcSemanticConventionUtils.getGrpcUserAgent(event).isEmpty());
 
-    event = createMockEventWithAttribute(RPC_REQUEST_METADATA_USER_AGENT.getValue(), "");
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RPC_REQUEST_METADATA_USER_AGENT.getValue(),
+                        AttributeValue.newBuilder().setValue("abc").build(),
+                        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("").build()))
+                .build());
     assertTrue(RpcSemanticConventionUtils.getGrpcUserAgent(event).isEmpty());
   }
 
   @Test
   public void testGetGrpcAuthrity() {
-    Event event = createMockEventWithAttribute(RPC_REQUEST_METADATA_AUTHORITY.getValue(), "abc");
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RPC_REQUEST_METADATA_AUTHORITY.getValue(),
+                        AttributeValue.newBuilder().setValue("abc").build(),
+                        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build()))
+                .build());
     assertEquals(Optional.of("abc"), RpcSemanticConventionUtils.getGrpcAuthority(event));
 
     event = mock(Event.class);
+    assertTrue(RpcSemanticConventionUtils.getGrpcAuthority(event).isEmpty());
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RPC_REQUEST_METADATA_AUTHORITY.getValue(),
+                        AttributeValue.newBuilder().setValue("abc").build(),
+                        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("").build()))
+                .build());
     assertTrue(RpcSemanticConventionUtils.getGrpcAuthority(event).isEmpty());
   }
 
