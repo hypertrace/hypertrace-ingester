@@ -12,6 +12,7 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.viewgenerator.api.ServiceCallView;
 import org.hypertrace.viewgenerator.generators.ViewGeneratorState.TraceState;
+import org.hypertrace.viewgenerator.generators.utils.TestUtilities;
 import org.junit.jupiter.api.Test;
 
 public class ServiceCallViewGeneratorTest {
@@ -21,6 +22,7 @@ public class ServiceCallViewGeneratorTest {
     StructuredTrace trace = TestUtilities.getSampleHotRodTrace();
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     ServiceCallViewGenerator serviceCallViewGenerator = new ServiceCallViewGenerator();
+
     List<ServiceCallView> individuallyComputedServiceCalls = Lists.newArrayList();
     individuallyComputedServiceCalls.addAll(
         verifyEdgesCreatedFromApiNodeEdge_HotrodTrace(
