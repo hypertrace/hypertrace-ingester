@@ -45,7 +45,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     Config jobConfig = getJobConfig(properties);
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
-
+    System.out.println("fafad");
     KStream<TraceIdentity, RawSpan> inputStream =
         (KStream<TraceIdentity, RawSpan>) inputStreams.get(inputTopic);
     if (inputStream == null) {
