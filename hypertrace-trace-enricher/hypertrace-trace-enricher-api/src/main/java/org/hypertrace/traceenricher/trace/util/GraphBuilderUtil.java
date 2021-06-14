@@ -32,8 +32,7 @@ public class GraphBuilderUtil {
   static boolean isTraceEventsChanged(StructuredTrace cachedTrace, StructuredTrace trace) {
     // trace events internally changed (full trace comparison is costly, so we are doing only with
     // required fields)
-    if (null == cachedTrace
-        || null == trace
+    if (isDifferentTrace(cachedTrace, trace)
         || cachedTrace.getEventList().size() != trace.getEventList().size()
         || cachedTrace.getEventEdgeList().size() != trace.getEventEdgeList().size()) {
       LOG.debug(
@@ -48,8 +47,7 @@ public class GraphBuilderUtil {
 
     // trace entities internally changed (full trace comparison is costly, so we are doing only with
     // required fields)
-    if (null == cachedTrace
-        || null == trace
+    if (isDifferentTrace(cachedTrace, trace)
         || cachedTrace.getEntityList().size() != trace.getEntityList().size()
         || cachedTrace.getEntityEdgeList().size() != trace.getEntityEdgeList().size()) {
       LOG.debug(
