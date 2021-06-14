@@ -326,8 +326,8 @@ public class HttpSemanticConventionUtils {
         String pathval = getNormalizedUrl(url.get()).getPath();
         if (StringUtils.isBlank(pathval)) {
           pathval = SLASH;
-          return Optional.of(removeTrailingSlash(pathval));
         }
+        return Optional.of(removeTrailingSlash(pathval));
       } catch (MalformedURLException e) {
         e.printStackTrace();
       }
@@ -436,7 +436,7 @@ public class HttpSemanticConventionUtils {
     Optional<String> url = getHttpUrlUtil(event);
     if (url.isPresent() && queryString.isEmpty()) {
       try {
-        return Optional.of(getNormalizedUrl(url.get()).getQuery());
+        return Optional.ofNullable(getNormalizedUrl(url.get()).getQuery());
       } catch (MalformedURLException e) {
         e.printStackTrace();
       }
@@ -486,7 +486,7 @@ public class HttpSemanticConventionUtils {
     return Optional.empty();
   }
 
-  private static Optional<String> getPathFromUrlObject(String urlPath) {
+  public static Optional<String> getPathFromUrlObject(String urlPath) {
     try {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
@@ -501,7 +501,7 @@ public class HttpSemanticConventionUtils {
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
   }
 
-  private static boolean isAbsoluteUrl(String urlStr) {
+  public static boolean isAbsoluteUrl(String urlStr) {
     try {
       URL url = getNormalizedUrl(urlStr);
       return url.toString().equals(urlStr);

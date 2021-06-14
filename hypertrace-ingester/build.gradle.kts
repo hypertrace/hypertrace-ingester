@@ -33,6 +33,9 @@ dependencies {
   implementation("com.typesafe:config:1.4.1")
   implementation("org.apache.commons:commons-lang3:3.12.0")
 
+  implementation(project(":span-normalizer:span-normalizer-constants"))
+  implementation(project(":span-normalizer:raw-span-constants"))
+  implementation(project(":semantic-convention-utils"))
   implementation(project(":span-normalizer:span-normalizer"))
   implementation(project(":raw-spans-grouper:raw-spans-grouper"))
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
