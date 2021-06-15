@@ -6429,7 +6429,7 @@
       "start_time_millis": 1613406996836,
       "end_time_millis": 1613406996898,
       "metrics": {
-        "metric_map": {raw-spans-grouper/raw-spans-grouper/src/main/java/org/hypertrace/core/rawspansgrouper/RawSpansGrouper.java
+        "metric_map": {
           "Duration": {
             "value": 62.0
           },

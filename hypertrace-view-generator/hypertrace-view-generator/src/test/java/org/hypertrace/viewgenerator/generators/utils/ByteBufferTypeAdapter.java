@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Base64;
 public class ByteBufferTypeAdapter
     implements JsonDeserializer<ByteBuffer>, JsonSerializer<ByteBuffer> {
 
+  @Override
   public ByteBuffer deserialize(
       JsonElement jsonElement, Type type, JsonDeserializationContext context) {
     return ByteBuffer.wrap(Base64.decodeBase64(jsonElement.getAsString()));
