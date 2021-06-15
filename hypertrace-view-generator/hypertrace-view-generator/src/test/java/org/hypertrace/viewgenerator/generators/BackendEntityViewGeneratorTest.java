@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.viewgenerator.api.BackendEntityView;
+import org.hypertrace.viewgenerator.generators.utils.TestUtilities;
 import org.junit.jupiter.api.Test;
 
 public class BackendEntityViewGeneratorTest {
