@@ -1,9 +1,13 @@
 package org.hypertrace.ingester;
 
-import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
-import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.CensusResponse.*;
+import static org.hypertrace.core.span.constants.v1.Envoy.*;
+import static org.hypertrace.core.span.constants.v1.Grpc.*;
 import static org.hypertrace.core.span.constants.v1.Http.*;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.*;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.typesafe.config.ConfigFactory;
@@ -15,11 +19,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1067,5 +1074,311 @@ public class MigrationTest {
     Assertions.assertEquals(
         "/api/v1/gatekeeper/check",
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+  }
+
+  @Test
+  public void testGrpcFields() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+
+    Span span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE))
+                    .setVStr("Some error message"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE))
+                    .setVStr("12"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(GRPC_STATUS_CODE))
+                    .setVStr("13"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE))
+                    .setVStr("14"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE))
+                    .setVStr("CENSUS_RESPONSE_STATUS_MESSAGE"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE))
+                    .setVStr("ENVOY_GRPC_STATUS_MESSAGE"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(GRPC_REQUEST_BODY))
+                    .setVStr("some grpc request body"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(GRPC_RESPONSE_BODY))
+                    .setVStr("some grpc response body"))
+            .build();
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
+        RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
+        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
+        RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getSize(),
+        RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get());
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getRequest().getSize(),
+        RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get());
+  }
+
+  @Test
+  public void testGrpcFieldsConverterEnvoyRequestAndResponseSizeHigherPriority() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+
+    Span span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(GRPC_REQUEST_BODY))
+                    .setVStr("some grpc request body"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(GRPC_RESPONSE_BODY))
+                    .setVStr("some grpc response body"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE))
+                    .setVStr("200"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE))
+                    .setVStr("400"))
+            .build();
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getSize(),
+        RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get());
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getRequest().getSize(),
+        RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get());
+  }
+
+  @Test
+  public void testGrpcFieldsConverterStatusCodePriority() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+
+    Span span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE))
+                    .setVStr("12"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(GRPC_STATUS_CODE))
+                    .setVStr("13"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE))
+                    .setVStr("14"))
+            .build();
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
+        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
+    Assertions.assertEquals(12, rawSpan.getEvent().getGrpc().getResponse().getStatusCode());
+
+    span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(GRPC_STATUS_CODE))
+                    .setVStr("13"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE))
+                    .setVStr("14"))
+            .build();
+    rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
+        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
+    Assertions.assertEquals(13, rawSpan.getEvent().getGrpc().getResponse().getStatusCode());
+
+    span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE))
+                    .setVStr("14"))
+            .build();
+    rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
+        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
+    Assertions.assertEquals(14, rawSpan.getEvent().getGrpc().getResponse().getStatusCode());
+  }
+
+  @Test
+  public void testGrpcFieldsConverterStatusMessagePriority() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+
+    Span span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE))
+                    .setVStr("CENSUS_RESPONSE_STATUS_MESSAGE"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE))
+                    .setVStr("ENVOY_GRPC_STATUS_MESSAGE"))
+            .build();
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
+        RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
+    Assertions.assertEquals(
+        "CENSUS_RESPONSE_STATUS_MESSAGE",
+        rawSpan.getEvent().getGrpc().getResponse().getStatusMessage());
+
+    span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE))
+                    .setVStr("ENVOY_GRPC_STATUS_MESSAGE"))
+            .build();
+    rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
+        RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
+    Assertions.assertEquals(
+        "ENVOY_GRPC_STATUS_MESSAGE", rawSpan.getEvent().getGrpc().getResponse().getStatusMessage());
+  }
+
+  @Test
+  public void testGrpcFieldsForOTelSpan() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+
+    Span span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue())
+                    .setVStr("5"))
+            .build();
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
+        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
+  }
+
+  @Test
+  public void testPopulateOtherFields() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+
+    Span span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue())
+                    .setVStr("resource not found"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(OTelRpcSemanticConventions.RPC_SYSTEM.getValue())
+                    .setVStr(OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue()))
+            .build();
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
+        RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
+  }
+
+  @Test
+  public void testRpcFieldsGrpcSystem() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+
+    Span span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder().setKey(OTEL_SPAN_TAG_RPC_SYSTEM.getValue()).setVStr("grpc"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RPC_REQUEST_METADATA_AUTHORITY.getValue())
+                    .setVStr("testservice:45"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RPC_REQUEST_METADATA_USER_AGENT.getValue())
+                    .setVStr("grpc-go/1.17.0"))
+            .build();
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getAuthority(),
+        RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).get());
+    Assertions.assertEquals(
+        rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getUserAgent(),
+        RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).get());
+  }
+
+  @Test
+  public void testRpcFieldsNonGrpcSystem() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+
+    Span span =
+        Span.newBuilder()
+            .addTags(
+                KeyValue.newBuilder().setKey(OTEL_SPAN_TAG_RPC_SYSTEM.getValue()).setVStr("wcf"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RPC_REQUEST_METADATA_AUTHORITY.getValue())
+                    .setVStr("testservice:45"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RPC_REQUEST_METADATA_USER_AGENT.getValue())
+                    .setVStr("grpc-go/1.17.0"))
+            .build();
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    Assertions.assertFalse(
+        RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).isPresent());
+    Assertions.assertFalse(
+        RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).isPresent());
   }
 }
