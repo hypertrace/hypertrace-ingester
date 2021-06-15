@@ -1,14 +1,34 @@
 package org.hypertrace.ingester;
 
-import static org.hypertrace.core.span.constants.v1.CensusResponse.*;
-import static org.hypertrace.core.span.constants.v1.Envoy.*;
-import static org.hypertrace.core.span.constants.v1.Grpc.*;
-import static org.hypertrace.core.span.constants.v1.Http.*;
-import static org.hypertrace.core.span.constants.v1.OTSpanTag.*;
+import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_CODE;
+import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE;
+import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_GRPC_STATUS_MESSAGE;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_STATUS_CODE;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_URL;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HOST;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_UNDERSCORE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRING;
+import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_METHOD;
+import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
-import static org.junit.jupiter.api.Assertions.*;
 
 import com.typesafe.config.ConfigFactory;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
@@ -1039,8 +1059,8 @@ public class MigrationTest {
 
   @Test
   public void testIsAbsoluteUrl() {
-    assertTrue(HttpSemanticConventionUtils.isAbsoluteUrl("http://example.com/abc/xyz"));
-    assertFalse(HttpSemanticConventionUtils.isAbsoluteUrl("/abc/xyz"));
+    Assertions.assertTrue(HttpSemanticConventionUtils.isAbsoluteUrl("http://example.com/abc/xyz"));
+    Assertions.assertFalse(HttpSemanticConventionUtils.isAbsoluteUrl("/abc/xyz"));
   }
 
   @Test
@@ -1048,7 +1068,7 @@ public class MigrationTest {
     Optional<String> path =
         HttpSemanticConventionUtils.getPathFromUrlObject(
             "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel");
-    assertEquals(path.get(), "/api/v1/gatekeeper/check");
+    Assertions.assertEquals(path.get(), "/api/v1/gatekeeper/check");
   }
 
   @Test
