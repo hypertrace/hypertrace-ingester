@@ -291,7 +291,7 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<String> getHttpHost(Event event) {
-    Optional<String> url = getHttpUrlUtil(event);
+    Optional<String> url = getHttpUrlFromRawAttributes(event);
     if (url.isPresent() && isAbsoluteUrl(url.get())) {
       try {
         return Optional.of(getNormalizedUrl(url.get()).getAuthority());
@@ -299,17 +299,13 @@ public class HttpSemanticConventionUtils {
         e.printStackTrace();
       }
     }
-    return getHttpHostUtil(event);
-  }
-
-  private static Optional<String> getHttpHostUtil(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, HOST_ATTRIBUTES));
   }
 
   public static Optional<String> getHttpPath(Event event) {
-    Optional<String> path = getHttpPathUtil(event);
-    Optional<String> url = getHttpUrlUtil(event);
+    Optional<String> path = getHttpPathFromRawAttributes(event);
+    Optional<String> url = getHttpUrlFromRawAttributes(event);
     if (url.isPresent() && path.isEmpty()) {
       try {
         String pathval = getNormalizedUrl(url.get()).getPath();
@@ -324,7 +320,7 @@ public class HttpSemanticConventionUtils {
     return path;
   }
 
-  private static Optional<String> getHttpPathUtil(Event event) {
+  private static Optional<String> getHttpPathFromRawAttributes(Event event) {
 
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
@@ -360,7 +356,7 @@ public class HttpSemanticConventionUtils {
 
   public static Optional<String> getHttpScheme(Event event) {
 
-    Optional<String> url = getHttpUrlUtil(event);
+    Optional<String> url = getHttpUrlFromRawAttributes(event);
     if (url.isPresent() && isAbsoluteUrl(url.get())) {
       try {
         return Optional.of(getNormalizedUrl(url.get()).getProtocol());
@@ -368,10 +364,10 @@ public class HttpSemanticConventionUtils {
         e.printStackTrace();
       }
     }
-    return getHttpSchemeUtil(event);
+    return getHttpSchemeFromRawAttributes(event);
   }
 
-  private static Optional<String> getHttpSchemeUtil(Event event) {
+  private static Optional<String> getHttpSchemeFromRawAttributes(Event event) {
 
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
@@ -388,15 +384,15 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<String> getHttpUrl(Event event) {
-    Optional<String> url = getHttpUrlUtil(event);
+    Optional<String> url = getHttpUrlFromRawAttributes(event);
     if (url.isPresent() && !isAbsoluteUrl(url.get())) {
       return Optional.empty();
     }
-    return getHttpUrlUtil(event);
+    return getHttpUrlFromRawAttributes(event);
   }
 
   //  input url to populateurlparts
-  private static Optional<String> getHttpUrlUtil(Event event) {
+  private static Optional<String> getHttpUrlFromRawAttributes(Event event) {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
@@ -421,8 +417,11 @@ public class HttpSemanticConventionUtils {
 
   public static Optional<String> getHttpQueryString(Event event) {
 
-    Optional<String> queryString = getHttpQueryStringUtil(event);
-    Optional<String> url = getHttpUrlUtil(event);
+    Optional<String> queryString =
+        Optional.ofNullable(
+            SpanAttributeUtils.getFirstAvailableStringAttribute(event, QUERY_STRING_ATTRIBUTES));
+
+    Optional<String> url = getHttpUrlFromRawAttributes(event);
     if (url.isPresent() && queryString.isEmpty()) {
       try {
         return Optional.ofNullable(getNormalizedUrl(url.get()).getQuery());
@@ -431,11 +430,6 @@ public class HttpSemanticConventionUtils {
       }
     }
     return queryString;
-  }
-
-  private static Optional<String> getHttpQueryStringUtil(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(event, QUERY_STRING_ATTRIBUTES));
   }
 
   public static Optional<Integer> getHttpRequestSize(Event event) {
@@ -450,7 +444,7 @@ public class HttpSemanticConventionUtils {
     return Optional.ofNullable(httpResponseSize).map(s -> Integer.parseInt(s));
   }
 
-  public static Optional<String> getPathFromUrlObject(String urlPath) {
+  static Optional<String> getPathFromUrlObject(String urlPath) {
     try {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
@@ -465,7 +459,7 @@ public class HttpSemanticConventionUtils {
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
   }
 
-  public static boolean isAbsoluteUrl(String urlStr) {
+  static boolean isAbsoluteUrl(String urlStr) {
     try {
       URL url = getNormalizedUrl(urlStr);
       return url.toString().equals(urlStr);

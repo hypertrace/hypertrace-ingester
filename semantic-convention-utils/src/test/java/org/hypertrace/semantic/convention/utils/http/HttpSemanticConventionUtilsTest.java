@@ -44,6 +44,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OCAttribute;
 import org.hypertrace.core.span.constants.v1.OCSpanKind;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Unit test for {@link HttpSemanticConventionUtils} */
@@ -375,5 +376,19 @@ public class HttpSemanticConventionUtilsTest {
                         AttributeValue.newBuilder().setValue("200").build()))
                 .build());
     assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpResponseSize(event));
+  }
+
+  @Test
+  public void testIsAbsoluteUrl() {
+    Assertions.assertTrue(HttpSemanticConventionUtils.isAbsoluteUrl("http://example.com/abc/xyz"));
+    Assertions.assertFalse(HttpSemanticConventionUtils.isAbsoluteUrl("/abc/xyz"));
+  }
+
+  @Test
+  public void testGetPathFromUrl() {
+    Optional<String> path =
+        HttpSemanticConventionUtils.getPathFromUrlObject(
+            "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel");
+    Assertions.assertEquals(path.get(), "/api/v1/gatekeeper/check");
   }
 }

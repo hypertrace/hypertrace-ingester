@@ -36,7 +36,6 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
@@ -1055,20 +1054,6 @@ public class MigrationTest {
     Assertions.assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getUrl(),
         HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
-  }
-
-  @Test
-  public void testIsAbsoluteUrl() {
-    Assertions.assertTrue(HttpSemanticConventionUtils.isAbsoluteUrl("http://example.com/abc/xyz"));
-    Assertions.assertFalse(HttpSemanticConventionUtils.isAbsoluteUrl("/abc/xyz"));
-  }
-
-  @Test
-  public void testGetPathFromUrl() {
-    Optional<String> path =
-        HttpSemanticConventionUtils.getPathFromUrlObject(
-            "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel");
-    Assertions.assertEquals(path.get(), "/api/v1/gatekeeper/check");
   }
 
   @Test
