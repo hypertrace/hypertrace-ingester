@@ -303,18 +303,8 @@ public class HttpSemanticConventionUtils {
   }
 
   private static Optional<String> getHttpHostUtil(Event event) {
-
-    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
-      return Optional.empty();
-    }
-
-    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    for (String host : HOST_ATTRIBUTES) {
-      if (attributeValueMap.get(host) != null) {
-        return Optional.of(attributeValueMap.get(host).getValue());
-      }
-    }
-    return Optional.empty();
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(event, HOST_ATTRIBUTES));
   }
 
   public static Optional<String> getHttpPath(Event event) {
@@ -444,45 +434,20 @@ public class HttpSemanticConventionUtils {
   }
 
   private static Optional<String> getHttpQueryStringUtil(Event event) {
-    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
-      return Optional.empty();
-    }
-
-    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    for (String query_string : QUERY_STRING_ATTRIBUTES) {
-      if (attributeValueMap.get(query_string) != null) {
-        return Optional.of(attributeValueMap.get(query_string).getValue());
-      }
-    }
-    return Optional.empty();
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(event, QUERY_STRING_ATTRIBUTES));
   }
 
   public static Optional<Integer> getHttpRequestSize(Event event) {
-    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
-      return Optional.empty();
-    }
-
-    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    for (String reqsa : REQUEST_SIZE_ATTRIBUTES) {
-      if (attributeValueMap.get(reqsa) != null) {
-        return Optional.of(Integer.parseInt(attributeValueMap.get(reqsa).getValue()));
-      }
-    }
-    return Optional.empty();
+    String httpRequestSize =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(event, REQUEST_SIZE_ATTRIBUTES);
+    return Optional.ofNullable(httpRequestSize).map(s -> Integer.parseInt(s));
   }
 
   public static Optional<Integer> getHttpResponseSize(Event event) {
-    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
-      return Optional.empty();
-    }
-
-    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    for (String rsa : RESPONSE_SIZE_ATTRIBUTES) {
-      if (attributeValueMap.get(rsa) != null) {
-        return Optional.of(Integer.parseInt(attributeValueMap.get(rsa).getValue()));
-      }
-    }
-    return Optional.empty();
+    String httpResponseSize =
+        SpanAttributeUtils.getFirstAvailableStringAttribute(event, RESPONSE_SIZE_ATTRIBUTES);
+    return Optional.ofNullable(httpResponseSize).map(s -> Integer.parseInt(s));
   }
 
   public static Optional<String> getPathFromUrlObject(String urlPath) {
