@@ -412,10 +412,9 @@ public class HttpSemanticConventionUtils {
 
     // check for OTel format
     Optional<String> httpUrlForOTelFormat = getHttpUrlForOTelFormat(attributeValueMap);
-    if (httpUrlFromRawAttributes != null) {
-      return isAbsoluteUrl(httpUrlFromRawAttributes)
-          ? Optional.of(httpUrlFromRawAttributes)
-          : Optional.of(httpUrlForOTelFormat.orElse(httpUrlFromRawAttributes));
+    if (httpUrlFromRawAttributes != null
+        && (isAbsoluteUrl(httpUrlFromRawAttributes) || httpUrlForOTelFormat.isEmpty())) {
+      return Optional.of(httpUrlFromRawAttributes);
     }
     return httpUrlForOTelFormat;
   }
