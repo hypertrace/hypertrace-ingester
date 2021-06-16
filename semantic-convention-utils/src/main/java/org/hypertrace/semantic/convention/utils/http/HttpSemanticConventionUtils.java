@@ -321,7 +321,6 @@ public class HttpSemanticConventionUtils {
     Optional<String> path = getHttpPathUtil(event);
     Optional<String> url = getHttpUrlUtil(event);
     if (url.isPresent() && path.isEmpty()) {
-
       try {
         String pathval = getNormalizedUrl(url.get()).getPath();
         if (StringUtils.isBlank(pathval)) {
@@ -420,8 +419,8 @@ public class HttpSemanticConventionUtils {
           if (isAbsoluteUrl(urlVal)) {
             return Optional.of(urlVal);
           } else {
-            Optional<String> url2 = getHttpUrlForOTelFormat(attributeValueMap);
-            return url2.isPresent() ? url2 : Optional.of(urlVal);
+            Optional<String> urlForOTelFormat = getHttpUrlForOTelFormat(attributeValueMap);
+            return Optional.of(urlForOTelFormat.orElse(urlVal));
           }
         }
       }
