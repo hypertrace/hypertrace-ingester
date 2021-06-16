@@ -29,6 +29,7 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-api"))
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
+  implementation(project(":semantic-convention-utils"))
 
   // TODO: migrate in core
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.3.0")

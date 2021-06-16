@@ -11,8 +11,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.eventfields.http.Http;
-import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
@@ -44,14 +42,14 @@ public class HttpBackendProvider implements BackendProvider {
 
   @Override
   public Optional<String> getBackendUri(Event event, StructuredTraceGraph structuredTraceGraph) {
-    return getHttpRequest(event).map(Request::getHost);
+    return HttpSemanticConventionUtils.getHttpHost(event);
   }
 
   @Override
   public Map<String, AttributeValue> getEntityAttributes(Event event) {
     Map<String, AttributeValue> entityAttributes = new HashMap<>();
 
-    String path = getHttpRequest(event).map(Request::getPath).orElse(null);
+    String path = HttpSemanticConventionUtils.getHttpPath(event).orElse(null);
     if (StringUtils.isNotEmpty(path)) {
       entityAttributes.put(
           EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_PATH),
@@ -69,19 +67,15 @@ public class HttpBackendProvider implements BackendProvider {
 
   @Override
   public Optional<String> getBackendOperation(Event event) {
-    return getHttpRequest(event).map(Request::getMethod);
+    return HttpSemanticConventionUtils.getHttpMethod(event);
   }
 
   @Override
   public Optional<String> getBackendDestination(Event event) {
-    return getHttpRequest(event).map(Request::getPath).filter(StringUtils::isNotEmpty);
+    return HttpSemanticConventionUtils.getHttpPath(event).filter(StringUtils::isNotEmpty);
   }
 
   private Protocol getProtocol() {
     return this.protocolSupplier.get();
-  }
-
-  private Optional<Request> getHttpRequest(Event event) {
-    return Optional.ofNullable(event.getHttp()).map(Http::getRequest);
   }
 }

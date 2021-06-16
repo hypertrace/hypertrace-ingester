@@ -1,5 +1,7 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -22,9 +24,8 @@ import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.eventfields.http.Http;
-import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -52,12 +53,8 @@ public class SpanEventViewGeneratorTest {
 
   @Test
   public void test_getRequestUrl_httpProtocol_shouldReturnFullUrl() {
-    Event event = mock(Event.class);
-    when(event.getHttp())
-        .thenReturn(
-            Http.newBuilder()
-                .setRequest(Request.newBuilder().setUrl("http://www.example.com").build())
-                .build());
+    Event event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL), "http://www.example.com");
     assertEquals(
         "http://www.example.com",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
@@ -65,12 +62,9 @@ public class SpanEventViewGeneratorTest {
 
   @Test
   public void test_getRequestUrl_httpsProtocol_shouldReturnFullUrl() {
-    Event event = mock(Event.class);
-    when(event.getHttp())
-        .thenReturn(
-            Http.newBuilder()
-                .setRequest(Request.newBuilder().setUrl("https://www.example.com").build())
-                .build());
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_URL), "https://www.example.com");
     assertEquals(
         "https://www.example.com",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTPS));
@@ -87,12 +81,9 @@ public class SpanEventViewGeneratorTest {
 
   @Test
   public void testGetRequestUrl_fullUrlIsAbsent() {
-    Event event = mock(Event.class);
-    when(event.getHttp())
-        .thenReturn(
-            Http.newBuilder()
-                .setRequest(Request.newBuilder().setPath("/api/v1/gatekeeper/check").build())
-                .build());
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_PATH), "/api/v1/gatekeeper/check");
     assertEquals(
         "/api/v1/gatekeeper/check",
         spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
@@ -101,8 +92,6 @@ public class SpanEventViewGeneratorTest {
   @Test
   public void testGetRequestUrl_urlAndPathIsAbsent() {
     Event event = mock(Event.class);
-    when(event.getHttp())
-        .thenReturn(Http.newBuilder().setRequest(Request.newBuilder().build()).build());
     Assertions.assertNull(spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_HTTP));
   }
 
@@ -284,5 +273,16 @@ public class SpanEventViewGeneratorTest {
     spanEventViewGenerator = new SpanEventViewGenerator();
     list = spanEventViewGenerator.process(trace);
     assertEquals(5, list.get(0).getApiTraceErrorSpanCount());
+  }
+
+  private Event createMockEventWithAttribute(String key, String value) {
+    Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
+                .build());
+    when(e.getEnrichedAttributes()).thenReturn(null);
+    return e;
   }
 }

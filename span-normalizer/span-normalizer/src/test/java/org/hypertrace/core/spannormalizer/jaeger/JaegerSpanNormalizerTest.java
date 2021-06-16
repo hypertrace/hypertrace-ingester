@@ -1,5 +1,7 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
@@ -160,6 +162,10 @@ public class JaegerSpanNormalizerTest {
                 KeyValue.newBuilder()
                     .setKey(JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY)
                     .setVStr("testService"))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_METHOD))
+                    .setVStr("GET"))
             .build();
     rawSpan = normalizer.convert("tenant-key", span);
     Assertions.assertEquals("testService", rawSpan.getEvent().getServiceName());

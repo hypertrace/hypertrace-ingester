@@ -10,20 +10,56 @@ import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSem
 import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions.SPAN_KIND;
 import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions.SPAN_KIND_CLIENT_VALUE;
 import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions.SPAN_KIND_SERVER_VALUE;
+import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRING;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_UNDERSCORE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
+import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_METHOD;
+import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 import static org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil.buildAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Maps;
 import java.util.Map;
+import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Attributes;
+import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OCAttribute;
 import org.hypertrace.core.span.constants.v1.OCSpanKind;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /** Unit test for {@link HttpSemanticConventionUtils} */
 public class HttpSemanticConventionUtilsTest {
+
+  private Event createMockEventWithAttribute(String key, String value) {
+    Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
+                .build());
+    when(e.getEnrichedAttributes()).thenReturn(null);
+    return e;
+  }
 
   @Test
   public void testGetHttpUrlForOtelFormat() {
@@ -127,5 +163,232 @@ public class HttpSemanticConventionUtilsTest {
         buildAttributeValue(RawSpanConstants.getValue(OCSpanKind.OC_SPAN_KIND_SERVER)));
     url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
     assertEquals("https://example.com:1211/webshop/articles/4?s=1", url);
+  }
+
+  @Test
+  public void testGetHttpUserAgent() {
+    Event event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "Chrome 1");
+    assertEquals(Optional.of("Chrome 1"), HttpSemanticConventionUtils.getHttpUserAgent(event));
+
+    event = mock(Event.class);
+    assertTrue(HttpSemanticConventionUtils.getHttpUserAgent(event).isEmpty());
+
+    event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "");
+    assertTrue(HttpSemanticConventionUtils.getHttpUserAgent(event).isEmpty());
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RawSpanConstants.getValue(HTTP_USER_DOT_AGENT),
+                        AttributeValue.newBuilder().setValue("Chrome 1").build(),
+                        RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE),
+                        AttributeValue.newBuilder().setValue("Chrome 2").build(),
+                        RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE),
+                        AttributeValue.newBuilder().setValue("Chrome 3").build(),
+                        RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH),
+                        AttributeValue.newBuilder().setValue("Chrome 4").build()))
+                .build());
+    assertEquals(Optional.of("Chrome 1"), HttpSemanticConventionUtils.getHttpUserAgent(event));
+  }
+
+  @Test
+  public void testGetHttpUserAgentFromHeader() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 1");
+    assertEquals(
+        Optional.of("Chrome 1"), HttpSemanticConventionUtils.getHttpUserAgentFromHeader(event));
+
+    event = mock(Event.class);
+    assertTrue(HttpSemanticConventionUtils.getHttpUserAgentFromHeader(event).isEmpty());
+
+    event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "Chrome 1");
+    assertTrue(HttpSemanticConventionUtils.getHttpUserAgentFromHeader(event).isEmpty());
+  }
+
+  @Test
+  public void testGetHttpHost() {
+    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(Http.HTTP_HOST), "abc.ai");
+    assertEquals(Optional.of("abc.ai"), HttpSemanticConventionUtils.getHttpHost(event));
+
+    event = mock(Event.class);
+    assertTrue(HttpSemanticConventionUtils.getHttpHost(event).isEmpty());
+  }
+
+  @Test
+  public void testGetHttpPath() {
+    Event event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path");
+    assertEquals(Optional.of("/path"), HttpSemanticConventionUtils.getHttpPath(event));
+
+    event = mock(Event.class);
+    assertTrue(HttpSemanticConventionUtils.getHttpPath(event).isEmpty());
+
+    event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "");
+    assertTrue(HttpSemanticConventionUtils.getHttpPath(event).isEmpty());
+
+    event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path");
+    assertTrue(HttpSemanticConventionUtils.getHttpPath(event).isEmpty());
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RawSpanConstants.getValue(HTTP_REQUEST_PATH),
+                        AttributeValue.newBuilder().setValue("/path1").build(),
+                        RawSpanConstants.getValue(HTTP_PATH),
+                        AttributeValue.newBuilder().setValue("/path2").build(),
+                        OTelHttpSemanticConventions.HTTP_TARGET.getValue(),
+                        AttributeValue.newBuilder().setValue("/path3").build()))
+                .build());
+    assertEquals(Optional.of("/path1"), HttpSemanticConventionUtils.getHttpPath(event));
+  }
+
+  @Test
+  public void testGetHttpMethod() {
+    Event event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_METHOD), "GET");
+    assertEquals(Optional.of("GET"), HttpSemanticConventionUtils.getHttpMethod(event));
+
+    event = mock(Event.class);
+    assertTrue(HttpSemanticConventionUtils.getHttpMethod(event).isEmpty());
+
+    event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_METHOD), "");
+    assertTrue(HttpSemanticConventionUtils.getHttpPath(event).isEmpty());
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RawSpanConstants.getValue(HTTP_REQUEST_METHOD),
+                        AttributeValue.newBuilder().setValue("GET").build(),
+                        RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD),
+                        AttributeValue.newBuilder().setValue("PUT").build()))
+                .build());
+    assertEquals(Optional.of("GET"), HttpSemanticConventionUtils.getHttpMethod(event));
+  }
+
+  @Test
+  public void testGetHttpScheme() {
+    Event event =
+        createMockEventWithAttribute(OTelHttpSemanticConventions.HTTP_SCHEME.getValue(), "https");
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    event = createMockEventWithAttribute(OTelHttpSemanticConventions.HTTP_SCHEME.getValue(), "");
+    assertTrue(HttpSemanticConventionUtils.getHttpScheme(event).isEmpty());
+  }
+
+  @Test
+  public void testGetHttpUrl() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(Http.HTTP_URL),
+            "https://example.ai/apis/5673/events?a1=v1&a2=v2");
+    assertEquals(
+        Optional.of("https://example.ai/apis/5673/events?a1=v1&a2=v2"),
+        HttpSemanticConventionUtils.getHttpUrl(event));
+
+    event = mock(Event.class);
+    assertTrue(HttpSemanticConventionUtils.getHttpUrl(event).isEmpty());
+
+    event = createMockEventWithAttribute(RawSpanConstants.getValue(Http.HTTP_URL), "");
+    assertTrue(HttpSemanticConventionUtils.getHttpPath(event).isEmpty());
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL),
+                        AttributeValue.newBuilder()
+                            .setValue("https://example.ai/apis/5673/events?a1=v1&a2=v2")
+                            .build(),
+                        RawSpanConstants.getValue(HTTP_REQUEST_URL),
+                        AttributeValue.newBuilder()
+                            .setValue("https://example2.ai/apis/5673/events?a1=v1&a2=v2")
+                            .build(),
+                        RawSpanConstants.getValue(Http.HTTP_URL),
+                        AttributeValue.newBuilder()
+                            .setValue("https://example4.ai/apis/5673/events?a1=v1&a2=v2")
+                            .build()))
+                .build());
+    assertEquals(
+        Optional.of("https://example.ai/apis/5673/events?a1=v1&a2=v2"),
+        HttpSemanticConventionUtils.getHttpUrl(event));
+  }
+
+  @Test
+  public void testGetHttpQueryString() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), "a1=v1&a2=v2");
+    assertEquals(Optional.of("a1=v1&a2=v2"), HttpSemanticConventionUtils.getHttpQueryString(event));
+  }
+
+  @Test
+  public void testGetHttpRequestSize() {
+    Event event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "100");
+    assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpRequestSize(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RawSpanConstants.getValue(ENVOY_REQUEST_SIZE),
+                        AttributeValue.newBuilder().setValue("100").build(),
+                        OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(),
+                        AttributeValue.newBuilder().setValue("150").build(),
+                        RawSpanConstants.getValue(HTTP_REQUEST_SIZE),
+                        AttributeValue.newBuilder().setValue("200").build()))
+                .build());
+    assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpRequestSize(event));
+  }
+
+  @Test
+  public void testGetHttpResponseSize() {
+    Event event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "100");
+    assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpResponseSize(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
+                        AttributeValue.newBuilder().setValue("100").build(),
+                        RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
+                        AttributeValue.newBuilder().setValue("150").build(),
+                        OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(),
+                        AttributeValue.newBuilder().setValue("200").build()))
+                .build());
+    assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpResponseSize(event));
+  }
+
+  @Test
+  public void testIsAbsoluteUrl() {
+    Assertions.assertTrue(HttpSemanticConventionUtils.isAbsoluteUrl("http://example.com/abc/xyz"));
+    Assertions.assertFalse(HttpSemanticConventionUtils.isAbsoluteUrl("/abc/xyz"));
+  }
+
+  @Test
+  public void testGetPathFromUrl() {
+    Optional<String> path =
+        HttpSemanticConventionUtils.getPathFromUrlObject(
+            "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel");
+    Assertions.assertEquals(path.get(), "/api/v1/gatekeeper/check");
   }
 }

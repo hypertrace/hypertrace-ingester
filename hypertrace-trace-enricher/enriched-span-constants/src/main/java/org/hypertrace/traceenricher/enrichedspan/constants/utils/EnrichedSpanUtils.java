@@ -20,6 +20,7 @@ import org.hypertrace.entity.constants.v1.K8sEntityAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
@@ -309,37 +310,22 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getHttpMethod(Event event) {
-    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-      return Optional.ofNullable(event.getHttp().getRequest().getMethod());
-    }
-
-    return Optional.empty();
+    return HttpSemanticConventionUtils.getHttpMethod(event);
   }
 
   public static Optional<String> getFullHttpUrl(Event event) {
-    if (event.getHttp() != null
-        && event.getHttp().getRequest() != null
-        && event.getHttp().getRequest().getUrl() != null) {
-      return Optional.of(event.getHttp().getRequest().getUrl());
-    }
-    Optional<AttributeValue> httpUrl = HttpSemanticConventionUtils.getValidHttpUrl(event);
-    return httpUrl.map(AttributeValue::getValue);
+    Optional<String> fullHttpUrl = HttpSemanticConventionUtils.getHttpUrl(event);
+    return fullHttpUrl.isPresent()
+        ? fullHttpUrl
+        : HttpSemanticConventionUtils.getValidHttpUrl(event).map(AttributeValue::getValue);
   }
 
   public static Optional<String> getPath(Event event) {
-    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-      return Optional.ofNullable(event.getHttp().getRequest().getPath());
-    }
-
-    return Optional.empty();
+    return HttpSemanticConventionUtils.getHttpPath(event);
   }
 
   public static Optional<String> getQueryString(Event event) {
-    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-      return Optional.ofNullable(event.getHttp().getRequest().getQueryString());
-    }
-
-    return Optional.empty();
+    return HttpSemanticConventionUtils.getHttpQueryString(event);
   }
 
   public static Optional<Integer> getRequestSize(Event event) {
@@ -351,15 +337,9 @@ public class EnrichedSpanUtils {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        if (event.getHttp() != null && event.getHttp().getRequest() != null) {
-          return Optional.of(event.getHttp().getRequest().getSize());
-        }
-        break;
+        return HttpSemanticConventionUtils.getHttpRequestSize(event);
       case PROTOCOL_GRPC:
-        if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
-          return Optional.of(event.getGrpc().getRequest().getSize());
-        }
-        break;
+        return RpcSemanticConventionUtils.getGrpcRequestSize(event);
     }
 
     return Optional.empty();
@@ -374,15 +354,9 @@ public class EnrichedSpanUtils {
     switch (protocol) {
       case PROTOCOL_HTTP:
       case PROTOCOL_HTTPS:
-        if (event.getHttp() != null && event.getHttp().getResponse() != null) {
-          return Optional.of(event.getHttp().getResponse().getSize());
-        }
-        break;
+        return HttpSemanticConventionUtils.getHttpResponseSize(event);
       case PROTOCOL_GRPC:
-        if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-          return Optional.of(event.getGrpc().getResponse().getSize());
-        }
-        break;
+        return RpcSemanticConventionUtils.getGrpcResponseSize(event);
     }
 
     return Optional.empty();
