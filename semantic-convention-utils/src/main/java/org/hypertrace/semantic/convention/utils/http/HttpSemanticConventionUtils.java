@@ -398,21 +398,26 @@ public class HttpSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+    String httpUrlFromRawAttributes = null;
+
     for (String url : FULL_URL_ATTRIBUTES) {
       if (attributeValueMap.get(url) != null) {
         String urlVal = attributeValueMap.get(url).getValue();
         if (!StringUtils.isBlank(urlVal) && isValidUrl(urlVal)) {
-          if (isAbsoluteUrl(urlVal)) {
-            return Optional.of(urlVal);
-          } else {
-            Optional<String> urlForOTelFormat = getHttpUrlForOTelFormat(attributeValueMap);
-            return Optional.of(urlForOTelFormat.orElse(urlVal));
-          }
+          httpUrlFromRawAttributes = urlVal;
+          break;
         }
       }
     }
 
-    return getHttpUrlForOTelFormat(attributeValueMap);
+    // check for OTel format
+    Optional<String> httpUrlForOTelFormat = getHttpUrlForOTelFormat(attributeValueMap);
+    if (httpUrlFromRawAttributes != null) {
+      return isAbsoluteUrl(httpUrlFromRawAttributes)
+          ? Optional.of(httpUrlFromRawAttributes)
+          : Optional.of(httpUrlForOTelFormat.orElse(httpUrlFromRawAttributes));
+    }
+    return httpUrlForOTelFormat;
   }
 
   public static Optional<String> getHttpQueryString(Event event) {
