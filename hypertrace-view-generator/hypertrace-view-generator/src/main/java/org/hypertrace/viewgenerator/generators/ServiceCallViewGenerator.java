@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.commons.lang3.StringUtils;
@@ -12,11 +11,11 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.ErrorMetrics;
@@ -171,12 +170,8 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
 
     // If this is a HTTP request, parse the http response status code.
     if (protocol == Protocol.PROTOCOL_HTTP || protocol == Protocol.PROTOCOL_HTTPS) {
-      Optional<Request> httpRequest =
-          Optional.ofNullable(event.getHttp())
-              .map(org.hypertrace.core.datamodel.eventfields.http.Http::getRequest);
-      // Set request related attributes.
-      builder.setRequestUrl(httpRequest.map(Request::getUrl).orElse(null));
-      builder.setRequestMethod(httpRequest.map(Request::getMethod).orElse(null));
+      builder.setRequestUrl(HttpSemanticConventionUtils.getHttpUrl(event).orElse(null));
+      builder.setRequestMethod(HttpSemanticConventionUtils.getHttpMethod(event).orElse(null));
     }
 
     String statusValue = EnrichedSpanUtils.getStatusCode(event);

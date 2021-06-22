@@ -1,5 +1,9 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +15,7 @@ import org.hypertrace.core.datamodel.eventfields.grpc.RequestMetadata;
 import org.hypertrace.core.datamodel.eventfields.http.Http;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.eventfields.http.RequestHeaders;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.UserAgent;
@@ -88,6 +93,8 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                           .setHeaders(RequestHeaders.newBuilder().setUserAgent("").build())
                           .build())
                   .build());
+      addAttribute(e, RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "");
+
       enricher.enrichEvent(null, e);
       // Verify no enriched attributes are added
       assertEquals(1, e.getEnrichedAttributes().getAttributeMap().size());
@@ -100,6 +107,8 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
       when(e.getHttp())
           .thenReturn(
               Http.newBuilder().setRequest(Request.newBuilder().setUserAgent("").build()).build());
+      addAttribute(e, RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "");
+
       enricher.enrichEvent(null, e);
       // Verify no enriched attributes are added
       assertEquals(1, e.getEnrichedAttributes().getAttributeMap().size());
@@ -159,6 +168,8 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                           .setRequestMetadata(RequestMetadata.newBuilder().setUserAgent("").build())
                           .build())
                   .build());
+      addAttribute(e, RPC_REQUEST_METADATA_USER_AGENT.getValue(), "");
+
       enricher.enrichEvent(null, e);
       // Verify no enriched attributes are added
       assertEquals(1, e.getEnrichedAttributes().getAttributeMap().size());
@@ -182,6 +193,9 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                         .build())
                 .build());
     mockProtocol(e, Protocol.PROTOCOL_HTTP);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), userAgent);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), userAgent);
+
     enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();
@@ -212,16 +226,9 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
     String userAgent = "grpc-java-okhttp/1.19.0";
 
     Event e = createMockEvent();
-    when(e.getGrpc())
-        .thenReturn(
-            Grpc.newBuilder()
-                .setRequest(
-                    org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder()
-                        .setRequestMetadata(
-                            RequestMetadata.newBuilder().setUserAgent(userAgent).build())
-                        .build())
-                .build());
     mockProtocol(e, Protocol.PROTOCOL_GRPC);
+    addAttribute(e, RPC_REQUEST_METADATA_USER_AGENT.getValue(), userAgent);
+    addAttribute(e, OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), "grpc");
     enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();
@@ -265,6 +272,9 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                         .build())
                 .build());
     mockProtocol(e, Protocol.PROTOCOL_HTTP);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), userAgent);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), userAgent);
+
     enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();
@@ -306,6 +316,9 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                         .build())
                 .build());
     mockProtocol(e, Protocol.PROTOCOL_HTTPS);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), userAgent);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), userAgent);
+
     enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();
@@ -347,6 +360,9 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                         .build())
                 .build());
     mockProtocol(e, Protocol.PROTOCOL_HTTP);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), badUserAgent);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), badUserAgent);
+
     enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();
@@ -390,6 +406,9 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                         .build())
                 .build());
     mockProtocol(e, Protocol.PROTOCOL_HTTP);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "I am not a User Agent!");
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), userAgent);
+
     enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();
@@ -428,6 +447,8 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
                 .setRequest(Request.newBuilder().setUserAgent(userAgent).build())
                 .build());
     mockProtocol(e, Protocol.PROTOCOL_HTTP);
+    addAttribute(e, RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), userAgent);
+
     enricher.enrichEvent(null, e);
 
     Map<String, AttributeValue> map = e.getEnrichedAttributes().getAttributeMap();
@@ -462,5 +483,12 @@ public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
             AttributeValue.newBuilder()
                 .setValue(Constants.getEnrichedSpanConstant(protocol))
                 .build());
+  }
+
+  private void addAttribute(Event event, String key, String val) {
+    event
+        .getAttributes()
+        .getAttributeMap()
+        .put(key, AttributeValue.newBuilder().setValue(val).build());
   }
 }

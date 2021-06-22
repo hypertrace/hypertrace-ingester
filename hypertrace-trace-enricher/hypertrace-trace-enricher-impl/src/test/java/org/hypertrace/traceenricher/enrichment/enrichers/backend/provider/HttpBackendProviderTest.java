@@ -1,5 +1,9 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HOST;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRING;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -19,6 +23,7 @@ import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -107,6 +112,7 @@ public class HttpBackendProviderTest {
                         Request.newBuilder()
                             .setHost("dataservice:9394")
                             .setPath("/product/5d644175551847d7408760b1")
+                            .setMethod("GET")
                             .build())
                     .build())
             .build();
@@ -162,7 +168,9 @@ public class HttpBackendProviderTest {
     assertEquals(
         Map.of(
             "BACKEND_DESTINATION",
-            AttributeValueCreator.create("/product/5d644175551847d7408760b1")),
+            AttributeValueCreator.create("/product/5d644175551847d7408760b1"),
+            "BACKEND_OPERATION",
+            AttributeValueCreator.create("GET")),
         attributes);
   }
 
@@ -198,6 +206,12 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTP/1.1").build(),
                             Constants.getRawSpanConstant(Http.HTTP_METHOD),
                             AttributeValue.newBuilder().setValue("GET").build(),
+                            Constants.getRawSpanConstant((Http.HTTP_HOST)),
+                            AttributeValue.newBuilder().setValue("dataservice:9394").build(),
+                            Constants.getRawSpanConstant((Http.HTTP_PATH)),
+                            AttributeValue.newBuilder()
+                                .setValue("product/5d644175551847d7408760b4")
+                                .build(),
                             "http.url",
                             AttributeValue.newBuilder()
                                 .setValue(
@@ -300,6 +314,19 @@ public class HttpBackendProviderTest {
                 Attributes.newBuilder()
                     .setAttributeMap(
                         Map.of(
+                            RawSpanConstants.getValue(HTTP_URL),
+                            AttributeValue.newBuilder()
+                                .setValue(
+                                    "http://dataservice:9394/userreview?productId=5d644175551847d7408760b4")
+                                .build(),
+                            RawSpanConstants.getValue(HTTP_HOST),
+                            AttributeValue.newBuilder().setValue("dataservice:9394").build(),
+                            RawSpanConstants.getValue(HTTP_PATH),
+                            AttributeValue.newBuilder().setValue("/userreview").build(),
+                            RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING),
+                            AttributeValue.newBuilder()
+                                .setValue("productId=5d644175551847d7408760b4")
+                                .build(),
                             "http.request.method",
                             AttributeValue.newBuilder().setValue("GET").build(),
                             "FLAGS",
@@ -325,17 +352,6 @@ public class HttpBackendProviderTest {
                         .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
-            .setHttp(
-                org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
-                    .setRequest(
-                        Request.newBuilder()
-                            .setUrl(
-                                "http://dataservice:9394/userreview?productId=5d644175551847d7408760b4")
-                            .setHost("dataservice:9394")
-                            .setPath("/userreview")
-                            .setQueryString("productId=5d644175551847d7408760b4")
-                            .build())
-                    .build())
             .build();
 
     final Entity backendEntity =
@@ -513,6 +529,10 @@ public class HttpBackendProviderTest {
                 Attributes.newBuilder()
                     .setAttributeMap(
                         Map.of(
+                            RawSpanConstants.getValue(HTTP_HOST),
+                            AttributeValue.newBuilder().setValue("dataservice:9394").build(),
+                            RawSpanConstants.getValue(HTTP_PATH),
+                            AttributeValue.newBuilder().setValue("/api/timelines").build(),
                             "http.response.header.x-envoy-upstream-service-time",
                             AttributeValue.newBuilder().setValue("11").build(),
                             "http.response.header.x-forwarded-proto",

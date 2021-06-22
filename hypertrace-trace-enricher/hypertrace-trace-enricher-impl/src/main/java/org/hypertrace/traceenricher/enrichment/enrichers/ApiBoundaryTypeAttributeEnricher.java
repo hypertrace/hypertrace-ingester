@@ -11,13 +11,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.eventfields.grpc.Request;
-import org.hypertrace.core.datamodel.eventfields.grpc.RequestMetadata;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -145,12 +144,9 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
   }
 
   private Optional<String> getGrpcAuthority(Event event) {
-    if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
-      Request request = event.getGrpc().getRequest();
-      RequestMetadata requestMetadata = request.getRequestMetadata();
-      if (requestMetadata != null) {
-        return getSanitizedHostValue(requestMetadata.getAuthority());
-      }
+    Optional<String> grpcAuthority = RpcSemanticConventionUtils.getGrpcAuthority(event);
+    if (grpcAuthority.isPresent()) {
+      return getSanitizedHostValue(grpcAuthority.get());
     }
     return Optional.empty();
   }

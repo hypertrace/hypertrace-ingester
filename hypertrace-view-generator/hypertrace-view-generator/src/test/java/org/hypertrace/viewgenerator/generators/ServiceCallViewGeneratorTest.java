@@ -4,34 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.avro.file.DataFileReader;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.viewgenerator.api.ServiceCallView;
 import org.hypertrace.viewgenerator.generators.ViewGeneratorState.TraceState;
+import org.hypertrace.viewgenerator.generators.utils.TestUtilities;
 import org.junit.jupiter.api.Test;
 
 public class ServiceCallViewGeneratorTest {
 
   @Test
   public void testServiceCallViewGenerator_HotrodTrace() throws IOException {
-    URL resource =
-        Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
-
-    SpecificDatumReader<StructuredTrace> datumReader =
-        new SpecificDatumReader<>(StructuredTrace.getClassSchema());
-    DataFileReader<StructuredTrace> dfrStructuredTrace =
-        new DataFileReader<>(new File(resource.getPath()), datumReader);
-    StructuredTrace trace = dfrStructuredTrace.next();
-    dfrStructuredTrace.close();
-
+    StructuredTrace trace = TestUtilities.getSampleHotRodTrace();
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     ServiceCallViewGenerator serviceCallViewGenerator = new ServiceCallViewGenerator();
     List<ServiceCallView> individuallyComputedServiceCalls = Lists.newArrayList();

@@ -6,7 +6,6 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.eventfields.grpc.Response;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
@@ -16,6 +15,7 @@ import org.hypertrace.core.span.constants.v1.Envoy;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
+import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -60,8 +60,8 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
   private static String getStatusCode(Event event, Protocol protocol) {
     List<String> statusCodeKeys = Lists.newArrayList();
     if (Protocol.PROTOCOL_GRPC == protocol) {
-      if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-        int statusCode = event.getGrpc().getResponse().getStatusCode();
+      if (event.getAttributes() != null && event.getAttributes().getAttributeMap() != null) {
+        int statusCode = RpcSemanticConventionUtils.getGrpcStatusCode(event);
         // Checking for the default value for status code field
         if (statusCode != -1) {
           return Integer.toString(statusCode);
@@ -77,12 +77,11 @@ public class ApiStatusEnricher extends AbstractTraceEnricher {
 
   private static String getGrpcStatusMessage(Event event, String statusCode) {
     String statusMessage = null;
-    if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
-      Response response = event.getGrpc().getResponse();
-      if (StringUtils.isNotBlank(response.getStatusMessage())) {
-        statusMessage = response.getStatusMessage();
-      } else if (StringUtils.isNotBlank(response.getErrorMessage())) {
-        statusMessage = response.getErrorMessage();
+    if (event.getAttributes() != null && event.getAttributes().getAttributeMap() != null) {
+      if (StringUtils.isNotBlank(RpcSemanticConventionUtils.getGrpcStatusMsg(event))) {
+        statusMessage = RpcSemanticConventionUtils.getGrpcStatusMsg(event);
+      } else if (StringUtils.isNotBlank(RpcSemanticConventionUtils.getGrpcErrorMsg(event))) {
+        statusMessage = RpcSemanticConventionUtils.getGrpcErrorMsg(event);
       }
     } else {
       statusMessage =

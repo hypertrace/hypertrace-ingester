@@ -1,6 +1,12 @@
 package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 
 import static java.util.Collections.emptyList;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_METHOD;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -9,6 +15,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,11 +23,9 @@ import java.util.Random;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.eventfields.http.Http;
-import org.hypertrace.core.datamodel.eventfields.http.Request;
-import org.hypertrace.core.datamodel.eventfields.http.Response;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.entity.constants.v1.ApiAttribute;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.junit.jupiter.api.Test;
@@ -64,35 +69,6 @@ public class EnrichedSpanUtilsTest {
 
     event = createMockEventWithAttribute(key, "true");
     assertTrue(SpanAttributeUtils.getBooleanAttribute(event, key));
-  }
-
-  private Event createMockEventWithNoAttributes() {
-    Event e = mock(Event.class);
-    when(e.getAttributes()).thenReturn(null);
-    when(e.getEnrichedAttributes()).thenReturn(null);
-    return e;
-  }
-
-  private Event createMockEventWithAttribute(String key, String value) {
-    Event e = mock(Event.class);
-    when(e.getAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
-                .build());
-    when(e.getEnrichedAttributes()).thenReturn(null);
-    return e;
-  }
-
-  private Event createMockEventWithEnrichedAttribute(String key, String value) {
-    Event e = mock(Event.class);
-    when(e.getAttributes()).thenReturn(null);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
-                .build());
-    return e;
   }
 
   @Test
@@ -193,28 +169,13 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void should_getApiDiscoveryState_enrichedAttribute() {
-    Event e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(
-                    Map.of(
-                        API_DISCOVERY_STATE_ATTR,
-                        AttributeValue.newBuilder().setValue("DISCOVERED").build()))
-                .build());
-
+    Event e = createMockEventWithEnrichedAttribute(API_DISCOVERY_STATE_ATTR, "DISCOVERED");
     assertEquals("DISCOVERED", EnrichedSpanUtils.getApiDiscoveryState(e));
   }
 
   @Test
   public void should_getHttpMethod() {
-    Event e = mock(Event.class);
-    when(e.getHttp())
-        .thenReturn(
-            org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
-                .setRequest(Request.newBuilder().setMethod("GET").build())
-                .build());
-
+    Event e = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_METHOD), "GET");
     Optional<String> method = EnrichedSpanUtils.getHttpMethod(e);
     assertFalse(method.isEmpty());
     assertEquals("GET", method.get());
@@ -223,6 +184,8 @@ public class EnrichedSpanUtilsTest {
   @Test
   public void should_getNullMethod_noHttpFields() {
     Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<String> method = EnrichedSpanUtils.getHttpMethod(e);
     assertTrue(method.isEmpty());
@@ -230,41 +193,18 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void should_getFullUrl() {
-    Event e = mock(Event.class);
-    when(e.getHttp())
-        .thenReturn(
-            org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
-                .setRequest(Request.newBuilder().setUrl("http://hipstershop.com?order=1").build())
-                .build());
-
+    String testurl = "http://hipstershop.com?order=1";
+    Event e = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_URL), testurl);
     Optional<String> url = EnrichedSpanUtils.getFullHttpUrl(e);
     assertFalse(url.isEmpty());
-    assertEquals("http://hipstershop.com?order=1", url.get());
-
-    // When it is present in attributemap
-    e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(
-                    Map.of(
-                        "http.url", AttributeValueCreator.create("http://hypertrace.com?order=2")))
-                .build());
-    url = EnrichedSpanUtils.getFullHttpUrl(e);
-    assertFalse(url.isEmpty());
-    assertEquals("http://hypertrace.com?order=2", url.get());
-
-    // Check when url is not present
-    e = mock(Event.class);
-    when(e.getHttp())
-        .thenReturn(Http.newBuilder().setRequest(Request.newBuilder().build()).build());
-    url = EnrichedSpanUtils.getFullHttpUrl(e);
-    assertTrue(url.isEmpty());
+    assertEquals(testurl, url.get());
   }
 
   @Test
   public void should_getNullUrl_noHttpFields() {
     Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<String> url = EnrichedSpanUtils.getFullHttpUrl(e);
     assertTrue(url.isEmpty());
@@ -272,17 +212,10 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getRequestSize_httpProtocol() {
-    Event e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("HTTP")))
-                .build());
-    when(e.getHttp())
-        .thenReturn(
-            org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
-                .setRequest(Request.newBuilder().setSize(64).build())
-                .build());
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+    addAttribute(e, RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "64");
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertFalse(requestSize.isEmpty());
@@ -291,24 +224,14 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getRequestSize_grpcProtocol() {
-    Event e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("GRPC")))
-                .build());
-    when(e.getGrpc())
-        .thenReturn(
-            org.hypertrace.core.datamodel.eventfields.grpc.Grpc.newBuilder()
-                .setRequest(
-                    org.hypertrace.core.datamodel.eventfields.grpc.Request.newBuilder()
-                        .setSize(64)
-                        .build())
-                .build());
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "GRPC");
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+    addAttribute(e, RawSpanConstants.getValue(GRPC_REQUEST_BODY), "some grpc response body");
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertFalse(requestSize.isEmpty());
-    assertEquals(64, requestSize.get().intValue());
+    assertEquals(23, requestSize.get().intValue());
   }
 
   @Test
@@ -321,12 +244,9 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getRequestSize_httpProtocol_noSize() {
-    Event e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("HTTP")))
-                .build());
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertTrue(requestSize.isEmpty());
@@ -334,17 +254,10 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getResponseSize_httpProtocol() {
-    Event e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("HTTP")))
-                .build());
-    when(e.getHttp())
-        .thenReturn(
-            org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
-                .setResponse(Response.newBuilder().setSize(64).build())
-                .build());
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+    addAttribute(e, RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "64");
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
     assertFalse(responseSize.isEmpty());
@@ -353,34 +266,21 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void getResponseSize_grpcProtocol() {
-    Event e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("GRPC")))
-                .build());
-    when(e.getGrpc())
-        .thenReturn(
-            org.hypertrace.core.datamodel.eventfields.grpc.Grpc.newBuilder()
-                .setResponse(
-                    org.hypertrace.core.datamodel.eventfields.grpc.Response.newBuilder()
-                        .setSize(64)
-                        .build())
-                .build());
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "GRPC");
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+    addAttribute(e, RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "some grpc request body");
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
     assertFalse(responseSize.isEmpty());
-    assertEquals(64, responseSize.get().intValue());
+    assertEquals(22, responseSize.get().intValue());
   }
 
   @Test
   public void getResponseSize_httpProtocol_noSize() {
-    Event e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(Map.of("PROTOCOL", AttributeValueCreator.create("HTTP")))
-                .build());
+    Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getResponseSize(e);
     assertTrue(requestSize.isEmpty());
@@ -412,13 +312,8 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void testGetBackendOperation_withData() {
-    Event e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(
-                    Map.of("BACKEND_OPERATION", AttributeValueCreator.create("select")))
-                .build());
+    Event e = createMockEventWithEnrichedAttribute("BACKEND_OPERATION", "select");
+
     assertEquals("select", EnrichedSpanUtils.getBackendOperation(e));
   }
 
@@ -432,13 +327,8 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void testGetBackendDestination_withData() {
-    Event e = mock(Event.class);
-    when(e.getEnrichedAttributes())
-        .thenReturn(
-            Attributes.newBuilder()
-                .setAttributeMap(
-                    Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("tableName")))
-                .build());
+    Event e = createMockEventWithEnrichedAttribute("BACKEND_DESTINATION", "tableName");
+
     assertEquals("tableName", EnrichedSpanUtils.getBackendDestination(e));
   }
 
@@ -453,5 +343,41 @@ public class EnrichedSpanUtilsTest {
                 .build());
 
     assertEquals(spaceIds, EnrichedSpanUtils.getSpaceIds(e));
+  }
+
+  private void addAttribute(Event event, String key, String val) {
+    event
+        .getAttributes()
+        .getAttributeMap()
+        .put(key, AttributeValue.newBuilder().setValue(val).build());
+  }
+
+  private Event createMockEventWithNoAttributes() {
+    Event e = mock(Event.class);
+    when(e.getAttributes()).thenReturn(null);
+    when(e.getEnrichedAttributes()).thenReturn(null);
+    return e;
+  }
+
+  private Event createMockEventWithAttribute(String key, String value) {
+    Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
+                .build());
+    when(e.getEnrichedAttributes()).thenReturn(null);
+    return e;
+  }
+
+  private Event createMockEventWithEnrichedAttribute(String key, String value) {
+    Event e = mock(Event.class);
+    when(e.getAttributes()).thenReturn(null);
+    when(e.getEnrichedAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
+                .build());
+    return e;
   }
 }
