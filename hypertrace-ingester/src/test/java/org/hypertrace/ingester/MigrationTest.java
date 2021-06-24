@@ -41,6 +41,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
@@ -95,80 +96,32 @@ public class MigrationTest {
 
   @Test
   public void testHttpFields() throws Exception {
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_METHOD))
-                    .setVStr("GET"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD))
-                    .setVStr("PUT"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL))
-                    .setVStr("https://example.ai/url1"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_URL))
-                    .setVStr("https://example.ai/url2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_URL))
-                    .setVStr("https://example.ai/url3"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_HOST))
-                    .setVStr("example.ai"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_PATH))
-                    .setVStr("/url1"))
-            .addTags(
-                KeyValue.newBuilder().setKey(RawSpanConstants.getValue(HTTP_PATH)).setVStr("/url2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT))
-                    .setVStr("Chrome 1"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE))
-                    .setVStr("Chrome 2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH))
-                    .setVStr("Chrome 3"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER))
-                    .setVStr("Chrome 4"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT))
-                    .setVStr("Chrome 5"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE))
-                    .setVStr("50"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_SIZE))
-                    .setVStr("40"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE))
-                    .setVStr("30"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE))
-                    .setVStr("20"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING))
-                    .setVStr("a1=v1&a2=v2"))
-            .build();
 
+    Map<String, String> tagsMap =
+        new HashMap<>() {
+          {
+            put(RawSpanConstants.getValue(HTTP_REQUEST_METHOD), "GET");
+            put(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD), "PUT");
+            put(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL), "https://example.ai/url1");
+            put(RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2");
+            put(RawSpanConstants.getValue(HTTP_REQUEST_URL), "https://example.ai/url3");
+            put(RawSpanConstants.getValue(HTTP_HOST), "example.ai");
+            put(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/url1");
+            put(RawSpanConstants.getValue(HTTP_PATH), "/url2");
+            put(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "Chrome 1");
+            put(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE), "Chrome 2");
+            put(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3");
+            put(RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4");
+            put(RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+            put(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE), "50");
+            put(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "40");
+            put(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE), "30");
+            put(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "20");
+            put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), "a1=v1&a2=v2");
+          }
+        };
+
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
     assertAll(
@@ -1353,5 +1306,19 @@ public class MigrationTest {
         () ->
             assertFalse(
                 RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).isPresent()));
+  }
+
+  private Span createSpanFromTags(Map<String, String> tagsMap) {
+    return Span.newBuilder()
+        .addAllTags(
+            tagsMap.entrySet().stream()
+                .map(
+                    entry ->
+                        KeyValue.newBuilder()
+                            .setKey(entry.getKey())
+                            .setVStr(entry.getValue())
+                            .build())
+                .collect(Collectors.toList()))
+        .build();
   }
 }
