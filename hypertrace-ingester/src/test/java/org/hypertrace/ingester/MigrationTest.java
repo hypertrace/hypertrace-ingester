@@ -174,19 +174,6 @@ public class MigrationTest {
         HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get());
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingRequestMethodPriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(HTTP_REQUEST_METHOD), "GET",
-            RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD), "PUT");
-
-    Map<String, String> tagsMap2 =
-        Map.of(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD), "POST");
-
-    return Stream.of(tagsMap1, tagsMap2);
-  }
-
   @ParameterizedTest
   @MethodSource("provideMapForTestingRequestUrlTagKeysPriority")
   public void testRequestUrlTagKeysPriority(Map<String, String> tagsMap) throws Exception {
@@ -197,25 +184,6 @@ public class MigrationTest {
     assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getUrl(),
         HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
-  }
-
-  private static Stream<Map<String, String>> provideMapForTestingRequestUrlTagKeysPriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL), "https://example.ai/url1",
-            RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2",
-            RawSpanConstants.getValue(HTTP_REQUEST_URL), "https://example.ai/url3");
-
-    Map<String, String> tagsMap2 =
-        Map.of(
-            RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2",
-            RawSpanConstants.getValue(HTTP_REQUEST_URL), "https://example.ai/url3");
-
-    Map<String, String> tagsMap3 =
-        Map.of(RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2");
-
-    return Stream.of(tagsMap1, tagsMap2, tagsMap3);
   }
 
   @ParameterizedTest
@@ -230,36 +198,23 @@ public class MigrationTest {
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingRequestPathTagKeysPriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path1",
-            RawSpanConstants.getValue(HTTP_PATH), "/path2");
-
-    Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_PATH), "/path2");
-
-    return Stream.of(tagsMap1, tagsMap2);
-  }
-
   @Test
   public void testInvalidRequestPath() throws Exception {
 
-    Map<String, String> tagsMap =
-        Map.of(
-            RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
-            RawSpanConstants.getValue(HTTP_PATH), "  ");
-
-    Span span = createSpanFromTags(tagsMap);
+    Span span =
+        createSpanFromTags(
+            Map.of(
+                RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
+                RawSpanConstants.getValue(HTTP_PATH), "  "));
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
     assertFalse(HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).isPresent());
 
-    Map<String, String> tagsMap2 =
-        Map.of(
-            RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
-            RawSpanConstants.getValue(HTTP_PATH), "/");
-
-    span = createSpanFromTags(tagsMap2);
+    span =
+        createSpanFromTags(
+            Map.of(
+                RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
+                RawSpanConstants.getValue(HTTP_PATH), "/"));
     rawSpan = normalizer.convert("tenant-key", span);
 
     assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
@@ -280,39 +235,6 @@ public class MigrationTest {
         HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingRequestUserAgentTagKeysPriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "Chrome 1",
-            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE), "Chrome 2",
-            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3",
-            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
-            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
-
-    Map<String, String> tagsMap2 =
-        Map.of(
-            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE), "Chrome 2",
-            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3",
-            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
-            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
-
-    Map<String, String> tagsMap3 =
-        Map.of(
-            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3",
-            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
-            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
-
-    Map<String, String> tagsMap4 =
-        Map.of(
-            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
-            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
-
-    Map<String, String> tagsMap5 = Map.of(RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
-
-    return Stream.of(tagsMap1, tagsMap2, tagsMap3, tagsMap4, tagsMap5);
-  }
-
   @ParameterizedTest
   @MethodSource("provideMapForTestingRequestSizeTagKeysPriority")
   public void testRequestSizeTagKeysPriority(Map<String, String> tagsMap) throws Exception {
@@ -325,18 +247,6 @@ public class MigrationTest {
         HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get());
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingRequestSizeTagKeysPriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(ENVOY_REQUEST_SIZE), "50",
-            RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "40");
-
-    Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "35");
-
-    return Stream.of(tagsMap1, tagsMap2);
-  }
-
   @ParameterizedTest
   @MethodSource("provideMapForTestingResponseSizeTagKeysPriority")
   public void testResponseSizeTagKeysPriority(Map<String, String> tagsMap) throws Exception {
@@ -347,18 +257,6 @@ public class MigrationTest {
     assertEquals(
         rawSpan.getEvent().getHttp().getResponse().getSize(),
         HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get());
-  }
-
-  private static Stream<Map<String, String>> provideMapForTestingResponseSizeTagKeysPriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE), "100",
-            RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "90");
-
-    Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "85");
-
-    return Stream.of(tagsMap1, tagsMap2);
   }
 
   @Test
@@ -926,26 +824,6 @@ public class MigrationTest {
         RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
   }
 
-  private static Stream<Map<String, String>>
-      provideMapForTestingGrpcFieldsConverterSatusCodePriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE), "12",
-            RawSpanConstants.getValue(GRPC_STATUS_CODE), "13",
-            RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
-
-    Map<String, String> tagsMap2 =
-        Map.of(
-            RawSpanConstants.getValue(GRPC_STATUS_CODE), "13",
-            RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
-
-    Map<String, String> tagsMap3 =
-        Map.of(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
-
-    return Stream.of(tagsMap1, tagsMap2, tagsMap3);
-  }
-
   @ParameterizedTest
   @MethodSource("provideMapForTestingGrpcFieldsConverterSatusMessagePriority")
   public void testGrpcFieldsConverterStatusMessagePriority(Map<String, String> tagsMap)
@@ -957,21 +835,6 @@ public class MigrationTest {
     assertEquals(
         rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
         RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
-  }
-
-  private static Stream<Map<String, String>>
-      provideMapForTestingGrpcFieldsConverterSatusMessagePriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
-                "CENSUS_RESPONSE_STATUS_MESSAGE",
-            RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), "ENVOY_GRPC_STATUS_MESSAGE");
-
-    Map<String, String> tagsMap2 =
-        Map.of(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), "ENVOY_GRPC_STATUS_MESSAGE");
-
-    return Stream.of(tagsMap1, tagsMap2);
   }
 
   @Test
@@ -1048,6 +911,143 @@ public class MigrationTest {
         () ->
             assertFalse(
                 RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).isPresent()));
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestMethodPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_REQUEST_METHOD), "GET",
+            RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD), "PUT");
+
+    Map<String, String> tagsMap2 =
+        Map.of(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD), "POST");
+
+    return Stream.of(tagsMap1, tagsMap2);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestUrlTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL), "https://example.ai/url1",
+            RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2",
+            RawSpanConstants.getValue(HTTP_REQUEST_URL), "https://example.ai/url3");
+
+    Map<String, String> tagsMap2 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2",
+            RawSpanConstants.getValue(HTTP_REQUEST_URL), "https://example.ai/url3");
+
+    Map<String, String> tagsMap3 =
+        Map.of(RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2");
+
+    return Stream.of(tagsMap1, tagsMap2, tagsMap3);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestPathTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path1",
+            RawSpanConstants.getValue(HTTP_PATH), "/path2");
+
+    Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_PATH), "/path2");
+
+    return Stream.of(tagsMap1, tagsMap2);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestUserAgentTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "Chrome 1",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE), "Chrome 2",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
+            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    Map<String, String> tagsMap2 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE), "Chrome 2",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
+            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    Map<String, String> tagsMap3 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
+            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    Map<String, String> tagsMap4 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
+            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    Map<String, String> tagsMap5 = Map.of(RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    return Stream.of(tagsMap1, tagsMap2, tagsMap3, tagsMap4, tagsMap5);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestSizeTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(ENVOY_REQUEST_SIZE), "50",
+            RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "40");
+
+    Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "35");
+
+    return Stream.of(tagsMap1, tagsMap2);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingResponseSizeTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE), "100",
+            RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "90");
+
+    Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "85");
+
+    return Stream.of(tagsMap1, tagsMap2);
+  }
+
+  private static Stream<Map<String, String>>
+      provideMapForTestingGrpcFieldsConverterSatusCodePriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE), "12",
+            RawSpanConstants.getValue(GRPC_STATUS_CODE), "13",
+            RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
+
+    Map<String, String> tagsMap2 =
+        Map.of(
+            RawSpanConstants.getValue(GRPC_STATUS_CODE), "13",
+            RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
+
+    Map<String, String> tagsMap3 =
+        Map.of(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
+
+    return Stream.of(tagsMap1, tagsMap2, tagsMap3);
+  }
+
+  private static Stream<Map<String, String>>
+      provideMapForTestingGrpcFieldsConverterSatusMessagePriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
+            "CENSUS_RESPONSE_STATUS_MESSAGE",
+            RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE),
+            "ENVOY_GRPC_STATUS_MESSAGE");
+
+    Map<String, String> tagsMap2 =
+        Map.of(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), "ENVOY_GRPC_STATUS_MESSAGE");
+
+    return Stream.of(tagsMap1, tagsMap2);
   }
 
   private Span createSpanFromTags(Map<String, String> tagsMap) {
