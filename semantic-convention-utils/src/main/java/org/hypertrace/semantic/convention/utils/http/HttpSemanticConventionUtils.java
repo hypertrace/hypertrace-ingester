@@ -463,7 +463,7 @@ public class HttpSemanticConventionUtils {
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
   }
 
-  static boolean isAbsoluteUrl(String urlStr) {
+  public static boolean isAbsoluteUrl(String urlStr) {
     try {
       URL url = getNormalizedUrl(urlStr);
       return url.toString().equals(urlStr);
