@@ -277,10 +277,12 @@ public class MigrationTest {
             Map.of(RawSpanConstants.getValue(HTTP_URL), "http://abc.xyz/dispatch/test?a=b&k1=v1"));
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUrl(),
-        HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
-    assertTrue(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getUrl(),
+                HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get()),
+        () -> assertTrue(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent()));
   }
 
   @Test
@@ -820,10 +822,12 @@ public class MigrationTest {
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
-    assertEquals(statusCode, rawSpan.getEvent().getGrpc().getResponse().getStatusCode());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
+                RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent())),
+        () -> assertEquals(statusCode, rawSpan.getEvent().getGrpc().getResponse().getStatusCode()));
   }
 
   @ParameterizedTest
@@ -834,10 +838,14 @@ public class MigrationTest {
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
-        RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
-    assertEquals(statusMessage, rawSpan.getEvent().getGrpc().getResponse().getStatusMessage());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
+                RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent())),
+        () ->
+            assertEquals(
+                statusMessage, rawSpan.getEvent().getGrpc().getResponse().getStatusMessage()));
   }
 
   @Test
