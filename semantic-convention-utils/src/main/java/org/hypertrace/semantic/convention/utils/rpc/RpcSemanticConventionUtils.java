@@ -257,7 +257,7 @@ public class RpcSemanticConventionUtils {
     return Optional.empty();
   }
 
-  private static Boolean check(Map<String, AttributeValue> avm) {
+  public static Boolean check(Map<String, AttributeValue> avm) {
 
     if (avm.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR) != null) {
       String val = avm.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR).getValue();
