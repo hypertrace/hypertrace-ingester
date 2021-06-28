@@ -55,6 +55,7 @@ import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class MigrationTest {
@@ -812,8 +813,8 @@ public class MigrationTest {
   }
 
   @ParameterizedTest
-  @MethodSource("provideMapForTestingGrpcFieldsConverterSatusCodePriority")
-  public void testGrpcFieldsConverterStatusCodePriority(Map<String, String> tagsMap)
+  @MethodSource("provideArgumentsForTestingGrpcFieldsConverterSatusCodePriority")
+  public void testGrpcFieldsConverterStatusCodePriority(Map<String, String> tagsMap, int statusCode)
       throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
@@ -822,12 +823,13 @@ public class MigrationTest {
     assertEquals(
         rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
         RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
+    assertEquals(statusCode, rawSpan.getEvent().getGrpc().getResponse().getStatusCode());
   }
 
   @ParameterizedTest
-  @MethodSource("provideMapForTestingGrpcFieldsConverterSatusMessagePriority")
-  public void testGrpcFieldsConverterStatusMessagePriority(Map<String, String> tagsMap)
-      throws Exception {
+  @MethodSource("provideArgumentsForTestingGrpcFieldsConverterSatusMessagePriority")
+  public void testGrpcFieldsConverterStatusMessagePriority(
+      Map<String, String> tagsMap, String statusMessage) throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
@@ -835,6 +837,7 @@ public class MigrationTest {
     assertEquals(
         rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
         RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
+    assertEquals(statusMessage, rawSpan.getEvent().getGrpc().getResponse().getStatusMessage());
   }
 
   @Test
@@ -1014,8 +1017,8 @@ public class MigrationTest {
     return Stream.of(tagsMap1, tagsMap2);
   }
 
-  private static Stream<Map<String, String>>
-      provideMapForTestingGrpcFieldsConverterSatusCodePriority() {
+  private static Stream<Arguments>
+      provideArgumentsForTestingGrpcFieldsConverterSatusCodePriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -1031,11 +1034,14 @@ public class MigrationTest {
     Map<String, String> tagsMap3 =
         Map.of(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
 
-    return Stream.of(tagsMap1, tagsMap2, tagsMap3);
+    return Stream.of(
+        Arguments.arguments(tagsMap1, 12),
+        Arguments.arguments(tagsMap2, 13),
+        Arguments.arguments(tagsMap3, 14));
   }
 
-  private static Stream<Map<String, String>>
-      provideMapForTestingGrpcFieldsConverterSatusMessagePriority() {
+  private static Stream<Arguments>
+      provideArgumentsForTestingGrpcFieldsConverterSatusMessagePriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -1047,7 +1053,9 @@ public class MigrationTest {
     Map<String, String> tagsMap2 =
         Map.of(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), "ENVOY_GRPC_STATUS_MESSAGE");
 
-    return Stream.of(tagsMap1, tagsMap2);
+    return Stream.of(
+        Arguments.arguments(tagsMap1, "CENSUS_RESPONSE_STATUS_MESSAGE"),
+        Arguments.arguments(tagsMap2, "ENVOY_GRPC_STATUS_MESSAGE"));
   }
 
   private Span createSpanFromTags(Map<String, String> tagsMap) {
