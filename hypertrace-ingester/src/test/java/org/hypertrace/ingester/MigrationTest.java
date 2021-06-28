@@ -29,6 +29,10 @@ import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_U
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.typesafe.config.ConfigFactory;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
@@ -37,6 +41,8 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
@@ -46,24 +52,16 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class MigrationTest {
 
   private final Random random = new Random();
-
-  @BeforeEach
-  public void resetSingleton()
-      throws SecurityException, NoSuchFieldException, IllegalArgumentException,
-          IllegalAccessException {
-    // Since JaegerToRawSpanConverter is a singleton, we need to reset it for unit tests to
-    // recreate the instance.
-    Field instance = JaegerSpanNormalizer.class.getDeclaredField("INSTANCE");
-    instance.setAccessible(true);
-    instance.set(null, null);
-  }
+  private JaegerSpanNormalizer normalizer;
 
   private Map<String, Object> getCommonConfig() {
     return Map.of(
@@ -83,523 +81,212 @@ public class MigrationTest {
         Map.of("schema.registry.url", "http://localhost:8081"));
   }
 
+  @BeforeEach
+  public void setup()
+      throws SecurityException, NoSuchFieldException, IllegalArgumentException,
+          IllegalAccessException {
+    // Since JaegerToRawSpanConverter is a singleton, we need to reset it for unit tests to
+    // recreate the instance.
+    Field instance = JaegerSpanNormalizer.class.getDeclaredField("INSTANCE");
+    instance.setAccessible(true);
+    instance.set(null, null);
+
+    // Create a JaegerSpanNormaliser
+    String tenantId = "tenant-" + this.random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    this.normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+  }
+
   @Test
   public void testHttpFields() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_METHOD))
-                    .setVStr("GET"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD))
-                    .setVStr("PUT"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL))
-                    .setVStr("https://example.ai/url1"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_URL))
-                    .setVStr("https://example.ai/url2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_URL))
-                    .setVStr("https://example.ai/url3"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_HOST))
-                    .setVStr("example.ai"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_PATH))
-                    .setVStr("/url1"))
-            .addTags(
-                KeyValue.newBuilder().setKey(RawSpanConstants.getValue(HTTP_PATH)).setVStr("/url2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT))
-                    .setVStr("Chrome 1"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE))
-                    .setVStr("Chrome 2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH))
-                    .setVStr("Chrome 3"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER))
-                    .setVStr("Chrome 4"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT))
-                    .setVStr("Chrome 5"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE))
-                    .setVStr("50"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_SIZE))
-                    .setVStr("40"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE))
-                    .setVStr("30"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE))
-                    .setVStr("20"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING))
-                    .setVStr("a1=v1&a2=v2"))
-            .build();
+    Map<String, String> tagsMap =
+        new HashMap<>() {
+          {
+            put(RawSpanConstants.getValue(HTTP_REQUEST_METHOD), "GET");
+            put(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD), "PUT");
+            put(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL), "https://example.ai/url1");
+            put(RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2");
+            put(RawSpanConstants.getValue(HTTP_REQUEST_URL), "https://example.ai/url3");
+            put(RawSpanConstants.getValue(HTTP_HOST), "example.ai");
+            put(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/url1");
+            put(RawSpanConstants.getValue(HTTP_PATH), "/url2");
+            put(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "Chrome 1");
+            put(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE), "Chrome 2");
+            put(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3");
+            put(RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4");
+            put(RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+            put(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE), "50");
+            put(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "40");
+            put(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE), "30");
+            put(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "20");
+            put(RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), "a1=v1&a2=v2");
+          }
+        };
+
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getMethod(),
-        HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUrl(),
-        HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
-        HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getSize(),
-        HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getResponse().getSize(),
-        HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getMethod(),
+                HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getUrl(),
+                HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getHost(),
+                HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getPath(),
+                HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
+                HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getSize(),
+                HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getResponse().getSize(),
+                HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getQueryString(),
+                HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get()));
   }
 
-  @Test
-  public void testRequestMethodPriority() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+  @ParameterizedTest
+  @MethodSource("provideMapForTestingRequestMethodPriority")
+  public void testRequestMethodPriority(Map<String, String> tagsMap) throws Exception {
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_METHOD))
-                    .setVStr("GET"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD))
-                    .setVStr("PUT"))
-            .build();
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getMethod(),
-        HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD))
-                    .setVStr("POST"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getMethod(),
         HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get());
   }
 
-  @Test
-  public void testRequestUrlTagKeysPriority() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+  @ParameterizedTest
+  @MethodSource("provideMapForTestingRequestUrlTagKeysPriority")
+  public void testRequestUrlTagKeysPriority(Map<String, String> tagsMap) throws Exception {
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL))
-                    .setVStr("https://example.ai/url1"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_URL))
-                    .setVStr("https://example.ai/url2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_URL))
-                    .setVStr("https://example.ai/url3"))
-            .build();
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUrl(),
-        HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_URL))
-                    .setVStr("https://example.ai/url2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_URL))
-                    .setVStr("https://example.ai/url3"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUrl(),
-        HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_URL))
-                    .setVStr("https://example.ai/url2"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getUrl(),
         HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
   }
 
-  @Test
-  public void testRequestPathTagKeysPriority() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+  @ParameterizedTest
+  @MethodSource("provideMapForTestingRequestPathTagKeysPriority")
+  public void testRequestPathTagKeysPriority(Map<String, String> tagsMap) throws Exception {
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_PATH))
-                    .setVStr("/path1"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_PATH))
-                    .setVStr("/path2"))
-            .build();
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_PATH))
-                    .setVStr("/path2"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
   }
 
   @Test
   public void testInvalidRequestPath() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
     Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_PATH))
-                    .setVStr("path1"))
-            .addTags(
-                KeyValue.newBuilder().setKey(RawSpanConstants.getValue(HTTP_PATH)).setVStr("  "))
-            .build();
+        createSpanFromTags(
+            Map.of(
+                RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
+                RawSpanConstants.getValue(HTTP_PATH), "  "));
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertFalse(HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).isPresent());
 
     span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_PATH))
-                    .setVStr("path1"))
-            .addTags(
-                KeyValue.newBuilder().setKey(RawSpanConstants.getValue(HTTP_PATH)).setVStr("/"))
-            .build();
+        createSpanFromTags(
+            Map.of(
+                RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
+                RawSpanConstants.getValue(HTTP_PATH), "/"));
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
   }
 
-  @Test
-  public void testRequestUserAgentTagKeysPriority() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+  @ParameterizedTest
+  @MethodSource("provideMapForTestingRequestUserAgentTagKeysPriority")
+  public void testRequestUserAgentTagKeysPriority(Map<String, String> tagsMap) throws Exception {
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_DOT_AGENT))
-                    .setVStr("Chrome 1"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE))
-                    .setVStr("Chrome 2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH))
-                    .setVStr("Chrome 3"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER))
-                    .setVStr("Chrome 4"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT))
-                    .setVStr("Chrome 5"))
-            .build();
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
-        HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE))
-                    .setVStr("Chrome 2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH))
-                    .setVStr("Chrome 3"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER))
-                    .setVStr("Chrome 4"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT))
-                    .setVStr("Chrome 5"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
-        HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH))
-                    .setVStr("Chrome 3"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER))
-                    .setVStr("Chrome 4"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT))
-                    .setVStr("Chrome 5"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
-        HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER))
-                    .setVStr("Chrome 4"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT))
-                    .setVStr("Chrome 5"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
-        HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_USER_AGENT))
-                    .setVStr("Chrome 5"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
         HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
   }
 
-  @Test
-  public void testRequestSizeTagKeysPriority() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+  @ParameterizedTest
+  @MethodSource("provideMapForTestingRequestSizeTagKeysPriority")
+  public void testRequestSizeTagKeysPriority(Map<String, String> tagsMap) throws Exception {
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE))
-                    .setVStr("50"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_SIZE))
-                    .setVStr("40"))
-            .build();
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getSize(),
-        HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_REQUEST_SIZE))
-                    .setVStr("35"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getSize(),
         HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get());
   }
 
-  @Test
-  public void testResponseSizeTagKeysPriority() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+  @ParameterizedTest
+  @MethodSource("provideMapForTestingResponseSizeTagKeysPriority")
+  public void testResponseSizeTagKeysPriority(Map<String, String> tagsMap) throws Exception {
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE))
-                    .setVStr("100"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE))
-                    .setVStr("90"))
-            .build();
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getResponse().getSize(),
-        HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE))
-                    .setVStr("85"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getResponse().getSize(),
         HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get());
   }
 
   @Test
   public void testRelativeUrlNotSetsUrlField() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
     Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_URL))
-                    .setVStr("/dispatch/test?a=b&k1=v1"))
-            .build();
+        createSpanFromTags(Map.of(RawSpanConstants.getValue(HTTP_URL), "/dispatch/test?a=b&k1=v1"));
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
   }
 
   @Test
   public void testAbsoluteUrlNotSetsUrlField() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
     Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(HTTP_URL))
-                    .setVStr("http://abc.xyz/dispatch/test?a=b&k1=v1"))
-            .build();
+        createSpanFromTags(
+            Map.of(RawSpanConstants.getValue(HTTP_URL), "http://abc.xyz/dispatch/test?a=b&k1=v1"));
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUrl(),
-        HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
-    Assertions.assertTrue(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getUrl(),
+                HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get()),
+        () -> assertTrue(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent()));
   }
 
   @Test
   public void testInvalidUrlRejectedByUrlValidator() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
-
     Span span =
         Span.newBuilder()
             .addTags(
@@ -607,18 +294,19 @@ public class MigrationTest {
                     .setKey(RawSpanConstants.getValue(HTTP_URL))
                     .setVStr("https://example.ai/apis/5673/events?a1=v1&a2=v2"))
             .build();
+
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
@@ -630,18 +318,19 @@ public class MigrationTest {
                     .setKey(RawSpanConstants.getValue(HTTP_URL))
                     .setVStr("https://example.ai/apis/5673/events/?a1=v1&a2=v2"))
             .build();
+
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
@@ -653,19 +342,19 @@ public class MigrationTest {
                     .setKey(RawSpanConstants.getValue(HTTP_URL))
                     .setVStr("https://example.ai/apis/5673/events"))
             .build();
+
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertFalse(
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
 
     // No path
     span =
@@ -675,19 +364,19 @@ public class MigrationTest {
                     .setKey(RawSpanConstants.getValue(HTTP_URL))
                     .setVStr("https://example.ai"))
             .build();
+
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertFalse(
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
 
     // Relative URL - should extract path and query string only
     span =
@@ -697,16 +386,16 @@ public class MigrationTest {
                     .setKey(RawSpanConstants.getValue(HTTP_URL))
                     .setVStr("/apis/5673/events?a1=v1&a2=v2"))
             .build();
+
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
-    Assertions.assertFalse(
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
-    Assertions.assertFalse(HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).isPresent());
-    Assertions.assertEquals(
+    assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).isPresent());
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
 
@@ -718,18 +407,19 @@ public class MigrationTest {
                     .setKey(RawSpanConstants.getValue(HTTP_URL))
                     .setVStr("http://example.ai:9000/?a1=v1&a2=v2"))
             .build();
+
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
@@ -750,102 +440,83 @@ public class MigrationTest {
                     .setKey(RawSpanConstants.getValue(HTTP_PATH))
                     .setVStr("/some-test-path"))
             .build();
+
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
   }
 
   @Test
   public void testHttpFieldGenerationForOtelSpan() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelHttpSemanticConventions.HTTP_TARGET.getValue())
-                    .setVStr("/url2"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelHttpSemanticConventions.HTTP_URL.getValue())
-                    .setVStr("https://example.ai/url1"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue())
-                    .setVStr("Chrome 1"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue())
-                    .setVStr("100"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue())
-                    .setVStr("200"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelHttpSemanticConventions.HTTP_METHOD.getValue())
-                    .setVStr("GET"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelHttpSemanticConventions.HTTP_SCHEME.getValue())
-                    .setVStr("https"))
-            .build();
+    Map<String, String> tagsMap =
+        new HashMap<>() {
+          {
+            put(OTelHttpSemanticConventions.HTTP_TARGET.getValue(), "/url2");
+            put(OTelHttpSemanticConventions.HTTP_URL.getValue(), "https://example.ai/url1");
+            put(OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue(), "Chrome 1");
+            put(OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(), "100");
+            put(OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(), "200");
+            put(OTelHttpSemanticConventions.HTTP_METHOD.getValue(), "GET");
+            put(OTelHttpSemanticConventions.HTTP_SCHEME.getValue(), "https");
+          }
+        };
+
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getMethod(),
-        HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUrl(),
-        HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
-        HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getSize(),
-        HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getResponse().getSize(),
-        HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getMethod(),
+                HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getUrl(),
+                HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getPath(),
+                HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
+                HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getSize(),
+                HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getResponse().getSize(),
+                HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getScheme(),
+                HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get()));
   }
 
   @Test
   public void testPopulateOtherFieldsOTelSpan() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
-
     Span span = Span.newBuilder().build();
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
-    Assertions.assertFalse(
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
-    Assertions.assertFalse(HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).isPresent());
-    Assertions.assertFalse(HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).isPresent());
-    Assertions.assertFalse(
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
 
     span =
         Span.newBuilder()
@@ -857,16 +528,16 @@ public class MigrationTest {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
 
@@ -881,16 +552,16 @@ public class MigrationTest {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
 
@@ -905,17 +576,16 @@ public class MigrationTest {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertFalse(
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
 
     // No path
     span =
@@ -928,17 +598,16 @@ public class MigrationTest {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertFalse(
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
 
     // Relative URL - should extract path and query string only
     span =
@@ -951,14 +620,13 @@ public class MigrationTest {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
-    Assertions.assertFalse(
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
-    Assertions.assertFalse(HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).isPresent());
-    Assertions.assertEquals(
+    assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
+    assertFalse(HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).isPresent());
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
@@ -973,16 +641,16 @@ public class MigrationTest {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
@@ -1006,16 +674,16 @@ public class MigrationTest {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getHost(),
         HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getScheme(),
         HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getQueryString(),
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
@@ -1047,343 +715,368 @@ public class MigrationTest {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getUrl(),
         "http://example.internal.com:50850/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel");
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getUrl(),
         HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
   }
 
   @Test
   public void testSetPath() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
     Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelHttpSemanticConventions.HTTP_TARGET.getValue())
-                    .setVStr(
-                        "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel"))
-            .build();
+        createSpanFromTags(
+            Map.of(
+                OTelHttpSemanticConventions.HTTP_TARGET.getValue(),
+                "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel"));
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        "/api/v1/gatekeeper/check",
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getHttp().getRequest().getPath(),
+                HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                "/api/v1/gatekeeper/check",
+                HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()));
   }
 
   @Test
   public void testGrpcFields() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE))
-                    .setVStr("Some error message"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE))
-                    .setVStr("12"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(GRPC_STATUS_CODE))
-                    .setVStr("13"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE))
-                    .setVStr("14"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE))
-                    .setVStr("CENSUS_RESPONSE_STATUS_MESSAGE"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE))
-                    .setVStr("ENVOY_GRPC_STATUS_MESSAGE"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(GRPC_REQUEST_BODY))
-                    .setVStr("some grpc request body"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(GRPC_RESPONSE_BODY))
-                    .setVStr("some grpc response body"))
-            .build();
+    Map<String, String> tagsMap =
+        new HashMap<>() {
+          {
+            put(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE), "Some error message");
+            put(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE), "12");
+            put(RawSpanConstants.getValue(GRPC_STATUS_CODE), "13");
+            put(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
+            put(
+                RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
+                "CENSUS_RESPONSE_STATUS_MESSAGE");
+            put(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), "ENVOY_GRPC_STATUS_MESSAGE");
+            put(RawSpanConstants.getValue(GRPC_REQUEST_BODY), "some grpc request body");
+            put(RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "some grpc response body");
+          }
+        };
+
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
-        RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
-        RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getSize(),
-        RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getRequest().getSize(),
-        RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
+                RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent())),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
+                RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent())),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
+                RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent())),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getResponse().getSize(),
+                RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getRequest().getSize(),
+                RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get()));
   }
 
   @Test
   public void testGrpcFieldsConverterEnvoyRequestAndResponseSizeHigherPriority() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(GRPC_REQUEST_BODY))
-                    .setVStr("some grpc request body"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(GRPC_RESPONSE_BODY))
-                    .setVStr("some grpc response body"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE))
-                    .setVStr("200"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE))
-                    .setVStr("400"))
-            .build();
+    Map<String, String> tagsMap =
+        Map.of(
+            RawSpanConstants.getValue(GRPC_REQUEST_BODY), "some grpc request body",
+            RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "some grpc response body",
+            RawSpanConstants.getValue(ENVOY_REQUEST_SIZE), "200",
+            RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE), "400");
+
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getSize(),
-        RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getRequest().getSize(),
-        RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getResponse().getSize(),
+                RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getRequest().getSize(),
+                RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get()));
   }
 
-  @Test
-  public void testGrpcFieldsConverterStatusCodePriority() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+  @ParameterizedTest
+  @MethodSource("provideArgumentsForTestingGrpcFieldsConverterSatusCodePriority")
+  public void testGrpcFieldsConverterStatusCodePriority(Map<String, String> tagsMap, int statusCode)
+      throws Exception {
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE))
-                    .setVStr("12"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(GRPC_STATUS_CODE))
-                    .setVStr("13"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE))
-                    .setVStr("14"))
-            .build();
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
-    Assertions.assertEquals(12, rawSpan.getEvent().getGrpc().getResponse().getStatusCode());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(GRPC_STATUS_CODE))
-                    .setVStr("13"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE))
-                    .setVStr("14"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
-    Assertions.assertEquals(13, rawSpan.getEvent().getGrpc().getResponse().getStatusCode());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE))
-                    .setVStr("14"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
-    Assertions.assertEquals(14, rawSpan.getEvent().getGrpc().getResponse().getStatusCode());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
+                RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent())),
+        () -> assertEquals(statusCode, rawSpan.getEvent().getGrpc().getResponse().getStatusCode()));
   }
 
-  @Test
-  public void testGrpcFieldsConverterStatusMessagePriority() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+  @ParameterizedTest
+  @MethodSource("provideArgumentsForTestingGrpcFieldsConverterSatusMessagePriority")
+  public void testGrpcFieldsConverterStatusMessagePriority(
+      Map<String, String> tagsMap, String statusMessage) throws Exception {
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE))
-                    .setVStr("CENSUS_RESPONSE_STATUS_MESSAGE"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE))
-                    .setVStr("ENVOY_GRPC_STATUS_MESSAGE"))
-            .build();
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
-        RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
-    Assertions.assertEquals(
-        "CENSUS_RESPONSE_STATUS_MESSAGE",
-        rawSpan.getEvent().getGrpc().getResponse().getStatusMessage());
-
-    span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE))
-                    .setVStr("ENVOY_GRPC_STATUS_MESSAGE"))
-            .build();
-    rawSpan = normalizer.convert("tenant-key", span);
-
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
-        RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
-    Assertions.assertEquals(
-        "ENVOY_GRPC_STATUS_MESSAGE", rawSpan.getEvent().getGrpc().getResponse().getStatusMessage());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
+                RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent())),
+        () ->
+            assertEquals(
+                statusMessage, rawSpan.getEvent().getGrpc().getResponse().getStatusMessage()));
   }
 
   @Test
   public void testGrpcFieldsForOTelSpan() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue())
-                    .setVStr("5"))
-            .build();
+    Map<String, String> tagMap =
+        Map.of(OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue(), "5");
+
+    Span span = createSpanFromTags(tagMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
         RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
   }
 
   @Test
   public void testPopulateOtherFields() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue())
-                    .setVStr("resource not found"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(OTelRpcSemanticConventions.RPC_SYSTEM.getValue())
-                    .setVStr(OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue()))
-            .build();
+    Map<String, String> tagMap =
+        Map.of(
+            OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue(),
+            "resource not found",
+            OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+            OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue());
+
+    Span span = createSpanFromTags(tagMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
+    assertEquals(
         rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
         RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
   }
 
   @Test
   public void testRpcFieldsGrpcSystem() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder().setKey(OTEL_SPAN_TAG_RPC_SYSTEM.getValue()).setVStr("grpc"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RPC_REQUEST_METADATA_AUTHORITY.getValue())
-                    .setVStr("testservice:45"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RPC_REQUEST_METADATA_USER_AGENT.getValue())
-                    .setVStr("grpc-go/1.17.0"))
-            .build();
+    Map<String, String> tagMap =
+        Map.of(
+            OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), "grpc",
+            RPC_REQUEST_METADATA_AUTHORITY.getValue(), "testservice:45",
+            RPC_REQUEST_METADATA_USER_AGENT.getValue(), "grpc-go/1.17.0");
+
+    Span span = createSpanFromTags(tagMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getAuthority(),
-        RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).get());
-    Assertions.assertEquals(
-        rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getUserAgent(),
-        RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).get());
+    assertAll(
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getAuthority(),
+                RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).get()),
+        () ->
+            assertEquals(
+                rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getUserAgent(),
+                RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).get()));
   }
 
   @Test
   public void testRpcFieldsNonGrpcSystem() throws Exception {
-    String tenantId = "tenant-" + random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
 
-    Span span =
-        Span.newBuilder()
-            .addTags(
-                KeyValue.newBuilder().setKey(OTEL_SPAN_TAG_RPC_SYSTEM.getValue()).setVStr("wcf"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RPC_REQUEST_METADATA_AUTHORITY.getValue())
-                    .setVStr("testservice:45"))
-            .addTags(
-                KeyValue.newBuilder()
-                    .setKey(RPC_REQUEST_METADATA_USER_AGENT.getValue())
-                    .setVStr("grpc-go/1.17.0"))
-            .build();
+    Map<String, String> tagsMap =
+        Map.of(
+            OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), "wcf",
+            RPC_REQUEST_METADATA_AUTHORITY.getValue(), "testservice:45",
+            RPC_REQUEST_METADATA_USER_AGENT.getValue(), "grpc-go/1.17.0");
+
+    Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    Assertions.assertFalse(
-        RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).isPresent());
-    Assertions.assertFalse(
-        RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).isPresent());
+    assertAll(
+        () ->
+            assertFalse(
+                RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).isPresent()),
+        () ->
+            assertFalse(
+                RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).isPresent()));
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestMethodPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_REQUEST_METHOD), "GET",
+            RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD), "PUT");
+
+    Map<String, String> tagsMap2 =
+        Map.of(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD), "POST");
+
+    return Stream.of(tagsMap1, tagsMap2);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestUrlTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL), "https://example.ai/url1",
+            RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2",
+            RawSpanConstants.getValue(HTTP_REQUEST_URL), "https://example.ai/url3");
+
+    Map<String, String> tagsMap2 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2",
+            RawSpanConstants.getValue(HTTP_REQUEST_URL), "https://example.ai/url3");
+
+    Map<String, String> tagsMap3 =
+        Map.of(RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2");
+
+    return Stream.of(tagsMap1, tagsMap2, tagsMap3);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestPathTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path1",
+            RawSpanConstants.getValue(HTTP_PATH), "/path2");
+
+    Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_PATH), "/path2");
+
+    return Stream.of(tagsMap1, tagsMap2);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestUserAgentTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_USER_DOT_AGENT), "Chrome 1",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE), "Chrome 2",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
+            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    Map<String, String> tagsMap2 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_UNDERSCORE), "Chrome 2",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
+            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    Map<String, String> tagsMap3 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_USER_AGENT_WITH_DASH), "Chrome 3",
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
+            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    Map<String, String> tagsMap4 =
+        Map.of(
+            RawSpanConstants.getValue(HTTP_USER_AGENT_REQUEST_HEADER), "Chrome 4",
+            RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    Map<String, String> tagsMap5 = Map.of(RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
+
+    return Stream.of(tagsMap1, tagsMap2, tagsMap3, tagsMap4, tagsMap5);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingRequestSizeTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(ENVOY_REQUEST_SIZE), "50",
+            RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "40");
+
+    Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "35");
+
+    return Stream.of(tagsMap1, tagsMap2);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingResponseSizeTagKeysPriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE), "100",
+            RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "90");
+
+    Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "85");
+
+    return Stream.of(tagsMap1, tagsMap2);
+  }
+
+  private static Stream<Arguments>
+      provideArgumentsForTestingGrpcFieldsConverterSatusCodePriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE), "12",
+            RawSpanConstants.getValue(GRPC_STATUS_CODE), "13",
+            RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
+
+    Map<String, String> tagsMap2 =
+        Map.of(
+            RawSpanConstants.getValue(GRPC_STATUS_CODE), "13",
+            RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
+
+    Map<String, String> tagsMap3 =
+        Map.of(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
+
+    return Stream.of(
+        Arguments.arguments(tagsMap1, 12),
+        Arguments.arguments(tagsMap2, 13),
+        Arguments.arguments(tagsMap3, 14));
+  }
+
+  private static Stream<Arguments>
+      provideArgumentsForTestingGrpcFieldsConverterSatusMessagePriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
+            "CENSUS_RESPONSE_STATUS_MESSAGE",
+            RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE),
+            "ENVOY_GRPC_STATUS_MESSAGE");
+
+    Map<String, String> tagsMap2 =
+        Map.of(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), "ENVOY_GRPC_STATUS_MESSAGE");
+
+    return Stream.of(
+        Arguments.arguments(tagsMap1, "CENSUS_RESPONSE_STATUS_MESSAGE"),
+        Arguments.arguments(tagsMap2, "ENVOY_GRPC_STATUS_MESSAGE"));
+  }
+
+  private Span createSpanFromTags(Map<String, String> tagsMap) {
+    return Span.newBuilder()
+        .addAllTags(
+            tagsMap.entrySet().stream()
+                .map(
+                    entry ->
+                        KeyValue.newBuilder()
+                            .setKey(entry.getKey())
+                            .setVStr(entry.getValue())
+                            .build())
+                .collect(Collectors.toList()))
+        .build();
   }
 }
