@@ -7,7 +7,8 @@ import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
-import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.*;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.*;
 
 import com.google.common.base.Joiner;
@@ -295,6 +296,24 @@ public class RpcSemanticConventionUtils {
       }
     }
     return false;
+  }
+
+  public static Optional<String> getRpcPath(Event event) {
+
+    String service = getRpcService(event).orElse("");
+    String method = getRpcMethod(event).orElse("");
+
+    if (StringUtils.isNotBlank(service) && StringUtils.isNotBlank(method)) {
+      return Optional.of(DOT_JOINER.join(service, method));
+    }
+
+    return Optional.empty();
+  }
+
+  private static Optional<String> getRpcMethod(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(OTEL_SPAN_TAG_RPC_METHOD.getValue())));
   }
 
   /**
