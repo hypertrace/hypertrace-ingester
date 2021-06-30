@@ -16,14 +16,11 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUE
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
@@ -34,6 +31,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.CensusResponse;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.normalizer.constants.OTelRpcSystem;
+import org.hypertrace.semantic.convention.utils.Utils;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
 /**
@@ -44,7 +42,6 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
  */
 public class RpcSemanticConventionUtils {
 
-  private static final Splitter SLASH_SPLITTER = Splitter.on("/").omitEmptyStrings().trimResults();
   private static final Joiner DOT_JOINER = Joiner.on(".");
 
   // otel specific attributes
@@ -284,7 +281,7 @@ public class RpcSemanticConventionUtils {
     if (attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()) != null) {
       return Optional.ofNullable(
               attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()).getValue())
-          .map(path -> sanitizePath(path));
+          .map(path -> Utils.sanitizePath(path));
     }
 
     return Optional.empty();
@@ -318,19 +315,5 @@ public class RpcSemanticConventionUtils {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, List.of(OTEL_SPAN_TAG_RPC_METHOD.getValue())));
-  }
-
-  /**
-   * Takes in a param path and converts it to a DOT joined path /service.product/GetProducts ->
-   * service.product.GetProducts
-   *
-   * @param path
-   * @return
-   */
-  private @Nullable static String sanitizePath(@Nonnull String path) {
-    if (path.isBlank()) {
-      return null;
-    }
-    return DOT_JOINER.join(SLASH_SPLITTER.split(path));
   }
 }

@@ -27,8 +27,6 @@ import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_M
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -37,8 +35,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
@@ -47,13 +43,11 @@ import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticCo
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
+import org.hypertrace.semantic.convention.utils.Utils;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
 /** Utility class to fetch http span attributes */
 public class HttpSemanticConventionUtils {
-
-  private static final Splitter SLASH_SPLITTER = Splitter.on("/").omitEmptyStrings().trimResults();
-  private static final Joiner DOT_JOINER = Joiner.on(".");
 
   // otel specific attributes
   private static final String OTEL_HTTP_METHOD = OTelHttpSemanticConventions.HTTP_METHOD.getValue();
@@ -491,7 +485,7 @@ public class HttpSemanticConventionUtils {
     if (attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)) != null) {
       return Optional.ofNullable(
               attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)).getValue())
-          .map(path -> sanitizePath(path));
+          .map(path -> Utils.sanitizePath(path));
     }
 
     return Optional.empty();
@@ -520,19 +514,5 @@ public class HttpSemanticConventionUtils {
       // ignore
     }
     return false;
-  }
-
-  /**
-   * Takes in a param path and converts it to a DOT joined path /service.product/GetProducts ->
-   * service.product.GetProducts
-   *
-   * @param path
-   * @return
-   */
-  private @Nullable static String sanitizePath(@Nonnull String path) {
-    if (path.isBlank()) {
-      return null;
-    }
-    return DOT_JOINER.join(SLASH_SPLITTER.split(path));
   }
 }
