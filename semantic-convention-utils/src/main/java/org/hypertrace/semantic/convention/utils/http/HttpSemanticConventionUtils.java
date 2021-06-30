@@ -449,7 +449,7 @@ public class HttpSemanticConventionUtils {
     return Optional.ofNullable(httpResponseSize).map(Integer::parseInt);
   }
 
-  public static int getResponseStatusCode(Event event) {
+  public static int getHttpResponseStatusCode(Event event) {
 
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return 0;
