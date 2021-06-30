@@ -7,9 +7,15 @@ import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
-import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.*;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.List;
@@ -25,6 +31,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.CensusResponse;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.normalizer.constants.OTelRpcSystem;
+import org.hypertrace.semantic.convention.utils.Utils;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
 /**
@@ -34,6 +41,8 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
  * system
  */
 public class RpcSemanticConventionUtils {
+
+  private static final Joiner DOT_JOINER = Joiner.on(".");
 
   // otel specific attributes
   private static final String OTEL_RPC_SYSTEM = OTelRpcSemanticConventions.RPC_SYSTEM.getValue();
@@ -257,6 +266,27 @@ public class RpcSemanticConventionUtils {
     return Optional.empty();
   }
 
+  public static Optional<String> getGrpcRequestMetadataPath(Event event) {
+
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (Boolean.FALSE.equals(RpcSemanticConventionUtils.check(attributeValueMap))) {
+      return Optional.empty();
+    }
+
+    if (attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()) != null) {
+      return Optional.ofNullable(
+              attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()).getValue())
+          .map(path -> Utils.sanitizePath(path));
+    }
+
+    return Optional.empty();
+  }
+
   public static Boolean check(Map<String, AttributeValue> avm) {
 
     if (avm.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR) != null) {
@@ -267,5 +297,23 @@ public class RpcSemanticConventionUtils {
       }
     }
     return false;
+  }
+
+  public static Optional<String> getRpcPath(Event event) {
+
+    String service = getRpcService(event).orElse("");
+    String method = getRpcMethod(event).orElse("");
+
+    if (StringUtils.isNotBlank(service) && StringUtils.isNotBlank(method)) {
+      return Optional.of(DOT_JOINER.join(service, method));
+    }
+
+    return Optional.empty();
+  }
+
+  private static Optional<String> getRpcMethod(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(OTEL_SPAN_TAG_RPC_METHOD.getValue())));
   }
 }
