@@ -331,7 +331,7 @@ public class HttpSemanticConventionUtils {
       if (attributeValueMap.get(path) != null) {
         String s = attributeValueMap.get(path).getValue();
         if (StringUtils.isNotBlank(s) && s.startsWith(SLASH)) {
-          return getPathFromUrlObject(s).map(str -> removeTrailingSlash(str));
+          return getPathFromUrlObject(s).map(HttpSemanticConventionUtils::removeTrailingSlash);
         }
       }
     }
