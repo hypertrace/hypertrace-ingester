@@ -44,6 +44,7 @@ import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.spannormalizer.fieldgenerators.FieldsGenerator;
+import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,10 +181,7 @@ public class JaegerSpanNormalizer {
       if ((tenantIdKey.isPresent() && key.equals(tenantIdKey.get()))) {
         continue;
       }
-      attributeFieldMap.put(
-          key,
-          org.hypertrace.core.spannormalizer.util.AttributeValueCreator.createFromJaegerKeyValue(
-              keyValue));
+      attributeFieldMap.put(key, JaegerHTTagsConverter.createFromJaegerKeyValue(keyValue));
       // Generate a field from the keyValue
       this.fieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder, tagsMap);
     }

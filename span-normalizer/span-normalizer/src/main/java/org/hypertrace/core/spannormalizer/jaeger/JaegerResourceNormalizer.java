@@ -1,7 +1,7 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
 import static java.util.function.Predicate.not;
-import static org.hypertrace.core.spannormalizer.util.AttributeValueCreator.createFromJaegerKeyValue;
+import static org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter.createFromJaegerKeyValue;
 
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Process;

@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import org.hypertrace.core.datamodel.AttributeValue;
 
-public class AttributeValueCreator {
+public class JaegerHTTagsConverter {
   public static AttributeValue createFromJaegerKeyValue(JaegerSpanInternalModel.KeyValue keyValue) {
     AttributeValue.Builder valueBuilder = AttributeValue.newBuilder();
     switch (keyValue.getVType()) {

@@ -6,15 +6,15 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.junit.jupiter.api.Test;
 
-public class AttributeValueConverterTest {
+public class JaegerHTTagsConverterTest {
 
   @Test
   public void testConvertAttributeToKeyValue() {
     String val = "sample value";
     AttributeValue attributeValue = AttributeValue.newBuilder().setValue(val).build();
-    assertEquals(val, AttributeValueCreator.convertAttributeToKeyValue(attributeValue).getVStr());
+    assertEquals(val, JaegerHTTagsConverter.convertAttributeToKeyValue(attributeValue).getVStr());
     assertEquals(
         JaegerSpanInternalModel.ValueType.STRING,
-        AttributeValueCreator.convertAttributeToKeyValue(attributeValue).getVType());
+        JaegerHTTagsConverter.convertAttributeToKeyValue(attributeValue).getVType());
   }
 }

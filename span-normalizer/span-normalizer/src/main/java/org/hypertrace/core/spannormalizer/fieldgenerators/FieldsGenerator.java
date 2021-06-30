@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
+import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +92,7 @@ public class FieldsGenerator {
           eventBuilder
               .getAttributesBuilder()
               .getAttributeMap()
-              .put(key, AttributeValueCreator.createFromJaegerKeyValue(keyValue));
+              .put(key, JaegerHTTagsConverter.createFromJaegerKeyValue(keyValue));
         }
       }
     } catch (Exception ex) {

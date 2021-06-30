@@ -18,7 +18,7 @@ import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.LogEvent;
 import org.hypertrace.core.datamodel.LogEvents;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
-import org.hypertrace.core.spannormalizer.util.AttributeValueCreator;
+import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +90,7 @@ public class JaegerSpanToLogRecordsTransformer
                 .collect(
                     Collectors.toMap(
                         k -> k.getKey().toLowerCase(),
-                        AttributeValueCreator::createFromJaegerKeyValue)))
+                        JaegerHTTagsConverter::createFromJaegerKeyValue)))
         .build();
   }
 
