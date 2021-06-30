@@ -9,21 +9,11 @@ import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSem
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_URL;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_PATH;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRING;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_UNDERSCORE;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
-import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_METHOD;
-import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
+import static org.hypertrace.core.span.constants.v1.Http.*;
+import static org.hypertrace.core.span.constants.v1.OTSpanTag.*;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -32,6 +22,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
@@ -44,6 +36,9 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
 
 /** Utility class to fetch http span attributes */
 public class HttpSemanticConventionUtils {
+
+  private static final Splitter SLASH_SPLITTER = Splitter.on("/").omitEmptyStrings().trimResults();
+  private static final Joiner DOT_JOINER = Joiner.on(".");
 
   // otel specific attributes
   private static final String OTEL_HTTP_METHOD = OTelHttpSemanticConventions.HTTP_METHOD.getValue();
@@ -114,6 +109,12 @@ public class HttpSemanticConventionUtils {
           RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
           RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
           OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue());
+
+  private static final List<String> STATUS_CODE_ATTRIBUTES =
+      List.of(
+          RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_STATUS_CODE),
+          RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE),
+          OTelHttpSemanticConventions.HTTP_STATUS_CODE.getValue());
 
   /** @return attribute keys for http method */
   public static List<String> getAttributeKeysForHttpMethod() {
@@ -448,6 +449,39 @@ public class HttpSemanticConventionUtils {
     return Optional.ofNullable(httpResponseSize).map(Integer::parseInt);
   }
 
+  public static int getResponseStatusCode(Event event) {
+
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return 0;
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    for (String responseStatusCodeKey : STATUS_CODE_ATTRIBUTES) {
+      if (attributeValueMap.get(responseStatusCodeKey) != null) {
+        return Integer.parseInt(attributeValueMap.get(responseStatusCodeKey).getValue());
+      }
+    }
+
+    return 0;
+  }
+
+  public static Optional<String> getHttpRequestHeaderPath(Event event) {
+
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+    if (attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)) != null) {
+      return Optional.ofNullable(
+              attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)).getValue())
+          .map(path -> sanitizePath(path));
+    }
+
+    return Optional.empty();
+  }
+
   static Optional<String> getPathFromUrlObject(String urlPath) {
     try {
       URL url = getNormalizedUrl(urlPath);
@@ -471,5 +505,19 @@ public class HttpSemanticConventionUtils {
       // ignore
     }
     return false;
+  }
+
+  /**
+   * Takes in a param path and converts it to a DOT joined path /service.product/GetProducts ->
+   * service.product.GetProducts
+   *
+   * @param path
+   * @return
+   */
+  private @Nullable static String sanitizePath(@Nonnull String path) {
+    if (path.isBlank()) {
+      return null;
+    }
+    return DOT_JOINER.join(SLASH_SPLITTER.split(path));
   }
 }

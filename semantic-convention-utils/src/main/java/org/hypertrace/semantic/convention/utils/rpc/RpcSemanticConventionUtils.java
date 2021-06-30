@@ -10,11 +10,15 @@ import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.*;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
@@ -34,6 +38,9 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
  * system
  */
 public class RpcSemanticConventionUtils {
+
+  private static final Splitter SLASH_SPLITTER = Splitter.on("/").omitEmptyStrings().trimResults();
+  private static final Joiner DOT_JOINER = Joiner.on(".");
 
   // otel specific attributes
   private static final String OTEL_RPC_SYSTEM = OTelRpcSemanticConventions.RPC_SYSTEM.getValue();
@@ -257,6 +264,27 @@ public class RpcSemanticConventionUtils {
     return Optional.empty();
   }
 
+  public static Optional<String> getGrpcRequestMetadataPath(Event event) {
+
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (Boolean.FALSE.equals(RpcSemanticConventionUtils.check(attributeValueMap))) {
+      return Optional.empty();
+    }
+
+    if (attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()) != null) {
+      return Optional.ofNullable(
+              attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()).getValue())
+          .map(path -> sanitizePath(path));
+    }
+
+    return Optional.empty();
+  }
+
   public static Boolean check(Map<String, AttributeValue> avm) {
 
     if (avm.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR) != null) {
@@ -267,5 +295,19 @@ public class RpcSemanticConventionUtils {
       }
     }
     return false;
+  }
+
+  /**
+   * Takes in a param path and converts it to a DOT joined path /service.product/GetProducts ->
+   * service.product.GetProducts
+   *
+   * @param path
+   * @return
+   */
+  private @Nullable static String sanitizePath(@Nonnull String path) {
+    if (path.isBlank()) {
+      return null;
+    }
+    return DOT_JOINER.join(SLASH_SPLITTER.split(path));
   }
 }
