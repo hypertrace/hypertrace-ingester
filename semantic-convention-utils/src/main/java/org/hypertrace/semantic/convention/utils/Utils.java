@@ -2,8 +2,8 @@ package org.hypertrace.semantic.convention.utils;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import java.util.Optional;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public class Utils {
 
@@ -17,10 +17,9 @@ public class Utils {
    * @param path
    * @return
    */
-  public @Nullable static String sanitizePath(@Nonnull String path) {
-    if (path.isBlank()) {
-      return null;
-    }
-    return DOT_JOINER.join(SLASH_SPLITTER.split(path));
+  public static Optional<String> sanitizePath(@Nonnull String path) {
+    return path.isBlank()
+        ? Optional.empty()
+        : Optional.ofNullable(DOT_JOINER.join(SLASH_SPLITTER.split(path)));
   }
 }

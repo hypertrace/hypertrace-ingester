@@ -1,8 +1,8 @@
 package org.hypertrace.semantic.convention.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -14,19 +14,19 @@ public class UtilsTest {
   @ParameterizedTest
   @ValueSource(strings = {" ", "   ", "\t", "\n"})
   public void testSanitizePathForEmptyStrings(String path) {
-    assertNull(Utils.sanitizePath(path));
+    assertEquals(Optional.empty(), Utils.sanitizePath(path));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"samplepath", "sample_path", "sample path"})
   public void testSanitizePathForSanitizedStrings(String path) {
-    assertEquals(path, Utils.sanitizePath(path));
+    assertEquals(Optional.of(path), Utils.sanitizePath(path));
   }
 
   @ParameterizedTest
   @MethodSource("getMapToTestSanitizedPath")
   public void testSanitizePathForUnsanitizedStrings(String path, String sanitized_path) {
-    assertEquals(sanitized_path, Utils.sanitizePath(path));
+    assertEquals(Optional.of(sanitized_path), Utils.sanitizePath(path));
   }
 
   private static Stream<Arguments> getMapToTestSanitizedPath() {

@@ -485,7 +485,7 @@ public class HttpSemanticConventionUtils {
     if (attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)) != null) {
       return Optional.ofNullable(
               attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)).getValue())
-          .map(path -> Utils.sanitizePath(path));
+          .flatMap(Utils::sanitizePath);
     }
 
     return Optional.empty();

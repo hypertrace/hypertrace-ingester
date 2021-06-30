@@ -281,7 +281,7 @@ public class RpcSemanticConventionUtils {
     if (attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()) != null) {
       return Optional.ofNullable(
               attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()).getValue())
-          .map(path -> Utils.sanitizePath(path));
+          .flatMap(Utils::sanitizePath);
     }
 
     return Optional.empty();
