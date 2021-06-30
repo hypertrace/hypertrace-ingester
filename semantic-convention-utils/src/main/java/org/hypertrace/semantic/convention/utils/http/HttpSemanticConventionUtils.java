@@ -439,13 +439,13 @@ public class HttpSemanticConventionUtils {
   public static Optional<Integer> getHttpRequestSize(Event event) {
     String httpRequestSize =
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, REQUEST_SIZE_ATTRIBUTES);
-    return Optional.ofNullable(httpRequestSize).map(s -> Integer.parseInt(s));
+    return Optional.ofNullable(httpRequestSize).map(Integer::parseInt);
   }
 
   public static Optional<Integer> getHttpResponseSize(Event event) {
     String httpResponseSize =
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, RESPONSE_SIZE_ATTRIBUTES);
-    return Optional.ofNullable(httpResponseSize).map(s -> Integer.parseInt(s));
+    return Optional.ofNullable(httpResponseSize).map(Integer::parseInt);
   }
 
   static Optional<String> getPathFromUrlObject(String urlPath) {
