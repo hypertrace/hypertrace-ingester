@@ -45,7 +45,6 @@ import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticCo
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
-import org.hypertrace.semantic.convention.utils.Utils;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
 /** Utility class to fetch http span attributes */
@@ -495,11 +494,9 @@ public class HttpSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)) != null) {
-      return Optional.ofNullable(
-              attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)).getValue())
-          .flatMap(Utils::sanitizePath);
+      return Optional.of(
+          attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)).getValue());
     }
-
     return Optional.empty();
   }
 

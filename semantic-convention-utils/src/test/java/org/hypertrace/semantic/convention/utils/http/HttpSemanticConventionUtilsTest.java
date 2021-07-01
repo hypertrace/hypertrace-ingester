@@ -331,7 +331,7 @@ public class HttpSemanticConventionUtilsTest {
         createMockEventWithAttribute(
             RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH), "sample/http/request/header/path");
     assertEquals(
-        Optional.of("sample.http.request.header.path"),
+        Optional.of("sample/http/request/header/path"),
         HttpSemanticConventionUtils.getHttpRequestHeaderPath(event));
   }
 

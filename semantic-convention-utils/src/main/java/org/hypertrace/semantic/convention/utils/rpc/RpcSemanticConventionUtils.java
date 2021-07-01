@@ -32,7 +32,6 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.CensusResponse;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.normalizer.constants.OTelRpcSystem;
-import org.hypertrace.semantic.convention.utils.Utils;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
 /**
@@ -296,11 +295,8 @@ public class RpcSemanticConventionUtils {
     }
 
     if (attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()) != null) {
-      return Optional.ofNullable(
-              attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()).getValue())
-          .flatMap(Utils::sanitizePath);
+      return Optional.of(attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()).getValue());
     }
-
     return Optional.empty();
   }
 
