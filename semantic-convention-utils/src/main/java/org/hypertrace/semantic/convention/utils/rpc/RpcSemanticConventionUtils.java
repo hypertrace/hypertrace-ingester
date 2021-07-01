@@ -311,7 +311,7 @@ public class RpcSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
 
-    if (checkIfRpcSystemIsGrpc(attributeValueMap)) {
+    if (!checkIfRpcSystemIsGrpc(attributeValueMap)) {
       return Optional.empty();
     }
 
