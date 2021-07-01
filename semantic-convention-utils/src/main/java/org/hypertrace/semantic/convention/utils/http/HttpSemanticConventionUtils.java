@@ -10,6 +10,7 @@ import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSem
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_PATH;
@@ -506,6 +507,12 @@ public class HttpSemanticConventionUtils {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_X_FORWARDED_FOR_HEADER))));
+  }
+
+  public static Optional<String> getHttpRequestContentType(Event event) {
+    return Optional.of(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_TYPE))));
   }
 
   static Optional<String> getPathFromUrlObject(String urlPath) {
