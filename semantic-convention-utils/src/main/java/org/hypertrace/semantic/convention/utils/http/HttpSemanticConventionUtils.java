@@ -10,12 +10,14 @@ import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSem
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRING;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT;
@@ -43,7 +45,6 @@ import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticCo
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
-import org.hypertrace.semantic.convention.utils.Utils;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 
 /** Utility class to fetch http span attributes */
@@ -137,6 +138,16 @@ public class HttpSemanticConventionUtils {
 
   public static List<String> getAttributeKeysForHttpTarget() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_HTTP_TARGET));
+  }
+
+  public static boolean isAbsoluteUrl(String urlStr) {
+    try {
+      URL url = getNormalizedUrl(urlStr);
+      return url.toString().equals(urlStr);
+    } catch (MalformedURLException e) {
+      // ignore
+    }
+    return false;
   }
 
   /**
@@ -483,12 +494,22 @@ public class HttpSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
     if (attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)) != null) {
-      return Optional.ofNullable(
-              attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)).getValue())
-          .map(path -> Utils.sanitizePath(path));
+      return Optional.of(
+          attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)).getValue());
     }
-
     return Optional.empty();
+  }
+
+  public static Optional<String> getHttpXForwardedFor(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_X_FORWARDED_FOR_HEADER))));
+  }
+
+  public static Optional<String> getHttpRequestContentType(Event event) {
+    return Optional.of(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_TYPE))));
   }
 
   static Optional<String> getPathFromUrlObject(String urlPath) {
@@ -504,15 +525,5 @@ public class HttpSemanticConventionUtils {
   private static String removeTrailingSlash(String s) {
     // Ends with "/" and it's not home page path
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
-  }
-
-  public static boolean isAbsoluteUrl(String urlStr) {
-    try {
-      URL url = getNormalizedUrl(urlStr);
-      return url.toString().equals(urlStr);
-    } catch (MalformedURLException e) {
-      // ignore
-    }
-    return false;
   }
 }
