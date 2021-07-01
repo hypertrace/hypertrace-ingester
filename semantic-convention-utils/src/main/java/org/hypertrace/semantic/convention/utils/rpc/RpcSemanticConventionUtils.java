@@ -114,7 +114,7 @@ public class RpcSemanticConventionUtils {
             event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod()));
   }
 
-  public static Boolean checkIfRpcSystemIsGrpc(Map<String, AttributeValue> attributeValueMap) {
+  public static Boolean isRpcSystemGrpc(Map<String, AttributeValue> attributeValueMap) {
     if (attributeValueMap.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR) != null) {
       String val = attributeValueMap.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR).getValue();
       if (StringUtils.isNotBlank(val)
@@ -204,7 +204,7 @@ public class RpcSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
 
-    if (!checkIfRpcSystemIsGrpc(attributeValueMap)) {
+    if (!isRpcSystemGrpc(attributeValueMap)) {
       return Optional.empty();
     }
 
@@ -224,7 +224,7 @@ public class RpcSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
 
-    if (!checkIfRpcSystemIsGrpc(attributeValueMap)) {
+    if (!isRpcSystemGrpc(attributeValueMap)) {
       return Optional.empty();
     }
 
@@ -290,7 +290,7 @@ public class RpcSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
 
-    if (!checkIfRpcSystemIsGrpc(attributeValueMap)) {
+    if (!isRpcSystemGrpc(attributeValueMap)) {
       return Optional.empty();
     }
 
@@ -307,7 +307,7 @@ public class RpcSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
 
-    if (!checkIfRpcSystemIsGrpc(attributeValueMap)) {
+    if (!isRpcSystemGrpc(attributeValueMap)) {
       return Optional.empty();
     }
 
