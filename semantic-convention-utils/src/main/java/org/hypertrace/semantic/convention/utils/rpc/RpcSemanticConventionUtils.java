@@ -102,6 +102,12 @@ public class RpcSemanticConventionUtils {
             event, getAttributeKeysForRpcService()));
   }
 
+  public static Optional<String> getRpcMethod(Event event) {
+    return Optional.ofNullable(
+            SpanAttributeUtils.getFirstAvailableStringAttribute(
+                    event, List.of(OTEL_SPAN_TAG_RPC_METHOD.getValue())));
+  }
+
   public static Optional<String> getRpcOperation(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
@@ -306,11 +312,5 @@ public class RpcSemanticConventionUtils {
     }
 
     return Optional.empty();
-  }
-
-  private static Optional<String> getRpcMethod(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, List.of(OTEL_SPAN_TAG_RPC_METHOD.getValue())));
   }
 }
