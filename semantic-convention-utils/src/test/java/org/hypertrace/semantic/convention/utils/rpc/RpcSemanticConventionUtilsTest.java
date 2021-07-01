@@ -7,8 +7,7 @@ import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
-import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
-import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -127,6 +126,22 @@ class RpcSemanticConventionUtilsTest {
                         AttributeValue.newBuilder().setValue("14").build()))
                 .build());
     assertEquals(12, RpcSemanticConventionUtils.getGrpcStatusCode(event));
+  }
+
+  @Test
+  public void testGetGrpcXForwardedFor() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RPC_REQUEST_METADATA_X_FORWARDED_FOR.getValue(),
+                        AttributeValue.newBuilder().setValue("198.12.34.1").build()))
+                .build());
+    assertEquals("198.12.34.1", RpcSemanticConventionUtils.getGrpcXForwardedFor(event).get());
   }
 
   @Test

@@ -336,6 +336,27 @@ public class HttpSemanticConventionUtilsTest {
   }
 
   @Test
+  public void testGetHttpXForwardedFor() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_REQUEST_X_FORWARDED_FOR_HEADER),
+            "forwarded for header val");
+    assertEquals(
+        Optional.of("forwarded for header val"),
+        HttpSemanticConventionUtils.getHttpXForwardedFor(event));
+  }
+
+  @Test
+  public void testGetHttpRequestContentType() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_TYPE), "application/text");
+    assertEquals(
+        Optional.of("application/text"),
+        HttpSemanticConventionUtils.getHttpRequestContentType(event));
+  }
+
+  @Test
   public void testGetHttpRequestSize() {
     Event event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "100");
     assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpRequestSize(event));
