@@ -304,7 +304,7 @@ public class RpcSemanticConventionUtils {
     return Optional.empty();
   }
 
-  public Optional<String> getGrpcXForwardedFor(Event event) {
+  public static Optional<String> getGrpcXForwardedFor(Event event) {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }

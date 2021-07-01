@@ -502,7 +502,7 @@ public class HttpSemanticConventionUtils {
     return Optional.empty();
   }
 
-  public Optional<String> getHttpXForwardedFor(Event event) {
+  public static Optional<String> getHttpXForwardedFor(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_X_FORWARDED_FOR_HEADER))));
