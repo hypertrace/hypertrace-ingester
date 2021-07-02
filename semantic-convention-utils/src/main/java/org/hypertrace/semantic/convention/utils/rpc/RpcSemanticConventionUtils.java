@@ -360,10 +360,7 @@ public class RpcSemanticConventionUtils {
 
   static Optional<String> getSanitizedGrpcAuthority(Event event) {
 
-    Optional<String> grpcAuthority =
-        org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils.getGrpcAuthority(
-            event);
-
+    Optional<String> grpcAuthority = getGrpcAuthority(event);
     if (grpcAuthority.isPresent()) {
       return getSanitizedAuthorityValue(grpcAuthority.get());
     } else if (SpanAttributeUtils.containsAttributeKey(
