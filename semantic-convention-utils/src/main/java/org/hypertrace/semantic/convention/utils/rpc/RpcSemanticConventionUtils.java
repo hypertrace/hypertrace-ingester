@@ -17,8 +17,11 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUE
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,6 +33,7 @@ import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemantic
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.CensusResponse;
+import org.hypertrace.core.span.constants.v1.Envoy;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.normalizer.constants.OTelRpcSystem;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
@@ -43,6 +47,8 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
 public class RpcSemanticConventionUtils {
 
   private static final Joiner DOT_JOINER = Joiner.on(".");
+  private static final String LOCALHOST = "localhost";
+  private static final String COLON = ":";
 
   // otel specific attributes
   private static final String OTEL_RPC_SYSTEM = OTelRpcSemanticConventions.RPC_SYSTEM.getValue();
@@ -71,6 +77,29 @@ public class RpcSemanticConventionUtils {
       List.of(
           RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
           RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE));
+
+  /**
+   * Differs from {@link
+   * org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils#getGrpcURI(Event) in
+   * authority resolution logic} }
+   *
+   * @param event object encapsulating span data
+   * @return uri for grpc span
+   */
+  public static Optional<String> getGrpcURL(Event event) {
+    if (SpanAttributeUtils.containsAttributeKey(event, OTHER_GRPC_HOST_PORT)) {
+      return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_GRPC_HOST_PORT));
+    }
+    // look for grpc authority
+    Optional<String> grpcAuthority = getSanitizedGrpcAuthority(event);
+    if (grpcAuthority.isPresent()) {
+      return grpcAuthority;
+    }
+    if (isRpcTypeGrpcForOTelFormat(event)) {
+      return SpanSemanticConventionUtils.getURIForOtelFormat(event);
+    }
+    return Optional.empty();
+  }
 
   /** @return attribute keys for grpc method */
   public static List<String> getAttributeKeysForGrpcMethod() {
@@ -326,6 +355,68 @@ public class RpcSemanticConventionUtils {
       return Optional.of(DOT_JOINER.join(service, method));
     }
 
+    return Optional.empty();
+  }
+
+  static Optional<String> getSanitizedGrpcAuthority(Event event) {
+
+    Optional<String> grpcAuthority = getGrpcAuthority(event);
+    if (grpcAuthority.isPresent()) {
+      return getSanitizedAuthorityValue(grpcAuthority.get());
+    } else if (SpanAttributeUtils.containsAttributeKey(
+        event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY))) {
+      return getSanitizedAuthorityValue(
+          SpanAttributeUtils.getStringAttribute(
+              event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY)));
+    }
+    return Optional.empty();
+  }
+
+  static Optional<String> getSanitizedAuthorityValue(String value) {
+    if (StringUtils.isBlank(value)) {
+      return Optional.empty();
+    }
+    // authority part of the uri assumes this format: <userinfo@host:port>
+    // parsing it as uri doesn't work, since this is not in url format
+    // allow for string of type <xyz> or <xyz:port> or <abc@xyz:port>
+    List<String> list = Splitter.on(COLON).splitToList(value);
+    if (list.size() <= 2 && !value.contains("/")) {
+      String host = list.get(0);
+      Optional<String> port =
+          (list.size() == 2 && !StringUtils.isBlank(list.get(1)))
+              ? Optional.of(list.get(1))
+              : Optional.empty();
+      // reject string of type <:9000> where userinfo@host part is empty
+      if (StringUtils.isEmpty(host)) {
+        return Optional.empty();
+      }
+      if (host.contains("@")) {
+        List<String> firstHalf = Splitter.on("@").splitToList(host);
+        // reject string where host part is empty
+        if (firstHalf.size() < 2 || StringUtils.isEmpty(firstHalf.get(1))) {
+          return Optional.empty();
+        }
+        host = firstHalf.get(1);
+      }
+      if (LOCALHOST.equalsIgnoreCase(host)) {
+        return Optional.empty();
+      }
+      return port.isPresent()
+          ? Optional.of(String.format("%s:%s", host, port.get()))
+          : Optional.of(host);
+    }
+    // else string is of type url
+    try {
+      URI uri = new URI(value);
+      if (null != uri.getHost() && !LOCALHOST.equalsIgnoreCase(uri.getHost())) {
+        if (-1 != uri.getPort()) {
+          return Optional.of(String.format("%s:%s", uri.getHost(), uri.getPort()));
+        }
+        return Optional.of(uri.getHost());
+      }
+    } catch (URISyntaxException e) {
+      // ignore
+    }
     return Optional.empty();
   }
 }
