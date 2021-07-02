@@ -17,11 +17,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
+import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.semantic.convention.utils.SemanticConventionTestUtil;
@@ -245,5 +249,239 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     assertTrue(RpcSemanticConventionUtils.getGrpcResponseSize(event).isEmpty());
+  }
+
+  @Test
+  public void testGetGrpcURI() {
+    Event e = mock(Event.class);
+
+    // grpc_host_port is preferred
+    Attributes attributes =
+        buildAttributes(
+            Map.of(
+                RawSpanConstants.getValue(Grpc.GRPC_HOST_PORT),
+                "webhost:9011",
+                "grpc.authority",
+                "some-service:56003",
+                "rpc.system",
+                "grpc",
+                OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+                "otel-host"));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = RpcSemanticConventionUtils.getGrpcURL(e);
+    assertEquals("webhost:9011", v.get());
+
+    // no relevant attributes
+    attributes = buildAttributes(Map.of("span.kind", "client"));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = RpcSemanticConventionUtils.getGrpcURL(e);
+    assertTrue(v.isEmpty());
+
+    // grpc authority is used
+    attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system",
+                "grpc",
+                OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+                "otel-host",
+                "grpc.authority",
+                "some-service:56003"));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = RpcSemanticConventionUtils.getGrpcURL(e);
+    assertEquals("some-service:56003", v.get());
+
+    // rpc.system is not present but grpc authority is present
+    attributes = buildAttributes(Map.of("grpc.authority", "some-service:56003"));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = RpcSemanticConventionUtils.getGrpcURL(e);
+    assertEquals("some-service:56003", v.get());
+
+    // grpc authority is used
+    attributes =
+        buildAttributes(
+            Map.of(
+                RPC_REQUEST_METADATA_AUTHORITY.getValue(),
+                "some-service:56003",
+                "rpc.system",
+                "grpc",
+                OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+                "otel-host"));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = RpcSemanticConventionUtils.getGrpcURL(e);
+    assertEquals("some-service:56003", v.get());
+
+    // rpc.system is not present but grpc authority is present
+    attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system",
+                "grpc",
+                RPC_REQUEST_METADATA_AUTHORITY.getValue(),
+                "some-service:56003"));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = RpcSemanticConventionUtils.getGrpcURL(e);
+    assertEquals("some-service:56003", v.get());
+
+    // otel host name is used
+    attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system",
+                "grpc",
+                OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+                "otel-host"));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = RpcSemanticConventionUtils.getGrpcURL(e);
+    assertEquals("otel-host", v.get());
+  }
+
+  @Test
+  public void testGetGrpcAuthority() {
+    Event e = mock(Event.class);
+
+    Attributes attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system", "grpc",
+                "grpc.authority", "some-service:56003"));
+    when(e.getAttributes()).thenReturn(attributes);
+    Optional<String> v = RpcSemanticConventionUtils.getSanitizedGrpcAuthority(e);
+    assertEquals("some-service:56003", v.get());
+
+    attributes =
+        buildAttributes(
+            Map.of(
+                RPC_REQUEST_METADATA_AUTHORITY.getValue(),
+                "some-service:56003",
+                "rpc.system",
+                "grpc",
+                "grpc.authority",
+                "other-service:56003"));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = RpcSemanticConventionUtils.getSanitizedGrpcAuthority(e);
+    assertEquals("some-service:56003", v.get());
+  }
+
+  @Test
+  public void testGetSanitizedAuthorityValue() {
+    // userinfo@host:port format, userinfo missing
+    Optional<String> authority =
+        RpcSemanticConventionUtils.getSanitizedAuthorityValue("some-service:56004");
+    assertEquals("some-service:56004", authority.get());
+
+    // userinfo@host:port format
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("ram@some-service:56004");
+    assertEquals("some-service:56004", authority.get());
+
+    // userinfo@host:port format
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("ram@www.example.com:56004");
+    assertEquals("www.example.com:56004", authority.get());
+
+    // userinfo@host:port format, userinfo missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("@www.example.com:56004");
+    assertEquals("www.example.com:56004", authority.get());
+
+    // userinfo@host:port format, port missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("ram@www.example.com:");
+    assertEquals("www.example.com", authority.get());
+
+    // userinfo@host:port format, port missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("ram@some-service");
+    assertEquals("some-service", authority.get());
+
+    // userinfo@host:port format, host missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("ram@:56004");
+    assertFalse(authority.isPresent());
+
+    // userinfo@host:port format, userinfo & port missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("some-service");
+    assertEquals("some-service", authority.get());
+
+    // url format, userinfo & path missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("http://some-service:56004");
+    assertEquals("some-service:56004", authority.get());
+
+    // url format, userinfo missing
+    authority =
+        RpcSemanticConventionUtils.getSanitizedAuthorityValue("https://some-service:56004/xyz");
+    assertEquals("some-service:56004", authority.get());
+
+    // url format
+    authority =
+        RpcSemanticConventionUtils.getSanitizedAuthorityValue("https://ram@some-service:56004/xyz");
+    assertEquals("some-service:56004", authority.get());
+
+    // url format, host missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("https://ram@:56004/xyz");
+    assertTrue(authority.isEmpty());
+
+    // url format, port missing
+    authority =
+        RpcSemanticConventionUtils.getSanitizedAuthorityValue("https://ram@some-service:/xyz");
+    assertEquals("some-service", authority.get());
+
+    // url format, userinfo & port missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("http://some-service/xyz");
+    assertEquals("some-service", authority.get());
+
+    // url format, port missing
+    authority =
+        RpcSemanticConventionUtils.getSanitizedAuthorityValue("http://ram@some-service/xyz");
+    assertEquals("some-service", authority.get());
+
+    // blank string
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("");
+    assertTrue(authority.isEmpty());
+
+    // userinfo@host:port, userinfo & port missing & host matches `localhost`
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("localhost");
+    assertTrue(authority.isEmpty());
+
+    // userinfo@host:port, userinfo  missing & host matches `localhost`
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("localhost:56004");
+    assertTrue(authority.isEmpty());
+
+    // userinfo@host:port, host matches `localhost`
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("ram@localhost:56004");
+    assertTrue(authority.isEmpty());
+
+    // userinfo@host:port, host missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue(":9000");
+    assertTrue(authority.isEmpty());
+
+    // url format, userinfo missing, host matches `localhost`
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("http://localhost:56004/xyz");
+    assertTrue(authority.isEmpty());
+
+    // url format, host matches `localhost`
+    authority =
+        RpcSemanticConventionUtils.getSanitizedAuthorityValue("http://ram@localhost:56004/xyz");
+    assertTrue(authority.isEmpty());
+
+    // url format, host is missing
+    authority = RpcSemanticConventionUtils.getSanitizedAuthorityValue("http://:9000/path");
+    assertTrue(authority.isEmpty());
+
+    // invalid uri
+    authority =
+        RpcSemanticConventionUtils.getSanitizedAuthorityValue(
+            "http://www.example.com/file[/].html");
+    assertTrue(authority.isEmpty());
+
+    // invalid uri
+    authority =
+        RpcSemanticConventionUtils.getSanitizedAuthorityValue(
+            "http://ram@www.example.com/file[/].html");
+    assertTrue(authority.isEmpty());
+  }
+
+  private static Attributes buildAttributes(Map<String, String> attributes) {
+    return attributes.entrySet().stream()
+        .collect(
+            Collectors.collectingAndThen(
+                Collectors.toMap(
+                    Entry::getKey, entry -> AttributeValueCreator.create(entry.getValue())),
+                map -> Attributes.newBuilder().setAttributeMap(map).build()));
   }
 }
