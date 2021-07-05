@@ -41,7 +41,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class MigrationTestRpc {
 
-
   private final Random random = new Random();
   private JaegerSpanNormalizer normalizer;
 
@@ -66,7 +65,7 @@ public class MigrationTestRpc {
   @BeforeEach
   public void setup()
       throws SecurityException, NoSuchFieldException, IllegalArgumentException,
-      IllegalAccessException {
+          IllegalAccessException {
     // Since JaegerToRawSpanConverter is a singleton, we need to reset it for unit tests to
     // recreate the instance.
     Field instance = JaegerSpanNormalizer.class.getDeclaredField("INSTANCE");
@@ -79,7 +78,6 @@ public class MigrationTestRpc {
     configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
     this.normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
   }
-
 
   @Test
   public void testGrpcFields() throws Exception {
@@ -169,8 +167,7 @@ public class MigrationTestRpc {
   @Test
   public void testGetGrpcUserAgent() throws Exception {
     Map<String, String> tagsMap =
-        Map.of(
-            RPC_REQUEST_METADATA_USER_AGENT.getValue(), "rpc user agent");
+        Map.of(RPC_REQUEST_METADATA_USER_AGENT.getValue(), "rpc user agent");
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
@@ -180,8 +177,10 @@ public class MigrationTestRpc {
 
     tagsMap =
         Map.of(
-            RPC_REQUEST_METADATA_USER_AGENT.getValue(), "rpc user agent",
-            OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), OTEL_RPC_SYSTEM_GRPC.getValue());
+            RPC_REQUEST_METADATA_USER_AGENT.getValue(),
+            "rpc user agent",
+            OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
+            OTEL_RPC_SYSTEM_GRPC.getValue());
 
     span = createSpanFromTags(tagsMap);
     rawSpan = normalizer.convert("tenant-key", span);
@@ -194,8 +193,7 @@ public class MigrationTestRpc {
   @Test
   public void testGetGrpcAuthority() throws Exception {
     Map<String, String> tagsMap =
-        Map.of(
-            RPC_REQUEST_METADATA_AUTHORITY.getValue(), "grpc authority");
+        Map.of(RPC_REQUEST_METADATA_AUTHORITY.getValue(), "grpc authority");
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
@@ -205,8 +203,10 @@ public class MigrationTestRpc {
 
     tagsMap =
         Map.of(
-            RPC_REQUEST_METADATA_AUTHORITY.getValue(), "grpc authority",
-            OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), OTEL_RPC_SYSTEM_GRPC.getValue());
+            RPC_REQUEST_METADATA_AUTHORITY.getValue(),
+            "grpc authority",
+            OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
+            OTEL_RPC_SYSTEM_GRPC.getValue());
 
     span = createSpanFromTags(tagsMap);
     rawSpan = normalizer.convert("tenant-key", span);
@@ -216,7 +216,8 @@ public class MigrationTestRpc {
         RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).get());
   }
 
-  private static Stream<Arguments> provideArgumentsForTestingGrpcFieldsConverterStatusCodePriority() {
+  private static Stream<Arguments>
+      provideArgumentsForTestingGrpcFieldsConverterStatusCodePriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -256,7 +257,8 @@ public class MigrationTestRpc {
                 statusMessage, rawSpan.getEvent().getGrpc().getResponse().getStatusMessage()));
   }
 
-  private static Stream<Arguments> provideArgumentsForTestingGrpcFieldsConverterStatusMessagePriority() {
+  private static Stream<Arguments>
+      provideArgumentsForTestingGrpcFieldsConverterStatusMessagePriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
