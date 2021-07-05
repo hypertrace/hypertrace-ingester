@@ -733,24 +733,6 @@ public class MigrationTestHttp {
                 HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()));
   }
 
-  @Test
-  public void testPopulateOtherFields() throws Exception {
-
-    Map<String, String> tagMap =
-        Map.of(
-            OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue(),
-            "resource not found",
-            OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
-            OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue());
-
-    Span span = createSpanFromTags(tagMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
-
-    assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
-        RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
-  }
-
   private static Stream<Map<String, String>> provideMapForTestingRequestMethodPriority() {
 
     Map<String, String> tagsMap1 =

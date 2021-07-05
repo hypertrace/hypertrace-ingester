@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Stream;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer;
@@ -273,6 +274,24 @@ public class MigrationTestRpc {
     return Stream.of(
         Arguments.arguments(tagsMap1, "CENSUS_RESPONSE_STATUS_MESSAGE"),
         Arguments.arguments(tagsMap2, "ENVOY_GRPC_STATUS_MESSAGE"));
+  }
+
+  @Test
+  public void testPopulateOtherFields() throws Exception {
+
+    Map<String, String> tagMap =
+        Map.of(
+            OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue(),
+            "resource not found",
+            OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+            OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue());
+
+    Span span = createSpanFromTags(tagMap);
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    assertEquals(
+        rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
+        RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
   }
 
   @Test
