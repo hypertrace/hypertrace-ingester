@@ -1,4 +1,4 @@
-package org.hypertrace.ingester;
+package org.hypertrace.migration;
 
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_CODE;
@@ -58,7 +58,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class MigrationTest {
+public class MigrationTestHttp {
 
   private final Random random = new Random();
   private JaegerSpanNormalizer normalizer;
@@ -746,123 +746,6 @@ public class MigrationTest {
   }
 
   @Test
-  public void testGrpcFields() throws Exception {
-
-    Map<String, String> tagsMap =
-        new HashMap<>() {
-          {
-            put(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE), "Some error message");
-            put(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE), "12");
-            put(RawSpanConstants.getValue(GRPC_STATUS_CODE), "13");
-            put(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
-            put(
-                RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
-                "CENSUS_RESPONSE_STATUS_MESSAGE");
-            put(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), "ENVOY_GRPC_STATUS_MESSAGE");
-            put(RawSpanConstants.getValue(GRPC_REQUEST_BODY), "some grpc request body");
-            put(RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "some grpc response body");
-          }
-        };
-
-    Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
-
-    assertAll(
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
-                RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent())),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-                RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent())),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
-                RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent())),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getSize(),
-                RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get()),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getRequest().getSize(),
-                RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get()));
-  }
-
-  @Test
-  public void testGrpcFieldsConverterEnvoyRequestAndResponseSizeHigherPriority() throws Exception {
-
-    Map<String, String> tagsMap =
-        Map.of(
-            RawSpanConstants.getValue(GRPC_REQUEST_BODY), "some grpc request body",
-            RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "some grpc response body",
-            RawSpanConstants.getValue(ENVOY_REQUEST_SIZE), "200",
-            RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE), "400");
-
-    Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
-
-    assertAll(
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getSize(),
-                RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get()),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getRequest().getSize(),
-                RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get()));
-  }
-
-  @ParameterizedTest
-  @MethodSource("provideArgumentsForTestingGrpcFieldsConverterSatusCodePriority")
-  public void testGrpcFieldsConverterStatusCodePriority(Map<String, String> tagsMap, int statusCode)
-      throws Exception {
-
-    Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
-
-    assertAll(
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-                RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent())),
-        () -> assertEquals(statusCode, rawSpan.getEvent().getGrpc().getResponse().getStatusCode()));
-  }
-
-  @ParameterizedTest
-  @MethodSource("provideArgumentsForTestingGrpcFieldsConverterSatusMessagePriority")
-  public void testGrpcFieldsConverterStatusMessagePriority(
-      Map<String, String> tagsMap, String statusMessage) throws Exception {
-
-    Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
-
-    assertAll(
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
-                RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent())),
-        () ->
-            assertEquals(
-                statusMessage, rawSpan.getEvent().getGrpc().getResponse().getStatusMessage()));
-  }
-
-  @Test
-  public void testGrpcFieldsForOTelSpan() throws Exception {
-
-    Map<String, String> tagMap =
-        Map.of(OTelRpcSemanticConventions.GRPC_STATUS_CODE.getValue(), "5");
-
-    Span span = createSpanFromTags(tagMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
-
-    assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
-  }
-
-  @Test
   public void testPopulateOtherFields() throws Exception {
 
     Map<String, String> tagMap =
@@ -878,50 +761,6 @@ public class MigrationTest {
     assertEquals(
         rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
         RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
-  }
-
-  @Test
-  public void testRpcFieldsGrpcSystem() throws Exception {
-
-    Map<String, String> tagMap =
-        Map.of(
-            OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), "grpc",
-            RPC_REQUEST_METADATA_AUTHORITY.getValue(), "testservice:45",
-            RPC_REQUEST_METADATA_USER_AGENT.getValue(), "grpc-go/1.17.0");
-
-    Span span = createSpanFromTags(tagMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
-
-    assertAll(
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getAuthority(),
-                RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).get()),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getUserAgent(),
-                RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).get()));
-  }
-
-  @Test
-  public void testRpcFieldsNonGrpcSystem() throws Exception {
-
-    Map<String, String> tagsMap =
-        Map.of(
-            OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), "wcf",
-            RPC_REQUEST_METADATA_AUTHORITY.getValue(), "testservice:45",
-            RPC_REQUEST_METADATA_USER_AGENT.getValue(), "grpc-go/1.17.0");
-
-    Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
-
-    assertAll(
-        () ->
-            assertFalse(
-                RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).isPresent()),
-        () ->
-            assertFalse(
-                RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).isPresent()));
   }
 
   private static Stream<Map<String, String>> provideMapForTestingRequestMethodPriority() {
@@ -1025,48 +864,7 @@ public class MigrationTest {
     return Stream.of(tagsMap1, tagsMap2);
   }
 
-  private static Stream<Arguments>
-      provideArgumentsForTestingGrpcFieldsConverterSatusCodePriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE), "12",
-            RawSpanConstants.getValue(GRPC_STATUS_CODE), "13",
-            RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
-
-    Map<String, String> tagsMap2 =
-        Map.of(
-            RawSpanConstants.getValue(GRPC_STATUS_CODE), "13",
-            RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
-
-    Map<String, String> tagsMap3 =
-        Map.of(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
-
-    return Stream.of(
-        Arguments.arguments(tagsMap1, 12),
-        Arguments.arguments(tagsMap2, 13),
-        Arguments.arguments(tagsMap3, 14));
-  }
-
-  private static Stream<Arguments>
-      provideArgumentsForTestingGrpcFieldsConverterSatusMessagePriority() {
-
-    Map<String, String> tagsMap1 =
-        Map.of(
-            RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
-            "CENSUS_RESPONSE_STATUS_MESSAGE",
-            RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE),
-            "ENVOY_GRPC_STATUS_MESSAGE");
-
-    Map<String, String> tagsMap2 =
-        Map.of(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), "ENVOY_GRPC_STATUS_MESSAGE");
-
-    return Stream.of(
-        Arguments.arguments(tagsMap1, "CENSUS_RESPONSE_STATUS_MESSAGE"),
-        Arguments.arguments(tagsMap2, "ENVOY_GRPC_STATUS_MESSAGE"));
-  }
-
-  private Span createSpanFromTags(Map<String, String> tagsMap) {
+  static Span createSpanFromTags(Map<String, String> tagsMap) {
     return Span.newBuilder()
         .addAllTags(
             tagsMap.entrySet().stream()

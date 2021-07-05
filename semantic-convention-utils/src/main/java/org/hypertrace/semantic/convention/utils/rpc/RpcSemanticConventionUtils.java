@@ -146,10 +146,8 @@ public class RpcSemanticConventionUtils {
   public static Boolean isRpcSystemGrpc(Map<String, AttributeValue> attributeValueMap) {
     if (attributeValueMap.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR) != null) {
       String val = attributeValueMap.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR).getValue();
-      if (StringUtils.isNotBlank(val)
-          && StringUtils.equals(val, OTelRpcSystem.OTEL_RPC_SYSTEM_GRPC.getValue())) {
-        return true;
-      }
+      return StringUtils.isNotBlank(val)
+          && StringUtils.equals(val, OTelRpcSystem.OTEL_RPC_SYSTEM_GRPC.getValue());
     }
     return false;
   }
