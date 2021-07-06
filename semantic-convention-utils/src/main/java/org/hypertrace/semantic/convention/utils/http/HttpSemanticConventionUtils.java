@@ -409,7 +409,7 @@ public class HttpSemanticConventionUtils {
     if (url.isPresent() && !isAbsoluteUrl(url.get())) {
       return Optional.empty();
     }
-    return getHttpUrlFromRawAttributes(event);
+    return url;
   }
 
   //  input url to populateurlparts
