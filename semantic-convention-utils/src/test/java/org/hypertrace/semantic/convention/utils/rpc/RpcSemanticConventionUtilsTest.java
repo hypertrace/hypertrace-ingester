@@ -8,10 +8,12 @@ import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_X_FORWARDED_FOR;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
@@ -163,6 +165,39 @@ class RpcSemanticConventionUtilsTest {
         createMockEventWithAttribute(
             RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE), "msg 1");
     assertEquals("msg 1", RpcSemanticConventionUtils.getGrpcStatusMsg(event));
+  }
+
+  @Test
+  public void testRpcMethod() {
+    Event event = createMockEventWithAttribute(OTEL_SPAN_TAG_RPC_METHOD.getValue(), "GetId");
+    assertEquals("GetId", RpcSemanticConventionUtils.getRpcMethod(event).get());
+  }
+
+  @Test
+  public void testRpcService() {
+    Event event =
+        createMockEventWithAttribute(
+            OTelRpcSemanticConventions.RPC_SYSTEM_SERVICE.getValue(), "package.service");
+    assertEquals("package.service", RpcSemanticConventionUtils.getRpcService(event).get());
+  }
+
+  @Test
+  public void testGetGrpcRequestMetadataPath() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "rpc.system",
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RPC_REQUEST_METADATA_PATH.getValue(),
+                        AttributeValue.newBuilder().setValue("/package.service/GetId").build()))
+                .build());
+
+    assertEquals(
+        "/package.service/GetId",
+        RpcSemanticConventionUtils.getGrpcRequestMetadataPath(event).get());
   }
 
   @Test
