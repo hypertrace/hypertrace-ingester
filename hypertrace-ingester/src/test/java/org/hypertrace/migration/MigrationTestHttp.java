@@ -10,6 +10,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRI
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
@@ -17,6 +18,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DA
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_UNDERSCORE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_METHOD;
+import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -163,6 +165,18 @@ public class MigrationTestHttp {
     assertEquals(
         rawSpan.getEvent().getHttp().getRequest().getPath(),
         HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideMapForTestingResponseStatusCodePriority")
+  public void testResponseStatusCodePriority(Map<String, String> tagsMap) throws Exception {
+
+    Span span = createSpanFromTags(tagsMap);
+    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+
+    assertEquals(
+        rawSpan.getEvent().getHttp().getResponse().getStatusCode(),
+        HttpSemanticConventionUtils.getHttpResponseStatusCode(rawSpan.getEvent()));
   }
 
   @Test
@@ -808,6 +822,19 @@ public class MigrationTestHttp {
             RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "90");
 
     Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "85");
+
+    return Stream.of(tagsMap1, tagsMap2);
+  }
+
+  private static Stream<Map<String, String>> provideMapForTestingResponseStatusCodePriority() {
+
+    Map<String, String> tagsMap1 =
+        Map.of(
+            RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_STATUS_CODE), "200",
+            RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE), "201");
+
+    Map<String, String> tagsMap2 =
+        Map.of(RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE), "201");
 
     return Stream.of(tagsMap1, tagsMap2);
   }
