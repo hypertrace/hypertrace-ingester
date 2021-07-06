@@ -3,19 +3,27 @@ package org.hypertrace.semantic.convention.utils.rpc;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
+import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_X_FORWARDED_FOR;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -24,6 +32,7 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -159,9 +168,104 @@ class RpcSemanticConventionUtilsTest {
   }
 
   @Test
+  public void testRpcMethod() {
+    Event event = createMockEventWithAttribute(OTEL_SPAN_TAG_RPC_METHOD.getValue(), "GetId");
+    assertEquals("GetId", RpcSemanticConventionUtils.getRpcMethod(event).get());
+  }
+
+  @Test
+  public void testRpcService() {
+    Event event =
+        createMockEventWithAttribute(
+            OTelRpcSemanticConventions.RPC_SYSTEM_SERVICE.getValue(), "package.service");
+    assertEquals("package.service", RpcSemanticConventionUtils.getRpcService(event).get());
+  }
+
+  @Test
+  public void testGetGrpcRequestMetadataPath() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "rpc.system",
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RPC_REQUEST_METADATA_PATH.getValue(),
+                        AttributeValue.newBuilder().setValue("/package.service/GetId").build()))
+                .build());
+
+    assertEquals(
+        "/package.service/GetId",
+        RpcSemanticConventionUtils.getGrpcRequestMetadataPath(event).get());
+  }
+
+  @Test
   public void testGetGrpcErrorMsg() {
     Event event =
         createMockEventWithAttribute(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE), "e_msg 1");
+    assertEquals("e_msg 1", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "rpc.system",
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RPC_ERROR_MESSAGE.getValue(),
+                        AttributeValue.newBuilder().setValue("e_msg 2").build()))
+                .build());
+    assertEquals("e_msg 2", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
+  }
+
+  @Test
+  public void testGetGrpcErrorMsgPriority() {
+
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue(),
+                        AttributeValue.newBuilder().setValue("exc_msg").build(),
+                        RawSpanConstants.getValue(GRPC_ERROR_MESSAGE),
+                        AttributeValue.newBuilder().setValue("e_msg 1").build(),
+                        RPC_ERROR_MESSAGE.getValue(),
+                        AttributeValue.newBuilder().setValue("e_msg 2").build()))
+                .build());
+    assertEquals("exc_msg", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RawSpanConstants.getValue(GRPC_ERROR_MESSAGE),
+                        AttributeValue.newBuilder().setValue("e_msg 1").build(),
+                        RPC_ERROR_MESSAGE.getValue(),
+                        AttributeValue.newBuilder().setValue("e_msg 2").build()))
+                .build());
+    assertEquals("e_msg 2", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RawSpanConstants.getValue(GRPC_ERROR_MESSAGE),
+                        AttributeValue.newBuilder().setValue("e_msg 1").build()))
+                .build());
     assertEquals("e_msg 1", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
   }
 
@@ -238,6 +342,77 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     assertTrue(RpcSemanticConventionUtils.getGrpcRequestSize(event).isEmpty());
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RPC_REQUEST_BODY.getValue(),
+                        AttributeValue.newBuilder().setValue("some rpc request body").build(),
+                        "rpc.system",
+                        AttributeValue.newBuilder().setValue("grpc").build()))
+                .build());
+    assertEquals(Optional.of(21), RpcSemanticConventionUtils.getGrpcRequestSize(event));
+  }
+
+  @Test
+  public void testGetGrpcRequestSizePriority() {
+
+    Map<String, AttributeValue> tagsMap =
+        new HashMap<>() {
+          {
+            put(
+                RawSpanConstants.getValue(ENVOY_REQUEST_SIZE),
+                AttributeValue.newBuilder().setValue("1").build());
+            put(
+                RawSpanConstants.getValue(GRPC_REQUEST_BODY),
+                AttributeValue.newBuilder().setValue("some grpc request body").build());
+            put(
+                RPC_REQUEST_BODY.getValue(),
+                AttributeValue.newBuilder().setValue("some rpc request body").build());
+            put("rpc.system", AttributeValue.newBuilder().setValue("grpc").build());
+          }
+        };
+
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+    assertEquals(Optional.of(1), RpcSemanticConventionUtils.getGrpcRequestSize(event));
+
+    tagsMap =
+        new HashMap<>() {
+          {
+            put(
+                RawSpanConstants.getValue(GRPC_REQUEST_BODY),
+                AttributeValue.newBuilder().setValue("some grpc request body").build());
+            put(
+                RPC_REQUEST_BODY.getValue(),
+                AttributeValue.newBuilder().setValue("some rpc request body").build());
+            put("rpc.system", AttributeValue.newBuilder().setValue("grpc").build());
+          }
+        };
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+    assertEquals(Optional.of(22), RpcSemanticConventionUtils.getGrpcRequestSize(event));
+
+    tagsMap =
+        new HashMap<>() {
+          {
+            put(
+                RPC_REQUEST_BODY.getValue(),
+                AttributeValue.newBuilder().setValue("some rpc request body").build());
+            put("rpc.system", AttributeValue.newBuilder().setValue("grpc").build());
+          }
+        };
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+    assertEquals(Optional.of(21), RpcSemanticConventionUtils.getGrpcRequestSize(event));
   }
 
   @Test
@@ -249,6 +424,77 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     assertTrue(RpcSemanticConventionUtils.getGrpcResponseSize(event).isEmpty());
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RPC_RESPONSE_BODY.getValue(),
+                        AttributeValue.newBuilder().setValue("some rpc response body").build(),
+                        "rpc.system",
+                        AttributeValue.newBuilder().setValue("grpc").build()))
+                .build());
+    assertEquals(Optional.of(22), RpcSemanticConventionUtils.getGrpcResponseSize(event));
+  }
+
+  @Test
+  public void testGetGrpcResponseSizePriority() {
+
+    Map<String, AttributeValue> tagsMap =
+        new HashMap<>() {
+          {
+            put(
+                RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
+                AttributeValue.newBuilder().setValue("1").build());
+            put(
+                RawSpanConstants.getValue(GRPC_RESPONSE_BODY),
+                AttributeValue.newBuilder().setValue("some grpc response body").build());
+            put(
+                RPC_RESPONSE_BODY.getValue(),
+                AttributeValue.newBuilder().setValue("some rpc response body").build());
+            put("rpc.system", AttributeValue.newBuilder().setValue("grpc").build());
+          }
+        };
+
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+    assertEquals(Optional.of(1), RpcSemanticConventionUtils.getGrpcResponseSize(event));
+
+    tagsMap =
+        new HashMap<>() {
+          {
+            put(
+                RawSpanConstants.getValue(GRPC_RESPONSE_BODY),
+                AttributeValue.newBuilder().setValue("some grpc response body").build());
+            put(
+                RPC_RESPONSE_BODY.getValue(),
+                AttributeValue.newBuilder().setValue("some rpc response body").build());
+            put("rpc.system", AttributeValue.newBuilder().setValue("grpc").build());
+          }
+        };
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+    assertEquals(Optional.of(23), RpcSemanticConventionUtils.getGrpcResponseSize(event));
+
+    tagsMap =
+        new HashMap<>() {
+          {
+            put(
+                RPC_RESPONSE_BODY.getValue(),
+                AttributeValue.newBuilder().setValue("some rpc response body").build());
+            put("rpc.system", AttributeValue.newBuilder().setValue("grpc").build());
+          }
+        };
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+    assertEquals(Optional.of(22), RpcSemanticConventionUtils.getGrpcResponseSize(event));
   }
 
   @Test
