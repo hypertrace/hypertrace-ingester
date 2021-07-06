@@ -48,24 +48,6 @@ public class MigrationTestHttp {
   private final Random random = new Random();
   private JaegerSpanNormalizer normalizer;
 
-  private Map<String, Object> getCommonConfig() {
-    return Map.of(
-        "span.type",
-        "jaeger",
-        "input.topic",
-        "jaeger-spans",
-        "output.topic",
-        "raw-spans-from-jaeger-spans",
-        "kafka.streams.config",
-        Map.of(
-            "application.id",
-            "jaeger-spans-to-raw-spans-job",
-            "bootstrap.servers",
-            "localhost:9092"),
-        "schema.registry.config",
-        Map.of("schema.registry.url", "http://localhost:8081"));
-  }
-
   @BeforeEach
   public void setup()
       throws SecurityException, NoSuchFieldException, IllegalArgumentException,
@@ -78,8 +60,7 @@ public class MigrationTestHttp {
 
     // Create a JaegerSpanNormaliser
     String tenantId = "tenant-" + this.random.nextLong();
-    Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    Map<String, Object> configs = Map.of("processor", Map.of("defaultTenantId", tenantId));
     this.normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
   }
 
