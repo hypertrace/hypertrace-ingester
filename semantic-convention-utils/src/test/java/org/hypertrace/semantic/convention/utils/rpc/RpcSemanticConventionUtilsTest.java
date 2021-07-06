@@ -9,6 +9,7 @@ import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
@@ -29,6 +30,7 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -167,6 +169,68 @@ class RpcSemanticConventionUtilsTest {
   public void testGetGrpcErrorMsg() {
     Event event =
         createMockEventWithAttribute(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE), "e_msg 1");
+    assertEquals("e_msg 1", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "rpc.system",
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RPC_ERROR_MESSAGE.getValue(),
+                        AttributeValue.newBuilder().setValue("e_msg 2").build()))
+                .build());
+    assertEquals("e_msg 2", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
+  }
+
+  @Test
+  public void testGetGrpcErrorMsgPriority() {
+
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        OTelErrorSemanticConventions.EXCEPTION_MESSAGE.getValue(),
+                        AttributeValue.newBuilder().setValue("exc_msg").build(),
+                        RawSpanConstants.getValue(GRPC_ERROR_MESSAGE),
+                        AttributeValue.newBuilder().setValue("e_msg 1").build(),
+                        RPC_ERROR_MESSAGE.getValue(),
+                        AttributeValue.newBuilder().setValue("e_msg 2").build()))
+                .build());
+    assertEquals("exc_msg", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RawSpanConstants.getValue(GRPC_ERROR_MESSAGE),
+                        AttributeValue.newBuilder().setValue("e_msg 1").build(),
+                        RPC_ERROR_MESSAGE.getValue(),
+                        AttributeValue.newBuilder().setValue("e_msg 2").build()))
+                .build());
+    assertEquals("e_msg 2", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RawSpanConstants.getValue(GRPC_ERROR_MESSAGE),
+                        AttributeValue.newBuilder().setValue("e_msg 1").build()))
+                .build());
     assertEquals("e_msg 1", RpcSemanticConventionUtils.getGrpcErrorMsg(event));
   }
 

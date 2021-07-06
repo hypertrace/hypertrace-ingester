@@ -9,6 +9,7 @@ import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
@@ -218,9 +219,15 @@ public class RpcSemanticConventionUtils {
           .getValue();
     }
 
+    if (isRpcSystemGrpc(attributeValueMap)
+        && attributeValueMap.get(RPC_ERROR_MESSAGE.getValue()) != null) {
+      return attributeValueMap.get(RPC_ERROR_MESSAGE.getValue()).getValue();
+    }
+
     if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE)) != null) {
       return attributeValueMap.get(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE)).getValue();
     }
+
     return "";
   }
 
