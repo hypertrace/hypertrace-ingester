@@ -268,7 +268,9 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null) {
+    if ((attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null)
+        || (isRpcSystemGrpc(attributeValueMap)
+            && attributeValueMap.get(RPC_REQUEST_BODY.getValue()) != null)) {
 
       if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE)) != null) {
         return Optional.of(
@@ -292,7 +294,9 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null) {
+    if ((attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null)
+        || (isRpcSystemGrpc(attributeValueMap)
+            && attributeValueMap.get(RPC_RESPONSE_BODY.getValue()) != null)) {
 
       if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE)) != null) {
         return Optional.of(
