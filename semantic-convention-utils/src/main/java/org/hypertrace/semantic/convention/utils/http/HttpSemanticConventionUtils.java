@@ -321,7 +321,8 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.of(getNormalizedUrl(url.get()).getAuthority());
       } catch (MalformedURLException e) {
-        LOGGER.warn("Received invalid URL host : {}", e.getMessage());
+        LOGGER.warn(
+            "On extracting httpHost, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
     return Optional.ofNullable(
@@ -339,7 +340,8 @@ public class HttpSemanticConventionUtils {
         }
         return Optional.of(removeTrailingSlash(pathval));
       } catch (MalformedURLException e) {
-        LOGGER.warn("Received invalid URL path : {}", e.getMessage());
+        LOGGER.warn(
+            "On extracting httpPath, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
     return path;
@@ -386,7 +388,8 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.of(getNormalizedUrl(url.get()).getProtocol());
       } catch (MalformedURLException e) {
-        LOGGER.warn("Received invalid URL scheme : {}", e.getMessage());
+        LOGGER.warn(
+            "On extracting httpScheme, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
     return getHttpSchemeFromRawAttributes(event);
@@ -459,7 +462,10 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.ofNullable(getNormalizedUrl(url.get()).getQuery());
       } catch (MalformedURLException e) {
-        LOGGER.warn("Received invalid URL querystring : {}", e.getMessage());
+        LOGGER.warn(
+            "On extracting httpQueryString, received an invalid URL: {}, {}",
+            url.get(),
+            e.getMessage());
       }
     }
     return queryString;
@@ -525,7 +531,10 @@ public class HttpSemanticConventionUtils {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
     } catch (MalformedURLException e) {
-      LOGGER.warn("Received invalid URL path : {}, {}", urlPath, e.getMessage());
+      LOGGER.warn(
+          "On extracting httpResponseStatusCode, received invalid URL path : {}, {}",
+          urlPath,
+          e.getMessage());
     }
     return Optional.empty();
   }
