@@ -431,13 +431,17 @@ public class HttpSemanticConventionUtils {
       }
     }
 
-    // check for OTel format
-    Optional<String> httpUrlForOTelFormat = getHttpUrlForOTelFormat(attributeValueMap);
-    if (httpUrlFromRawAttributes != null
-        && (isAbsoluteUrl(httpUrlFromRawAttributes) || httpUrlForOTelFormat.isEmpty())) {
+    if (httpUrlFromRawAttributes != null && isAbsoluteUrl(httpUrlFromRawAttributes)) {
       return Optional.of(httpUrlFromRawAttributes);
     }
-    return httpUrlForOTelFormat;
+
+    // check for OTel format
+    Optional<String> httpUrlForOTelFormat = getHttpUrlForOTelFormat(attributeValueMap);
+    if (httpUrlForOTelFormat.isPresent()) {
+      return httpUrlForOTelFormat;
+    }
+
+    return Optional.ofNullable(httpUrlFromRawAttributes);
   }
 
   public static Optional<String> getHttpQueryString(Event event) {
