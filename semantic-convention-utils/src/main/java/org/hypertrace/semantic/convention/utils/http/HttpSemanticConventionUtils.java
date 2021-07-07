@@ -46,9 +46,13 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Utility class to fetch http span attributes */
 public class HttpSemanticConventionUtils {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpSemanticConventionUtils.class);
 
   // otel specific attributes
   private static final String OTEL_HTTP_METHOD = OTelHttpSemanticConventions.HTTP_METHOD.getValue();
@@ -317,7 +321,7 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.of(getNormalizedUrl(url.get()).getAuthority());
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOGGER.warn("Received invalid URL host : {}", e.getMessage());
       }
     }
     return Optional.ofNullable(
@@ -335,7 +339,7 @@ public class HttpSemanticConventionUtils {
         }
         return Optional.of(removeTrailingSlash(pathval));
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOGGER.warn("Received invalid URL path : {}", e.getMessage());
       }
     }
     return path;
@@ -382,7 +386,7 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.of(getNormalizedUrl(url.get()).getProtocol());
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOGGER.warn("Received invalid URL scheme : {}", e.getMessage());
       }
     }
     return getHttpSchemeFromRawAttributes(event);
@@ -455,7 +459,7 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.ofNullable(getNormalizedUrl(url.get()).getQuery());
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOGGER.warn("Received invalid URL querystring : {}", e.getMessage());
       }
     }
     return queryString;
@@ -521,7 +525,7 @@ public class HttpSemanticConventionUtils {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
     } catch (MalformedURLException e) {
-      e.printStackTrace();
+      LOGGER.warn("Received invalid URL path : {}, {}", urlPath, e.getMessage());
     }
     return Optional.empty();
   }
