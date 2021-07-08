@@ -199,12 +199,14 @@ public class ApiTraceGraph {
           apiNode.getEvents().forEach(e -> remainingEventIds.remove(e.getEventId()));
         } else if (!StringUtils.equals(
             EnrichedSpanUtils.getSpanType(event), UNKNOWN_SPAN_KIND_VALUE)) {
-          LOGGER.warn(
-              "Non exit root span wasn't picked for ApiNode; traceId: {}, spanId: {}, spanName: {}, serviceName: {}",
-              HexUtils.getHex(trace.getTraceId()),
-              HexUtils.getHex(event.getEventId()),
-              event.getEventName(),
-              event.getServiceName());
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(
+                "Non exit root span wasn't picked for ApiNode; traceId: {}, spanId: {}, spanName: {}, serviceName: {}",
+                HexUtils.getHex(trace.getTraceId()),
+                HexUtils.getHex(event.getEventId()),
+                event.getEventName(),
+                event.getServiceName());
+          }
         }
       }
     }
