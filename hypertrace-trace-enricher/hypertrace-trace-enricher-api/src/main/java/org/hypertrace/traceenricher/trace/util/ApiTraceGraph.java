@@ -307,18 +307,20 @@ public class ApiTraceGraph {
                         .add(apiNodeEventEdgeList.size() - 1);
                   });
             } else {
-              LOGGER.warn(
-                  "Exit boundary event with eventId: {}, eventName: {}, serviceName: {},"
-                      + " can only have entry boundary event as child. Non-entry child:"
-                      + " childEventId: {}, childEventName: {}, childServiceName: {}."
-                      + " traceId for events: {}",
-                  HexUtils.getHex(exitBoundaryEvent.getEventId()),
-                  exitBoundaryEvent.getEventName(),
-                  exitBoundaryEvent.getServiceName(),
-                  HexUtils.getHex(exitBoundaryEventChild.getEventId()),
-                  exitBoundaryEventChild.getEventName(),
-                  exitBoundaryEventChild.getServiceName(),
-                  HexUtils.getHex(trace.getTraceId()));
+              if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                    "Exit boundary event with eventId: {}, eventName: {}, serviceName: {},"
+                        + " can only have entry boundary event as child. Non-entry child:"
+                        + " childEventId: {}, childEventName: {}, childServiceName: {}."
+                        + " traceId for events: {}",
+                    HexUtils.getHex(exitBoundaryEvent.getEventId()),
+                    exitBoundaryEvent.getEventName(),
+                    exitBoundaryEvent.getServiceName(),
+                    HexUtils.getHex(exitBoundaryEventChild.getEventId()),
+                    exitBoundaryEventChild.getEventName(),
+                    exitBoundaryEventChild.getServiceName(),
+                    HexUtils.getHex(trace.getTraceId()));
+              }
             }
           }
         }
@@ -366,9 +368,11 @@ public class ApiTraceGraph {
         return Optional.of(apiNodeEventEdge);
       }
     } else {
-      LOGGER.warn(
-          "Strange! Entry boundary event {} should already have been discovered as an api node",
-          entryBoundaryEventOfDestinationApiNode);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug(
+            "Strange! Entry boundary event {} should already have been discovered as an api node",
+            entryBoundaryEventOfDestinationApiNode);
+      }
     }
     return Optional.empty();
   }
