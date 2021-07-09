@@ -270,10 +270,12 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       BackendType type = backendProvider.getBackendType(event);
       Optional<String> maybeBackendUri = backendProvider.getBackendUri(event, structuredTraceGraph);
       if (maybeBackendUri.isEmpty() || StringUtils.isEmpty(maybeBackendUri.get())) {
-        LOGGER.error(
-            "Unable to infer backend uri from event {} for backend type {}",
-            HexUtils.getHex(event.getEventId()),
-            type);
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug(
+              "Unable to infer backend uri from event {} for backend type {}",
+              HexUtils.getHex(event.getEventId()),
+              type);
+        }
         continue;
       }
 
