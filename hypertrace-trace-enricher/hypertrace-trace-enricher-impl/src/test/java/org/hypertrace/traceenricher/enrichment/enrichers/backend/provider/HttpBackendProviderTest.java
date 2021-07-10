@@ -20,6 +20,7 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.eventfields.http.Request;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -41,12 +42,14 @@ import org.junit.jupiter.api.Test;
 public class HttpBackendProviderTest {
   private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
+  private StructuredTrace structuredTrace;
 
   @BeforeEach
   public void setup() {
     backendEntityEnricher = new MockBackendEntityEnricher();
     backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
 
+    structuredTrace = mock(StructuredTrace.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -117,7 +120,8 @@ public class HttpBackendProviderTest {
                     .build())
             .build();
 
-    final BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
+    final BackendInfo backendInfo =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
     assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
@@ -247,7 +251,7 @@ public class HttpBackendProviderTest {
             .build();
 
     final Entity backendEntity =
-        backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
     assertEquals("dataservice:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -355,7 +359,7 @@ public class HttpBackendProviderTest {
             .build();
 
     final Entity backendEntity =
-        backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
     assertEquals("dataservice:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -462,7 +466,7 @@ public class HttpBackendProviderTest {
             .build();
 
     final Entity backendEntity =
-        backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
     assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -581,7 +585,8 @@ public class HttpBackendProviderTest {
                     .build())
             .build();
 
-    Entity backendEntity = backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
+    Entity backendEntity =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
     assertEquals("dataservice:9394", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -700,7 +705,7 @@ public class HttpBackendProviderTest {
             .build();
 
     final Entity backendEntity =
-        backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
     assertEquals(backendEntity.getEntityName(), "dataservice:9394");
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(

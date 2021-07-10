@@ -16,6 +16,7 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -32,6 +33,7 @@ public class CassandraBackendProviderTest {
 
   private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
+  private StructuredTrace structuredTrace;
 
   @BeforeEach
   public void setup() {
@@ -39,12 +41,15 @@ public class CassandraBackendProviderTest {
     backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
 
     structuredTraceGraph = mock(StructuredTraceGraph.class);
+    structuredTrace = mock(StructuredTrace.class);
   }
 
   @Test
   public void testBackendResolution() {
     BackendInfo backendInfo =
-        backendEntityEnricher.resolve(getCassandraEvent(), structuredTraceGraph).get();
+        backendEntityEnricher
+            .resolve(getCassandraEvent(), structuredTrace, structuredTraceGraph)
+            .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals("localhost:9000", entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
@@ -60,7 +65,9 @@ public class CassandraBackendProviderTest {
   @Test
   public void testBackendResolutionForOTEvent() {
     BackendInfo backendInfo =
-        backendEntityEnricher.resolve(getCassandraOTEvent(), structuredTraceGraph).get();
+        backendEntityEnricher
+            .resolve(getCassandraOTEvent(), structuredTrace, structuredTraceGraph)
+            .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals("localhost:9000", entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
@@ -70,7 +77,9 @@ public class CassandraBackendProviderTest {
   @Test
   public void testBackendResolutionWithoutConnectionString() {
     BackendInfo backendInfo =
-        backendEntityEnricher.resolve(getCassandraOTelEvent(), structuredTraceGraph).get();
+        backendEntityEnricher
+            .resolve(getCassandraOTelEvent(), structuredTrace, structuredTraceGraph)
+            .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals("test:9000", entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
