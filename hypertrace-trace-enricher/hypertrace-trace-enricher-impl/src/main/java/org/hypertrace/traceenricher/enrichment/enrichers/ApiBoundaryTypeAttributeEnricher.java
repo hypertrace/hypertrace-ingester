@@ -82,9 +82,9 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
     if (isEntrySpan) {
       /*
       Determines if this is entry span is an entry to  api
-      1. If the event is an ENTRY span, and
-      2. If the direct parent span is either an EXIT Span or Null, then this is the entry point.
-      3. If the direct parent span service name different from current span service name.
+      1. If the event is an ENTRY span, and if the direct parent span is either an EXIT Span or Null.
+                              OR
+      2. If the event is an ENTRY span, and the direct parent span service name different from current span service name.
       */
 
       Event parentEvent = graph.getParentEvent(event);

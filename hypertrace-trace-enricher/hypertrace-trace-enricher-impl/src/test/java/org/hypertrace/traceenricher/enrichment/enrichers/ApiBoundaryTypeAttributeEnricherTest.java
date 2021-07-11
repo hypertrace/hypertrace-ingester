@@ -124,16 +124,16 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
     mockDoubleEntryStructuredGraph();
     target.enrichEvent(trace, outerEntrySpan);
     Assertions.assertEquals(
-            EnrichedSpanUtils.getApiBoundaryType(outerEntrySpan),
-            Constants.getEnrichedSpanConstant(ENTRY));
+        EnrichedSpanUtils.getApiBoundaryType(outerEntrySpan),
+        Constants.getEnrichedSpanConstant(ENTRY));
     target.enrichEvent(trace, innerEntrySpan);
     Assertions.assertNull(EnrichedSpanUtils.getApiBoundaryType(innerEntrySpan));
     mockDoubleEntryStructuredGraph();
     when(innerEntrySpan.getServiceName()).thenReturn("service2");
     target.enrichEvent(trace, innerEntrySpan);
     Assertions.assertEquals(
-            EnrichedSpanUtils.getApiBoundaryType(innerEntrySpan),
-            Constants.getEnrichedSpanConstant(ENTRY));
+        EnrichedSpanUtils.getApiBoundaryType(innerEntrySpan),
+        Constants.getEnrichedSpanConstant(ENTRY));
   }
 
   @Test
