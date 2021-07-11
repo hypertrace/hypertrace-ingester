@@ -17,6 +17,7 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
@@ -37,12 +38,14 @@ public class ClientSpanEndpointProviderTest {
 
   private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
+  private StructuredTrace structuredTrace;
 
   @BeforeEach
   public void setup() {
     backendEntityEnricher = new MockBackendEntityEnricher();
     backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
 
+    structuredTrace = mock(StructuredTrace.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -115,7 +118,8 @@ public class ClientSpanEndpointProviderTest {
             .build();
 
     when(structuredTraceGraph.getParentEvent(e)).thenReturn(parentEvent);
-    Entity backendEntity = backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
+    Entity backendEntity =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
     assertEquals(
         "redis",
         backendEntity
@@ -197,7 +201,8 @@ public class ClientSpanEndpointProviderTest {
     // Since the event serviceName is same as parentServiceName, no new service entity should be
     // created.
     when(structuredTraceGraph.getParentEvent(e)).thenReturn(parentEvent);
-    Assertions.assertTrue(backendEntityEnricher.resolve(e, structuredTraceGraph).isEmpty());
+    Assertions.assertTrue(
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).isEmpty());
   }
 
   static class MockBackendEntityEnricher extends AbstractBackendEntityEnricher {
