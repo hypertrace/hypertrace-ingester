@@ -84,10 +84,12 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
       Determines if this is entry span is an entry to  api
       1. If the event is an ENTRY span, and
       2. If the direct parent span is either an EXIT Span or Null, then this is the entry point.
+      3. If the direct parent span service name different from current span service name.
       */
 
       Event parentEvent = graph.getParentEvent(event);
-      if (!EnrichedSpanUtils.isEntrySpan(parentEvent)) {
+      if (!EnrichedSpanUtils.isEntrySpan(parentEvent)
+          || areBothSpansFromDifferentService(event, parentEvent)) {
         addEnrichedAttribute(
             event, API_BOUNDARY_TYPE_ATTR_NAME, AttributeValueCreator.create(ENTRY_BOUNDARY_TYPE));
 
@@ -117,6 +119,13 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
         }
       }
     }
+  }
+
+  private boolean areBothSpansFromDifferentService(Event event, Event parentEvent) {
+    if (event.getServiceName() == null || parentEvent.getServiceName() == null) {
+      return false;
+    }
+    return !StringUtils.equals(event.getServiceName(), parentEvent.getServiceName());
   }
 
   /**
