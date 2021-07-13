@@ -16,6 +16,7 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -32,12 +33,14 @@ import org.junit.jupiter.api.Test;
 public class RabbitMqBackendProviderTest {
   private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
+  private StructuredTrace structuredTrace;
 
   @BeforeEach
   public void setup() {
     backendEntityEnricher = new MockBackendEntityEnricher();
     backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
 
+    structuredTrace = mock(StructuredTrace.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -45,7 +48,9 @@ public class RabbitMqBackendProviderTest {
   public void testEventResolution() {
     String routingKey = "routingkey";
     BackendInfo backendInfo =
-        backendEntityEnricher.resolve(getRabbitMqEvent(routingKey), structuredTraceGraph).get();
+        backendEntityEnricher
+            .resolve(getRabbitMqEvent(routingKey), structuredTrace, structuredTraceGraph)
+            .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals(routingKey, entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
@@ -63,7 +68,8 @@ public class RabbitMqBackendProviderTest {
     String routingKey = "routingkey";
     BackendInfo backendInfo =
         backendEntityEnricher
-            .resolve(getRabbitMqEventMissingOperation(routingKey), structuredTraceGraph)
+            .resolve(
+                getRabbitMqEventMissingOperation(routingKey), structuredTrace, structuredTraceGraph)
             .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals(routingKey, entity.getEntityName());
@@ -82,7 +88,10 @@ public class RabbitMqBackendProviderTest {
     String routingKey = "routingkey";
     BackendInfo backendInfo =
         backendEntityEnricher
-            .resolve(getRabbitMqDestinationWithRoutingKey(routingKey), structuredTraceGraph)
+            .resolve(
+                getRabbitMqDestinationWithRoutingKey(routingKey),
+                structuredTrace,
+                structuredTraceGraph)
             .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals(routingKey, entity.getEntityName());

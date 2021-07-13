@@ -19,6 +19,7 @@ import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.grpcutils.context.RequestContext;
 import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.client.EdsClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
@@ -95,7 +96,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
                   EnrichedSpanUtils.isExitSpan(event)
                       && SpanAttributeUtils.isLeafSpan(structuredTraceGraph, event))
           // resolve backend entity
-          .map(event -> Pair.of(event, resolve(event, structuredTraceGraph)))
+          .map(event -> Pair.of(event, resolve(event, trace, structuredTraceGraph)))
           .filter(pair -> pair.getRight().isPresent())
           // check if backend entity is valid
           .filter(pair -> isValidBackendEntity(pair.getLeft(), pair.getRight().get()))
@@ -235,16 +236,15 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
 
   @Nullable
   private Entity createBackendIfMissing(Entity backendEntity) {
+    RequestContext requestContext = RequestContext.forTenantId(backendEntity.getTenantId());
     try {
       Optional<Entity> backendFromCache =
           entityCache
               .getBackendIdAttrsToEntityCache()
-              .get(
-                  Pair.of(
-                      backendEntity.getTenantId(), backendEntity.getIdentifyingAttributesMap()));
+              .get(requestContext.buildContextualKey(backendEntity.getIdentifyingAttributesMap()));
       return backendFromCache.orElseGet(
           () -> {
-            Entity result = edsClient.upsert(backendEntity);
+            Entity result = this.upsertBackend(backendEntity);
             LOGGER.info("Created backend:{}", result);
             return result;
           });
@@ -259,7 +259,8 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
   }
 
   @VisibleForTesting
-  public Optional<BackendInfo> resolve(Event event, StructuredTraceGraph structuredTraceGraph) {
+  public Optional<BackendInfo> resolve(
+      Event event, StructuredTrace trace, StructuredTraceGraph structuredTraceGraph) {
     for (BackendProvider backendProvider : getBackendProviders()) {
       backendProvider.init(event);
 
@@ -280,7 +281,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       }
 
       String backendUri = maybeBackendUri.get();
-      final Builder entityBuilder = getBackendEntityBuilder(type, backendUri, event);
+      final Builder entityBuilder = getBackendEntityBuilder(type, backendUri, event, trace);
       backendProvider.getEntityAttributes(event).forEach(entityBuilder::putAttributes);
 
       Map<String, org.hypertrace.core.datamodel.AttributeValue> enrichedAttributes =
@@ -303,14 +304,15 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return Optional.empty();
   }
 
-  private Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event) {
+  protected Builder getBackendEntityBuilder(
+      BackendType type, String backendURI, Event event, StructuredTrace trace) {
     String[] hostAndPort = backendURI.split(COLON);
     String host = hostAndPort[0];
-    String port = (hostAndPort.length == 2) ? hostAndPort[1] : DEFAULT_PORT;
+    String port = hostAndPort.length == 2 ? hostAndPort[1] : DEFAULT_PORT;
     String fqn = fqnResolver.resolve(host, event);
     String entityName = port.equals(DEFAULT_PORT) ? fqn : COLON_JOINER.join(fqn, port);
     final Builder entityBuilder =
-        org.hypertrace.entity.data.service.v1.Entity.newBuilder()
+        Entity.newBuilder()
             .setEntityType(EntityType.BACKEND.name())
             .setTenantId(event.getCustomerId())
             .setEntityName(entityName)
@@ -327,5 +329,9 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
         EnrichedSpanConstants.getValue(Backend.BACKEND_FROM_EVENT_ID),
         EnricherUtil.createAttributeValue(HexUtils.getHex(event.getEventId())));
     return entityBuilder;
+  }
+
+  protected Entity upsertBackend(Entity backendEntity) {
+    return edsClient.upsert(backendEntity);
   }
 }

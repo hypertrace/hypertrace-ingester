@@ -17,6 +17,7 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
@@ -39,12 +40,14 @@ public class MongoBackendProviderTest {
 
   private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
+  private StructuredTrace structuredTrace;
 
   @BeforeEach
   public void setup() {
     backendEntityEnricher = new MockBackendEntityEnricher();
     backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
 
+    structuredTrace = mock(StructuredTrace.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -101,7 +104,7 @@ public class MongoBackendProviderTest {
                         .build()))
             .build();
     final Entity backendEntity =
-        backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
     assertEquals("mongo:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -199,7 +202,7 @@ public class MongoBackendProviderTest {
                         .build()))
             .build();
     final Entity backendEntity =
-        backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
     assertEquals("mongo:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
     assertEquals(
@@ -302,7 +305,8 @@ public class MongoBackendProviderTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    final BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
+    final BackendInfo backendInfo =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
     assertEquals("mongodb0:27017", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());

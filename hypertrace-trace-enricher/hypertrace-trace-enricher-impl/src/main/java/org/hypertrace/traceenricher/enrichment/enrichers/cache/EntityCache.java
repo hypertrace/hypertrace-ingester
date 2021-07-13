@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hypertrace.core.grpcutils.context.ContextualKey;
 import org.hypertrace.entity.constants.v1.CommonAttribute;
 import org.hypertrace.entity.data.service.client.EdsClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
@@ -89,25 +90,12 @@ public class EntityCache {
    * Cache of Backend identifying attributes to Entity Key: Map of identifying attributes Value:
    * Optional Backend entity
    */
-  private final LoadingCache<Pair<String, Map<String, AttributeValue>>, Optional<Entity>>
+  private final LoadingCache<ContextualKey<Map<String, AttributeValue>>, Optional<Entity>>
       backendIdAttrsToEntityCache =
           CacheBuilder.newBuilder()
               .maximumSize(10000)
               .expireAfterWrite(5, TimeUnit.MINUTES)
-              .build(
-                  new CacheLoader<>() {
-                    @Override
-                    public Optional<Entity> load(
-                        @Nonnull Pair<String, Map<String, AttributeValue>> pair) {
-                      ByTypeAndIdentifyingAttributes request =
-                          ByTypeAndIdentifyingAttributes.newBuilder()
-                              .setEntityType(EntityType.BACKEND.name())
-                              .putAllIdentifyingAttributes(pair.getRight())
-                              .build();
-                      return Optional.ofNullable(
-                          edsClient.getByTypeAndIdentifyingAttributes(pair.getLeft(), request));
-                    }
-                  });
+              .build(CacheLoader.from(this::loadBackendFromIdentifyingAttributes));
 
   public EntityCache(EdsClient edsClient) {
     this.edsClient = edsClient;
@@ -125,8 +113,20 @@ public class EntityCache {
     return namespaceCache;
   }
 
-  public LoadingCache<Pair<String, Map<String, AttributeValue>>, Optional<Entity>>
+  public LoadingCache<ContextualKey<Map<String, AttributeValue>>, Optional<Entity>>
       getBackendIdAttrsToEntityCache() {
     return backendIdAttrsToEntityCache;
+  }
+
+  protected Optional<Entity> loadBackendFromIdentifyingAttributes(
+      ContextualKey<Map<String, AttributeValue>> key) {
+    ByTypeAndIdentifyingAttributes request =
+        ByTypeAndIdentifyingAttributes.newBuilder()
+            .setEntityType(EntityType.BACKEND.name())
+            .putAllIdentifyingAttributes(key.getData())
+            .build();
+    return Optional.ofNullable(
+        edsClient.getByTypeAndIdentifyingAttributes(
+            key.getContext().getTenantId().orElseThrow(), request));
   }
 }
