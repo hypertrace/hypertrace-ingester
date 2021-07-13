@@ -91,6 +91,8 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
         addEnrichedAttribute(
             event, API_BOUNDARY_TYPE_ATTR_NAME, AttributeValueCreator.create(ENTRY_BOUNDARY_TYPE));
 
+        // if all its child are entry -> consider this as proxy span
+
         // For all API entry spans, try to enrich with host header.
         enrichHostHeader(event);
       }
