@@ -325,6 +325,32 @@ public class ApiTraceGraph {
           }
         }
       }
+      // Sometimes an exit span might be missing for services like Istio, Kong.
+      // Only Entry spans will be populated for these services,
+      // an edge must be created between these services as well.
+      Optional<Event> entryBoundaryEvent = apiNode.getEntryApiBoundaryEvent();
+      if (entryBoundaryEvent.isPresent()) {
+        List<Event> children = graph.getChildrenEvents(entryBoundaryEvent.get());
+        if (children != null) {
+          for (Event child : children) {
+            // if the child of an entry boundary event is an entry api boundary type,
+            // which can happen if exit span missing and both belongs to different services.
+            if (EnrichedSpanUtils.isEntryApiBoundary(child)
+                && GraphBuilderUtil.areBothSpansFromDifferentService(
+                    child, entryBoundaryEvent.get())) {
+              ApiNode<Event> destinationApiNode = entryApiBoundaryEventIdToApiNode.get(child);
+              LOGGER.debug(
+                  "Edge between entry boundaries {} to {} ",
+                  entryBoundaryEvent.get().getServiceName(),
+                  child.getServiceName());
+              Optional<ApiNodeEventEdge> edgeBetweenApiNodes =
+                  createEdgeBetweenApiNodes(
+                      apiNode, destinationApiNode, entryBoundaryEvent.get(), child);
+              edgeBetweenApiNodes.ifPresent(apiNodeEventEdgeList::add);
+            }
+          }
+        }
+      }
     }
   }
 
