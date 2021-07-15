@@ -343,13 +343,15 @@ public class ApiTraceGraph {
                 && GraphBuilderUtil.areBothSpansFromDifferentService(
                     child, entryBoundaryEvent.get())) {
               ApiNode<Event> destinationApiNode = entryApiBoundaryEventIdToApiNode.get(child);
-              LOGGER.debug(
-                  "Edge between entry boundaries servicename: {} span: {}  to servicename: {} span: {} of trace {}",
-                  entryBoundaryEvent.get().getServiceName(),
-                  HexUtils.getHex(entryBoundaryEvent.get().getEventId()),
-                  child.getServiceName(),
-                  HexUtils.getHex(child.getEventId()),
-                  HexUtils.getHex(trace.getTraceId()));
+              if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                    "Edge between entry boundaries servicename: {} span: {}  to servicename: {} span: {} of trace {}",
+                    entryBoundaryEvent.get().getServiceName(),
+                    HexUtils.getHex(entryBoundaryEvent.get().getEventId()),
+                    child.getServiceName(),
+                    HexUtils.getHex(child.getEventId()),
+                    HexUtils.getHex(trace.getTraceId()));
+              }
               Optional<ApiNodeEventEdge> edgeBetweenApiNodes =
                   createEdgeBetweenApiNodes(
                       apiNode, destinationApiNode, entryBoundaryEvent.get(), child);
