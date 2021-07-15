@@ -16,6 +16,7 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -32,12 +33,14 @@ import org.junit.jupiter.api.Test;
 public class KafkaBackendProviderTest {
   private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
+  private StructuredTrace structuredTrace;
 
   @BeforeEach
   public void setup() {
     backendEntityEnricher = new MockBackendEntityEnricher();
     backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
 
+    structuredTrace = mock(StructuredTrace.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -45,7 +48,9 @@ public class KafkaBackendProviderTest {
   public void TestOtelBackendEventResolution() {
     String broker = "kafka-test.hypertrace.com:9092";
     BackendInfo backendInfo =
-        backendEntityEnricher.resolve(getOtelKafkaBackendEvent(broker), structuredTraceGraph).get();
+        backendEntityEnricher
+            .resolve(getOtelKafkaBackendEvent(broker), structuredTrace, structuredTraceGraph)
+            .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals(broker, entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
@@ -58,7 +63,10 @@ public class KafkaBackendProviderTest {
     String brokerPort = "9092";
     Entity entity =
         backendEntityEnricher
-            .resolve(getOTKafkaBackendEvent(brokerHost, brokerPort), structuredTraceGraph)
+            .resolve(
+                getOTKafkaBackendEvent(brokerHost, brokerPort),
+                structuredTrace,
+                structuredTraceGraph)
             .get()
             .getEntity();
     Assertions.assertEquals(String.format("%s:%s", brokerHost, brokerPort), entity.getEntityName());
@@ -69,7 +77,10 @@ public class KafkaBackendProviderTest {
     String broker = "kafka-test.hypertrace.com:9092";
     BackendInfo backendInfo =
         backendEntityEnricher
-            .resolve(getOtelKafkaBackendEventForDestination(broker), structuredTraceGraph)
+            .resolve(
+                getOtelKafkaBackendEventForDestination(broker),
+                structuredTrace,
+                structuredTraceGraph)
             .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals(broker, entity.getEntityName());

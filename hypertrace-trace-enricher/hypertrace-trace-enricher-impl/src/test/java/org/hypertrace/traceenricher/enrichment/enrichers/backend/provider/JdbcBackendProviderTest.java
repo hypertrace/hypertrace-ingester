@@ -18,6 +18,7 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConventions;
@@ -42,12 +43,14 @@ import org.junit.jupiter.api.Test;
 public class JdbcBackendProviderTest {
   private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
+  private StructuredTrace structuredTrace;
 
   @BeforeEach
   public void setup() {
     backendEntityEnricher = new MockBackendEntityEnricher();
     backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
 
+    structuredTrace = mock(StructuredTrace.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
@@ -107,7 +110,8 @@ public class JdbcBackendProviderTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
     assertEquals("dbhost:9001", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
@@ -201,7 +205,8 @@ public class JdbcBackendProviderTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get();
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("insert")), attributes);
   }
@@ -242,7 +247,8 @@ public class JdbcBackendProviderTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get();
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(Map.of("BACKEND_OPERATION", AttributeValueCreator.create("insert")), attributes);
   }
@@ -283,7 +289,8 @@ public class JdbcBackendProviderTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get();
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(
         Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("customer.orders")), attributes);
@@ -323,7 +330,8 @@ public class JdbcBackendProviderTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get();
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
     assertEquals(
         Map.of("BACKEND_DESTINATION", AttributeValueCreator.create("customer")), attributes);
@@ -380,7 +388,8 @@ public class JdbcBackendProviderTest {
                         .build()))
             .build();
 
-    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
 
     assertEquals("127.0.0.1:3306", backendEntity.getEntityName());
@@ -487,7 +496,8 @@ public class JdbcBackendProviderTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    BackendInfo backendInfo = backendEntityEnricher.resolve(e, structuredTraceGraph).get();
+    BackendInfo backendInfo =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get();
     final Entity backendEntity = backendInfo.getEntity();
     assertEquals("mysql:3306", backendEntity.getEntityName());
     assertEquals(3, backendEntity.getIdentifyingAttributesCount());
@@ -592,7 +602,8 @@ public class JdbcBackendProviderTest {
                         .setRefType(EventRefType.CHILD_OF)
                         .build()))
             .build();
-    Entity backendEntity = backendEntityEnricher.resolve(e, structuredTraceGraph).get().getEntity();
+    Entity backendEntity =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
     Map<String, org.hypertrace.entity.data.service.v1.AttributeValue> idAttrMap =
         backendEntity.getIdentifyingAttributesMap();
     assertEquals(
