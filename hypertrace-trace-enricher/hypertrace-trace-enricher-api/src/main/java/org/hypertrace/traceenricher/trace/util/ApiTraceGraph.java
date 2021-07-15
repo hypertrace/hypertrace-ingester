@@ -272,12 +272,11 @@ public class ApiTraceGraph {
 
   private void buildApiNodeEdges(StructuredTraceGraph graph) {
     // 1. get all the exit boundary events from an api node
-    // 2. exit boundary events are the only ones which can call a different api node
-    // 3. find all the children of exit boundary events, which will be entry boundary nodes of
+    // 2. find all the children of exit boundary events, which will be entry boundary nodes of
     // different api nodes
-    // 4. find all the api nodes based on children of exit boundary events from
+    // 3. find all the api nodes based on children of exit boundary events from
     // `entryBoundaryToApiNode`
-    // 5. connect the exit boundary and entry boundary of different api node with an edge
+    // 4. connect the exit boundary and entry boundary of different api node with an edge
     for (ApiNode<Event> apiNode : apiNodeList) {
       // exit boundary events of api node
       List<Event> exitBoundaryEvents = apiNode.getExitApiBoundaryEvents();
@@ -328,6 +327,11 @@ public class ApiTraceGraph {
       // Sometimes an exit span might be missing for services like Istio, Kong.
       // Only Entry spans will be populated for these services,
       // an edge must be created between these services as well.
+      // 1. get entry boundary event from an api node.
+      // 2. find all the children of entry boundary event, which will be entry boundary nodes of
+      //  different api nodes
+      // 3. Check both parent span and child belong to different service as well.
+      // 4. connect the entry boundary of different api nodes with an edge.
       Optional<Event> entryBoundaryEvent = apiNode.getEntryApiBoundaryEvent();
       if (entryBoundaryEvent.isPresent()) {
         List<Event> children = graph.getChildrenEvents(entryBoundaryEvent.get());
@@ -340,9 +344,12 @@ public class ApiTraceGraph {
                     child, entryBoundaryEvent.get())) {
               ApiNode<Event> destinationApiNode = entryApiBoundaryEventIdToApiNode.get(child);
               LOGGER.debug(
-                  "Edge between entry boundaries {} to {} ",
+                  "Edge between entry boundaries servicename: {} span: {}  to servicename: {} span: {} of trace {}",
                   entryBoundaryEvent.get().getServiceName(),
-                  child.getServiceName());
+                  HexUtils.getHex(entryBoundaryEvent.get().getEventId()),
+                  child.getServiceName(),
+                  HexUtils.getHex(child.getEventId()),
+                  HexUtils.getHex(trace.getTraceId()));
               Optional<ApiNodeEventEdge> edgeBetweenApiNodes =
                   createEdgeBetweenApiNodes(
                       apiNode, destinationApiNode, entryBoundaryEvent.get(), child);
