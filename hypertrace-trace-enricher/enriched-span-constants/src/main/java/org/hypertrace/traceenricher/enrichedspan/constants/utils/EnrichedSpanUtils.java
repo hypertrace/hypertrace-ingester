@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.avro.reflect.Nullable;
+import org.apache.commons.codec.binary.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
@@ -367,5 +368,13 @@ public class EnrichedSpanUtils {
             SpanAttributeUtils.getAttributeValue(event, EnrichedSpanConstants.SPACE_IDS_ATTRIBUTE))
         .map(AttributeValue::getValueList)
         .orElseGet(Collections::emptyList);
+  }
+
+  /** Check whether these spans belongs to different services. */
+  public static boolean areBothSpansFromDifferentService(Event event, Event parentEvent) {
+    if (event.getServiceName() == null || parentEvent.getServiceName() == null) {
+      return false;
+    }
+    return !StringUtils.equals(event.getServiceName(), parentEvent.getServiceName());
   }
 }
