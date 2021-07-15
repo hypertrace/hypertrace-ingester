@@ -24,7 +24,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.traceenricher.trace.util.GraphBuilderUtil;
 
 /**
  * This is to determine if the span is the entry / exit point for a particular API. We can't use the
@@ -89,7 +88,7 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
 
       Event parentEvent = graph.getParentEvent(event);
       if (!EnrichedSpanUtils.isEntrySpan(parentEvent)
-          || GraphBuilderUtil.areBothSpansFromDifferentService(event, parentEvent)) {
+          || EnrichedSpanUtils.areBothSpansFromDifferentService(event, parentEvent)) {
         addEnrichedAttribute(
             event, API_BOUNDARY_TYPE_ATTR_NAME, AttributeValueCreator.create(ENTRY_BOUNDARY_TYPE));
 

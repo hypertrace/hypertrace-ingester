@@ -1,7 +1,5 @@
 package org.hypertrace.traceenricher.trace.util;
 
-import org.apache.commons.lang3.StringUtils;
-import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,13 +55,5 @@ public class GraphBuilderUtil {
       return true;
     }
     return false;
-  }
-
-  /** Check whether these spans belongs to different services. */
-  public static boolean areBothSpansFromDifferentService(Event event, Event parentEvent) {
-    if (event.getServiceName() == null || parentEvent.getServiceName() == null) {
-      return false;
-    }
-    return !StringUtils.equals(event.getServiceName(), parentEvent.getServiceName());
   }
 }

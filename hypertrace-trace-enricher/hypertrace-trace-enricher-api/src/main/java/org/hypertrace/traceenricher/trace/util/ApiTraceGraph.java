@@ -340,7 +340,7 @@ public class ApiTraceGraph {
             // if the child of an entry boundary event is an entry api boundary type,
             // which can happen if exit span missing and both belongs to different services.
             if (EnrichedSpanUtils.isEntryApiBoundary(child)
-                && GraphBuilderUtil.areBothSpansFromDifferentService(
+                && EnrichedSpanUtils.areBothSpansFromDifferentService(
                     child, entryBoundaryEvent.get())) {
               ApiNode<Event> destinationApiNode = entryApiBoundaryEventIdToApiNode.get(child);
               if (LOGGER.isDebugEnabled()) {
