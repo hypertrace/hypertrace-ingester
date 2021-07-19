@@ -99,7 +99,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
           .map(event -> Pair.of(event, resolve(event, trace, structuredTraceGraph)))
           .filter(pair -> pair.getRight().isPresent())
           // check if backend entity is valid
-          .filter(pair -> isValidBackendEntity(pair.getLeft(), pair.getRight().get()))
+          .filter(pair -> isValidBackendEntity(trace, pair.getLeft(), pair.getRight().get()))
           // decorate event/trace with backend entity attributes
           .forEach(pair -> decorateWithBackendEntity(pair.getRight().get(), pair.getLeft(), trace));
     } catch (Exception ex) {
@@ -108,7 +108,8 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
   }
 
   /** Checks if the candidateEntity is indeed a backend Entity */
-  private boolean isValidBackendEntity(Event backendSpan, BackendInfo candidateInfo) {
+  private boolean isValidBackendEntity(
+      StructuredTrace trace, Event backendSpan, BackendInfo candidateInfo) {
     // Always create backend entity for RabbitMq, Mongo, Redis, Jdbc
     String backendProtocol =
         candidateInfo
@@ -134,7 +135,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
             .getValue()
             .getString();
 
-    if (checkIfServiceEntityExists(backendSpan.getCustomerId(), fqn, candidateInfo.getEntity())) {
+    if (checkIfServiceEntityExists(trace, backendSpan, fqn, candidateInfo.getEntity())) {
       return false;
     }
 
@@ -143,7 +144,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     String peerServiceName = SpanSemanticConventionUtils.getPeerServiceName(backendSpan);
     if (peerServiceName != null
         && checkIfServiceEntityExists(
-            backendSpan.getCustomerId(), peerServiceName, candidateInfo.getEntity())) {
+            trace, backendSpan, peerServiceName, candidateInfo.getEntity())) {
       return false;
     }
 
@@ -174,20 +175,19 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
   }
 
   private boolean checkIfServiceEntityExists(
-      String tenantId, String serviceFqn, Entity candidateBackendEntity) {
+      StructuredTrace trace, Event span, String serviceFqn, Entity candidateBackendEntity) {
     try {
-      boolean serviceExists =
-          entityCache.getFqnToServiceEntityCache().get(Pair.of(tenantId, serviceFqn)).isPresent();
+      boolean serviceExists = this.getPossibleService(trace, span, serviceFqn).isPresent();
       if (serviceExists) {
         LOGGER.debug(
             "BackendEntity {} is actually an Existing service entity.", candidateBackendEntity);
       }
       return serviceExists;
-    } catch (ExecutionException ex) {
+    } catch (Exception ex) {
       LOGGER.error(
-          "Error getting service entity using FQN:{} from cache for customerId:{}",
+          "Error getting service entity using FQN:{} from cache for tenantId:{}",
           serviceFqn,
-          tenantId);
+          span.getCustomerId());
       return false;
     }
   }
@@ -333,5 +333,12 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
 
   protected Entity upsertBackend(Entity backendEntity) {
     return edsClient.upsert(backendEntity);
+  }
+
+  protected Optional<Entity> getPossibleService(
+      StructuredTrace trace, Event span, String possibleFqn) {
+    return entityCache
+        .getFqnToServiceEntityCache()
+        .getUnchecked(Pair.of(span.getCustomerId(), possibleFqn));
   }
 }
