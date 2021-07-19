@@ -49,7 +49,8 @@ public class EnrichmentProcessor {
         LOG.error(
             "Could not apply the enricher: {} to the trace with traceId: {}",
             enricher.getClass().getCanonicalName(),
-            HexUtils.getHex(trace.getTraceId()));
+            HexUtils.getHex(trace.getTraceId()),
+            e);
       }
     }
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
