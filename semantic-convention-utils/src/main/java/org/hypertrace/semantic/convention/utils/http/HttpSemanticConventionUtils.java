@@ -521,7 +521,7 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Optional<String> getHttpRequestContentType(Event event) {
-    return Optional.of(
+    return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_TYPE))));
   }
