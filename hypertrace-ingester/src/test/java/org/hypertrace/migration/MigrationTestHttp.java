@@ -23,6 +23,7 @@ import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_U
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.typesafe.config.ConfigFactory;
@@ -43,6 +44,7 @@ import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class MigrationTestHttp {
@@ -96,87 +98,94 @@ public class MigrationTestHttp {
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
     assertAll(
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getMethod(),
-                HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get()),
+                "GET", HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getUrl(),
+                "https://example.ai/url1",
                 HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getHost(),
-                HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get()),
+                "example.ai", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getPath(),
-                HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()),
+                "/url1", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
-                HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get()),
+                "Chrome 1", HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getSize(),
-                HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get()),
+                50, HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getResponse().getSize(),
-                HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get()),
+                30, HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getQueryString(),
+                "a1=v1&a2=v2",
                 HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get()));
   }
 
   @ParameterizedTest
   @MethodSource("provideMapForTestingRequestMethodPriority")
-  public void testRequestMethodPriority(Map<String, String> tagsMap) throws Exception {
+  public void testRequestMethodPriority(Map<String, String> tagsMap, String expectedMethod)
+      throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getMethod(),
-        HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get());
+        expectedMethod, HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get());
   }
 
   @ParameterizedTest
   @MethodSource("provideMapForTestingRequestUrlTagKeysPriority")
-  public void testRequestUrlTagKeysPriority(Map<String, String> tagsMap) throws Exception {
+  public void testRequestUrlTagKeysPriority(Map<String, String> tagsMap, String expectedUrl)
+      throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUrl(),
-        HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals(expectedUrl, HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
   }
 
   @ParameterizedTest
   @MethodSource("provideMapForTestingRequestPathTagKeysPriority")
-  public void testRequestPathTagKeysPriority(Map<String, String> tagsMap) throws Exception {
+  public void testRequestPathTagKeysPriority(Map<String, String> tagsMap, String expectedPath)
+      throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals(expectedPath, HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
   }
 
   @ParameterizedTest
   @MethodSource("provideMapForTestingResponseStatusCodePriority")
-  public void testResponseStatusCodePriority(Map<String, String> tagsMap) throws Exception {
+  public void testResponseStatusCodePriority(Map<String, String> tagsMap, int statusCode)
+      throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
     assertEquals(
-        rawSpan.getEvent().getHttp().getResponse().getStatusCode(),
-        HttpSemanticConventionUtils.getHttpResponseStatusCode(rawSpan.getEvent()));
+        statusCode, HttpSemanticConventionUtils.getHttpResponseStatusCode(rawSpan.getEvent()));
   }
 
   @Test
@@ -199,45 +208,50 @@ public class MigrationTestHttp {
     rawSpan = normalizer.convert("tenant-key", span);
 
     assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
   }
 
   @ParameterizedTest
   @MethodSource("provideMapForTestingRequestUserAgentTagKeysPriority")
-  public void testRequestUserAgentTagKeysPriority(Map<String, String> tagsMap) throws Exception {
+  public void testRequestUserAgentTagKeysPriority(Map<String, String> tagsMap, String userAgent)
+      throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
-        HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals(userAgent, HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get());
   }
 
   @ParameterizedTest
   @MethodSource("provideMapForTestingRequestSizeTagKeysPriority")
-  public void testRequestSizeTagKeysPriority(Map<String, String> tagsMap) throws Exception {
+  public void testRequestSizeTagKeysPriority(Map<String, String> tagsMap, int requestSize)
+      throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getSize(),
-        HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get());
+        requestSize, HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get());
   }
 
   @ParameterizedTest
   @MethodSource("provideMapForTestingResponseSizeTagKeysPriority")
-  public void testResponseSizeTagKeysPriority(Map<String, String> tagsMap) throws Exception {
+  public void testResponseSizeTagKeysPriority(Map<String, String> tagsMap, int responseSize)
+      throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
     assertEquals(
-        rawSpan.getEvent().getHttp().getResponse().getSize(),
-        HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get());
+        responseSize, HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get());
   }
 
   @Test
@@ -257,12 +271,15 @@ public class MigrationTestHttp {
             Map.of(RawSpanConstants.getValue(HTTP_URL), "http://abc.xyz/dispatch/test?a=b&k1=v1"));
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
     assertAll(
+        () -> assertTrue(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getUrl(),
-                HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get()),
-        () -> assertTrue(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent()));
+                "http://abc.xyz/dispatch/test?a=b&k1=v1",
+                HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get()));
   }
 
   @Test
@@ -277,18 +294,15 @@ public class MigrationTestHttp {
 
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals("https", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+    assertEquals("example.ai", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+        "/apis/5673/events", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
+        "a1=v1&a2=v2", HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
     // Removes the trailing "/" for path
     span =
@@ -301,18 +315,15 @@ public class MigrationTestHttp {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals("https", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+    assertEquals("example.ai", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+        "/apis/5673/events", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
+        "a1=v1&a2=v2", HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
     // No query
     span =
@@ -325,15 +336,13 @@ public class MigrationTestHttp {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals("https", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+    assertEquals("example.ai", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+        "/apis/5673/events", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
     assertFalse(HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
 
     // No path
@@ -347,15 +356,12 @@ public class MigrationTestHttp {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals("https", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+    assertEquals("example.ai", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
+    assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
     assertFalse(HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
 
     // Relative URL - should extract path and query string only
@@ -369,15 +375,16 @@ public class MigrationTestHttp {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
     assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
     assertFalse(HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
     assertFalse(HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).isPresent());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
+        "a1=v1&a2=v2", HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+        "/apis/5673/events", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
 
     // "/" home path, host with port
     span =
@@ -390,18 +397,15 @@ public class MigrationTestHttp {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals("http", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+        "example.ai:9000", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
+    assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
+        "a1=v1&a2=v2", HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
     // Set path and query string before calling populateOtherFields. Simulate case where fields came
     // from attributes
@@ -423,17 +427,16 @@ public class MigrationTestHttp {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals("http", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+        "example.ai:9000", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
+        "/some-test-path", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
+        "some-query-str=v1",
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
   }
 
@@ -456,35 +459,32 @@ public class MigrationTestHttp {
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
     assertAll(
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getMethod(),
-                HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get()),
+                "GET", HttpSemanticConventionUtils.getHttpMethod(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getUrl(),
+                "https://example.ai/url1",
                 HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getPath(),
-                HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()),
+                "/url2", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getUserAgent(),
-                HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get()),
+                "Chrome 1", HttpSemanticConventionUtils.getHttpUserAgent(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getSize(),
-                HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get()),
+                100, HttpSemanticConventionUtils.getHttpRequestSize(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getResponse().getSize(),
-                HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get()),
+                200, HttpSemanticConventionUtils.getHttpResponseSize(rawSpan.getEvent()).get()),
         () ->
             assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getScheme(),
-                HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get()));
+                "https", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get()));
   }
 
   @Test
@@ -508,18 +508,15 @@ public class MigrationTestHttp {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals("example.ai", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
+        "a1=v1&a2=v2", HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+        "/apis/5673/events", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    assertEquals("https", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
 
     // Removes the trailing "/" for path
     span =
@@ -531,19 +528,15 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan = normalizer.convert("tenant-key", span);
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
 
+    assertEquals("example.ai", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
+        "a1=v1&a2=v2", HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+        "/apis/5673/events", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    assertEquals("https", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
 
     // No query
     span =
@@ -556,15 +549,13 @@ public class MigrationTestHttp {
 
     rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
+
+    assertEquals("example.ai", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+        "/apis/5673/events", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    assertEquals("https", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
     assertFalse(HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
 
     // No path
@@ -577,16 +568,12 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan = normalizer.convert("tenant-key", span);
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
 
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
+    assertEquals("example.ai", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
+    assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    assertEquals("https", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
     assertFalse(HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).isPresent());
 
     // Relative URL - should extract path and query string only
@@ -599,16 +586,16 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan = normalizer.convert("tenant-key", span);
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
 
     assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
     assertFalse(HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
     assertFalse(HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).isPresent());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+        "/apis/5673/events", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
+        "a1=v1&a2=v2", HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
     // "/" home path, host with port
     span =
@@ -620,19 +607,15 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan = normalizer.convert("tenant-key", span);
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
 
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
+        "example.ai:9000", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
+    assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    assertEquals("http", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
-        HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
+        "a1=v1&a2=v2", HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
     // Set path and query string before calling populateOtherFields. Simulate case where fields came
     // from attributes
@@ -653,18 +636,15 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan = normalizer.convert("tenant-key", span);
-
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getHost(),
-        HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
+        "example.ai:9000", HttpSemanticConventionUtils.getHttpHost(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getPath(),
-        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+        "/some-test-path", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    assertEquals("http", HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getScheme(),
-        HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).get());
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getQueryString(),
+        "some-query-str=v1",
         HttpSemanticConventionUtils.getHttpQueryString(rawSpan.getEvent()).get());
 
     // originally set url is a relative url, should be overridden
@@ -694,14 +674,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan = normalizer.convert("tenant-key", span);
-
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
     assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUrl(),
+        HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get(),
         "http://example.internal.com:50850/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel");
-
-    assertEquals(
-        rawSpan.getEvent().getHttp().getRequest().getUrl(),
-        HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).get());
   }
 
   @Test
@@ -713,19 +690,15 @@ public class MigrationTestHttp {
                 OTelHttpSemanticConventions.HTTP_TARGET.getValue(),
                 "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel"));
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getHttp());
 
-    assertAll(
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getHttp().getRequest().getPath(),
-                HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()),
-        () ->
-            assertEquals(
-                "/api/v1/gatekeeper/check",
-                HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get()));
+    assertEquals(
+        "/api/v1/gatekeeper/check",
+        HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingRequestMethodPriority() {
+  private static Stream<Arguments> provideMapForTestingRequestMethodPriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -735,10 +708,10 @@ public class MigrationTestHttp {
     Map<String, String> tagsMap2 =
         Map.of(RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_METHOD), "POST");
 
-    return Stream.of(tagsMap1, tagsMap2);
+    return Stream.of(Arguments.arguments(tagsMap1, "GET"), Arguments.arguments(tagsMap2, "POST"));
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingRequestUrlTagKeysPriority() {
+  private static Stream<Arguments> provideMapForTestingRequestUrlTagKeysPriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -754,10 +727,13 @@ public class MigrationTestHttp {
     Map<String, String> tagsMap3 =
         Map.of(RawSpanConstants.getValue(HTTP_URL), "https://example.ai/url2");
 
-    return Stream.of(tagsMap1, tagsMap2, tagsMap3);
+    return Stream.of(
+        Arguments.arguments(tagsMap1, "https://example.ai/url1"),
+        Arguments.arguments(tagsMap2, "https://example.ai/url3"),
+        Arguments.arguments(tagsMap3, "https://example.ai/url2"));
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingRequestPathTagKeysPriority() {
+  private static Stream<Arguments> provideMapForTestingRequestPathTagKeysPriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -766,10 +742,11 @@ public class MigrationTestHttp {
 
     Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_PATH), "/path2");
 
-    return Stream.of(tagsMap1, tagsMap2);
+    return Stream.of(
+        Arguments.arguments(tagsMap1, "/path1"), Arguments.arguments(tagsMap2, "/path2"));
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingRequestUserAgentTagKeysPriority() {
+  private static Stream<Arguments> provideMapForTestingRequestUserAgentTagKeysPriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -799,10 +776,15 @@ public class MigrationTestHttp {
 
     Map<String, String> tagsMap5 = Map.of(RawSpanConstants.getValue(HTTP_USER_AGENT), "Chrome 5");
 
-    return Stream.of(tagsMap1, tagsMap2, tagsMap3, tagsMap4, tagsMap5);
+    return Stream.of(
+        Arguments.arguments(tagsMap1, "Chrome 1"),
+        Arguments.arguments(tagsMap2, "Chrome 2"),
+        Arguments.arguments(tagsMap3, "Chrome 3"),
+        Arguments.arguments(tagsMap4, "Chrome 4"),
+        Arguments.arguments(tagsMap5, "Chrome 5"));
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingRequestSizeTagKeysPriority() {
+  private static Stream<Arguments> provideMapForTestingRequestSizeTagKeysPriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -811,10 +793,10 @@ public class MigrationTestHttp {
 
     Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "35");
 
-    return Stream.of(tagsMap1, tagsMap2);
+    return Stream.of(Arguments.arguments(tagsMap1, 50), Arguments.arguments(tagsMap2, 35));
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingResponseSizeTagKeysPriority() {
+  private static Stream<Arguments> provideMapForTestingResponseSizeTagKeysPriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -823,10 +805,10 @@ public class MigrationTestHttp {
 
     Map<String, String> tagsMap2 = Map.of(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "85");
 
-    return Stream.of(tagsMap1, tagsMap2);
+    return Stream.of(Arguments.arguments(tagsMap1, 100), Arguments.arguments(tagsMap2, 85));
   }
 
-  private static Stream<Map<String, String>> provideMapForTestingResponseStatusCodePriority() {
+  private static Stream<Arguments> provideMapForTestingResponseStatusCodePriority() {
 
     Map<String, String> tagsMap1 =
         Map.of(
@@ -836,7 +818,7 @@ public class MigrationTestHttp {
     Map<String, String> tagsMap2 =
         Map.of(RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE), "201");
 
-    return Stream.of(tagsMap1, tagsMap2);
+    return Stream.of(Arguments.arguments(tagsMap1, 200), Arguments.arguments(tagsMap2, 201));
   }
 
   static Span createSpanFromTags(Map<String, String> tagsMap) {

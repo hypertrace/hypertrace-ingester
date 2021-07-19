@@ -64,46 +64,50 @@ public class MigrationTestRpc {
   @Test
   public void testGrpcFields() throws Exception {
 
+    String grpcRequestBodyValue = "some grpc request body";
+    String grpcResponseBodyValue = "some grpc response body";
+    String grpcErrorMessageValue = "some error message";
+    String censusResponseStatusMessageValue = "CENSUS_RESPONSE_STATUS_MESSAGE";
+    String envoyGrpcStatusMessage = "ENVOY_GRPC_STATUS_MESSAGE";
+
     Map<String, String> tagsMap =
         new HashMap<>() {
           {
-            put(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE), "Some error message");
+            put(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE), grpcErrorMessageValue);
             put(RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_CODE), "12");
             put(RawSpanConstants.getValue(GRPC_STATUS_CODE), "13");
             put(RawSpanConstants.getValue(CENSUS_RESPONSE_CENSUS_STATUS_CODE), "14");
             put(
                 RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
-                "CENSUS_RESPONSE_STATUS_MESSAGE");
-            put(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), "ENVOY_GRPC_STATUS_MESSAGE");
-            put(RawSpanConstants.getValue(GRPC_REQUEST_BODY), "some grpc request body");
-            put(RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "some grpc response body");
+                censusResponseStatusMessageValue);
+            put(RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE), envoyGrpcStatusMessage);
+            put(RawSpanConstants.getValue(GRPC_REQUEST_BODY), grpcRequestBodyValue);
+            put(RawSpanConstants.getValue(GRPC_RESPONSE_BODY), grpcResponseBodyValue);
           }
         };
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertAll(
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
-                RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent())),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-                RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent())),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
-                RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent())),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getSize(),
-                RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get()),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getRequest().getSize(),
-                RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get()));
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getGrpc());
+
+    assertEquals(
+        grpcErrorMessageValue, RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
+
+    assertEquals(12, RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
+
+    assertEquals(
+        censusResponseStatusMessageValue,
+        RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
+
+    assertEquals(
+        grpcResponseBodyValue.length(),
+        RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get());
+
+    assertEquals(
+        grpcRequestBodyValue.length(),
+        RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get());
   }
 
   @Test
@@ -119,15 +123,12 @@ public class MigrationTestRpc {
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertAll(
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getSize(),
-                RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get()),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getRequest().getSize(),
-                RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get()));
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getGrpc());
+
+    assertEquals(400, RpcSemanticConventionUtils.getGrpcResponseSize(rawSpan.getEvent()).get());
+
+    assertEquals(200, RpcSemanticConventionUtils.getGrpcRequestSize(rawSpan.getEvent()).get());
   }
 
   @ParameterizedTest
@@ -138,18 +139,20 @@ public class MigrationTestRpc {
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getGrpc());
+
     assertAll(
         () ->
             assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-                RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent())),
-        () -> assertEquals(statusCode, rawSpan.getEvent().getGrpc().getResponse().getStatusCode()));
+                statusCode, RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent())));
   }
 
   @Test
   public void testGetGrpcUserAgent() throws Exception {
+    String rpcRequestMetadataUserAgentValue = "rpc user agent";
     Map<String, String> tagsMap =
-        Map.of(RPC_REQUEST_METADATA_USER_AGENT.getValue(), "rpc user agent");
+        Map.of(RPC_REQUEST_METADATA_USER_AGENT.getValue(), rpcRequestMetadataUserAgentValue);
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
@@ -160,22 +163,24 @@ public class MigrationTestRpc {
     tagsMap =
         Map.of(
             RPC_REQUEST_METADATA_USER_AGENT.getValue(),
-            "rpc user agent",
+            rpcRequestMetadataUserAgentValue,
             OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
             OTEL_RPC_SYSTEM_GRPC.getValue());
 
     span = createSpanFromTags(tagsMap);
     rawSpan = normalizer.convert("tenant-key", span);
-
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getGrpc());
     assertEquals(
-        rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getUserAgent(),
+        rpcRequestMetadataUserAgentValue,
         RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).get());
   }
 
   @Test
   public void testGetGrpcAuthority() throws Exception {
+    String rpcRequestMetadataAuthorityValue = "grpc authority";
     Map<String, String> tagsMap =
-        Map.of(RPC_REQUEST_METADATA_AUTHORITY.getValue(), "grpc authority");
+        Map.of(RPC_REQUEST_METADATA_AUTHORITY.getValue(), rpcRequestMetadataAuthorityValue);
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
@@ -186,15 +191,17 @@ public class MigrationTestRpc {
     tagsMap =
         Map.of(
             RPC_REQUEST_METADATA_AUTHORITY.getValue(),
-            "grpc authority",
+            rpcRequestMetadataAuthorityValue,
             OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
             OTEL_RPC_SYSTEM_GRPC.getValue());
 
     span = createSpanFromTags(tagsMap);
     rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getGrpc());
     assertEquals(
-        rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getAuthority(),
+        rpcRequestMetadataAuthorityValue,
         RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).get());
   }
 
@@ -229,14 +236,9 @@ public class MigrationTestRpc {
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertAll(
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getResponse().getStatusMessage(),
-                RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent())),
-        () ->
-            assertEquals(
-                statusMessage, rawSpan.getEvent().getGrpc().getResponse().getStatusMessage()));
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getGrpc());
+    assertEquals(statusMessage, RpcSemanticConventionUtils.getGrpcStatusMsg(rawSpan.getEvent()));
   }
 
   private static Stream<Arguments>
@@ -271,8 +273,7 @@ public class MigrationTestRpc {
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
     assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getErrorMessage(),
-        RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
+        "resource not found", RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
   }
 
   @Test
@@ -284,9 +285,10 @@ public class MigrationTestRpc {
     Span span = createSpanFromTags(tagMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
-    assertEquals(
-        rawSpan.getEvent().getGrpc().getResponse().getStatusCode(),
-        RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getGrpc());
+
+    assertEquals(5, RpcSemanticConventionUtils.getGrpcStatusCode(rawSpan.getEvent()));
   }
 
   @Test
@@ -301,15 +303,14 @@ public class MigrationTestRpc {
     Span span = createSpanFromTags(tagMap);
     RawSpan rawSpan = normalizer.convert("tenant-key", span);
 
+    // now, we are not populating first class fields. So, it should be null.
+    assertNull(rawSpan.getEvent().getGrpc());
+
     assertAll(
         () ->
             assertEquals(
-                rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getAuthority(),
-                RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).get()),
-        () ->
-            assertEquals(
-                rawSpan.getEvent().getGrpc().getRequest().getRequestMetadata().getUserAgent(),
-                RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).get()));
+                "testservice:45",
+                RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).get()));
   }
 
   @Test
