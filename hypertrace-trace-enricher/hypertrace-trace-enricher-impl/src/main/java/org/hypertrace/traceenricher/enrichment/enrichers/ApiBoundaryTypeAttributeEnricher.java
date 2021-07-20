@@ -24,6 +24,8 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is to determine if the span is the entry / exit point for a particular API. We can't use the
@@ -83,25 +85,34 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
     StructuredTraceGraph graph = buildGraph(trace);
 
     if (null == graph.getTraceEntitiesGraph() || null == graph.getTraceEventsGraph()) {
-      LOG.info("StructuredTraceGraph is not built correctly, trace {}, Is events graph non-null: {}."
+      LOG.info(
+          "StructuredTraceGraph is not built correctly, trace {}, Is events graph non-null: {}."
               + " Is entities graph non-null: {}",
-          trace, (null != graph.getTraceEventsGraph()), (null != graph.getTraceEntitiesGraph()));
+          trace,
+          (null != graph.getTraceEventsGraph()),
+          (null != graph.getTraceEntitiesGraph()));
 
       // build the graph again and check
       StructuredTraceGraph tempGraph = StructuredTraceGraph.createGraph(trace);
-      LOG.info("Recreating StructuredTraceGraph. Is events graph non-null: {}."
+      LOG.info(
+          "Recreating StructuredTraceGraph. Is events graph non-null: {}."
               + " Is entities graph non-null: {}",
-          (null != tempGraph.getTraceEventsGraph()), (null != tempGraph.getTraceEntitiesGraph()));
+          (null != tempGraph.getTraceEventsGraph()),
+          (null != tempGraph.getTraceEntitiesGraph()));
 
       tempGraph = StructuredTraceGraph.reCreateTraceEventsGraph(trace);
-      LOG.info("Recreating events graph. Is events graph non-null: {}."
+      LOG.info(
+          "Recreating events graph. Is events graph non-null: {}."
               + " Is entities graph non-null: {}",
-          (null != tempGraph.getTraceEventsGraph()), (null != tempGraph.getTraceEntitiesGraph()));
+          (null != tempGraph.getTraceEventsGraph()),
+          (null != tempGraph.getTraceEntitiesGraph()));
 
       tempGraph = StructuredTraceGraph.reCreateTraceEntitiesGraph(trace);
-      LOG.info("Recreating entities graph. Is events graph non-null: {}."
+      LOG.info(
+          "Recreating entities graph. Is events graph non-null: {}."
               + " Is entities graph non-null: {}",
-          (null != tempGraph.getTraceEventsGraph()), (null != tempGraph.getTraceEntitiesGraph()));
+          (null != tempGraph.getTraceEventsGraph()),
+          (null != tempGraph.getTraceEntitiesGraph()));
     }
 
     if (isEntrySpan) {
