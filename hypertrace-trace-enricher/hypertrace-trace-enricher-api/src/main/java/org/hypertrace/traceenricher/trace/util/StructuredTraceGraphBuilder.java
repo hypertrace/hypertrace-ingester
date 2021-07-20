@@ -55,10 +55,12 @@ public class StructuredTraceGraphBuilder {
     return cachedGraphThreadLocal.get();
   }
 
-  private static void debugGraph(String logPrefix, StructuredTraceGraph graph, StructuredTrace trace) {
+  private static void debugGraph(
+      String logPrefix, StructuredTraceGraph graph, StructuredTrace trace) {
     if (null == graph.getTraceEntitiesGraph() || null == graph.getTraceEventsGraph()) {
       LOG.info(
-          logPrefix + "StructuredTraceGraph is not built correctly, trace {}, Is events graph non-null: {}."
+          logPrefix
+              + "StructuredTraceGraph is not built correctly, trace {}, Is events graph non-null: {}."
               + " Is entities graph non-null: {}",
           trace,
           (null != graph.getTraceEventsGraph()),
@@ -67,21 +69,24 @@ public class StructuredTraceGraphBuilder {
       // build the graph again and check
       StructuredTraceGraph tempGraph = StructuredTraceGraph.createGraph(trace);
       LOG.info(
-          logPrefix + "Recreating StructuredTraceGraph. Is events graph non-null: {}."
+          logPrefix
+              + "Recreating StructuredTraceGraph. Is events graph non-null: {}."
               + " Is entities graph non-null: {}",
           (null != tempGraph.getTraceEventsGraph()),
           (null != tempGraph.getTraceEntitiesGraph()));
 
       tempGraph = StructuredTraceGraph.reCreateTraceEventsGraph(trace);
       LOG.info(
-          logPrefix + "Recreating events graph. Is events graph non-null: {}."
+          logPrefix
+              + "Recreating events graph. Is events graph non-null: {}."
               + " Is entities graph non-null: {}",
           (null != tempGraph.getTraceEventsGraph()),
           (null != tempGraph.getTraceEntitiesGraph()));
 
       tempGraph = StructuredTraceGraph.reCreateTraceEntitiesGraph(trace);
       LOG.info(
-          logPrefix + "Recreating entities graph. Is events graph non-null: {}."
+          logPrefix
+              + "Recreating entities graph. Is events graph non-null: {}."
               + " Is entities graph non-null: {}",
           (null != tempGraph.getTraceEventsGraph()),
           (null != tempGraph.getTraceEntitiesGraph()));
