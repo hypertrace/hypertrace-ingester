@@ -61,13 +61,15 @@ public class StructuredTraceGraphBuilderTest {
         StructuredTraceGraph actual = StructuredTraceGraphBuilder.buildGraph(underTestTrace);
         Assertions.assertEquals(mockedStructuredTraceGraph, actual);
         structuredTraceGraphMockedStatic.verify(
-            // todo change times to 1 when logging is changed to debug level in StructuredTraceGraphBuilder#buildGraph
+            // todo change times to 1 when logging is changed to debug level in
+            // StructuredTraceGraphBuilder#buildGraph
             () -> StructuredTraceGraph.createGraph(underTestTrace), times(2));
 
         // calls second time, this time it returns from cache
         StructuredTraceGraphBuilder.buildGraph(underTestTrace);
         structuredTraceGraphMockedStatic.verify(
-            // todo change times to 1 when logging is changed to debug level in StructuredTraceGraphBuilder#buildGraph
+            // todo change times to 1 when logging is changed to debug level in
+            // StructuredTraceGraphBuilder#buildGraph
             () -> StructuredTraceGraph.createGraph(underTestTrace), times(3));
       }
     }
