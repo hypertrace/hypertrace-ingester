@@ -30,6 +30,9 @@ import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
  * Entry / Exit span kind to determine if it's true API entry/exit.
  */
 public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceEntityEnricher.class);
+
   private static final String COLON = ":";
   private static final Splitter COLON_SPLITTER = Splitter.on(COLON);
   private static final String HOST_HEADER = EnrichedSpanConstants.getValue(Http.HTTP_HOST);
@@ -78,6 +81,28 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
 
     // does not need to build the full traversal graph, just get the parents mapping
     StructuredTraceGraph graph = buildGraph(trace);
+
+    if (null == graph.getTraceEntitiesGraph() || null == graph.getTraceEventsGraph()) {
+      LOG.info("StructuredTraceGraph is not built correctly, trace {}, Is events graph non-null: {}."
+              + " Is entities graph non-null: {}",
+          trace, (null != graph.getTraceEventsGraph()), (null != graph.getTraceEntitiesGraph()));
+
+      // build the graph again and check
+      StructuredTraceGraph tempGraph = StructuredTraceGraph.createGraph(trace);
+      LOG.info("Recreating StructuredTraceGraph. Is events graph non-null: {}."
+              + " Is entities graph non-null: {}",
+          (null != tempGraph.getTraceEventsGraph()), (null != tempGraph.getTraceEntitiesGraph()));
+
+      tempGraph = StructuredTraceGraph.reCreateTraceEventsGraph(trace);
+      LOG.info("Recreating events graph. Is events graph non-null: {}."
+              + " Is entities graph non-null: {}",
+          (null != tempGraph.getTraceEventsGraph()), (null != tempGraph.getTraceEntitiesGraph()));
+
+      tempGraph = StructuredTraceGraph.reCreateTraceEntitiesGraph(trace);
+      LOG.info("Recreating entities graph. Is events graph non-null: {}."
+              + " Is entities graph non-null: {}",
+          (null != tempGraph.getTraceEventsGraph()), (null != tempGraph.getTraceEntitiesGraph()));
+    }
 
     if (isEntrySpan) {
       /*
