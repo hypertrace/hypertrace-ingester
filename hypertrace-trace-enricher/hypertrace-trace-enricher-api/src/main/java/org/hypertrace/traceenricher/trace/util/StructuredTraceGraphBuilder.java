@@ -57,7 +57,7 @@ public class StructuredTraceGraphBuilder {
 
   private static void debugGraph(
       String logPrefix, StructuredTraceGraph graph, StructuredTrace trace) {
-    if (null == graph.getTraceEntitiesGraph() || null == graph.getTraceEventsGraph()) {
+    if (null != graph && (null == graph.getTraceEntitiesGraph() || null == graph.getTraceEventsGraph())) {
       LOG.info(
           logPrefix
               + "StructuredTraceGraph is not built correctly, trace {}, Is events graph non-null: {}."
