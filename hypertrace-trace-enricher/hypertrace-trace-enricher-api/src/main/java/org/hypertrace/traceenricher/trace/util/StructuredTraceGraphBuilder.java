@@ -24,7 +24,7 @@ public class StructuredTraceGraphBuilder {
     if (GraphBuilderUtil.isDifferentTrace(cachedTrace, trace)
         || (shouldRebuildTraceEventsGraph && shouldRebuildTraceEntitiesGraph)) {
       Instant start = Instant.now();
-      StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
+      StructuredTraceGraph graph = new StructuredTraceGraph(trace);
       LOG.debug(
           "Time taken in building StructuredTraceGraph, duration_millis:{} for tenantId:{}",
           Duration.between(start, Instant.now()).toMillis(),
@@ -37,10 +37,12 @@ public class StructuredTraceGraphBuilder {
 
     if (shouldRebuildTraceEventsGraph || shouldRebuildTraceEntitiesGraph) {
       Instant start = Instant.now();
-      StructuredTraceGraph graph =
-          shouldRebuildTraceEventsGraph
-              ? StructuredTraceGraph.reCreateTraceEventsGraph(trace)
-              : StructuredTraceGraph.reCreateTraceEntitiesGraph(trace);
+      StructuredTraceGraph graph = cachedGraphThreadLocal.get();
+      if (shouldRebuildTraceEventsGraph) {
+        graph.reCreateTraceEventsGraph(trace);
+      } else {
+        graph.reCreateTraceEntitiesGraph(trace);
+      }
       LOG.debug(
           "Time taken in building TraceEventsGraph, duration_millis:{} for tenantId:{}",
           Duration.between(start, Instant.now()).toMillis(),
@@ -68,7 +70,7 @@ public class StructuredTraceGraphBuilder {
           (null != graph.getTraceEntitiesGraph()));
 
       // build the graph again and check
-      StructuredTraceGraph tempGraph = StructuredTraceGraph.createGraph(trace);
+      StructuredTraceGraph tempGraph = new StructuredTraceGraph(trace);
       LOG.info(
           logPrefix
               + "Recreating StructuredTraceGraph. Is events graph non-null: {}."
@@ -76,7 +78,7 @@ public class StructuredTraceGraphBuilder {
           (null != tempGraph.getTraceEventsGraph()),
           (null != tempGraph.getTraceEntitiesGraph()));
 
-      tempGraph = StructuredTraceGraph.reCreateTraceEventsGraph(trace);
+      tempGraph.reCreateTraceEventsGraph(trace);
       LOG.info(
           logPrefix
               + "Recreating events graph. Is events graph non-null: {}."
@@ -84,7 +86,7 @@ public class StructuredTraceGraphBuilder {
           (null != tempGraph.getTraceEventsGraph()),
           (null != tempGraph.getTraceEntitiesGraph()));
 
-      tempGraph = StructuredTraceGraph.reCreateTraceEntitiesGraph(trace);
+      tempGraph.reCreateTraceEntitiesGraph(trace);
       LOG.info(
           logPrefix
               + "Recreating entities graph. Is events graph non-null: {}."
