@@ -41,11 +41,10 @@ public class StructuredTraceGraphBuilder {
 
     if (shouldRebuildTraceEventsGraph || shouldRebuildTraceEntitiesGraph) {
       Instant start = Instant.now();
-      StructuredTraceGraph graph = cachedGraphThreadLocal.get();
       if (shouldRebuildTraceEventsGraph) {
-        graph.reCreateTraceEventsGraph(trace);
+        cachedGraph.reCreateTraceEventsGraph(trace);
       } else {
-        graph.reCreateTraceEntitiesGraph(trace);
+        cachedGraph.reCreateTraceEntitiesGraph(trace);
       }
       if (LOG.isDebugEnabled()) {
         LOG.debug(
@@ -54,9 +53,9 @@ public class StructuredTraceGraphBuilder {
             trace.getCustomerId());
       }
       cachedTraceThreadLocal.set(StructuredTrace.newBuilder(trace).build());
-      cachedGraphThreadLocal.set(graph);
-      debugGraph("Case: Partially building the graph.", graph, trace);
-      return graph;
+      cachedGraphThreadLocal.set(cachedGraph);
+      debugGraph("Case: Partially building the graph.", cachedGraph, trace);
+      return cachedGraph;
     }
 
     debugGraph("Case: Not building the graph.", cachedGraphThreadLocal.get(), trace);
