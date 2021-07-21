@@ -38,7 +38,7 @@ dependencies {
         because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
     }
     implementation(project(":span-normalizer:span-normalizer-api"))
-    implementation("org.hypertrace.core.datamodel:data-model:0.1.17")
+    implementation("org.hypertrace.core.datamodel:data-model:0.1.18")
     implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
     implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
 

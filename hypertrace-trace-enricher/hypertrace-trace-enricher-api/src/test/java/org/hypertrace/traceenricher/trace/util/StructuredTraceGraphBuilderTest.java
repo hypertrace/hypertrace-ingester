@@ -1,8 +1,8 @@
 package org.hypertrace.traceenricher.trace.util;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
@@ -14,6 +14,7 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 
 public class StructuredTraceGraphBuilderTest {
@@ -44,33 +45,15 @@ public class StructuredTraceGraphBuilderTest {
           .when(() -> StructuredTrace.newBuilder(underTestTrace))
           .thenReturn(builder);
 
-      // make two calls, and check that first call create cache entries, and second call uses same
-      StructuredTraceGraph mockedStructuredTraceGraph = mock(StructuredTraceGraph.class);
-      try (MockedStatic<StructuredTraceGraph> structuredTraceGraphMockedStatic =
-          mockStatic(StructuredTraceGraph.class)) {
-        structuredTraceGraphMockedStatic
-            .when(() -> StructuredTraceGraph.createGraph(underTestTrace))
-            .thenReturn(mockedStructuredTraceGraph);
-        structuredTraceGraphMockedStatic
-            .when(() -> StructuredTraceGraph.reCreateTraceEntitiesGraph(underTestTrace))
-            .thenReturn(mockedStructuredTraceGraph);
-        structuredTraceGraphMockedStatic
-            .when(() -> StructuredTraceGraph.reCreateTraceEventsGraph(underTestTrace))
-            .thenReturn(mockedStructuredTraceGraph);
+      try (MockedConstruction<StructuredTraceGraph> mocked =
+          mockConstruction(StructuredTraceGraph.class)) {
+
         // calls first time
         StructuredTraceGraph actual = StructuredTraceGraphBuilder.buildGraph(underTestTrace);
-        Assertions.assertEquals(mockedStructuredTraceGraph, actual);
-        structuredTraceGraphMockedStatic.verify(
-            // todo change times to 1 when logging is changed to debug level in
-            // StructuredTraceGraphBuilder#buildGraph
-            () -> StructuredTraceGraph.createGraph(underTestTrace), times(2));
 
         // calls second time, this time it returns from cache
-        StructuredTraceGraphBuilder.buildGraph(underTestTrace);
-        structuredTraceGraphMockedStatic.verify(
-            // todo change times to 1 when logging is changed to debug level in
-            // StructuredTraceGraphBuilder#buildGraph
-            () -> StructuredTraceGraph.createGraph(underTestTrace), times(3));
+        StructuredTraceGraph cached = StructuredTraceGraphBuilder.buildGraph(underTestTrace);
+        Assertions.assertEquals(actual, cached);
       }
     }
   }
