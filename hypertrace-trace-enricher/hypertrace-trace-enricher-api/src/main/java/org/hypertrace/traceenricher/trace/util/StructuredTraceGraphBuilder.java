@@ -59,7 +59,7 @@ public class StructuredTraceGraphBuilder {
     }
 
     debugGraph("Case: Not building the graph.", cachedGraphThreadLocal.get(), trace);
-    return cachedGraphThreadLocal.get();
+    return cachedGraph;
   }
 
   private static void debugGraph(
