@@ -12,7 +12,7 @@ dependencies {
     implementation(project(":span-normalizer:span-normalizer-constants"))
 
     implementation("org.hypertrace.core.datamodel:data-model:0.1.18")
-    implementation("org.hypertrace.entity.service:entity-service-client:0.6.8")
+    implementation("org.hypertrace.entity.service:entity-service-client:0.6.10")
     implementation("org.apache.commons:commons-lang3:3.12.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")

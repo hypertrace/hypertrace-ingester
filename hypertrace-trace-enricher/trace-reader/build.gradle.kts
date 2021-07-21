@@ -8,8 +8,8 @@ plugins {
 dependencies {
   api("org.hypertrace.core.attribute.service:attribute-service-api:0.12.0")
   api("org.hypertrace.core.attribute.service:caching-attribute-service-client:0.12.0")
-  api("org.hypertrace.entity.service:entity-type-service-rx-client:0.6.4")
-  api("org.hypertrace.entity.service:entity-data-service-rx-client:0.6.4")
+  api("org.hypertrace.entity.service:entity-type-service-rx-client:0.6.10")
+  api("org.hypertrace.entity.service:entity-data-service-rx-client:0.6.10")
   api("org.hypertrace.core.datamodel:data-model:0.1.17")
   implementation("org.hypertrace.core.attribute.service:attribute-projection-registry:0.12.0")
   implementation("org.hypertrace.core.grpcutils:grpc-client-rx-utils:0.5.2")
