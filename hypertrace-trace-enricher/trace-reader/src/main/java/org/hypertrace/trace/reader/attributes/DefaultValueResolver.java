@@ -2,11 +2,13 @@ package org.hypertrace.trace.reader.attributes;
 
 import static io.reactivex.rxjava3.core.Single.zip;
 
+import com.google.common.util.concurrent.RateLimiter;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjection;
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
@@ -21,7 +23,10 @@ import org.hypertrace.core.attribute.service.v1.LiteralValue.ValueCase;
 import org.hypertrace.core.attribute.service.v1.Projection;
 import org.hypertrace.core.attribute.service.v1.ProjectionExpression;
 
+@Slf4j
 class DefaultValueResolver implements ValueResolver {
+  // One log a minute
+  private static final RateLimiter LOGGING_LIMITER = RateLimiter.create(1 / 60d);
   private final CachingAttributeClient attributeClient;
   private final AttributeProjectionRegistry attributeProjectionRegistry;
 
@@ -36,7 +41,7 @@ class DefaultValueResolver implements ValueResolver {
   public Single<LiteralValue> resolve(
       ValueSource valueSource, AttributeMetadata attributeMetadata) {
     if (!attributeMetadata.hasDefinition()) {
-      return this.buildError("Attribute definition not set");
+      return this.buildAndLogErrorLazily("Attribute definition not set");
     }
 
     return this.resolveDefinition(
@@ -66,7 +71,7 @@ class DefaultValueResolver implements ValueResolver {
             valueSource, attributeMetadata, definition.getFirstValuePresent());
       case VALUE_NOT_SET:
       default:
-        return this.buildError("Unrecognized attribute definition");
+        return this.buildAndLogErrorLazily("Unrecognized attribute definition");
     }
   }
 
@@ -88,7 +93,8 @@ class DefaultValueResolver implements ValueResolver {
     Single<ValueSource> matchingValueSource =
         Maybe.fromOptional(contextValueSource.sourceForScope(attributeScope))
             .switchIfEmpty(
-                this.buildError("No value source available supporting scope %s", attributeScope));
+                this.buildAndLogErrorLazily(
+                    "No value source available supporting scope %s", attributeScope));
     switch (attributeType) {
       case ATTRIBUTE:
         return matchingValueSource
@@ -101,7 +107,7 @@ class DefaultValueResolver implements ValueResolver {
       case UNRECOGNIZED:
       case TYPE_UNDEFINED:
       default:
-        return this.buildError("Unrecognized projection type");
+        return this.buildAndLogErrorLazily("Unrecognized projection type");
     }
   }
 
@@ -118,7 +124,7 @@ class DefaultValueResolver implements ValueResolver {
         return this.resolveExpression(valueSource, projection.getExpression());
       case VALUE_NOT_SET:
       default:
-        return this.buildError("Unrecognized projection type");
+        return this.buildAndLogErrorLazily("Unrecognized projection type");
     }
   }
 
@@ -145,7 +151,8 @@ class DefaultValueResolver implements ValueResolver {
     Single<AttributeProjection> projectionSingle =
         Maybe.fromOptional(this.attributeProjectionRegistry.getProjection(expression.getOperator()))
             .switchIfEmpty(
-                buildError("Unregistered projection operator: %s", expression.getOperator()));
+                buildAndLogErrorLazily(
+                    "Unregistered projection operator: %s", expression.getOperator()));
     Single<List<LiteralValue>> argumentsSingle =
         this.resolveArgumentList(valueSource, expression.getArgumentsList());
 
@@ -159,7 +166,13 @@ class DefaultValueResolver implements ValueResolver {
         .collect(Collectors.toList());
   }
 
-  private <T> Single<T> buildError(String message, Object... args) {
-    return Single.error(new UnsupportedOperationException(String.format(message, args)));
+  private <T> Single<T> buildAndLogErrorLazily(String message, Object... args) {
+    return Single.error(
+        () -> {
+          if (LOGGING_LIMITER.tryAcquire()) {
+            log.error(String.format(message, args));
+          }
+          return new UnsupportedOperationException(String.format(message, args));
+        });
   }
 }
