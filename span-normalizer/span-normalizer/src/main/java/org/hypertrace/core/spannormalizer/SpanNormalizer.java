@@ -7,6 +7,7 @@ import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstan
 
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
+import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,8 @@ import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToAvroRawSpanTransformer;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToLogRecordsTransformer;
 import org.hypertrace.core.spannormalizer.jaeger.PreProcessedSpan;
+import org.hypertrace.core.spannormalizer.otel.OtelMetricProcessor;
+import org.hypertrace.core.spannormalizer.otel.OtelMetricSerde;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +58,36 @@ public class SpanNormalizer extends KafkaStreamsApp {
         inputStream.transform(JaegerSpanPreProcessor::new);
     preProcessedStream.transform(JaegerSpanToAvroRawSpanTransformer::new).to(outputTopic);
     preProcessedStream.transform(JaegerSpanToLogRecordsTransformer::new).to(outputTopicRawLogs);
+
+    // add metrics processor
+
+    KStream<byte[], ResourceMetrics> secondProcessor =
+        (KStream<byte[], ResourceMetrics>) inputStreams.get("otel-metrics");
+    if (secondProcessor == null) {
+      secondProcessor =
+          streamsBuilder.stream(
+              "otel-metrics", Consumed.with(Serdes.ByteArray(), new OtelMetricSerde()));
+      inputStreams.put(inputTopic, secondProcessor);
+    }
+
+    KStream<byte[], ResourceMetrics> otelMetricStream =
+        secondProcessor.transform(OtelMetricProcessor::new);
+
     return streamsBuilder;
+  }
+
+  private void addStreamIfNeeded(
+      StreamsBuilder streamsBuilder,
+      Map<String, KStream<?, ?>> inputStreams,
+      String inputTopicName,
+      String nodeName) {
+    KStream<?, ?> inputStream = inputStreams.get(inputTopicName);
+    if (inputStream == null) {
+      inputStream =
+          streamsBuilder.stream(
+              inputTopicName, Consumed.with(Serdes.String(), null).withName(nodeName));
+      inputStreams.put(inputTopicName, inputStream);
+    }
   }
 
   @Override
