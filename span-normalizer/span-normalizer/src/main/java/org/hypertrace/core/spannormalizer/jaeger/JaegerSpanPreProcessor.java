@@ -1,12 +1,15 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
+import static org.hypertrace.core.spannormalizer.jaeger.SpanFilter.ROOT_SPAN_DROP_CRITERION_CONFIG;
+import static org.hypertrace.core.spannormalizer.jaeger.SpanFilter.SPAN_DROP_CRITERION_CONFIG;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Counter;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,14 +25,13 @@ import org.slf4j.LoggerFactory;
 public class JaegerSpanPreProcessor
     implements Transformer<byte[], Span, KeyValue<byte[], PreProcessedSpan>> {
 
+  static final String SPANS_COUNTER = "hypertrace.reported.spans";
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
-
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
-  static final String SPANS_COUNTER = "hypertrace.reported.spans";
-
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
+  private SpanFilter rootSpanFilter;
 
   public JaegerSpanPreProcessor() {
     // empty constructor
@@ -38,14 +40,32 @@ public class JaegerSpanPreProcessor
   // constructor for testing
   JaegerSpanPreProcessor(Config jobConfig) {
     tenantIdHandler = new TenantIdHandler(jobConfig);
-    spanFilter = new SpanFilter(jobConfig);
+    spanFilter =
+        new SpanFilter(
+            jobConfig.hasPath(SPAN_DROP_CRITERION_CONFIG)
+                ? jobConfig.getStringList(SPAN_DROP_CRITERION_CONFIG)
+                : Collections.emptyList());
+    rootSpanFilter =
+        new SpanFilter(
+            jobConfig.hasPath(ROOT_SPAN_DROP_CRITERION_CONFIG)
+                ? jobConfig.getStringList(ROOT_SPAN_DROP_CRITERION_CONFIG)
+                : Collections.emptyList());
   }
 
   @Override
   public void init(ProcessorContext context) {
     Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
     tenantIdHandler = new TenantIdHandler(jobConfig);
-    spanFilter = new SpanFilter(jobConfig);
+    spanFilter =
+        new SpanFilter(
+            jobConfig.hasPath(SPAN_DROP_CRITERION_CONFIG)
+                ? jobConfig.getStringList(SPAN_DROP_CRITERION_CONFIG)
+                : Collections.emptyList());
+    rootSpanFilter =
+        new SpanFilter(
+            jobConfig.hasPath(ROOT_SPAN_DROP_CRITERION_CONFIG)
+                ? jobConfig.getStringList(ROOT_SPAN_DROP_CRITERION_CONFIG)
+                : Collections.emptyList());
   }
 
   @Override
@@ -95,7 +115,8 @@ public class JaegerSpanPreProcessor
 
     String tenantId = maybeTenantId.get();
 
-    if (spanFilter.shouldDropSpan(tags)) {
+    if (spanFilter.shouldDropSpan(tags)
+        || (value.getReferencesList().isEmpty() && rootSpanFilter.shouldDropSpan(tags))) {
       return null;
     }
 
