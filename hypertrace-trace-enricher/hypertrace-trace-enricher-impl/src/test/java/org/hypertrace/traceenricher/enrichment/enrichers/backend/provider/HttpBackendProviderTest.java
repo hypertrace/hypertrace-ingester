@@ -402,6 +402,109 @@ public class HttpBackendProviderTest {
   }
 
   @Test
+  public void checkBackendEntityGeneratedFromHttpEventType4() {
+    Event e =
+        Event.newBuilder()
+            .setCustomerId("__default")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "SPAN_TYPE",
+                            AttributeValue.newBuilder().setValue("EXIT").build(),
+                            "PROTOCOL",
+                            AttributeValue.newBuilder().setValue("HTTP").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            RawSpanConstants.getValue(HTTP_URL),
+                            AttributeValue.newBuilder()
+                                .setValue(
+                                    "http://dataservice:80/userreview?productId=5d644175551847d7408760b4")
+                                .build(),
+                            RawSpanConstants.getValue(HTTP_HOST),
+                            AttributeValue.newBuilder().setValue("dataservice:80").build(),
+                            RawSpanConstants.getValue(HTTP_PATH),
+                            AttributeValue.newBuilder().setValue("/userreview").build(),
+                            RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING),
+                            AttributeValue.newBuilder()
+                                .setValue("productId=5d644175551847d7408760b4")
+                                .build(),
+                            "http.request.method",
+                            AttributeValue.newBuilder().setValue("GET").build(),
+                            "FLAGS",
+                            AttributeValue.newBuilder().setValue("OK").build(),
+                            "http.request.url",
+                            AttributeValue.newBuilder()
+                                .setValue(
+                                    "http://dataservice:80/userreview?productId=5d644175551847d7408760b4")
+                                .build()))
+                    .build())
+            .setEventName("jaxrs.client.exit")
+            .setStartTimeMillis(1566869077746L)
+            .setEndTimeMillis(1566869077750L)
+            .setMetrics(
+                Metrics.newBuilder()
+                    .setMetricMap(
+                        Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build()))
+                    .build())
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .build();
+
+    final Entity backendEntity =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
+    assertEquals("dataservice", backendEntity.getEntityName());
+    assertEquals(3, backendEntity.getIdentifyingAttributesCount());
+    assertEquals(
+        BackendType.HTTP.name(),
+        backendEntity
+            .getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
+            .getValue()
+            .getString());
+    assertEquals(
+        "dataservice",
+        backendEntity
+            .getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST))
+            .getValue()
+            .getString());
+    assertEquals(
+        backendEntity
+            .getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT))
+            .getValue()
+            .getString(),
+        "-1");
+    assertEquals(
+        backendEntity
+            .getAttributesMap()
+            .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT))
+            .getValue()
+            .getString(),
+        "jaxrs.client.exit");
+    assertEquals(
+        backendEntity
+            .getAttributesMap()
+            .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID))
+            .getValue()
+            .getString(),
+        "62646630336466616266356337306638");
+    assertEquals(
+        backendEntity.getAttributesMap().get("http.request.method").getValue().getString(), "GET");
+  }
+
+  @Test
   public void checkBackendEntityGeneratedFromHttpsEvent() {
     Event e =
         Event.newBuilder()
@@ -490,6 +593,118 @@ public class HttpBackendProviderTest {
             .getValue()
             .getString(),
         "9394");
+    assertEquals(
+        backendEntity
+            .getAttributesMap()
+            .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT))
+            .getValue()
+            .getString(),
+        "Sent./product/5d644175551847d7408760b1");
+    assertEquals(
+        backendEntity
+            .getAttributesMap()
+            .get(Constants.getEnrichedSpanConstant(Backend.BACKEND_FROM_EVENT_ID))
+            .getValue()
+            .getString(),
+        "62646630336466616266356337303766");
+    assertEquals(
+        backendEntity
+            .getAttributesMap()
+            .get(Constants.getRawSpanConstant(Http.HTTP_METHOD))
+            .getValue()
+            .getString(),
+        "GET");
+  }
+
+  @Test
+  public void checkBackendEntityGeneratedFromHttpsEvent2() {
+    Event e =
+        Event.newBuilder()
+            .setCustomerId("__default")
+            .setEventId(ByteBuffer.wrap("bdf03dfabf5c707f".getBytes()))
+            .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8865"))
+            .setEnrichedAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "SPAN_TYPE",
+                            AttributeValue.newBuilder().setValue("EXIT").build(),
+                            "PROTOCOL",
+                            AttributeValue.newBuilder().setValue("HTTPS").build()))
+                    .build())
+            .setAttributes(
+                Attributes.newBuilder()
+                    .setAttributeMap(
+                        Map.of(
+                            "http.status_code",
+                            AttributeValue.newBuilder().setValue("200").build(),
+                            "http.user_agent",
+                            AttributeValue.newBuilder().setValue("").build(),
+                            "http.path",
+                            AttributeValue.newBuilder()
+                                .setValue("/product/5d644175551847d7408760b1")
+                                .build(),
+                            "FLAGS",
+                            AttributeValue.newBuilder().setValue("OK").build(),
+                            "status.message",
+                            AttributeValue.newBuilder().setValue("200").build(),
+                            Constants.getRawSpanConstant(Http.HTTP_METHOD),
+                            AttributeValue.newBuilder().setValue("GET").build(),
+                            "http.host",
+                            AttributeValue.newBuilder().setValue("dataservice:443").build(),
+                            "status.code",
+                            AttributeValue.newBuilder().setValue("0").build()))
+                    .build())
+            .setEventName("Sent./product/5d644175551847d7408760b1")
+            .setStartTimeMillis(1566869077746L)
+            .setEndTimeMillis(1566869077750L)
+            .setMetrics(
+                Metrics.newBuilder()
+                    .setMetricMap(
+                        Map.of("Duration", MetricValue.newBuilder().setValue(4.0).build()))
+                    .build())
+            .setEventRefList(
+                Arrays.asList(
+                    EventRef.newBuilder()
+                        .setTraceId(ByteBuffer.wrap("random_trace_id".getBytes()))
+                        .setEventId(ByteBuffer.wrap("random_event_id".getBytes()))
+                        .setRefType(EventRefType.CHILD_OF)
+                        .build()))
+            .setHttp(
+                org.hypertrace.core.datamodel.eventfields.http.Http.newBuilder()
+                    .setRequest(
+                        Request.newBuilder()
+                            .setHost("dataservice:443")
+                            .setPath("/product/5d644175551847d7408760b1")
+                            .build())
+                    .build())
+            .build();
+
+    final Entity backendEntity =
+        backendEntityEnricher.resolve(e, structuredTrace, structuredTraceGraph).get().getEntity();
+    assertEquals(backendEntity.getEntityName(), "dataservice");
+    assertEquals(3, backendEntity.getIdentifyingAttributesCount());
+    assertEquals(
+        BackendType.HTTPS.name(),
+        backendEntity
+            .getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PROTOCOL))
+            .getValue()
+            .getString());
+    assertEquals(
+        backendEntity
+            .getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_HOST))
+            .getValue()
+            .getString(),
+        "dataservice");
+    assertEquals(
+        backendEntity
+            .getIdentifyingAttributesMap()
+            .get(Constants.getEntityConstant(BackendAttribute.BACKEND_ATTRIBUTE_PORT))
+            .getValue()
+            .getString(),
+        "-1");
     assertEquals(
         backendEntity
             .getAttributesMap()

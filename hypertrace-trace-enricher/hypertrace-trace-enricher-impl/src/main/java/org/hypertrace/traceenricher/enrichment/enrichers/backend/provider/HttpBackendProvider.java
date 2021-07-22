@@ -21,6 +21,11 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 
 public class HttpBackendProvider implements BackendProvider {
+  private static final String COLON = ":";
+  private static final int DEFAULT_HTTP_PORT = 80;
+  private static final int DEFAULT_HTTPS_PORT = 443;
+  private static final String DEFAULT_HTTP_PORT_SUFFIX = COLON + DEFAULT_HTTP_PORT;
+  private static final String DEFAULT_HTTPS_PORT_SUFFIX = COLON + DEFAULT_HTTPS_PORT;
   private Supplier<Protocol> protocolSupplier;
 
   @Override
@@ -42,7 +47,21 @@ public class HttpBackendProvider implements BackendProvider {
 
   @Override
   public Optional<String> getBackendUri(Event event, StructuredTraceGraph structuredTraceGraph) {
-    return HttpSemanticConventionUtils.getHttpHost(event);
+    Optional<String> httpHost = HttpSemanticConventionUtils.getHttpHost(event);
+    // since http protocol has default ports for http and https protocol,
+    // Removing default port if available as suffix in httpHost based on protocol
+    if (httpHost.isPresent()) {
+      String httpHostStr = httpHost.get();
+      int index =
+          getProtocol() == Protocol.PROTOCOL_HTTP
+              ? httpHostStr.indexOf(DEFAULT_HTTP_PORT_SUFFIX)
+              : httpHostStr.indexOf(DEFAULT_HTTPS_PORT_SUFFIX);
+
+      if (index > -1) {
+        return Optional.of(httpHostStr.substring(0, index));
+      }
+    }
+    return httpHost;
   }
 
   @Override
