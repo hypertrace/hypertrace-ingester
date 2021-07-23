@@ -41,7 +41,7 @@ public class SpanFilter {
   private static final String COLON = ":";
 
   private List<List<Pair<String, String>>> spanDropCriterion = Collections.emptyList();
-  private boolean dropRootSpan = false;
+  private boolean alwaysDropRootSpan = false;
   private List<List<Pair<String, String>>> rootSpanDropExclusionCriterion = Collections.emptyList();
 
   public SpanFilter(Config config) {
@@ -49,23 +49,13 @@ public class SpanFilter {
       List<String> criterion = config.getStringList(SPAN_DROP_CRITERION_CONFIG);
       LOG.info("Span drop criterion: {}", criterion);
       // Parse the config to see if there is any criteria to drop spans.
-      this.spanDropCriterion =
-          criterion.stream()
-              // Split each criteria based on comma
-              .map(s -> s.split(COMMA))
-              .map(
-                  a ->
-                      Arrays.stream(a)
-                          .map(this::convertToPair)
-                          .filter(Objects::nonNull)
-                          .collect(Collectors.toList()))
-              .collect(Collectors.toList());
+      this.spanDropCriterion = parseStringList(criterion);
     }
 
     if (config.hasPath(ROOT_SPAN_DROP_CRITERION_CONFIG)) {
       Config rootSpanDropCriterionConfig = config.getConfig(ROOT_SPAN_DROP_CRITERION_CONFIG);
       LOG.info("Root Span drop criterion: {}", rootSpanDropCriterionConfig);
-      this.dropRootSpan =
+      this.alwaysDropRootSpan =
           rootSpanDropCriterionConfig.hasPath(ROOT_SPAN_ALWAYS_DROP)
               && rootSpanDropCriterionConfig.getBoolean(ROOT_SPAN_ALWAYS_DROP);
       List<String> exclusionList =
@@ -73,18 +63,21 @@ public class SpanFilter {
               ? rootSpanDropCriterionConfig.getStringList(ROOT_SPAN_DROP_EXCLUSIONS)
               : Collections.emptyList();
       // Parse the config to see if there is any criteria to drop spans.
-      this.rootSpanDropExclusionCriterion =
-          exclusionList.stream()
-              // Split each criteria based on comma
-              .map(s -> s.split(COMMA))
-              .map(
-                  a ->
-                      Arrays.stream(a)
-                          .map(this::convertToPair)
-                          .filter(Objects::nonNull)
-                          .collect(Collectors.toList()))
-              .collect(Collectors.toList());
+      this.rootSpanDropExclusionCriterion = parseStringList(exclusionList);
     }
+  }
+
+  private List<List<Pair<String, String>>> parseStringList(List<String> stringList) {
+    return stringList.stream()
+        // Split each criteria based on comma
+        .map(s -> s.split(COMMA))
+        .map(
+            a ->
+                Arrays.stream(a)
+                    .map(this::convertToPair)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()))
+        .collect(Collectors.toList());
   }
 
   /**
@@ -98,12 +91,8 @@ public class SpanFilter {
     }
 
     if (isRootExitSpan(span, tags)) {
-      if (dropRootSpan && noCriteriaMatch(tags, rootSpanDropExclusionCriterion)) {
-        return true;
-      }
-      if (!dropRootSpan && anyCriteriaMatch(tags, rootSpanDropExclusionCriterion)) {
-        return true;
-      }
+      boolean anyCriteriaMatch = anyCriteriaMatch(tags, rootSpanDropExclusionCriterion);
+      return (alwaysDropRootSpan && !anyCriteriaMatch) || (!alwaysDropRootSpan && anyCriteriaMatch);
     }
     return false;
   }
@@ -133,27 +122,13 @@ public class SpanFilter {
                                     tags.get(p.getLeft()).getVStr(), p.getRight())));
   }
 
-  private boolean noCriteriaMatch(
-      Map<String, JaegerSpanInternalModel.KeyValue> tags,
-      List<List<Pair<String, String>>> criteriaList) {
-    return criteriaList.stream()
-        .noneMatch(
-            l ->
-                l.stream()
-                    .allMatch(
-                        p ->
-                            tags.containsKey(p.getLeft())
-                                && StringUtils.equals(
-                                    tags.get(p.getLeft()).getVStr(), p.getRight())));
-  }
-
   private boolean isRootExitSpan(
       JaegerSpanInternalModel.Span span, Map<String, JaegerSpanInternalModel.KeyValue> tags) {
     if (!span.getReferencesList().isEmpty()) {
       return false;
     }
     JaegerSpanInternalModel.KeyValue spanKindKeyValue = tags.get(SPAN_KIND_TAG);
-    if (spanKindKeyValue == null) {
+    if (null == spanKindKeyValue) {
       return false;
     }
 
