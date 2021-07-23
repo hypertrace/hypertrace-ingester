@@ -1,7 +1,9 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,16 +26,18 @@ public class SpanFilter {
    * ["messaging.destination_kind:queue,messaging.operation:receive,messaging.system:jms"] drops all
    * spans which have all 3 attribute:value pairs.
    */
-  public static final String SPAN_DROP_CRITERION_CONFIG = "processor.spanDropCriterion";
-
-  public static final String ROOT_SPAN_DROP_CRITERION_CONFIG = "processor.rootSpanDropCriterion";
+  private static final String SPAN_DROP_CRITERION_CONFIG = "processor.spanDropCriterion";
 
   private static final String COMMA = ",";
   private static final String COLON = ":";
 
   private final List<List<Pair<String, String>>> spanDropCriterion;
 
-  public SpanFilter(List<String> criterion) {
+  public SpanFilter(Config config) {
+    List<String> criterion =
+        config.hasPath(SPAN_DROP_CRITERION_CONFIG)
+            ? config.getStringList(SPAN_DROP_CRITERION_CONFIG)
+            : Collections.emptyList();
     // Parse the config to see if there is any criteria to drop spans.
     this.spanDropCriterion =
         criterion.stream()
