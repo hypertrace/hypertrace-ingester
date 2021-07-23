@@ -17,9 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SpanFilter {
-
-  public static final String ROOT_SPAN_DROP_CRITERION_CONFIG =
-      "processor.rootExitSpanDropCriterion";
   private static final Logger LOG = LoggerFactory.getLogger(SpanFilter.class);
   private static final String SPAN_KIND_TAG =
       RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND);
@@ -35,47 +32,45 @@ public class SpanFilter {
    */
   private static final String SPAN_DROP_CRITERION_CONFIG = "processor.spanDropCriterion";
 
+  public static final String ROOT_SPAN_DROP_CRITERION_CONFIG =
+      "processor.rootExitSpanDropCriterion";
   private static final String ROOT_SPAN_ALWAYS_DROP = "alwaysDrop";
   private static final String ROOT_SPAN_DROP_EXCLUSIONS = "exclusionsMatchCriterion";
 
   private static final String COMMA = ",";
   private static final String COLON = ":";
 
-  private final List<List<Pair<String, String>>> spanDropCriterion;
+  private List<List<Pair<String, String>>> spanDropCriterion = Collections.emptyList();
   private boolean dropRootSpan = false;
   private List<List<Pair<String, String>>> rootSpanDropExclusionCriterion = Collections.emptyList();
 
   public SpanFilter(Config config) {
-    List<String> criterion =
-        config.hasPath(SPAN_DROP_CRITERION_CONFIG)
-            ? config.getStringList(SPAN_DROP_CRITERION_CONFIG)
-            : Collections.emptyList();
-    // Parse the config to see if there is any criteria to drop spans.
-    this.spanDropCriterion =
-        criterion.stream()
-            // Split each criteria based on comma
-            .map(s -> s.split(COMMA))
-            .map(
-                a ->
-                    Arrays.stream(a)
-                        .map(this::convertToPair)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList()))
-            .collect(Collectors.toList());
-
-    if (!this.spanDropCriterion.isEmpty()) {
-      LOG.info("Span drop criterion: {}", this.spanDropCriterion);
+    if (config.hasPath(SPAN_DROP_CRITERION_CONFIG)) {
+      List<String> criterion = config.getStringList(SPAN_DROP_CRITERION_CONFIG);
+      LOG.info("Span drop criterion: {}", criterion);
+      // Parse the config to see if there is any criteria to drop spans.
+      this.spanDropCriterion =
+          criterion.stream()
+              // Split each criteria based on comma
+              .map(s -> s.split(COMMA))
+              .map(
+                  a ->
+                      Arrays.stream(a)
+                          .map(this::convertToPair)
+                          .filter(Objects::nonNull)
+                          .collect(Collectors.toList()))
+              .collect(Collectors.toList());
     }
 
     if (config.hasPath(ROOT_SPAN_DROP_CRITERION_CONFIG)) {
-      Config dropCriterionConfig = config.getConfig(ROOT_SPAN_DROP_CRITERION_CONFIG);
-      LOG.info("Root Span drop criterion: {}", dropCriterionConfig);
+      Config rootSpanDropCriterionConfig = config.getConfig(ROOT_SPAN_DROP_CRITERION_CONFIG);
+      LOG.info("Root Span drop criterion: {}", rootSpanDropCriterionConfig);
       this.dropRootSpan =
-          dropCriterionConfig.hasPath(ROOT_SPAN_ALWAYS_DROP)
-              && dropCriterionConfig.getBoolean(ROOT_SPAN_ALWAYS_DROP);
+          rootSpanDropCriterionConfig.hasPath(ROOT_SPAN_ALWAYS_DROP)
+              && rootSpanDropCriterionConfig.getBoolean(ROOT_SPAN_ALWAYS_DROP);
       List<String> exclusionList =
-          dropCriterionConfig.hasPath(ROOT_SPAN_DROP_EXCLUSIONS)
-              ? dropCriterionConfig.getStringList(ROOT_SPAN_DROP_EXCLUSIONS)
+          rootSpanDropCriterionConfig.hasPath(ROOT_SPAN_DROP_EXCLUSIONS)
+              ? rootSpanDropCriterionConfig.getStringList(ROOT_SPAN_DROP_EXCLUSIONS)
               : Collections.emptyList();
       // Parse the config to see if there is any criteria to drop spans.
       this.rootSpanDropExclusionCriterion =
