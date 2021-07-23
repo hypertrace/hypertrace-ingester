@@ -24,8 +24,6 @@ public class HttpBackendProvider implements BackendProvider {
   private static final String COLON = ":";
   private static final int DEFAULT_HTTP_PORT = 80;
   private static final int DEFAULT_HTTPS_PORT = 443;
-  private static final String DEFAULT_HTTP_PORT_SUFFIX = COLON + DEFAULT_HTTP_PORT;
-  private static final String DEFAULT_HTTPS_PORT_SUFFIX = COLON + DEFAULT_HTTPS_PORT;
   private Supplier<Protocol> protocolSupplier;
 
   @Override
@@ -51,14 +49,11 @@ public class HttpBackendProvider implements BackendProvider {
     // since http protocol has default ports for http and https protocol,
     // Removing default port if available as suffix in httpHost based on protocol
     if (httpHost.isPresent()) {
-      String httpHostStr = httpHost.get();
-      int index =
-          getProtocol() == Protocol.PROTOCOL_HTTP
-              ? httpHostStr.indexOf(DEFAULT_HTTP_PORT_SUFFIX)
-              : httpHostStr.indexOf(DEFAULT_HTTPS_PORT_SUFFIX);
-
-      if (index > -1) {
-        return Optional.of(httpHostStr.substring(0, index));
+      String[] hostAndPort = httpHost.get().split(COLON);
+      String host = hostAndPort[0];
+      int port = hostAndPort.length == 2 ? Integer.valueOf(hostAndPort[1]) : getDefaultPort();
+      if (port == getDefaultPort()) {
+        return Optional.of(host);
       }
     }
     return httpHost;
@@ -96,5 +91,9 @@ public class HttpBackendProvider implements BackendProvider {
 
   private Protocol getProtocol() {
     return this.protocolSupplier.get();
+  }
+
+  private int getDefaultPort() {
+    return getProtocol() == Protocol.PROTOCOL_HTTP ? DEFAULT_HTTP_PORT : DEFAULT_HTTPS_PORT;
   }
 }
