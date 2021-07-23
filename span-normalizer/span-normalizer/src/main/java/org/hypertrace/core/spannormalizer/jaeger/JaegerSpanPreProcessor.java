@@ -28,7 +28,6 @@ public class JaegerSpanPreProcessor
       new ConcurrentHashMap<>();
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
-  private RootExitSpanFilter rootSpanFilter;
 
   public JaegerSpanPreProcessor() {
     // empty constructor
@@ -38,7 +37,6 @@ public class JaegerSpanPreProcessor
   JaegerSpanPreProcessor(Config jobConfig) {
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanFilter = new SpanFilter(jobConfig);
-    rootSpanFilter = new RootExitSpanFilter(jobConfig);
   }
 
   @Override
@@ -46,7 +44,6 @@ public class JaegerSpanPreProcessor
     Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanFilter = new SpanFilter(jobConfig);
-    rootSpanFilter = new RootExitSpanFilter(jobConfig);
   }
 
   @Override
@@ -96,11 +93,7 @@ public class JaegerSpanPreProcessor
 
     String tenantId = maybeTenantId.get();
 
-    if (spanFilter.shouldDropSpan(tags)
-        || (span.getReferencesList().isEmpty()
-            && tags.containsKey("span.kind")
-            && "client".equals(tags.get("span.kind").getVStr())
-            && rootSpanFilter.shouldDropSpan(span, tags))) {
+    if (spanFilter.shouldDropSpan(span, tags)) {
       return null;
     }
 
