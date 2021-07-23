@@ -112,13 +112,13 @@ kafka-topic-creator:
   helmHook: pre-install,pre-upgrade
   kafka:
     topics:
-      - name: enriched-structured-traces
+      enriched-structured-traces:
         replicationFactor: 3
         partitions: 8
         configs:
-          - retention.bytes=8589934592 # default = -1
-          - retention.ms=86400000 # default = 604800000 (7 days)
-          - max.message.bytes=10485760 # Allow larger messages for traces
+          retention.bytes: 8589934592 # default = -1
+          retention.ms: 86400000 # default = 604800000 (7 days)
+          max.message.bytes: 10485760 # Allow larger messages for traces
   zookeeper:
     address: zookeeper:2181
   imagePullSecrets: []
