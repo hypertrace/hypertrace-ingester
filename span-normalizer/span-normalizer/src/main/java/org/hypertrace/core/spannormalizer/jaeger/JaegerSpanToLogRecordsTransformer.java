@@ -1,11 +1,15 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.util.Timestamps;
+import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Counter;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +31,7 @@ public class JaegerSpanToLogRecordsTransformer
 
   private static final Logger LOG =
       LoggerFactory.getLogger(JaegerSpanToLogRecordsTransformer.class);
+  private static final String TENANT_IDS_TO_EXCLUDE_LOGS_CONFIG = "processor.excludeLogsTenantIds";
 
   private static final String VALID_SPAN_WITH_LOGS_RECEIVED_COUNT =
       "hypertrace.reported.span.with.logs.processed";
@@ -34,9 +39,16 @@ public class JaegerSpanToLogRecordsTransformer
   private static final ConcurrentMap<String, Counter> tenantToSpanWithLogsReceivedCount =
       new ConcurrentHashMap<>();
 
+  private List<String> tenantIdsToExclude;
+
+
   @Override
   public void init(ProcessorContext context) {
-    // no-op
+    Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
+    this.tenantIdsToExclude =
+        jobConfig.hasPath(TENANT_IDS_TO_EXCLUDE_LOGS_CONFIG)
+            ? jobConfig.getStringList(TENANT_IDS_TO_EXCLUDE_LOGS_CONFIG)
+            : Collections.emptyList();
   }
 
   @Override
@@ -44,7 +56,7 @@ public class JaegerSpanToLogRecordsTransformer
     try {
       Span value = preProcessedSpan.getSpan();
       String tenantId = preProcessedSpan.getTenantId();
-      if (value.getLogsCount() == 0) {
+      if (value.getLogsCount() == 0 || tenantIdsToExclude.contains(tenantId)) {
         return null;
       }
 
