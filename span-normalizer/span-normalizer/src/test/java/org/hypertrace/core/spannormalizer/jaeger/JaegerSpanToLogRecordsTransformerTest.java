@@ -40,10 +40,12 @@ public class JaegerSpanToLogRecordsTransformerTest {
     ProcessorContext processorContext = Mockito.mock(ProcessorContext.class);
     Mockito.when(processorContext.appConfigs())
         .thenReturn(Map.of("span-normalizer-job-config", ConfigFactory.parseMap(configs)));
-    JaegerSpanToLogRecordsTransformer jaegerSpanToLogRecordsTransformer = new JaegerSpanToLogRecordsTransformer();
+    JaegerSpanToLogRecordsTransformer jaegerSpanToLogRecordsTransformer =
+        new JaegerSpanToLogRecordsTransformer();
     jaegerSpanToLogRecordsTransformer.init(processorContext);
-    KeyValue<String, LogEvents> keyValue = jaegerSpanToLogRecordsTransformer.transform(
-        null, new PreProcessedSpan("tenant-1", getTestSpan()));
+    KeyValue<String, LogEvents> keyValue =
+        jaegerSpanToLogRecordsTransformer.transform(
+            null, new PreProcessedSpan("tenant-1", getTestSpan()));
     Assertions.assertNull(keyValue);
   }
 

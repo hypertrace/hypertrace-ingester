@@ -41,7 +41,6 @@ public class JaegerSpanToLogRecordsTransformer
 
   private List<String> tenantIdsToExclude;
 
-
   @Override
   public void init(ProcessorContext context) {
     Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
