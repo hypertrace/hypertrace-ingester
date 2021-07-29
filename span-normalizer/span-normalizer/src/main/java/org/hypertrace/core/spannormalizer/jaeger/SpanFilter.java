@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import com.google.common.util.concurrent.RateLimiter;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.util.Arrays;
@@ -16,8 +17,10 @@ import org.hypertrace.core.span.constants.v1.SpanAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("UnstableApiUsage")
 public class SpanFilter {
   private static final Logger LOG = LoggerFactory.getLogger(SpanFilter.class);
+  private static final RateLimiter DROPPED_SPANS_RATE_LIMITER = RateLimiter.create(1.0);
   private static final String SPAN_KIND_TAG =
       RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND);
   private static final String SPAN_KIND_CLIENT = "client";
@@ -87,12 +90,24 @@ public class SpanFilter {
   public boolean shouldDropSpan(
       JaegerSpanInternalModel.Span span, Map<String, JaegerSpanInternalModel.KeyValue> tags) {
     if (anyCriteriaMatch(tags, spanDropCriterion)) {
+      if (DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
+        LOG.info("Dropping span: [{}] with drop criterion: [{}]", span, spanDropCriterion);
+      }
       return true;
     }
 
     if (isRootExitSpan(span, tags)) {
       boolean anyCriteriaMatch = anyCriteriaMatch(tags, rootSpanDropExclusionCriterion);
-      return (alwaysDropRootSpan && !anyCriteriaMatch) || (!alwaysDropRootSpan && anyCriteriaMatch);
+      boolean shouldDropSpan =
+          (alwaysDropRootSpan && !anyCriteriaMatch) || (!alwaysDropRootSpan && anyCriteriaMatch);
+      if (shouldDropSpan && DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
+        LOG.info(
+            "Dropping root exit span: [{}] alwaysDropRootSpan: [{}] exclusionCriterion: [{}]",
+            span,
+            alwaysDropRootSpan,
+            rootSpanDropExclusionCriterion);
+      }
+      return shouldDropSpan;
     }
     return false;
   }
