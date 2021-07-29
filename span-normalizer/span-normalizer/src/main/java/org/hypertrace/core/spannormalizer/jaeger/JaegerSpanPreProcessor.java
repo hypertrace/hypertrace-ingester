@@ -3,7 +3,6 @@ package org.hypertrace.core.spannormalizer.jaeger;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.RateLimiter;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
@@ -20,13 +19,11 @@ import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("UnstableApiUsage")
 public class JaegerSpanPreProcessor
     implements Transformer<byte[], Span, KeyValue<byte[], PreProcessedSpan>> {
 
   static final String SPANS_COUNTER = "hypertrace.reported.spans";
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
-  private static final RateLimiter DROPPED_SPANS_RATE_LIMITER = RateLimiter.create(1.0);
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
   private TenantIdHandler tenantIdHandler;
@@ -97,9 +94,6 @@ public class JaegerSpanPreProcessor
     String tenantId = maybeTenantId.get();
 
     if (spanFilter.shouldDropSpan(span, tags)) {
-      if (DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
-        LOG.info("Dropped span: {}", span);
-      }
       return null;
     }
 
