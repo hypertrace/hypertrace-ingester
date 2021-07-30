@@ -23,8 +23,11 @@ public class JaegerSpanPreProcessor
     implements Transformer<byte[], Span, KeyValue<byte[], PreProcessedSpan>> {
 
   static final String SPANS_COUNTER = "hypertrace.reported.spans";
+  private static final String DROPPED_SPANS_COUNTER = "hypertrace.reported.spans.dropped";
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
+      new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Counter> tenantToSpansDroppedCount =
       new ConcurrentHashMap<>();
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
@@ -94,6 +97,14 @@ public class JaegerSpanPreProcessor
     String tenantId = maybeTenantId.get();
 
     if (spanFilter.shouldDropSpan(span, tags)) {
+      // increment dropped counter at tenant level
+      tenantToSpansDroppedCount
+          .computeIfAbsent(
+              tenantId,
+              tenant ->
+                  PlatformMetricsRegistry.registerCounter(
+                      DROPPED_SPANS_COUNTER, Map.of("tenantId", tenantId)))
+          .increment();
       return null;
     }
 
