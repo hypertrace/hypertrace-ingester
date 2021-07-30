@@ -68,6 +68,7 @@ public class JaegerSpanPreProcessor
                 "dropped",
                 k -> PlatformMetricsRegistry.registerCounter(SPANS_COUNTER, Map.of("result", k)))
             .increment();
+        return null;
       }
 
       return new KeyValue<>(key, preProcessedSpan);
