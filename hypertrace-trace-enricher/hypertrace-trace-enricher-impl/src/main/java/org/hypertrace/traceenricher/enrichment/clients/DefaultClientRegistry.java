@@ -3,12 +3,12 @@ package org.hypertrace.traceenricher.enrichment.clients;
 import com.typesafe.config.Config;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
@@ -36,14 +36,19 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final EntityCache entityCache;
   private final TraceEntityReader<StructuredTrace, Event> entityReader;
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
+  private final GrpcChannelRegistry grpcChannelRegistry = new GrpcChannelRegistry();
 
   public DefaultClientRegistry(Config config) {
     this.attributeServiceChannel =
-        this.buildChannel(config, ATTRIBUTE_SERVICE_HOST_KEY, ATTRIBUTE_SERVICE_PORT_KEY);
+        this.buildChannel(
+            config.getString(ATTRIBUTE_SERVICE_HOST_KEY),
+            config.getInt(ATTRIBUTE_SERVICE_PORT_KEY));
     this.configServiceChannel =
-        this.buildChannel(config, CONFIG_SERVICE_HOST_KEY, CONFIG_SERVICE_PORT_KEY);
+        this.buildChannel(
+            config.getString(CONFIG_SERVICE_HOST_KEY), config.getInt(CONFIG_SERVICE_PORT_KEY));
     this.entityServiceChannel =
-        this.buildChannel(config, ENTITY_SERVICE_HOST_KEY, ENTITY_SERVICE_PORT_KEY);
+        this.buildChannel(
+            config.getString(ENTITY_SERVICE_HOST_KEY), config.getInt(ENTITY_SERVICE_PORT_KEY));
 
     this.cachingAttributeClient =
         CachingAttributeClient.builder(this.attributeServiceChannel)
@@ -106,14 +111,10 @@ public class DefaultClientRegistry implements ClientRegistry {
   }
 
   public void shutdown() {
-    this.attributeServiceChannel.shutdown();
-    this.configServiceChannel.shutdown();
-    this.entityServiceChannel.shutdown();
+    this.grpcChannelRegistry.shutdown();
   }
 
-  private ManagedChannel buildChannel(Config config, String hostKey, String portKey) {
-    return ManagedChannelBuilder.forAddress(config.getString(hostKey), config.getInt(portKey))
-        .usePlaintext()
-        .build();
+  protected ManagedChannel buildChannel(String host, int port) {
+    return this.grpcChannelRegistry.forPlaintextAddress(host, port);
   }
 }
