@@ -95,7 +95,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
               event ->
                   EnrichedSpanUtils.isExitSpan(event)
                       && SpanAttributeUtils.isLeafSpan(structuredTraceGraph, event)
-                      && allowBackendResolution(structuredTraceGraph, event))
+                      && canResolveBackend(structuredTraceGraph, event))
           // resolve backend entity
           .map(event -> Pair.of(event, resolve(event, trace, structuredTraceGraph)))
           .filter(pair -> pair.getRight().isPresent())
@@ -109,14 +109,14 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
   }
 
   /**
-   * Method to check if backend resolution is allowed. This will enable any custom logic to be
+   * Method to check if backend resolution should proceed. This will enable any custom logic to be
    * inserted in the implementing classes.
    *
    * @param structuredTraceGraph structured trace graph
    * @param event leaf exit span
    * @return true if backend resolution is allowed
    */
-  protected boolean allowBackendResolution(StructuredTraceGraph structuredTraceGraph, Event event) {
+  protected boolean canResolveBackend(StructuredTraceGraph structuredTraceGraph, Event event) {
     // by default allow the backend resolution to proceed
     return true;
   }
