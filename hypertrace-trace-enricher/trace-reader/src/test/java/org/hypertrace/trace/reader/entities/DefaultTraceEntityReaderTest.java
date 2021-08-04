@@ -156,6 +156,23 @@ class DefaultTraceEntityReaderTest {
             .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
             .isEmpty()
             .blockingGet());
+    verifyNoInteractions(mockDataClient);
+  }
+
+  @Test
+  void omitsEntityBasedOnEmptyId() {
+    mockSingleEntityType();
+    mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE);
+    mockTenantId();
+    mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(""));
+    mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
+
+    assertTrue(
+        this.entityReader
+            .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
+            .isEmpty()
+            .blockingGet());
+    verifyNoInteractions(mockDataClient);
   }
 
   @Test
