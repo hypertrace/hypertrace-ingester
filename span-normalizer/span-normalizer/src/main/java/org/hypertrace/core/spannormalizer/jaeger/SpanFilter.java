@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("UnstableApiUsage")
 public class SpanFilter {
   private static final Logger LOG = LoggerFactory.getLogger(SpanFilter.class);
-  private static final RateLimiter DROPPED_SPANS_RATE_LIMITER = RateLimiter.create(1.0);
+  private static final RateLimiter DROPPED_SPANS_RATE_LIMITER = RateLimiter.create(0.01);
   private static final String SPAN_KIND_TAG =
       RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND);
   private static final String SPAN_KIND_CLIENT = "client";
