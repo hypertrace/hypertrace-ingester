@@ -1,7 +1,13 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.typesafe.config.Config;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
@@ -16,11 +22,39 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.UserAgent;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 
 public class UserAgentSpanEnricher extends AbstractTraceEnricher {
 
-  private UserAgentStringParser userAgentStringParser =
+  private static final String CACHE_CONFIG_KEY = "cache";
+  private static final String CACHE_CONFIG_MAX_SIZE = "maxSize";
+  private static final int CACHE_MAX_SIZE_DEFAULT = 10000;
+  private final UserAgentStringParser userAgentStringParser =
       UADetectorServiceFactory.getResourceModuleParser();
+  @Nullable private LoadingCache<String, ReadableUserAgent> userAgentCache;
+
+  @Override
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {
+    if (enricherConfig.hasPath(CACHE_CONFIG_KEY)) {
+      Config enricherCacheConfig = enricherConfig.getConfig(CACHE_CONFIG_KEY);
+      int cacheSize =
+          enricherCacheConfig.hasPath(CACHE_CONFIG_MAX_SIZE)
+              ? enricherCacheConfig.getInt(CACHE_CONFIG_MAX_SIZE)
+              : CACHE_MAX_SIZE_DEFAULT;
+      userAgentCache =
+          CacheBuilder.newBuilder()
+              .maximumSize(cacheSize)
+              .recordStats()
+              .build(
+                  new CacheLoader<>() {
+                    @Override
+                    @ParametersAreNonnullByDefault
+                    public ReadableUserAgent load(String userAgentString) {
+                      return userAgentStringParser.parse(userAgentString);
+                    }
+                  });
+    }
+  }
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -37,7 +71,10 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
     Optional<String> mayBeUserAgent = getUserAgent(event);
 
     if (mayBeUserAgent.isPresent()) {
-      ReadableUserAgent userAgent = userAgentStringParser.parse(mayBeUserAgent.get());
+      ReadableUserAgent userAgent =
+          userAgentCache != null
+              ? userAgentCache.getUnchecked(mayBeUserAgent.get())
+              : userAgentStringParser.parse(mayBeUserAgent.get());
       addEnrichedAttribute(
           event,
           EnrichedSpanConstants.getValue(UserAgent.USER_AGENT_NAME),
