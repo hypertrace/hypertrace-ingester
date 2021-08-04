@@ -27,6 +27,8 @@ public class DefaultClientRegistry implements ClientRegistry {
   private static final String CONFIG_SERVICE_PORT_KEY = "config.service.config.port";
   private static final String ENTITY_SERVICE_HOST_KEY = "entity.service.config.host";
   private static final String ENTITY_SERVICE_PORT_KEY = "entity.service.config.port";
+  private static final String TRACE_ENTITY_WRITE_THROTTLE_DURATION =
+      "trace.entity.write.throttle.duration";
 
   private final ManagedChannel attributeServiceChannel;
   private final ManagedChannel configServiceChannel;
@@ -67,6 +69,10 @@ public class DefaultClientRegistry implements ClientRegistry {
                 EntityTypeClient.builder(this.entityServiceChannel).build(),
                 EntityDataClient.builder(this.entityServiceChannel).build(),
                 this.cachingAttributeClient)
+            .withEntityWriteThrottleDuration(
+                config.hasPath(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
+                    ? config.getDuration(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
+                    : Duration.ofSeconds(15))
             .build();
   }
 
