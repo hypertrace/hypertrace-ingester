@@ -1,6 +1,7 @@
 package org.hypertrace.trace.reader.entities;
 
 import static io.reactivex.rxjava3.core.Maybe.zip;
+import static java.util.function.Predicate.not;
 
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -132,10 +133,12 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
         this.resolveAllAttributes(entityType.getAttributeScope(), trace, span).cache();
 
     Maybe<String> id =
-        attributes.mapOptional(map -> this.extractString(map, entityType.getIdAttributeKey()));
+        attributes.mapOptional(
+            map -> this.extractNonEmptyString(map, entityType.getIdAttributeKey()));
 
     Maybe<String> name =
-        attributes.mapOptional(map -> this.extractString(map, entityType.getNameAttributeKey()));
+        attributes.mapOptional(
+            map -> this.extractNonEmptyString(map, entityType.getNameAttributeKey()));
 
     return zip(
             id,
@@ -187,13 +190,14 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
         .map(value -> Map.entry(attributeMetadata.getKey(), value));
   }
 
-  private Optional<String> extractString(
+  private Optional<String> extractNonEmptyString(
       Map<String, AttributeValue> attributeValueMap, String key) {
     return Optional.ofNullable(attributeValueMap.get(key))
         .filter(value -> value.getTypeCase().equals(TypeCase.VALUE))
         .map(AttributeValue::getValue)
         .filter(value -> value.getTypeCase().equals(Value.TypeCase.STRING))
-        .map(Value::getString);
+        .map(Value::getString)
+        .filter(not(String::isEmpty));
   }
 
   private GrpcRxExecutionContext spanTenantContext(S span) {
