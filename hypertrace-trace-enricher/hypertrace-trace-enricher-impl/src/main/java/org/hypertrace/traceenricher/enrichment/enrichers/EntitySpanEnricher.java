@@ -16,11 +16,7 @@ public class EntitySpanEnricher extends AbstractTraceEnricher {
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
     // Don't block, this is just meant to eventually write the entities
-    this.entityReader
-        .getAssociatedEntitiesForSpan(trace, event)
-        .doOnError(error -> LOG.error("Failed to enrich entities on span", error))
-        .onErrorComplete()
-        .subscribe();
+    this.entityReader.upsertAssociatedEntitiesForSpanEventually(trace, event);
   }
 
   @Override

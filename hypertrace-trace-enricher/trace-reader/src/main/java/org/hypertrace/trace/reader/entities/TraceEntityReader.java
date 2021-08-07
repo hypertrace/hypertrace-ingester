@@ -11,4 +11,6 @@ public interface TraceEntityReader<T extends GenericRecord, S extends GenericRec
   Maybe<Entity> getAssociatedEntityForSpan(String entityType, T trace, S span);
 
   Single<Map<String, Entity>> getAssociatedEntitiesForSpan(T trace, S span);
+
+  void upsertAssociatedEntitiesForSpanEventually(T trace, S span);
 }

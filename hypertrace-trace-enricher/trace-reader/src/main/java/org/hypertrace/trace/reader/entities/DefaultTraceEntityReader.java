@@ -18,6 +18,7 @@ import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
+import org.hypertrace.core.grpcutils.context.RequestContext;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase;
@@ -71,6 +72,23 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
                     .flatMapMaybe(entityType -> this.getAndWriteEntity(entityType, trace, span))
                     .toMap(Entity::getEntityType)
                     .map(Collections::unmodifiableMap));
+  }
+
+  @Override
+  public void upsertAssociatedEntitiesForSpanEventually(T trace, S span) {
+    RequestContext.forTenantId(traceAttributeReader.getTenantId(span))
+        .call(this.entityTypeClient::getAll)
+        .subscribe(entityType -> this.usertEntityEventually(entityType, trace, span));
+  }
+
+  private void usertEntityEventually(EntityType entityType, T trace, S span) {
+    Entity entity = this.buildEntity(entityType, trace, span).blockingGet();
+    this.buildUpsertCondition(entityType, trace, span)
+        .defaultIfEmpty(UpsertCondition.getDefaultInstance())
+        .subscribe(
+            upsertCondition ->
+                this.entityDataClient.updateEntityEventuallyIgnoreResult(
+                    entity, upsertCondition, this.writeThrottleDuration));
   }
 
   private Maybe<Entity> getAndWriteEntity(EntityType entityType, T trace, S span) {
