@@ -87,8 +87,13 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
         .defaultIfEmpty(UpsertCondition.getDefaultInstance())
         .blockingSubscribe(
             upsertCondition ->
-                this.entityDataClient.updateEntityEventuallyIgnoreResult(
-                    entity, upsertCondition, this.writeThrottleDuration));
+                RequestContext.forTenantId(traceAttributeReader.getTenantId(span))
+                    .call(
+                        () -> {
+                          this.entityDataClient.updateEntityEventuallyIgnoreResult(
+                              entity, upsertCondition, this.writeThrottleDuration);
+                          return null;
+                        }));
   }
 
   private Maybe<Entity> getAndWriteEntity(EntityType entityType, T trace, S span) {
