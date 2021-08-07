@@ -78,14 +78,14 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
   public void upsertAssociatedEntitiesForSpanEventually(T trace, S span) {
     RequestContext.forTenantId(traceAttributeReader.getTenantId(span))
         .call(this.entityTypeClient::getAll)
-        .subscribe(entityType -> this.usertEntityEventually(entityType, trace, span));
+        .blockingSubscribe(entityType -> this.upsertEntityEventually(entityType, trace, span));
   }
 
-  private void usertEntityEventually(EntityType entityType, T trace, S span) {
+  private void upsertEntityEventually(EntityType entityType, T trace, S span) {
     Entity entity = this.buildEntity(entityType, trace, span).blockingGet();
     this.buildUpsertCondition(entityType, trace, span)
         .defaultIfEmpty(UpsertCondition.getDefaultInstance())
-        .subscribe(
+        .blockingSubscribe(
             upsertCondition ->
                 this.entityDataClient.updateEntityEventuallyIgnoreResult(
                     entity, upsertCondition, this.writeThrottleDuration));
