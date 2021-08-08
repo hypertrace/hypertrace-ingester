@@ -82,18 +82,20 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
   }
 
   private void upsertEntityEventually(EntityType entityType, T trace, S span) {
-    Entity entity = this.buildEntity(entityType, trace, span).blockingGet();
-    this.buildUpsertCondition(entityType, trace, span)
-        .defaultIfEmpty(UpsertCondition.getDefaultInstance())
+    this.buildEntity(entityType, trace, span)
         .blockingSubscribe(
-            upsertCondition ->
-                RequestContext.forTenantId(traceAttributeReader.getTenantId(span))
-                    .call(
-                        () -> {
-                          this.entityDataClient.updateEntityEventuallyIgnoreResult(
-                              entity, upsertCondition, this.writeThrottleDuration);
-                          return null;
-                        }));
+            entity ->
+                this.buildUpsertCondition(entityType, trace, span)
+                    .defaultIfEmpty(UpsertCondition.getDefaultInstance())
+                    .blockingSubscribe(
+                        upsertCondition ->
+                            RequestContext.forTenantId(traceAttributeReader.getTenantId(span))
+                                .call(
+                                    () -> {
+                                      this.entityDataClient.updateEntityEventuallyIgnoreResult(
+                                          entity, upsertCondition, this.writeThrottleDuration);
+                                      return null;
+                                    })));
   }
 
   private Maybe<Entity> getAndWriteEntity(EntityType entityType, T trace, S span) {
