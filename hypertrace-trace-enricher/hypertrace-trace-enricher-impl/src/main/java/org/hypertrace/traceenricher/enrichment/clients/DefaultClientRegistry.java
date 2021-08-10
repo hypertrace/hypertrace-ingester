@@ -14,10 +14,10 @@ import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.service.client.config.EntityServiceClientConfig;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
+import org.hypertrace.trace.accessor.entities.TraceEntityAccessor;
+import org.hypertrace.trace.accessor.entities.TraceEntityAccessorBuilder;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReaderFactory;
-import org.hypertrace.trace.reader.entities.TraceEntityReader;
-import org.hypertrace.trace.reader.entities.TraceEntityReaderBuilder;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 
 public class DefaultClientRegistry implements ClientRegistry {
@@ -36,7 +36,7 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final EdsCacheClient edsCacheClient;
   private final CachingAttributeClient cachingAttributeClient;
   private final EntityCache entityCache;
-  private final TraceEntityReader<StructuredTrace, Event> entityReader;
+  private final TraceEntityAccessor entityAccessor;
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
   private final GrpcChannelRegistry grpcChannelRegistry = new GrpcChannelRegistry();
 
@@ -64,8 +64,8 @@ public class DefaultClientRegistry implements ClientRegistry {
             new EntityDataServiceClient(this.entityServiceChannel),
             EntityServiceClientConfig.from(config).getCacheConfig());
     this.entityCache = new EntityCache(this.edsCacheClient);
-    this.entityReader =
-        new TraceEntityReaderBuilder(
+    this.entityAccessor =
+        new TraceEntityAccessorBuilder(
                 EntityTypeClient.builder(this.entityServiceChannel).build(),
                 EntityDataClient.builder(this.entityServiceChannel).build(),
                 this.cachingAttributeClient)
@@ -92,8 +92,8 @@ public class DefaultClientRegistry implements ClientRegistry {
   }
 
   @Override
-  public TraceEntityReader<StructuredTrace, Event> getEntityReader() {
-    return this.entityReader;
+  public TraceEntityAccessor getTraceEntityAccessor() {
+    return this.entityAccessor;
   }
 
   @Override

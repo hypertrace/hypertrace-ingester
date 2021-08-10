@@ -1,23 +1,23 @@
-package org.hypertrace.trace.reader.entities;
+package org.hypertrace.trace.accessor.entities;
 
 import static io.reactivex.rxjava3.core.Maybe.zip;
 import static java.util.function.Predicate.not;
 
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.generic.GenericRecord;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
+import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
+import org.hypertrace.core.grpcutils.context.RequestContext;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase;
@@ -32,19 +32,18 @@ import org.hypertrace.entity.type.service.v2.EntityType.EntityFormationCondition
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 
 @Slf4j
-class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
-    implements TraceEntityReader<T, S> {
+class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   private final EntityTypeClient entityTypeClient;
   private final EntityDataClient entityDataClient;
   private final CachingAttributeClient attributeClient;
-  private final TraceAttributeReader<T, S> traceAttributeReader;
+  private final TraceAttributeReader<StructuredTrace, Event> traceAttributeReader;
   private final Duration writeThrottleDuration;
 
-  DefaultTraceEntityReader(
+  DefaultTraceEntityAccessor(
       EntityTypeClient entityTypeClient,
       EntityDataClient entityDataClient,
       CachingAttributeClient attributeClient,
-      TraceAttributeReader<T, S> traceAttributeReader,
+      TraceAttributeReader<StructuredTrace, Event> traceAttributeReader,
       Duration writeThrottleDuration) {
     this.entityTypeClient = entityTypeClient;
     this.entityDataClient = entityDataClient;
@@ -54,41 +53,32 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
   }
 
   @Override
-  public Maybe<Entity> getAssociatedEntityForSpan(String entityType, T trace, S span) {
-    return spanTenantContext(span)
-        .wrapSingle(() -> this.entityTypeClient.get(entityType))
-        .flatMapMaybe(
-            entityTypeDefinition -> this.getAndWriteEntity(entityTypeDefinition, trace, span));
+  public void writeAssociatedEntitiesForSpanEventually(StructuredTrace trace, Event span) {
+    this.spanTenantContext(span)
+        .wrapSingle(() -> this.entityTypeClient.getAll().toList())
+        .blockingGet()
+        .forEach(entityType -> this.writeEntityIfExists(entityType, trace, span));
   }
 
-  @Override
-  public Single<Map<String, Entity>> getAssociatedEntitiesForSpan(T trace, S span) {
-    return spanTenantContext(span)
-        .wrapSingle(
-            () ->
-                this.entityTypeClient
-                    .getAll()
-                    .flatMapMaybe(entityType -> this.getAndWriteEntity(entityType, trace, span))
-                    .toMap(Entity::getEntityType)
-                    .map(Collections::unmodifiableMap));
+  private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
+    Entity entity = this.buildEntity(entityType, trace, span).blockingGet();
+    if (entity == null) {
+      return;
+    }
+    UpsertCondition upsertCondition =
+        this.buildUpsertCondition(entityType, trace, span)
+            .defaultIfEmpty(UpsertCondition.getDefaultInstance())
+            .blockingGet();
+
+    this.entityDataClient.createOrUpdateEntityEventually(
+        RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
+        entity,
+        upsertCondition,
+        this.writeThrottleDuration);
   }
 
-  private Maybe<Entity> getAndWriteEntity(EntityType entityType, T trace, S span) {
-    return this.buildEntity(entityType, trace, span)
-        .flatMapSingle(
-            entity ->
-                this.buildUpsertCondition(entityType, trace, span)
-                    .defaultIfEmpty(UpsertCondition.getDefaultInstance())
-                    .flatMap(
-                        condition ->
-                            spanTenantContext(span)
-                                .wrapSingle(
-                                    () ->
-                                        this.entityDataClient.createOrUpdateEntityEventually(
-                                            entity, condition, this.writeThrottleDuration))));
-  }
-
-  private Maybe<UpsertCondition> buildUpsertCondition(EntityType entityType, T trace, S span) {
+  private Maybe<UpsertCondition> buildUpsertCondition(
+      EntityType entityType, StructuredTrace trace, Event span) {
     if (entityType.getTimestampAttributeKey().isEmpty()) {
       return Maybe.empty();
     }
@@ -106,7 +96,7 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
   }
 
   private Maybe<UpsertCondition> buildUpsertCondition(
-      AttributeMetadata attribute, PredicateOperator operator, T trace, S span) {
+      AttributeMetadata attribute, PredicateOperator operator, StructuredTrace trace, Event span) {
 
     return this.traceAttributeReader
         .getSpanValue(trace, span, attribute.getScopeString(), attribute.getKey())
@@ -128,7 +118,7 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
                     .build());
   }
 
-  private Maybe<Entity> buildEntity(EntityType entityType, T trace, S span) {
+  private Maybe<Entity> buildEntity(EntityType entityType, StructuredTrace trace, Event span) {
     Maybe<Map<String, AttributeValue>> attributes =
         this.resolveAllAttributes(entityType.getAttributeScope(), trace, span).cache();
 
@@ -171,7 +161,8 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
     }
   }
 
-  private Maybe<Map<String, AttributeValue>> resolveAllAttributes(String scope, T trace, S span) {
+  private Maybe<Map<String, AttributeValue>> resolveAllAttributes(
+      String scope, StructuredTrace trace, Event span) {
     return spanTenantContext(span)
         .wrapSingle(() -> this.attributeClient.getAllInScope(scope))
         .flattenAsObservable(list -> list)
@@ -182,7 +173,7 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
   }
 
   private Maybe<Entry<String, AttributeValue>> resolveAttribute(
-      AttributeMetadata attributeMetadata, T trace, S span) {
+      AttributeMetadata attributeMetadata, StructuredTrace trace, Event span) {
     return this.traceAttributeReader
         .getSpanValue(trace, span, attributeMetadata.getScopeString(), attributeMetadata.getKey())
         .onErrorComplete()
@@ -200,7 +191,7 @@ class DefaultTraceEntityReader<T extends GenericRecord, S extends GenericRecord>
         .filter(not(String::isEmpty));
   }
 
-  private GrpcRxExecutionContext spanTenantContext(S span) {
+  private GrpcRxExecutionContext spanTenantContext(Event span) {
     return GrpcRxExecutionContext.forTenantContext(traceAttributeReader.getTenantId(span));
   }
 

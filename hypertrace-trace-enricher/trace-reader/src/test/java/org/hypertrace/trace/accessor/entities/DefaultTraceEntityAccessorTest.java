@@ -1,14 +1,13 @@
-package org.hypertrace.trace.reader.entities;
+package org.hypertrace.trace.accessor.entities;
 
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.longAttributeValue;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedEventBuilder;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedStructuredTraceBuilder;
 import static org.hypertrace.trace.reader.attributes.EntityUtil.buildAttributesWithKeyValues;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.longLiteral;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.longAttributeValue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,6 +27,7 @@ import org.hypertrace.core.attribute.service.v1.AttributeType;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.context.RequestContext;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.MergeAndUpsertEntityRequest.UpsertCondition;
@@ -40,11 +40,12 @@ import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DefaultTraceEntityReaderTest {
+class DefaultTraceEntityAccessorTest {
   private static final String TENANT_ID = "tenant-id";
   private static final String TEST_ENTITY_TYPE_NAME = "ENTITY_TYPE_1";
   private static final String TEST_ENTITY_ID_ATTRIBUTE_KEY = "id";
@@ -94,107 +95,75 @@ class DefaultTraceEntityReaderTest {
                       TEST_ENTITY_ID_ATTRIBUTE_KEY, TEST_ENTITY_ID_ATTRIBUTE_VALUE,
                       TEST_ENTITY_NAME_ATTRIBUTE_KEY, TEST_ENTITY_NAME_ATTRIBUTE_VALUE)))
           .build();
+  private static final ArgumentMatcher<RequestContext> MATCHING_TENANT_REQUEST_CONTEXT =
+      arg ->
+          arg.buildContextualKey()
+              .equals(RequestContext.forTenantId(TENANT_ID).buildContextualKey());
+  private static final Duration DEFAULT_DURATION = Duration.ofSeconds(15);
 
   @Mock EntityTypeClient mockTypeClient;
   @Mock EntityDataClient mockDataClient;
   @Mock CachingAttributeClient mockAttributeClient;
   @Mock TraceAttributeReader<StructuredTrace, Event> mockAttributeReader;
 
-  private DefaultTraceEntityReader<StructuredTrace, Event> entityReader;
+  private DefaultTraceEntityAccessor entityAccessor;
 
   @BeforeEach
   void beforeEach() {
-    this.entityReader =
-        new DefaultTraceEntityReader<>(
+    this.entityAccessor =
+        new DefaultTraceEntityAccessor(
             this.mockTypeClient,
             this.mockDataClient,
             this.mockAttributeClient,
             this.mockAttributeReader,
-            Duration.ofSeconds(15));
+            DEFAULT_DURATION);
   }
 
   @Test
-  void canReadAnEntity() {
-    mockSingleEntityType();
-    mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE);
-    mockTenantId();
-    mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
-    mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
-    mockEntityUpsert();
-
-    assertEquals(
-        EXPECTED_ENTITY,
-        this.entityReader
-            .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
-            .blockingGet());
-  }
-
-  @Test
-  void canReadAllEntities() {
+  void canWriteAllEntities() {
     mockAllEntityTypes();
     mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE);
     mockTenantId();
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
-    mockEntityUpsert();
 
-    assertEquals(
-        Map.of(TEST_ENTITY_TYPE_NAME, EXPECTED_ENTITY),
-        this.entityReader.getAssociatedEntitiesForSpan(TEST_TRACE, TEST_SPAN).blockingGet());
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
+
+    verify(mockDataClient, times(1))
+        .createOrUpdateEntityEventually(
+            argThat(MATCHING_TENANT_REQUEST_CONTEXT),
+            eq(EXPECTED_ENTITY),
+            eq(UpsertCondition.getDefaultInstance()),
+            eq(DEFAULT_DURATION));
   }
 
   @Test
   void omitsEntityBasedOnMissingAttributes() {
-    mockSingleEntityType();
+    mockAllEntityTypes();
     mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE);
     mockTenantId();
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, LiteralValue.getDefaultInstance());
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
-    assertTrue(
-        this.entityReader
-            .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
-            .isEmpty()
-            .blockingGet());
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
     verifyNoInteractions(mockDataClient);
   }
 
   @Test
   void omitsEntityBasedOnEmptyId() {
-    mockSingleEntityType();
+    mockAllEntityTypes();
     mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE);
     mockTenantId();
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(""));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
-    assertTrue(
-        this.entityReader
-            .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
-            .isEmpty()
-            .blockingGet());
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
     verifyNoInteractions(mockDataClient);
   }
 
   @Test
-  void omitsUpsertConditionIfNoTimestampAttributeDefined() {
-    mockSingleEntityType();
-    mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE);
-    mockTenantId();
-    mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
-    mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
-    mockEntityUpsert();
-
-    this.entityReader
-        .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
-        .blockingSubscribe();
-
-    verify(mockDataClient, times(1))
-        .createOrUpdateEntityEventually(any(), eq(UpsertCondition.getDefaultInstance()), any());
-  }
-
-  @Test
   void includesUpsertConditionIfTimestampAttributeDefined() {
-    mockSingleEntityType(
+    mockAllEntityTypes(
         TEST_ENTITY_TYPE.toBuilder()
             .setTimestampAttributeKey(TEST_ENTITY_TIMESTAMP_ATTRIBUTE_KEY)
             .build());
@@ -205,11 +174,8 @@ class DefaultTraceEntityReaderTest {
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_TIMESTAMP_ATTRIBUTE, longLiteral(30));
-    mockEntityUpsert();
 
-    this.entityReader
-        .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
-        .blockingSubscribe();
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
 
     UpsertCondition expectedCondition =
         UpsertCondition.newBuilder()
@@ -221,14 +187,21 @@ class DefaultTraceEntityReaderTest {
                     .build())
             .build();
     verify(mockDataClient, times(1))
-        .createOrUpdateEntityEventually(any(), eq(expectedCondition), any());
+        .createOrUpdateEntityEventually(
+            argThat(MATCHING_TENANT_REQUEST_CONTEXT),
+            eq(
+                EXPECTED_ENTITY.toBuilder()
+                    .putAttributes(TEST_ENTITY_TIMESTAMP_ATTRIBUTE_KEY, longAttributeValue(30))
+                    .build()),
+            eq(expectedCondition),
+            eq(DEFAULT_DURATION));
   }
 
   @Test
   void enforceFormationConditions() {
     AttributeMetadata otherAttribute =
         TEST_ENTITY_NAME_ATTRIBUTE.toBuilder().setKey("other").build();
-    mockSingleEntityType(
+    mockAllEntityTypes(
         TEST_ENTITY_TYPE.toBuilder()
             .addRequiredConditions(
                 EntityFormationCondition.newBuilder()
@@ -237,47 +210,38 @@ class DefaultTraceEntityReaderTest {
             .build());
     mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE, otherAttribute);
     mockTenantId();
-    mockEntityUpsert();
 
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockAttributeReadError(otherAttribute);
     // No "other" attribute, should not form entity
 
-    this.entityReader
-        .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
-        .blockingSubscribe();
-
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
     verifyNoInteractions(mockDataClient);
 
     // Now add "other"
     mockAttributeRead(otherAttribute, stringLiteral("other-value"));
 
-    this.entityReader
-        .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
-        .blockingSubscribe();
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
 
-    verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any());
+    verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any(), any());
   }
 
   @Test
   void skipsUnsetFormationConditions() {
-    mockSingleEntityType(
+    mockAllEntityTypes(
         TEST_ENTITY_TYPE.toBuilder()
             .addRequiredConditions(EntityFormationCondition.newBuilder())
             .build());
     mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE);
     mockTenantId();
-    mockEntityUpsert();
 
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
-    this.entityReader
-        .getAssociatedEntityForSpan(TEST_ENTITY_TYPE_NAME, TEST_TRACE, TEST_SPAN)
-        .blockingSubscribe();
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
 
-    verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any());
+    verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any(), any());
   }
 
   private void mockTenantId() {
@@ -296,12 +260,6 @@ class DefaultTraceEntityReaderTest {
         .thenReturn(Single.error(new NoSuchElementException()));
   }
 
-  private void mockEntityUpsert() {
-    when(this.mockDataClient.createOrUpdateEntityEventually(
-            any(Entity.class), any(UpsertCondition.class), any(Duration.class)))
-        .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-  }
-
   private void mockGetAllAttributes(AttributeMetadata... attributeMetadata) {
     when(this.mockAttributeClient.getAllInScope(TEST_ENTITY_TYPE_NAME))
         .thenReturn(Single.just(Arrays.asList(attributeMetadata)));
@@ -313,15 +271,11 @@ class DefaultTraceEntityReaderTest {
         .thenReturn(Single.just(attributeMetadata));
   }
 
-  private void mockSingleEntityType() {
-    mockSingleEntityType(TEST_ENTITY_TYPE);
-  }
-
-  private void mockSingleEntityType(EntityType entityType) {
-    when(this.mockTypeClient.get(entityType.getName())).thenReturn(Single.just(entityType));
+  private void mockAllEntityTypes(EntityType entityType) {
+    when(this.mockTypeClient.getAll()).thenReturn(Observable.just(entityType));
   }
 
   private void mockAllEntityTypes() {
-    when(this.mockTypeClient.getAll()).thenReturn(Observable.just(TEST_ENTITY_TYPE));
+    mockAllEntityTypes(TEST_ENTITY_TYPE);
   }
 }

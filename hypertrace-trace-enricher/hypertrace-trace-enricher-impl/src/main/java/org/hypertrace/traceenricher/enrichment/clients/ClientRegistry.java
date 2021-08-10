@@ -5,8 +5,8 @@ import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClien
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
+import org.hypertrace.trace.accessor.entities.TraceEntityAccessor;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
-import org.hypertrace.trace.reader.entities.TraceEntityReader;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 
 public interface ClientRegistry {
@@ -17,7 +17,7 @@ public interface ClientRegistry {
 
   Channel getConfigServiceChannel();
 
-  TraceEntityReader<StructuredTrace, Event> getEntityReader();
+  TraceEntityAccessor getTraceEntityAccessor();
 
   TraceAttributeReader<StructuredTrace, Event> getAttributeReader();
 
