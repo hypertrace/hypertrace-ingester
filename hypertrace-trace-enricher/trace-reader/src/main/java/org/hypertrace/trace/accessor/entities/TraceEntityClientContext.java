@@ -1,4 +1,4 @@
-package org.hypertrace.trace.reader.entities;
+package org.hypertrace.trace.accessor.entities;
 
 import io.grpc.Channel;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;

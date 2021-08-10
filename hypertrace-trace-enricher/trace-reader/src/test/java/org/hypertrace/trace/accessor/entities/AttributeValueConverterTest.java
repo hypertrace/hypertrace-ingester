@@ -1,14 +1,14 @@
-package org.hypertrace.trace.reader.entities;
+package org.hypertrace.trace.accessor.entities;
 
+import static org.hypertrace.trace.accessor.entities.AttributeValueConverter.convertToAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.booleanAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.doubleAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.longAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.stringAttributeValue;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.booleanLiteral;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.doubleLiteral;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.longLiteral;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
-import static org.hypertrace.trace.reader.entities.AttributeValueConverter.convertToAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.booleanAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.doubleAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.longAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.stringAttributeValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
