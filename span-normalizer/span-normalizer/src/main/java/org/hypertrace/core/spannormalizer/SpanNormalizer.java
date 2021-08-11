@@ -8,7 +8,6 @@ import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstan
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serdes;
@@ -103,7 +102,7 @@ public class SpanNormalizer extends KafkaStreamsApp {
   @Override
   public List<String> getInputTopics(Map<String, Object> properties) {
     Config jobConfig = getJobConfig(properties);
-    return Collections.singletonList(jobConfig.getString(INPUT_TOPIC_CONFIG_KEY));
+    return List.of(jobConfig.getString(INPUT_TOPIC_CONFIG_KEY), "otel-metrics");
   }
 
   @Override
