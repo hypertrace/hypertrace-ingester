@@ -21,6 +21,9 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
 
 public class HttpBackendProvider implements BackendProvider {
+  private static final String COLON = ":";
+  private static final int DEFAULT_HTTP_PORT = 80;
+  private static final int DEFAULT_HTTPS_PORT = 443;
   private Supplier<Protocol> protocolSupplier;
 
   @Override
@@ -42,7 +45,18 @@ public class HttpBackendProvider implements BackendProvider {
 
   @Override
   public Optional<String> getBackendUri(Event event, StructuredTraceGraph structuredTraceGraph) {
-    return HttpSemanticConventionUtils.getHttpHost(event);
+    Optional<String> httpHost = HttpSemanticConventionUtils.getHttpHost(event);
+    // since http protocol has default ports for http and https protocol,
+    // Removing default port if available as suffix in httpHost based on protocol
+    if (httpHost.isPresent()) {
+      String[] hostAndPort = httpHost.get().split(COLON);
+      String host = hostAndPort[0];
+      int port = hostAndPort.length == 2 ? Integer.valueOf(hostAndPort[1]) : getDefaultPort();
+      if (port == getDefaultPort()) {
+        return Optional.of(host);
+      }
+    }
+    return httpHost;
   }
 
   @Override
@@ -77,5 +91,9 @@ public class HttpBackendProvider implements BackendProvider {
 
   private Protocol getProtocol() {
     return this.protocolSupplier.get();
+  }
+
+  private int getDefaultPort() {
+    return getProtocol() == Protocol.PROTOCOL_HTTP ? DEFAULT_HTTP_PORT : DEFAULT_HTTPS_PORT;
   }
 }

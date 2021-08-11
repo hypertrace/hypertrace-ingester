@@ -1,18 +1,18 @@
-package org.hypertrace.trace.reader.entities;
+package org.hypertrace.trace.accessor.entities;
 
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.booleanAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.booleanListAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.doubleAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.doubleListAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.longAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.longListAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.stringAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.stringListAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.stringMapAttributeValue;
+import static org.hypertrace.trace.accessor.entities.AvroEntityConverter.convertToAvroEntity;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributeValue;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributeValueList;
 import static org.hypertrace.trace.reader.attributes.AvroUtil.buildAttributeValueMap;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.booleanAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.booleanListAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.doubleAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.doubleListAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.longAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.longListAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.stringAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.stringListAttributeValue;
-import static org.hypertrace.trace.reader.entities.AttributeValueUtil.stringMapAttributeValue;
-import static org.hypertrace.trace.reader.entities.AvroEntityConverter.convertToAvroEntity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;

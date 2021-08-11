@@ -34,7 +34,7 @@ dependencies {
   implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":semantic-convention-utils"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.17")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.18")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
@@ -66,5 +66,6 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
   testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
+  testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:6.0.1-ccs")
 }

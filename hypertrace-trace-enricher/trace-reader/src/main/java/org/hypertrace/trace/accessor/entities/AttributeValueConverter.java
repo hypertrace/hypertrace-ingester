@@ -1,4 +1,4 @@
-package org.hypertrace.trace.reader.entities;
+package org.hypertrace.trace.accessor.entities;
 
 import io.reactivex.rxjava3.core.Maybe;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;

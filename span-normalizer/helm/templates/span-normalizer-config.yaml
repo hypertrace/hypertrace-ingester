@@ -56,6 +56,14 @@ data:
       {{- if hasKey .Values.spanNormalizerConfig.processor "spanDropCriterion" }}
       spanDropCriterion = {{ .Values.spanNormalizerConfig.processor.spanDropCriterion | toJson }}
       {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "rootExitSpanDropCriterion" }}
+      rootExitSpanDropCriterion = {{ .Values.spanNormalizerConfig.processor.rootExitSpanDropCriterion | toJson }}
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "excludeLogsTenantIds" }}
+      excludeLogsTenantIds = {{ .Values.spanNormalizerConfig.processor.excludeLogsTenantIds | toJson }}
+      {{- end }}
     }
     {{- end }}
 

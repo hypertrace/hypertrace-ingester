@@ -35,7 +35,7 @@ public class TraceUI {
   }
 
   public static TraceUI build(StructuredTrace trace) {
-    StructuredTraceGraph graph = StructuredTraceGraph.createGraph(trace);
+    StructuredTraceGraph graph = new StructuredTraceGraph(trace);
     Set<Event> roots = findRootEvents(trace);
     Set<JSONObject> rootJsons = new HashSet<>();
     for (Event root : roots) {

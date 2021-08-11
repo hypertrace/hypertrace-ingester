@@ -1,4 +1,4 @@
-package org.hypertrace.trace.reader.entities;
+package org.hypertrace.trace.accessor.entities;
 
 import static java.util.Objects.nonNull;
 
