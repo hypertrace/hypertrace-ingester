@@ -6,12 +6,15 @@ import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor.S
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -28,9 +31,14 @@ public class JaegerSpanToAvroRawSpanTransformer
       new ConcurrentHashMap<>();
 
   private static final String VALID_SPAN_RECEIVED_COUNT = "hypertrace.reported.spans.processed";
+  private static final String SPAN_REQUEST_BODY_SIZE = "hypertrace.spans.request.body.size";
+  private static final String SPAN_RESPONSE_BODY_SIZE = "hypertrace.spans.response.body.size";
   private static final ConcurrentMap<String, Counter> tenantToSpanReceivedCount =
       new ConcurrentHashMap<>();
-
+  private static final ConcurrentMap<String, DistributionSummary> tenantToSpanRequestBodySize =
+      new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, DistributionSummary> tenantToSpanResponseBodySize =
+      new ConcurrentHashMap<>();
   private JaegerSpanNormalizer converter;
 
   @Override
@@ -54,6 +62,31 @@ public class JaegerSpanToAvroRawSpanTransformer
                     PlatformMetricsRegistry.registerCounter(
                         VALID_SPAN_RECEIVED_COUNT, Map.of("tenantId", tenantId)))
             .increment();
+
+        // Record request body size per tenantId
+        Optional<Integer> requestSize = getRequestSize(rawSpan.getEvent());
+        if (requestSize.isPresent()) {
+          tenantToSpanRequestBodySize
+              .computeIfAbsent(
+                  tenantId,
+                  tenant ->
+                      PlatformMetricsRegistry.registerDistributionSummary(
+                          SPAN_REQUEST_BODY_SIZE, Map.of("tenantId", tenantId)))
+              .record(requestSize.get().doubleValue());
+        }
+
+        // Record response body size per tenantId
+        Optional<Integer> responseSize = getResponseSize(rawSpan.getEvent());
+        if (responseSize.isPresent()) {
+          tenantToSpanResponseBodySize
+              .computeIfAbsent(
+                  tenantId,
+                  tenant ->
+                      PlatformMetricsRegistry.registerDistributionSummary(
+                          SPAN_RESPONSE_BODY_SIZE, Map.of("tenantId", tenantId)))
+              .record(requestSize.get().doubleValue());
+        }
+
         // we use the (tenant_id, trace_id) as the key so that raw_span_grouper
         // job can do a groupByKey without having to create a repartition topic
         TraceIdentity traceIdentity =
@@ -82,4 +115,24 @@ public class JaegerSpanToAvroRawSpanTransformer
 
   @Override
   public void close() {}
+
+  private Optional<Integer> getRequestSize(Event event) {
+    if (event.getHttp() != null && event.getHttp().getRequest() != null) {
+      return Optional.of(event.getHttp().getRequest().getSize());
+    }
+    if (event.getGrpc() != null && event.getGrpc().getRequest() != null) {
+      return Optional.of(event.getGrpc().getRequest().getSize());
+    }
+    return Optional.empty();
+  }
+
+  private Optional<Integer> getResponseSize(Event event) {
+    if (event.getHttp() != null && event.getHttp().getResponse() != null) {
+      return Optional.of(event.getHttp().getResponse().getSize());
+    }
+    if (event.getGrpc() != null && event.getGrpc().getResponse() != null) {
+      return Optional.of(event.getGrpc().getResponse().getSize());
+    }
+    return Optional.empty();
+  }
 }
