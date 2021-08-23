@@ -18,6 +18,7 @@ public class OperationNameBasedEndpointDiscoverer {
 
   private final String customerId;
   private final String serviceId;
+  private final String serviceName;
   private final ApiEntityDao apiEntityDao;
 
   private final LoadingCache<String, Entity> patternToApiEntityCache =
@@ -32,9 +33,10 @@ public class OperationNameBasedEndpointDiscoverer {
               });
 
   public OperationNameBasedEndpointDiscoverer(
-      String customerId, String serviceId, ApiEntityDao apiEntityDao) {
+      String customerId, String serviceId, String serviceName, ApiEntityDao apiEntityDao) {
     this.customerId = customerId;
     this.serviceId = serviceId;
+    this.serviceName = serviceName;
     this.apiEntityDao = apiEntityDao;
   }
 
@@ -44,7 +46,8 @@ public class OperationNameBasedEndpointDiscoverer {
   }
 
   private Entity getEntityForPattern(String pattern) {
-    return apiEntityDao.upsertApiEntity(customerId, serviceId, ApiEntityDao.API_TYPE, pattern);
+    return apiEntityDao.upsertApiEntity(
+        customerId, serviceId, serviceName, ApiEntityDao.API_TYPE, pattern);
   }
 
   @VisibleForTesting
