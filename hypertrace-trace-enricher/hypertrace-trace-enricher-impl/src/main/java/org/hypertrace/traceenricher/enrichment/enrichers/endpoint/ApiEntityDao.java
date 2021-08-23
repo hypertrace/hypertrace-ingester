@@ -34,6 +34,8 @@ public class ApiEntityDao {
 
   private static final String SERVICE_ID_ATTR =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_ID);
+  private static final String SERVICE_NAME_ATTR =
+      EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
   private static final String API_URL_PATTERN_ATTR =
       EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_URL_PATTERN);
   private static final String API_TYPE_ATTR =
@@ -45,10 +47,12 @@ public class ApiEntityDao {
     edsClient = client;
   }
 
-  public Entity upsertApiEntity(String tenantId, String serviceId, String apiType, String apiName) {
+  public Entity upsertApiEntity(
+      String tenantId, String serviceId, String serviceName, String apiType, String apiName) {
 
     Preconditions.checkNotNull(tenantId, "tenantId can't be empty");
     Preconditions.checkNotNull(serviceId, "serviceId can't be empty");
+    Preconditions.checkNotNull(serviceName, "serviceName can't be empty");
     Preconditions.checkNotNull(apiType, "apiType can't be empty");
     Preconditions.checkNotNull(apiName, "apiName can't be empty");
 
@@ -62,6 +66,7 @@ public class ApiEntityDao {
             .putIdentifyingAttributes(API_URL_PATTERN_ATTR, createAttributeValue(pattern))
             .putIdentifyingAttributes(SERVICE_ID_ATTR, createAttributeValue(serviceId))
             .putIdentifyingAttributes(API_TYPE_ATTR, createAttributeValue(apiType))
+            .putAttributes(SERVICE_NAME_ATTR, createAttributeValue(serviceName))
             .putAttributes(API_DISCOVERY_FROM_ATTR, createAttributeValue(DISCOVERED_FROM))
             .putAttributes(API_DISCOVERY_STATE_ATTR, createAttributeValue(DISCOVERED_STATE))
             .putAttributes(API_NAME_ATTR, createAttributeValue(apiName));

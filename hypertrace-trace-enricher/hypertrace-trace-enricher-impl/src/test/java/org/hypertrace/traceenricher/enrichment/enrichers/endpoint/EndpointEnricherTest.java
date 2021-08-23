@@ -33,7 +33,7 @@ import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
+class EndpointEnricherTest extends AbstractAttributeEnricherTest {
 
   private static final String API_NAME_ATTR =
       EntityConstants.getValue(ApiAttribute.API_ATTRIBUTE_NAME);
@@ -51,14 +51,14 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
   private ApiEntityDao dao;
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     dao = mock(ApiEntityDao.class);
     endpointEnricher = new EndpointEnricher();
     endpointEnricher.setApiEntityDao(dao);
   }
 
   @Test
-  public void whenEnrichedAttributesAreMissing_thenNoEnrichmentWillHappen() {
+  void whenEnrichedAttributesAreMissing_thenNoEnrichmentWillHappen() {
     Event event =
         Event.newBuilder()
             .setCustomerId(TENANT_ID)
@@ -70,7 +70,7 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
-  public void whenServiceIdMissing_thenNoEnrichmentWillHappen() {
+  void whenServiceIdMissing_thenNoEnrichmentWillHappen() {
     Event event = createMockApiBoundaryEntryEvent();
     StructuredTrace trace = getBigTrace();
     endpointEnricher.enrichEvent(trace, event);
@@ -79,7 +79,7 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
-  public void whenAllAttributesArePresentThenExpectEventToBeEnriched() {
+  void whenAllAttributesArePresentThenExpectEventToBeEnriched() {
     StructuredTrace trace = getBigTrace();
     Event event = trace.getEventList().get(0);
     Entity entity =
@@ -99,7 +99,11 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
             .build();
 
     when(dao.upsertApiEntity(
-            trace.getCustomerId(), SERVICE_ID, ApiEntityDao.API_TYPE, event.getEventName()))
+            trace.getCustomerId(),
+            SERVICE_ID,
+            SERVICE_NAME,
+            ApiEntityDao.API_TYPE,
+            event.getEventName()))
         .thenReturn(entity);
     endpointEnricher.enrichEvent(trace, event);
 
@@ -110,7 +114,7 @@ public class EndpointEnricherTest extends AbstractAttributeEnricherTest {
   }
 
   @Test
-  public void testApiEnrichmentForIntermediateEvents() {
+  void testApiEnrichmentForIntermediateEvents() {
     StructuredTrace trace = getBigTrace();
     Event exitEvent = trace.getEventList().get(2);
     endpointEnricher.enrichTrace(trace);
