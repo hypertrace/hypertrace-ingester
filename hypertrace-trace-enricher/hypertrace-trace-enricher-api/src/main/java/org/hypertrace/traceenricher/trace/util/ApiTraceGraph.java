@@ -8,6 +8,7 @@ import com.google.common.collect.Table;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.AttributeValue;
@@ -35,6 +37,9 @@ public class ApiTraceGraph {
 
   private static final String UNKNOWN_SPAN_KIND_VALUE =
       EnrichedSpanConstants.getValue(AttributeValue.ATTRIBUTE_VALUE_UNKNOWN);
+  private static final String API_CALL_GRAPH_DEPTH = "session.api_call_graph_depth";
+  private static final String TRACE_START_TIME_MILLIS = "session.trace_start_time_millis";
+  private static final String TRACE_END_TIME_MILLIS = "session.trace_end_time_millis";
 
   private final StructuredTrace trace;
   private final List<ApiNode<Event>> apiNodeList;
@@ -132,6 +137,215 @@ public class ApiTraceGraph {
                 apiExitBoundaryEventIdxWithNoOutgoingEdge.contains(
                     eventIdToIndexInTrace.get(v.getEventId())))
         .collect(Collectors.toList());
+  }
+
+  public Event getHeadSpan() {
+
+    boolean calculateApiCallGraphDepth = true;
+    if (apiNodeList != null && !apiNodeList.isEmpty()) {
+      return apiNodeList
+          .get(0)
+          .getEntryApiBoundaryEvent()
+          .map(
+              headSpan -> {
+                if (calculateApiCallGraphDepth) {
+                  int depth =
+                      calculateApiCallGraphDepthFromTraceAndApiTraceGraph(trace, apiNodeList);
+                  enrichEventWithApiCallGraphDepthAttribute(headSpan, depth);
+                }
+                // TODO: move below logic to trace enricher
+                enrichEventWithTraceStartTimeAttribute(headSpan, trace.getStartTimeMillis());
+                enrichEventWithTraceEndTimeAttribute(headSpan, trace.getEndTimeMillis());
+                return headSpan;
+              })
+          .orElse(null);
+    }
+    return null;
+  }
+
+  private int calculateApiCallGraphDepthFromTraceAndApiTraceGraph(
+      StructuredTrace trace, List<ApiNode<Event>> apiNodes) {
+    if (trace == null) {
+      return 0;
+    }
+
+    if (apiNodes.isEmpty() || apiNodes.size() == 1) {
+      return apiNodes.size();
+    }
+
+    List<Event> events = trace.getEventList();
+    List<Edge> edges = trace.getEventEdgeList();
+    // Checking for fractured trace. If there are nodes but no edges or there are disconnected
+    // graphs in which case
+    // number of edges won't be n - 1, where n = number of nodes
+    if (edges.isEmpty() || edges.size() != events.size() - 1) {
+      return 0;
+    }
+
+    return getEventTree(edges)
+        .map(eventTree -> calculateTreeDepthWithApiBoundaries(eventTree, events))
+        .orElse(0);
+  }
+
+  private Optional<EventNode> getEventTree(List<Edge> eventEdges) {
+    if (eventEdges == null || eventEdges.isEmpty()) {
+      return Optional.empty();
+    }
+
+    Map<Integer, EventNode> eventIndexToNode = new HashMap<>();
+
+    for (Edge eventEdge : eventEdges) {
+      int sourceIndex = eventEdge.getSrcIndex();
+      int targetIndex = eventEdge.getTgtIndex();
+
+      EventNode sourceEventNode = eventIndexToNode.computeIfAbsent(sourceIndex, EventNode::new);
+      EventNode targetEventNode =
+          eventIndexToNode.computeIfAbsent(
+              targetIndex, tI -> EventNode.createNodeWithParentReference(tI, sourceEventNode));
+
+      sourceEventNode.addChild(targetEventNode);
+    }
+
+    // this node will be the root most of the time, but traverse all the way up in case it's not
+    EventNode currentEventTreeRoot = eventIndexToNode.get(0);
+
+    // if this condition is hit, it means the trace is fractured
+    if (currentEventTreeRoot == null) {
+      return Optional.empty();
+    }
+
+    while (currentEventTreeRoot.getParent() != null) {
+      currentEventTreeRoot = currentEventTreeRoot.getParent();
+    }
+    return Optional.of(currentEventTreeRoot);
+  }
+
+  private int calculateTreeDepthWithApiBoundaries(EventNode eventTree, List<Event> events) {
+    Event rootEvent = trace.getEventList().get(0);
+    boolean isEventTreeRootEntryApiBoundary = EnrichedSpanUtils.isEntryApiBoundary(rootEvent);
+
+    if (eventTree.getChildren().isEmpty()) {
+      if (isEventTreeRootEntryApiBoundary) {
+        return 1;
+      }
+      return 0;
+    }
+
+    int depth = 0;
+    // make sure the "root" node we place on a queue is within API boundary and is of entry type
+    Queue<EventNode> queue = new LinkedList<>();
+
+    if (!isEventTreeRootEntryApiBoundary) {
+      List<EventNode> allEntryPoints = getEntryChildEventNodesFromEventTree(eventTree, events);
+      allEntryPoints.forEach(queue::offer);
+    } else {
+      queue.offer(eventTree);
+    }
+
+    while (!queue.isEmpty()) {
+      int sizeAtCurrentDepth = queue.size();
+
+      for (int i = 0; i < sizeAtCurrentDepth; i++) {
+        EventNode currentEventNode = queue.remove();
+        Event currentEvent = events.get(currentEventNode.getId());
+
+        if (currentEvent != null) {
+          List<EventNode> childEvents =
+              getEntryChildEventNodesFromEventTree(currentEventNode, events);
+          childEvents.forEach(queue::offer);
+        }
+      }
+      depth++;
+    }
+    return depth;
+  }
+
+  private List<EventNode> getEntryChildEventNodesFromEventTree(
+      EventNode eventNode, List<Event> events) {
+    List<EventNode> exitEvents = new ArrayList<>();
+
+    Queue<EventNode> queue = new LinkedList<>();
+    queue.add(eventNode);
+
+    while (!queue.isEmpty()) {
+      EventNode currentNode = queue.poll();
+
+      List<EventNode> children = currentNode.getChildren();
+      if (children != null) {
+        for (EventNode childNode : children) {
+          Event event = events.get(childNode.getId());
+          if (EnrichedSpanUtils.isEntryApiBoundary(event)) {
+            exitEvents.add(childNode);
+          } else {
+            queue.offer(childNode);
+          }
+        }
+      }
+    }
+    return exitEvents;
+  }
+
+  private void enrichEventWithApiCallGraphDepthAttribute(Event event, int depth) {
+    if (depth > 0) {
+      event
+          .getEnrichedAttributes()
+          .getAttributeMap()
+          .put(API_CALL_GRAPH_DEPTH, AttributeValueCreator.create(depth));
+    }
+  }
+
+  private void enrichEventWithTraceStartTimeAttribute(Event event, long startTime) {
+    event
+        .getEnrichedAttributes()
+        .getAttributeMap()
+        .put(TRACE_START_TIME_MILLIS, AttributeValueCreator.create(String.valueOf(startTime)));
+  }
+
+  private void enrichEventWithTraceEndTimeAttribute(Event event, long endTime) {
+    event
+        .getEnrichedAttributes()
+        .getAttributeMap()
+        .put(TRACE_END_TIME_MILLIS, AttributeValueCreator.create(String.valueOf(endTime)));
+  }
+
+  private static class EventNode {
+    private int id;
+    private EventNode parent;
+    private final List<EventNode> children = new ArrayList<>();
+
+    public static EventNode createNodeWithParentReference(int id, EventNode parent) {
+      EventNode eventNode = new EventNode(id);
+      eventNode.parent = parent;
+      return eventNode;
+    }
+
+    public EventNode(int id) {
+      this.id = id;
+    }
+
+    public int getId() {
+      return id;
+    }
+
+    public void setId(int id) {
+      this.id = id;
+    }
+
+    public EventNode getParent() {
+      return parent;
+    }
+
+    public void setParent(EventNode parent) {
+      this.parent = parent;
+    }
+
+    public List<EventNode> getChildren() {
+      return children;
+    }
+
+    public void addChild(EventNode child) {
+      this.children.add(child);
+    }
   }
 
   private void buildApiTraceGraph() {
