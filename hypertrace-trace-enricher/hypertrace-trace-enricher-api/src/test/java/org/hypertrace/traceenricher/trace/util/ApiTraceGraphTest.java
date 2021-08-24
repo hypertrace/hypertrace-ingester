@@ -81,7 +81,7 @@ public class ApiTraceGraphTest {
   }
 
   /**
-   * A->B->D A->C Depth = 3
+   * A->B->D A->C A->E Depth = 3
    */
   @Test
   void traceWithGraphOfThreeLevelsContainsHeadSpanWithDepthAttributeEqualToThree() {
@@ -90,12 +90,14 @@ public class ApiTraceGraphTest {
     Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent"); // 0
     Event aExitEvent = createExitEventWithCustomerAndName(customerId, "aExitEvent"); // 1
     Event aExitEvent2 = createExitEventWithCustomerAndName(customerId, "aExitEvent2"); // 2
+    Event aExitEvent3 = createExitEventWithCustomerAndName(customerId, "aExitEvent3"); // 3
 
-    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEntryEvent"); // 3
-    Event bExitEvent = createExitEventWithCustomerAndName(customerId, "bExitEvent"); // 4
+    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEntryEvent"); // 4
+    Event bExitEvent = createExitEventWithCustomerAndName(customerId, "bExitEvent"); // 5
 
-    Event cEntryEvent = createEntryEventWithCustomerAndName(customerId, "cEntryEvent"); // 5
-    Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEntryEvent"); // 6
+    Event cEntryEvent = createEntryEventWithCustomerAndName(customerId, "cEntryEvent"); // 6
+    Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEntryEvent"); // 7
+    Event eEntryEvent = createEntryEventWithCustomerAndName(customerId, "eEntryEvent"); // 8
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
@@ -104,18 +106,21 @@ public class ApiTraceGraphTest {
                 aEntryEvent,
                 aExitEvent,
                 aExitEvent2,
+                aExitEvent3,
                 bEntryEvent,
                 bExitEvent,
                 cEntryEvent,
-                dEntryEvent
+                dEntryEvent,
+                eEntryEvent
             },
             new HashMap<>() {
               {
-                put(0, new int[]{1, 2});
-                put(1, new int[]{3});
-                put(2, new int[]{5});
-                put(3, new int[]{4});
-                put(4, new int[]{6});
+                put(0, new int[]{1, 2, 3});
+                put(1, new int[]{4});
+                put(2, new int[]{6});
+                put(3, new int[]{8});
+                put(4, new int[]{5});
+                put(5, new int[]{7});
               }
             });
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
