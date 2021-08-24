@@ -125,7 +125,7 @@ public class ApiTraceGraphTest {
             });
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
     String actualDepth =
         headEvent
             .getEnrichedAttributes()
@@ -190,7 +190,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
     String actualDepth =
         headEvent
             .getEnrichedAttributes()
@@ -264,7 +264,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
     String actualDepth =
         headEvent
             .getEnrichedAttributes()
@@ -284,7 +284,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
     String actualDepth =
         headEvent
             .getEnrichedAttributes()
@@ -295,7 +295,7 @@ public class ApiTraceGraphTest {
   }
 
   @Test
-  void headSpanForTraceWithOneNonApiBoundaryEventWillBeNull() {
+  void noHeadSpanForTraceWithOneNonApiBoundaryEvent() {
     String customerId = "testCustomer";
     Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent");
 
@@ -304,8 +304,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
-    assertNull(headEvent);
+    assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
   }
 
   @Test
@@ -321,7 +320,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
 
     assertFalse(
         headEvent
@@ -334,7 +333,7 @@ public class ApiTraceGraphTest {
    * Fractured trace A B->C
    */
   @Test
-  void fracturedTraceHeadSpanWillNotContainDepthAttribute() {
+  void fracturedTraceHeadSpanWillNotContainApiCallDepthAttribute() {
     String customerId = "testCustomer";
     Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent");
     Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEntryEvent");
@@ -354,7 +353,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
     assertFalse(
         headEvent
             .getEnrichedAttributes()
@@ -363,19 +362,18 @@ public class ApiTraceGraphTest {
   }
 
   @Test
-  void emptyTraceHeadSpanIsNull() {
+  void emptyTraceHeadSpanWillNotContainApiCallDepthAttribute() {
     String customerId = "testCustomer";
     StructuredTrace trace =
         createTraceWithEventsAndEdges(customerId, new Event[]{}, new HashMap<>());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
-    assertNull(headEvent);
+    assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
   }
 
   @Test
-  void headSpanOfTraceWithNoApiBoundaryEventsWillBeNull() {
+  void noHeadSpanForTraceWithNoApiBoundaryEvents() {
     String customerId = "testCustomer";
 
     Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 0
@@ -396,9 +394,7 @@ public class ApiTraceGraphTest {
             });
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getHeadSpan();
-    assertNull(headEvent);
+    assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
   }
 
   @Test
@@ -424,7 +420,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
     String actualDepth =
         headEvent
             .getEnrichedAttributes()
@@ -462,7 +458,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
     String actualDepth =
         headEvent
             .getEnrichedAttributes()
@@ -508,7 +504,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
     String actualDepth =
         headEvent
             .getEnrichedAttributes()
@@ -565,7 +561,7 @@ public class ApiTraceGraphTest {
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
-    Event headEvent = apiTraceGraph.getHeadSpan();
+    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
     String startTime =
         headEvent
             .getEnrichedAttributes()

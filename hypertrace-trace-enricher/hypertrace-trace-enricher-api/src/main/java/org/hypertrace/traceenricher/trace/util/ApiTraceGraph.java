@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ApiTraceGraph {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ApiTraceGraph.class);
 
   private static final String UNKNOWN_SPAN_KIND_VALUE =
@@ -88,6 +89,7 @@ public class ApiTraceGraph {
     buildApiTraceGraph();
     buildApiEntryBoundaryEventWithNoIncomingEdge();
     buildApiExitBoundaryEventWithNoOutgoingEdge();
+    enrichHeadSpanWithApiCallGraphDepthTo(true);
   }
 
   public StructuredTrace getTrace() {
@@ -139,31 +141,25 @@ public class ApiTraceGraph {
         .collect(Collectors.toList());
   }
 
-  public Event getHeadSpan() {
-
-    boolean calculateApiCallGraphDepth = true;
+  private void enrichHeadSpanWithApiCallGraphDepthTo(boolean calculateApiCallGraphDepth) {
     if (apiNodeList != null && !apiNodeList.isEmpty()) {
-      return apiNodeList
+      apiNodeList
           .get(0)
           .getEntryApiBoundaryEvent()
           .map(
               headSpan -> {
                 if (calculateApiCallGraphDepth) {
-                  int depth =
-                      calculateApiCallGraphDepthFromTraceAndApiTraceGraph();
+                  int depth = calculateApiCallGraphDepth();
                   enrichEventWithApiCallGraphDepthAttribute(headSpan, depth);
                 }
-                // TODO: move below logic to trace enricher
                 enrichEventWithTraceStartTimeAttribute(headSpan, trace.getStartTimeMillis());
                 enrichEventWithTraceEndTimeAttribute(headSpan, trace.getEndTimeMillis());
                 return headSpan;
-              })
-          .orElse(null);
+              });
     }
-    return null;
   }
 
-  private int calculateApiCallGraphDepthFromTraceAndApiTraceGraph() {
+  private int calculateApiCallGraphDepth() {
     if (trace == null) {
       return 0;
     }
@@ -172,23 +168,7 @@ public class ApiTraceGraph {
       return apiNodeList.size();
     }
 
-    List<Event> events = trace.getEventList();
-    List<Edge> edges = trace.getEventEdgeList();
-    // Checking for fractured trace. If there are nodes but no edges or there are disconnected
-    // graphs in which case
-    // number of edges won't be n - 1, where n = number of nodes
-    if (edges.isEmpty() || edges.size() != events.size() - 1) {
-      return 0;
-    }
-
-    return calculateTreeDepthWithApiBoundaries();
-  }
-
-
-  private int calculateTreeDepthWithApiBoundaries() {
-
     int depth = 0;
-    // make sure the "root" node we place on a queue is within API boundary and is of entry type
     Queue<Integer> queue = new LinkedList<>();
     queue.offer(0);
 
@@ -440,7 +420,7 @@ public class ApiTraceGraph {
             // which can happen if exit span missing and both belongs to different services.
             if (EnrichedSpanUtils.isEntryApiBoundary(child)
                 && EnrichedSpanUtils.areBothSpansFromDifferentService(
-                    child, entryBoundaryEvent.get())) {
+                child, entryBoundaryEvent.get())) {
               ApiNode<Event> destinationApiNode = entryApiBoundaryEventIdToApiNode.get(child);
               if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(
