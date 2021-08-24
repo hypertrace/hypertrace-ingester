@@ -80,9 +80,11 @@ public class ApiTraceGraphTest {
             });
   }
 
-  /** A->B->D A->C Depth = 3 */
+  /**
+   * A->B->D A->C Depth = 3
+   */
   @Test
-  void traceWithGraphOfThreeLevelsContainsHeaderSpanWithDepthAttributeEqualToThree() {
+  void traceWithGraphOfThreeLevelsContainsHeadSpanWithDepthAttributeEqualToThree() {
     String customerId = "testCustomer";
 
     Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent"); // 0
@@ -98,7 +100,7 @@ public class ApiTraceGraphTest {
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
             customerId,
-            new Event[] {
+            new Event[]{
                 aEntryEvent,
                 aExitEvent,
                 aExitEvent2,
@@ -109,11 +111,11 @@ public class ApiTraceGraphTest {
             },
             new HashMap<>() {
               {
-                put(0, new int[] {1, 2});
-                put(1, new int[] {3});
-                put(2, new int[] {5});
-                put(3, new int[] {4});
-                put(4, new int[] {6});
+                put(0, new int[]{1, 2});
+                put(1, new int[]{3});
+                put(2, new int[]{5});
+                put(3, new int[]{4});
+                put(4, new int[]{6});
               }
             });
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
@@ -130,7 +132,7 @@ public class ApiTraceGraphTest {
 
   @Test
   void
-  traceWithGraphOfThreeLevelsAndDifferentTypesOfEventsContainsHeaderSpanWithDepthAttributeEqualToThree() {
+  traceWithGraphOfThreeLevelsAndDifferentTypesOfEventsContainsHeadSpanWithDepthAttributeEqualToThree() {
     String customerId = "testCustomer";
 
     Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent"); // 0
@@ -154,7 +156,7 @@ public class ApiTraceGraphTest {
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
             customerId,
-            new Event[] {
+            new Event[]{
                 aEntryEvent,
                 aUnspecifiedEvent,
                 aUnspecifiedEvent2,
@@ -169,15 +171,15 @@ public class ApiTraceGraphTest {
             },
             new HashMap<>() {
               {
-                put(0, new int[] {1, 4});
-                put(1, new int[] {2});
-                put(2, new int[] {3});
-                put(3, new int[] {5});
-                put(4, new int[] {9});
-                put(5, new int[] {6});
-                put(6, new int[] {7});
-                put(7, new int[] {8});
-                put(8, new int[] {10});
+                put(0, new int[]{1, 4});
+                put(1, new int[]{2});
+                put(2, new int[]{3});
+                put(3, new int[]{5});
+                put(4, new int[]{9});
+                put(5, new int[]{6});
+                put(6, new int[]{7});
+                put(7, new int[]{8});
+                put(8, new int[]{10});
               }
             });
 
@@ -193,7 +195,9 @@ public class ApiTraceGraphTest {
     assertEquals("3", actualDepth);
   }
 
-  /** Calls sequence A->B->C->A->B->A->B Depth = 7 */
+  /**
+   * Calls sequence A->B->C->A->B->A->B Depth = 7
+   */
   @Test
   void traceWithMultipleCyclesContainsHeadSpanWithDepthAttributeEqualToSeven() {
     String customerId = "testCustomer";
@@ -221,7 +225,7 @@ public class ApiTraceGraphTest {
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
             customerId,
-            new Event[] {
+            new Event[]{
                 aEntryEvent,
                 aExitEvent,
                 aEntryEvent2,
@@ -238,18 +242,18 @@ public class ApiTraceGraphTest {
             },
             new HashMap<>() {
               {
-                put(0, new int[] {1});
-                put(1, new int[] {2});
-                put(2, new int[] {3});
-                put(3, new int[] {4});
-                put(4, new int[] {5});
-                put(5, new int[] {6});
-                put(6, new int[] {7});
-                put(7, new int[] {8});
-                put(8, new int[] {9});
-                put(9, new int[] {10});
-                put(10, new int[] {11});
-                put(11, new int[] {12});
+                put(0, new int[]{1});
+                put(1, new int[]{2});
+                put(2, new int[]{3});
+                put(3, new int[]{4});
+                put(4, new int[]{5});
+                put(5, new int[]{6});
+                put(6, new int[]{7});
+                put(7, new int[]{8});
+                put(8, new int[]{9});
+                put(9, new int[]{10});
+                put(10, new int[]{11});
+                put(11, new int[]{12});
               }
             });
 
@@ -266,12 +270,12 @@ public class ApiTraceGraphTest {
   }
 
   @Test
-  void traceWithOneNodeContainsHeaderSpanWithDepthAttributeEqualToOne() {
+  void traceWithOneNodeContainsHeadSpanWithDepthAttributeEqualToOne() {
     String customerId = "testCustomer";
     Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent");
 
     StructuredTrace trace =
-        createTraceWithEventsAndEdges(customerId, new Event[] {aEntryEvent}, new HashMap<>());
+        createTraceWithEventsAndEdges(customerId, new Event[]{aEntryEvent}, new HashMap<>());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
@@ -286,12 +290,12 @@ public class ApiTraceGraphTest {
   }
 
   @Test
-  void headerSpanForTraceWithOneNonApiBoundaryEventWillBeNull() {
+  void headSpanForTraceWithOneNonApiBoundaryEventWillBeNull() {
     String customerId = "testCustomer";
     Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent");
 
     StructuredTrace trace =
-        createTraceWithEventsAndEdges(customerId, new Event[] {aEvent}, new HashMap<>());
+        createTraceWithEventsAndEdges(customerId, new Event[]{aEvent}, new HashMap<>());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
@@ -300,7 +304,7 @@ public class ApiTraceGraphTest {
   }
 
   @Test
-  void traceWithMultipleDisconnectedNodesContainsHeaderSpanWillNotContainDepthAttribute() {
+  void traceWithMultipleDisconnectedNodesContainsHeadSpanWillNotContainDepthAttribute() {
     String customerId = "testCustomer";
     Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent");
     Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEntryEvent");
@@ -308,7 +312,7 @@ public class ApiTraceGraphTest {
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId, new Event[] {aEntryEvent, bEntryEvent, cEntryEvent}, new HashMap<>());
+            customerId, new Event[]{aEntryEvent, bEntryEvent, cEntryEvent}, new HashMap<>());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
@@ -321,7 +325,9 @@ public class ApiTraceGraphTest {
             .containsKey("session.call_graph_depth"));
   }
 
-  /** Fractured trace A B->C */
+  /**
+   * Fractured trace A B->C
+   */
   @Test
   void fracturedTraceHeadSpanWillNotContainDepthAttribute() {
     String customerId = "testCustomer";
@@ -333,11 +339,11 @@ public class ApiTraceGraphTest {
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
             customerId,
-            new Event[] {aEntryEvent, bEntryEvent, bExitEvent, cEntryEvent},
+            new Event[]{aEntryEvent, bEntryEvent, bExitEvent, cEntryEvent},
             new HashMap<>() {
               {
-                put(1, new int[] {2});
-                put(2, new int[] {3});
+                put(1, new int[]{2});
+                put(2, new int[]{3});
               }
             });
 
@@ -352,10 +358,10 @@ public class ApiTraceGraphTest {
   }
 
   @Test
-  void emptyTraceHeaderSpanIsNull() {
+  void emptyTraceHeadSpanIsNull() {
     String customerId = "testCustomer";
     StructuredTrace trace =
-        createTraceWithEventsAndEdges(customerId, new Event[] {}, new HashMap<>());
+        createTraceWithEventsAndEdges(customerId, new Event[]{}, new HashMap<>());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
@@ -364,7 +370,7 @@ public class ApiTraceGraphTest {
   }
 
   @Test
-  void headerSpanOfTraceWithNoApiBoundaryEventsWillBeNull() {
+  void headSpanOfTraceWithNoApiBoundaryEventsWillBeNull() {
     String customerId = "testCustomer";
 
     Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 0
@@ -375,12 +381,12 @@ public class ApiTraceGraphTest {
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
             customerId,
-            new Event[] {aEvent, bEvent, cEvent, dEvent},
+            new Event[]{aEvent, bEvent, cEvent, dEvent},
             new HashMap<>() {
               {
-                put(0, new int[] {1});
-                put(1, new int[] {2});
-                put(2, new int[] {3});
+                put(0, new int[]{1});
+                put(1, new int[]{2});
+                put(2, new int[]{3});
               }
             });
 
@@ -391,7 +397,7 @@ public class ApiTraceGraphTest {
   }
 
   @Test
-  void headerSpanOfTraceWithOneApiBoundaryEventContainDepthAttributeEqualToOne() {
+  void headSpanOfTraceWithOneApiBoundaryEventContainDepthAttributeEqualToOne() {
     String customerId = "testCustomer";
 
     Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 0
@@ -402,12 +408,12 @@ public class ApiTraceGraphTest {
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
             customerId,
-            new Event[] {aEvent, bEvent, cEvent, dEntryEvent},
+            new Event[]{aEvent, bEvent, cEvent, dEntryEvent},
             new HashMap<>() {
               {
-                put(0, new int[] {1});
-                put(1, new int[] {2});
-                put(2, new int[] {3});
+                put(0, new int[]{1});
+                put(1, new int[]{2});
+                put(2, new int[]{3});
               }
             });
 
@@ -425,31 +431,27 @@ public class ApiTraceGraphTest {
 
   @Test
   void
-  headerSpanOfTraceWithTwoBoundaryEventsWithStartingEntryEventContainsDepthAttributeEqualToTwo() {
+  headSpanOfTraceWithTwoApiNodesWithEdgeBetweenThemContainsDepthAttributeEqualToTwo() {
     String customerId = "testCustomer";
 
     Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 0
     Event bEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "bEvent"); // 1
     Event cEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "cEvent"); // 2
     Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 3
-    Event eEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "eEvent"); // 4
-    Event fEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "fEvent"); // 5
-    Event gEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "gEvent"); // 6
-    Event hEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 7
+    Event dExitEvent = createExitEventWithCustomerAndName(customerId, "dExitEvent"); // 4
+    Event hEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 5
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
             customerId,
-            new Event[] {aEvent, bEvent, cEvent, dEntryEvent, eEvent, fEvent, gEvent, hEntryEvent},
+            new Event[]{aEvent, bEvent, cEvent, dEntryEvent, dExitEvent, hEntryEvent},
             new HashMap<>() {
               {
-                put(0, new int[] {1});
-                put(1, new int[] {2});
-                put(2, new int[] {3});
-                put(3, new int[] {4});
-                put(4, new int[] {5});
-                put(5, new int[] {6});
-                put(6, new int[] {7});
+                put(0, new int[]{1});
+                put(1, new int[]{2});
+                put(2, new int[]{3});
+                put(3, new int[]{4});
+                put(4, new int[]{5});
               }
             });
 
@@ -466,40 +468,36 @@ public class ApiTraceGraphTest {
   }
 
   /*
-   * A->B->C-D->E-F->G->H
-   * C->I
-   * I and D are entries at same 1st level and H entry on 2d level, hence depth = 2
+   * A->B->C->D
+   *       C->E
+   * E and D are entries at same 1st level and H entry on 2d level, hence depth = 2
    */
   @Test
   void
-  headerSpanOfTraceWithThreeBoundaryEventsWithStartingEntryEventContainsDepthAttributeEqualToTwo() {
+  headSpanOfTraceWithThreeBoundaryEventsWithStartingEntryEventContainsDepthAttributeEqualToTwo() {
     String customerId = "testCustomer";
 
     Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 0
     Event bEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "bEvent"); // 1
-    Event cEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "cEvent"); // 2
-    Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 3
-    Event eEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "eEvent"); // 4
-    Event fEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "fEvent"); // 5
-    Event gEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "gEvent"); // 6
-    Event hEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 7
-    Event iEntryEvent = createEntryEventWithCustomerAndName(customerId, "iEvent"); // 8
+    Event cEntryEvent = createEntryEventWithCustomerAndName(customerId, "cEvent"); // 2
+    Event cToDExitEvent = createExitEventWithCustomerAndName(customerId, "C->D"); // 3
+    Event cToIExitEvent = createExitEventWithCustomerAndName(customerId, "C->I"); // 4
+    Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 5
+    Event iEntryEvent = createEntryEventWithCustomerAndName(customerId, "iEvent"); // 6
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
             customerId,
-            new Event[] {
-                aEvent, bEvent, cEvent, dEntryEvent, eEvent, fEvent, gEvent, hEntryEvent, iEntryEvent
+            new Event[]{
+                aEvent, bEvent, cEntryEvent, cToDExitEvent, cToIExitEvent, dEntryEvent, iEntryEvent
             },
             new HashMap<>() {
               {
-                put(0, new int[] {1});
-                put(1, new int[] {2});
-                put(2, new int[] {3, 8});
-                put(3, new int[] {4});
-                put(4, new int[] {5});
-                put(5, new int[] {6});
-                put(6, new int[] {7});
+                put(0, new int[]{1});
+                put(1, new int[]{2});
+                put(2, new int[]{3, 4});
+                put(3, new int[]{5});
+                put(4, new int[]{6});
               }
             });
 
