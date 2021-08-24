@@ -233,17 +233,17 @@ public class ApiTraceGraphTest {
             new Event[]{
                 aEntryEvent,
                 aExitEvent,
-                aEntryEvent2,
-                aExitEvent2,
-                aEntryEvent3,
-                aExitEvent3,
                 bEntryEvent,
                 bExitEvent,
+                cEntryEvent,
+                cExitEvent,
+                aEntryEvent2,
+                aExitEvent2,
                 bEntryEvent2,
                 bExitEvent2,
+                aEntryEvent3,
+                aExitEvent3,
                 bEntryEvent3,
-                cEntryEvent,
-                cExitEvent
             },
             new HashMap<>() {
               {
