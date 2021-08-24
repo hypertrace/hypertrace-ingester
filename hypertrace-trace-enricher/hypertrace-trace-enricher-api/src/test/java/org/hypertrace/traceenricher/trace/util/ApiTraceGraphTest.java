@@ -130,7 +130,7 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("session.api_call_graph_depth")
+            .get("head_span.api_call_graph_depth")
             .getValue();
     assertEquals("3", actualDepth);
   }
@@ -195,7 +195,7 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("session.api_call_graph_depth")
+            .get("head_span.api_call_graph_depth")
             .getValue();
     assertEquals("3", actualDepth);
   }
@@ -269,7 +269,7 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("session.api_call_graph_depth")
+            .get("head_span.api_call_graph_depth")
             .getValue();
     assertEquals("7", actualDepth);
   }
@@ -289,7 +289,7 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("session.api_call_graph_depth")
+            .get("head_span.api_call_graph_depth")
             .getValue();
     assertEquals("1", actualDepth);
   }
@@ -326,7 +326,7 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .containsKey("session.call_graph_depth"));
+            .containsKey("head_span.call_graph_depth"));
   }
 
   /**
@@ -358,7 +358,7 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .containsKey("session.call_graph_depth"));
+            .containsKey("head_span.call_graph_depth"));
   }
 
   @Test
@@ -425,7 +425,7 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("session.api_call_graph_depth")
+            .get("head_span.api_call_graph_depth")
             .getValue();
     assertEquals("1", actualDepth);
   }
@@ -463,7 +463,7 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("session.api_call_graph_depth")
+            .get("head_span.api_call_graph_depth")
             .getValue();
     assertEquals("2", actualDepth);
   }
@@ -509,7 +509,7 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("session.api_call_graph_depth")
+            .get("head_span.api_call_graph_depth")
             .getValue();
     assertEquals("2", actualDepth);
   }
@@ -566,13 +566,13 @@ public class ApiTraceGraphTest {
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("session.trace_start_time_millis")
+            .get("head_span.trace_start_time_millis")
             .getValue();
     String endTime =
         headEvent
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("session.trace_end_time_millis")
+            .get("head_span.trace_end_time_millis")
             .getValue();
 
     assertEquals(String.valueOf(trace.getStartTimeMillis()), startTime);

@@ -1,5 +1,9 @@
 package org.hypertrace.traceenricher.trace.util;
 
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.API_CALL_GRAPH_DEPTH;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TRACE_END_TIME_MILLIS;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TRACE_START_TIME_MILLIS;
+
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -38,9 +42,6 @@ public class ApiTraceGraph {
 
   private static final String UNKNOWN_SPAN_KIND_VALUE =
       EnrichedSpanConstants.getValue(AttributeValue.ATTRIBUTE_VALUE_UNKNOWN);
-  private static final String API_CALL_GRAPH_DEPTH = "session.api_call_graph_depth";
-  private static final String TRACE_START_TIME_MILLIS = "session.trace_start_time_millis";
-  private static final String TRACE_END_TIME_MILLIS = "session.trace_end_time_millis";
 
   private final StructuredTrace trace;
   private final List<ApiNode<Event>> apiNodeList;

@@ -12,6 +12,9 @@ public class EnrichedSpanConstants {
   public static final String API_EXIT_CALLS_ATTRIBUTE = "API_EXIT_CALLS";
   public static final String API_CALLEE_NAME_COUNT_ATTRIBUTE = "API_CALLEE_NAME_COUNT";
   public static final String API_TRACE_ERROR_SPAN_COUNT_ATTRIBUTE = "API_TRACE_ERROR_SPAN_COUNT";
+  public static final String API_CALL_GRAPH_DEPTH = "head_span.api_call_graph_depth";
+  public static final String TRACE_START_TIME_MILLIS = "head_span.trace_start_time_millis";
+  public static final String TRACE_END_TIME_MILLIS = "head_span.trace_end_time_millis";
   /**
    * Returns the constant value for the given Enum.
    *
