@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,7 +22,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.EdgeType;
@@ -35,6 +35,8 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.junit.jupiter.api.Test;
 
 public class ApiTraceGraphTest {
+
+  public static final String TEST_CUSTOMER_ID = "testCustomerId";
 
   @Test
   public void testApiTraceGraph_HotrodTrace() throws IOException {
@@ -86,23 +88,20 @@ public class ApiTraceGraphTest {
    */
   @Test
   void traceWithGraphOfThreeLevelsContainsHeadSpanWithDepthAttributeEqualToThree() {
-    String customerId = "testCustomer";
+    Event aEntryEvent = createEntryEventWithName("aEntryEvent"); // 0
+    Event aExitEvent = createExitEventName("aExitEvent"); // 1
+    Event aExitEvent2 = createExitEventName("aExitEvent2"); // 2
+    Event aExitEvent3 = createExitEventName("aExitEvent3"); // 3
 
-    Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent"); // 0
-    Event aExitEvent = createExitEventWithCustomerAndName(customerId, "aExitEvent"); // 1
-    Event aExitEvent2 = createExitEventWithCustomerAndName(customerId, "aExitEvent2"); // 2
-    Event aExitEvent3 = createExitEventWithCustomerAndName(customerId, "aExitEvent3"); // 3
+    Event bEntryEvent = createEntryEventWithName("bEntryEvent"); // 4
+    Event bExitEvent = createExitEventName("bExitEvent"); // 5
 
-    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEntryEvent"); // 4
-    Event bExitEvent = createExitEventWithCustomerAndName(customerId, "bExitEvent"); // 5
-
-    Event cEntryEvent = createEntryEventWithCustomerAndName(customerId, "cEntryEvent"); // 6
-    Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEntryEvent"); // 7
-    Event eEntryEvent = createEntryEventWithCustomerAndName(customerId, "eEntryEvent"); // 8
+    Event cEntryEvent = createEntryEventWithName("cEntryEvent"); // 6
+    Event dEntryEvent = createEntryEventWithName("dEntryEvent"); // 7
+    Event eEntryEvent = createEntryEventWithName("eEntryEvent"); // 8
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{
                 aEntryEvent,
                 aExitEvent,
@@ -139,29 +138,26 @@ public class ApiTraceGraphTest {
   @Test
   void
   traceWithGraphOfThreeLevelsAndDifferentTypesOfEventsContainsHeadSpanWithDepthAttributeEqualToThree() {
-    String customerId = "testCustomer";
-
-    Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent"); // 0
+    Event aEntryEvent = createEntryEventWithName("aEntryEvent"); // 0
     Event aUnspecifiedEvent =
-        createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 1
+        createUnspecifiedTypeEventWithName("aEvent"); // 1
     Event aUnspecifiedEvent2 =
-        createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent2"); // 2
-    Event aExitEvent = createExitEventWithCustomerAndName(customerId, "aExitEvent"); // 3
-    Event aExitEvent2 = createExitEventWithCustomerAndName(customerId, "aExitEvent2"); // 4
+        createUnspecifiedTypeEventWithName("aEvent2"); // 2
+    Event aExitEvent = createExitEventName("aExitEvent"); // 3
+    Event aExitEvent2 = createExitEventName("aExitEvent2"); // 4
 
-    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEntryEvent"); // 5
+    Event bEntryEvent = createEntryEventWithName("bEntryEvent"); // 5
     Event bUnspecifiedEvent =
-        createUnspecifiedTypeEventWithCustomerAndName(customerId, "bEvent"); // 6
+        createUnspecifiedTypeEventWithName("bEvent"); // 6
     Event bUnspecifiedEvent2 =
-        createUnspecifiedTypeEventWithCustomerAndName(customerId, "bEvent2"); // 7
-    Event bExitEvent = createExitEventWithCustomerAndName(customerId, "bExitEvent"); // 8
+        createUnspecifiedTypeEventWithName("bEvent2"); // 7
+    Event bExitEvent = createExitEventName("bExitEvent"); // 8
 
-    Event cEntryEvent = createEntryEventWithCustomerAndName(customerId, "cEntryEvent"); // 9
-    Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEntryEvent"); // 10
+    Event cEntryEvent = createEntryEventWithName("cEntryEvent"); // 9
+    Event dEntryEvent = createEntryEventWithName("dEntryEvent"); // 10
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{
                 aEntryEvent,
                 aUnspecifiedEvent,
@@ -206,31 +202,28 @@ public class ApiTraceGraphTest {
    */
   @Test
   void traceWithMultipleCyclesContainsHeadSpanWithDepthAttributeEqualToSeven() {
-    String customerId = "testCustomer";
-
-    Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent"); // 0
-    Event aExitEvent = createExitEventWithCustomerAndName(customerId, "aExitEvent"); // 1
+    Event aEntryEvent = createEntryEventWithName("aEntryEvent"); // 0
+    Event aExitEvent = createExitEventName("aExitEvent"); // 1
     // A->B
-    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEntryEvent"); // 2
-    Event bExitEvent = createExitEventWithCustomerAndName(customerId, "bExitEvent"); // 3
+    Event bEntryEvent = createEntryEventWithName("bEntryEvent"); // 2
+    Event bExitEvent = createExitEventName("bExitEvent"); // 3
     // B->C
-    Event cEntryEvent = createEntryEventWithCustomerAndName(customerId, "cEntryEvent"); // 4
-    Event cExitEvent = createExitEventWithCustomerAndName(customerId, "cExitEvent"); // 5
+    Event cEntryEvent = createEntryEventWithName("cEntryEvent"); // 4
+    Event cExitEvent = createExitEventName("cExitEvent"); // 5
     // C->A
-    Event aEntryEvent2 = createEntryEventWithCustomerAndName(customerId, "aEntryEvent2"); // 6
-    Event aExitEvent2 = createExitEventWithCustomerAndName(customerId, "aExitEvent2"); // 7
+    Event aEntryEvent2 = createEntryEventWithName("aEntryEvent2"); // 6
+    Event aExitEvent2 = createExitEventName("aExitEvent2"); // 7
     // A->B
-    Event bEntryEvent2 = createEntryEventWithCustomerAndName(customerId, "bEntryEvent2"); // 8
-    Event bExitEvent2 = createExitEventWithCustomerAndName(customerId, "bExitEvent2"); // 9
+    Event bEntryEvent2 = createEntryEventWithName("bEntryEvent2"); // 8
+    Event bExitEvent2 = createExitEventName("bExitEvent2"); // 9
     // B->A
-    Event aEntryEvent3 = createEntryEventWithCustomerAndName(customerId, "aEntryEvent3"); // 10
-    Event aExitEvent3 = createExitEventWithCustomerAndName(customerId, "aExitEvent3"); // 11
+    Event aEntryEvent3 = createEntryEventWithName("aEntryEvent3"); // 10
+    Event aExitEvent3 = createExitEventName("aExitEvent3"); // 11
     // A->B
-    Event bEntryEvent3 = createEntryEventWithCustomerAndName(customerId, "bEntryEvent3"); // 12
+    Event bEntryEvent3 = createEntryEventWithName("bEntryEvent3"); // 12
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{
                 aEntryEvent,
                 aExitEvent,
@@ -277,11 +270,10 @@ public class ApiTraceGraphTest {
 
   @Test
   void traceWithOneNodeContainsHeadSpanWithDepthAttributeEqualToOne() {
-    String customerId = "testCustomer";
-    Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent");
+    Event aEntryEvent = createEntryEventWithName("aEntryEvent");
 
     StructuredTrace trace =
-        createTraceWithEventsAndEdges(customerId, new Event[]{aEntryEvent}, new HashMap<>());
+        createTraceWithEventsAndEdges(new Event[]{aEntryEvent}, new HashMap<>());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
@@ -297,11 +289,10 @@ public class ApiTraceGraphTest {
 
   @Test
   void noHeadSpanForTraceWithOneNonApiBoundaryEvent() {
-    String customerId = "testCustomer";
-    Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent");
+    Event aEvent = createUnspecifiedTypeEventWithName("aEvent");
 
     StructuredTrace trace =
-        createTraceWithEventsAndEdges(customerId, new Event[]{aEvent}, new HashMap<>());
+        createTraceWithEventsAndEdges(new Event[]{aEvent}, new HashMap<>());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
@@ -310,14 +301,13 @@ public class ApiTraceGraphTest {
 
   @Test
   void traceWithMultipleDisconnectedNodesContainsHeadSpanWillNotContainDepthAttribute() {
-    String customerId = "testCustomer";
-    Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent");
-    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEntryEvent");
-    Event cEntryEvent = createEntryEventWithCustomerAndName(customerId, "cEntryEvent");
+    Event aEntryEvent = createEntryEventWithName("aEntryEvent");
+    Event bEntryEvent = createEntryEventWithName("bEntryEvent");
+    Event cEntryEvent = createEntryEventWithName("cEntryEvent");
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId, new Event[]{aEntryEvent, bEntryEvent, cEntryEvent}, new HashMap<>());
+            new Event[]{aEntryEvent, bEntryEvent, cEntryEvent}, new HashMap<>());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
@@ -335,15 +325,13 @@ public class ApiTraceGraphTest {
    */
   @Test
   void fracturedTraceHeadSpanWillNotContainApiCallDepthAttribute() {
-    String customerId = "testCustomer";
-    Event aEntryEvent = createEntryEventWithCustomerAndName(customerId, "aEntryEvent");
-    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEntryEvent");
-    Event bExitEvent = createExitEventWithCustomerAndName(customerId, "bExitEvent");
-    Event cEntryEvent = createEntryEventWithCustomerAndName(customerId, "cEntryEvent");
+    Event aEntryEvent = createEntryEventWithName("aEntryEvent");
+    Event bEntryEvent = createEntryEventWithName("bEntryEvent");
+    Event bExitEvent = createExitEventName("bExitEvent");
+    Event cEntryEvent = createEntryEventWithName("cEntryEvent");
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{aEntryEvent, bEntryEvent, bExitEvent, cEntryEvent},
             new HashMap<>() {
               {
@@ -364,9 +352,8 @@ public class ApiTraceGraphTest {
 
   @Test
   void emptyTraceHeadSpanWillNotContainApiCallDepthAttribute() {
-    String customerId = "testCustomer";
     StructuredTrace trace =
-        createTraceWithEventsAndEdges(customerId, new Event[]{}, new HashMap<>());
+        createTraceWithEventsAndEdges(new Event[]{}, new HashMap<>());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
@@ -375,16 +362,13 @@ public class ApiTraceGraphTest {
 
   @Test
   void noHeadSpanForTraceWithNoApiBoundaryEvents() {
-    String customerId = "testCustomer";
-
-    Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 0
-    Event bEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "bEvent"); // 1
-    Event cEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "cEvent"); // 2
-    Event dEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "dEvent"); // 3
+    Event aEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+    Event bEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
+    Event cEvent = createUnspecifiedTypeEventWithName("cEvent"); // 2
+    Event dEvent = createUnspecifiedTypeEventWithName("dEvent"); // 3
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{aEvent, bEvent, cEvent, dEvent},
             new HashMap<>() {
               {
@@ -400,16 +384,13 @@ public class ApiTraceGraphTest {
 
   @Test
   void headSpanOfTraceWithOneApiBoundaryEventContainDepthAttributeEqualToOne() {
-    String customerId = "testCustomer";
-
-    Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 0
-    Event bEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "bEvent"); // 1
-    Event cEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "cEvent"); // 2
-    Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 3
+    Event aEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+    Event bEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
+    Event cEvent = createUnspecifiedTypeEventWithName("cEvent"); // 2
+    Event dEntryEvent = createEntryEventWithName("dEvent"); // 3
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{aEvent, bEvent, cEvent, dEntryEvent},
             new HashMap<>() {
               {
@@ -434,18 +415,15 @@ public class ApiTraceGraphTest {
   @Test
   void
   headSpanOfTraceWithTwoApiNodesWithEdgeBetweenThemContainsDepthAttributeEqualToTwo() {
-    String customerId = "testCustomer";
-
-    Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 0
-    Event bEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "bEvent"); // 1
-    Event cEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "cEvent"); // 2
-    Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 3
-    Event dExitEvent = createExitEventWithCustomerAndName(customerId, "dExitEvent"); // 4
-    Event hEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 5
+    Event aEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+    Event bEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
+    Event cEvent = createUnspecifiedTypeEventWithName("cEvent"); // 2
+    Event dEntryEvent = createEntryEventWithName("dEvent"); // 3
+    Event dExitEvent = createExitEventName("dExitEvent"); // 4
+    Event hEntryEvent = createEntryEventWithName("dEvent"); // 5
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{aEvent, bEvent, cEvent, dEntryEvent, dExitEvent, hEntryEvent},
             new HashMap<>() {
               {
@@ -477,19 +455,16 @@ public class ApiTraceGraphTest {
   @Test
   void
   headSpanOfTraceWithThreeBoundaryEventsWithStartingEntryEventContainsDepthAttributeEqualToTwo() {
-    String customerId = "testCustomer";
-
-    Event aEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "aEvent"); // 0
-    Event bEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "bEvent"); // 1
-    Event cEntryEvent = createEntryEventWithCustomerAndName(customerId, "cEvent"); // 2
-    Event cToDExitEvent = createExitEventWithCustomerAndName(customerId, "C->D"); // 3
-    Event cToIExitEvent = createExitEventWithCustomerAndName(customerId, "C->I"); // 4
-    Event dEntryEvent = createEntryEventWithCustomerAndName(customerId, "dEvent"); // 5
-    Event iEntryEvent = createEntryEventWithCustomerAndName(customerId, "iEvent"); // 6
+    Event aEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+    Event bEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
+    Event cEntryEvent = createEntryEventWithName("cEvent"); // 2
+    Event cToDExitEvent = createExitEventName("C->D"); // 3
+    Event cToIExitEvent = createExitEventName("C->I"); // 4
+    Event dEntryEvent = createEntryEventWithName("dEvent"); // 5
+    Event iEntryEvent = createEntryEventWithName("iEvent"); // 6
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{
                 aEvent, bEvent, cEntryEvent, cToDExitEvent, cToIExitEvent, dEntryEvent, iEntryEvent
             },
@@ -516,8 +491,8 @@ public class ApiTraceGraphTest {
   }
 
   private StructuredTrace createTraceWithEventsAndEdges(
-      String customerId, Event[] events, Map<Integer, int[]> adjList) {
-    StructuredTrace trace = createStructuredTrace(customerId, events);
+      Event[] events, Map<Integer, int[]> adjList) {
+    StructuredTrace trace = createStructuredTrace(events);
     List<Edge> eventEdgeList = new ArrayList<>();
 
     adjList.forEach(
@@ -535,30 +510,29 @@ public class ApiTraceGraphTest {
     return trace;
   }
 
-  private Event createEntryEventWithCustomerAndName(String customerId, String eventName) {
-    Event event = createEntryEvent(customerId);
+  private Event createEntryEventWithName(String eventName) {
+    Event event = createEntryEvent();
     event.setEventName(eventName);
     return event;
   }
 
-  private Event createExitEventWithCustomerAndName(String customerId, String eventName) {
-    Event event = createExitEvent(customerId);
+  private Event createExitEventName(String eventName) {
+    Event event = createExitEvent();
     event.setEventName(eventName);
     return event;
   }
 
-  private Event createUnspecifiedTypeEventWithCustomerAndName(String customerId, String eventName) {
-    Event event = createUnspecifiedTypeEvent(customerId);
+  private Event createUnspecifiedTypeEventWithName(String eventName) {
+    Event event = createUnspecifiedTypeEvent();
     event.setEventName(eventName);
     return event;
   }
 
   @Test
   void headSpanContainsTraceStartAndEndTimeAttributes() {
-    String customerId = "testCustomer";
-    Event event = createEntryEventWithCustomerAndName(customerId, "aEntryEvent");
+    Event event = createEntryEventWithName("aEntryEvent");
 
-    StructuredTrace trace = createStructuredTrace(customerId, event);
+    StructuredTrace trace = createStructuredTrace(event);
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
 
@@ -580,14 +554,14 @@ public class ApiTraceGraphTest {
     assertEquals(String.valueOf(trace.getEndTimeMillis()), endTime);
   }
 
-  private StructuredTrace createStructuredTrace(String customerId, Event... events) {
-    return createStructuredTraceWithEndTime(customerId, System.currentTimeMillis(), events);
+  private StructuredTrace createStructuredTrace(Event... events) {
+    return createStructuredTraceWithEndTime(System.currentTimeMillis(), events);
   }
 
   private StructuredTrace createStructuredTraceWithEndTime(
-      String customerId, long endTimeMillis, Event... events) {
+      long endTimeMillis, Event... events) {
     return StructuredTrace.newBuilder()
-        .setCustomerId(customerId)
+        .setCustomerId(TEST_CUSTOMER_ID)
         .setTraceId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
         .setStartTimeMillis(endTimeMillis - 10000)
         .setEndTimeMillis(endTimeMillis)
@@ -600,14 +574,14 @@ public class ApiTraceGraphTest {
         .build();
   }
 
-  Event createEntryEvent(String customerId) {
-    return createEventOfBoundaryTypeForCustomer(
-        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY, customerId);
+  Event createEntryEvent() {
+    return createEventOfBoundaryType(
+        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY);
   }
 
-  private Event createEventOfBoundaryTypeForCustomer(
-      BoundaryTypeValue boundaryTypeValue, String customerId) {
-    Event event = createEvent(customerId);
+  private Event createEventOfBoundaryType(
+      BoundaryTypeValue boundaryTypeValue) {
+    Event event = createEvent();
     addEnrichedSpanAttribute(
         event,
         EnrichedSpanConstants.getValue(Api.API_BOUNDARY_TYPE),
@@ -615,9 +589,9 @@ public class ApiTraceGraphTest {
     return event;
   }
 
-  private Event createEvent(String customerId) {
+  private Event createEvent() {
     return Event.newBuilder()
-        .setCustomerId(customerId)
+        .setCustomerId(TEST_CUSTOMER_ID)
         .setEventId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
         .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
         .setEnrichedAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
@@ -632,27 +606,24 @@ public class ApiTraceGraphTest {
         .put(attributeKey, AttributeValueCreator.create(attributeValue));
   }
 
-  private Event createExitEvent(String customerId) {
-    return createEventOfBoundaryTypeForCustomer(
-        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_EXIT, customerId);
+  private Event createExitEvent() {
+    return createEventOfBoundaryType(
+        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_EXIT);
   }
 
-  private Event createUnspecifiedTypeEvent(String customerId) {
-    return createEventOfBoundaryTypeForCustomer(
-        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_UNSPECIFIED, customerId);
+  private Event createUnspecifiedTypeEvent() {
+    return createEventOfBoundaryType(
+        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_UNSPECIFIED);
   }
 
   @Test
   void headSpanIndexInTraceIsAddedToTraceAttribute() {
-    String customerId = "testCustomer";
-
-    Event aEntryHeadSpanEvent = createEntryEventWithCustomerAndName(customerId, "aEvent"); // 0
-    Event aExitEvent = createExitEventWithCustomerAndName(customerId, "aExitEvent"); // 1
-    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEvent"); // 2
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 0
+    Event aExitEvent = createExitEventName("aExitEvent"); // 1
+    Event bEntryEvent = createEntryEventWithName("bEvent"); // 2
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{aEntryHeadSpanEvent, aExitEvent, bEntryEvent},
             new HashMap<>() {
               {
@@ -669,17 +640,14 @@ public class ApiTraceGraphTest {
 
   @Test
   void headSpanIndexInTracePlacedAtIndexTwoIsAddedToTraceAttributeWithValueTwo() {
-    String customerId = "testCustomer";
-
-    Event yEntryEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "yEvent"); // 0
-    Event zEntryEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "zEvent"); // 1
-    Event aEntryHeadSpanEvent = createEntryEventWithCustomerAndName(customerId, "aEvent"); // 2
-    Event aExitEvent = createExitEventWithCustomerAndName(customerId, "aExitEvent"); // 3
-    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEvent"); // 4
+    Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
+    Event aExitEvent = createExitEventName("aExitEvent"); // 3
+    Event bEntryEvent = createEntryEventWithName("bEvent"); // 4
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent, bEntryEvent},
             new HashMap<>() {
               {
@@ -698,14 +666,11 @@ public class ApiTraceGraphTest {
 
   @Test
   void headSpanIndexInTraceNotAddedToTraceAttributeIfNoApiNodesInTrace() {
-    String customerId = "testCustomer";
-
-    Event yEntryEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "yEvent"); // 0
-    Event zEntryEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "zEvent"); // 1
+    Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            customerId,
             new Event[]{yEntryEvent, zEntryEvent},
             new HashMap<>() {
               {
@@ -716,5 +681,66 @@ public class ApiTraceGraphTest {
     new ApiTraceGraph(trace);
     assertNull(trace.getAttributes()
         .getAttributeMap().get("head.span.event.index.in.trace"));
+  }
+
+  @Test
+  void totalNumberOfCallsIsAvailableInHeadSpanAttribute() {
+    Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
+    Event aExitEvent = createExitEventName("aExitEvent"); // 3
+    Event bEntryEvent = createEntryEventWithName("bEvent"); // 4
+
+    Event[] allEvents = new Event[]{yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent,
+        bEntryEvent};
+    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
+      {
+        put(0, new int[]{1});
+        put(1, new int[]{2});
+        put(2, new int[]{3});
+        put(3, new int[]{4});
+      }
+    };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    String expectedTotalNumberOfCalls = String.valueOf(eventEdges.size());
+    String actualTotalNumberOfCalls = apiTraceGraph.getApiNodeList().get(0).getHeadEvent()
+        .getEnrichedAttributes().getAttributeMap().get("total.number.of.trace.calls").getValue();
+
+    assertEquals(expectedTotalNumberOfCalls, actualTotalNumberOfCalls);
+  }
+
+  @Test
+  void totalNumberOfCallsAttributeNotAddedIfThereIsOnlyOneEvent() {
+    Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+
+    Event[] allEvents = new Event[]{aEntryEvent};
+
+    StructuredTrace trace =
+        createTraceWithEventsAndEdges(allEvents, Collections.emptyMap());
+
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
+  }
+
+  @Test
+  void totalNumberOfCallsAttributeNotAddedIfThereEventsButNoApiNodes() {
+    Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+    Event bEntryEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
+
+    Event[] allEvents = new Event[]{aEntryEvent,bEntryEvent};
+    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
+      {
+        put(0, new int[]{1});
+      }
+    };
+
+    StructuredTrace trace =
+        createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
   }
 }

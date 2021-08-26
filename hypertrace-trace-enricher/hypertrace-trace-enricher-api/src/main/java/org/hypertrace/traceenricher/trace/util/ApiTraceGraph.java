@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.ApiNodeEventEdge;
-import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -43,6 +42,7 @@ public class ApiTraceGraph {
   private static final String UNKNOWN_SPAN_KIND_VALUE =
       EnrichedSpanConstants.getValue(AttributeValue.ATTRIBUTE_VALUE_UNKNOWN);
   private static final String HEAD_SPAN_ID_TRACE_ATTRIBUTE = "head.span.event.index.in.trace";
+  private static final String TOTAL_NUMBER_OF_TRACE_CALLS = "total.number.of.trace.calls";
 
   private final StructuredTrace trace;
   private final List<ApiNode<Event>> apiNodeList;
@@ -93,6 +93,7 @@ public class ApiTraceGraph {
     buildApiExitBoundaryEventWithNoOutgoingEdge();
     enrichHeadSpanWithApiCallGraphDepthTo(true);
     addHeadSpanIdTraceAttribute();
+    addTotalAmountOfCallsToFirstNodeHeadSpan();
   }
 
   public StructuredTrace getTrace() {
@@ -545,7 +546,17 @@ public class ApiTraceGraph {
       if (headSpanEventIndexInTrace != null) {
         trace.getAttributes().getAttributeMap().put(HEAD_SPAN_ID_TRACE_ATTRIBUTE,
             AttributeValueCreator
-                .create(String.valueOf(headSpanEventIndexInTrace)));
+                .create(headSpanEventIndexInTrace));
+      }
+    }
+  }
+
+  private void addTotalAmountOfCallsToFirstNodeHeadSpan() {
+    if (!apiNodeList.isEmpty() && !trace.getEventEdgeList().isEmpty()) {
+      Event headSpan = apiNodeList.get(0).getHeadEvent();
+      if (headSpan != null) {
+        headSpan.getEnrichedAttributes().getAttributeMap().put(TOTAL_NUMBER_OF_TRACE_CALLS,
+            AttributeValueCreator.create(trace.getEventEdgeList().size()));
       }
     }
   }
