@@ -82,68 +82,6 @@ public class ApiTraceGraphTest {
             });
   }
 
-  private StructuredTrace createStructuredTrace(Event... events) {
-    return createStructuredTraceWithEndTime(System.currentTimeMillis(), events);
-  }
-
-  private StructuredTrace createStructuredTraceWithEndTime(
-      long endTimeMillis, Event... events) {
-    return StructuredTrace.newBuilder()
-        .setCustomerId(TEST_CUSTOMER_ID)
-        .setTraceId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
-        .setStartTimeMillis(endTimeMillis - 10000)
-        .setEndTimeMillis(endTimeMillis)
-        .setAttributes(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build())
-        .setEntityList(new ArrayList<>())
-        .setEntityEdgeList(new ArrayList<>())
-        .setEventEdgeList(new ArrayList<>())
-        .setEntityEventEdgeList(new ArrayList<>())
-        .setEventList(Lists.newArrayList(events))
-        .build();
-  }
-
-  Event createEntryEvent() {
-    return createEventOfBoundaryType(
-        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY);
-  }
-
-  private Event createEventOfBoundaryType(
-      BoundaryTypeValue boundaryTypeValue) {
-    Event event = createEvent();
-    addEnrichedSpanAttribute(
-        event,
-        EnrichedSpanConstants.getValue(Api.API_BOUNDARY_TYPE),
-        EnrichedSpanConstants.getValue(boundaryTypeValue));
-    return event;
-  }
-
-  private Event createEvent() {
-    return Event.newBuilder()
-        .setCustomerId(TEST_CUSTOMER_ID)
-        .setEventId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
-        .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
-        .setEnrichedAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
-        .build();
-  }
-
-  private void addEnrichedSpanAttribute(
-      Event event, String attributeKey, String attributeValue) {
-    event
-        .getEnrichedAttributes()
-        .getAttributeMap()
-        .put(attributeKey, AttributeValueCreator.create(attributeValue));
-  }
-
-  private Event createExitEvent() {
-    return createEventOfBoundaryType(
-        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_EXIT);
-  }
-
-  private Event createUnspecifiedTypeEvent() {
-    return createEventOfBoundaryType(
-        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_UNSPECIFIED);
-  }
-
   @Test
   void headSpanIndexInTraceIsAddedToTraceAttribute() {
     Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 0
@@ -346,6 +284,24 @@ public class ApiTraceGraphTest {
     assertEquals("1", actualTotalNumberOfCalls);
   }
 
+  private Event createEntryEventWithName(String eventName) {
+    Event event = createEntryEvent();
+    event.setEventName(eventName);
+    return event;
+  }
+
+  private Event createExitEventName(String eventName) {
+    Event event = createExitEvent();
+    event.setEventName(eventName);
+    return event;
+  }
+
+  private Event createUnspecifiedTypeEventWithName(String eventName) {
+    Event event = createUnspecifiedTypeEvent();
+    event.setEventName(eventName);
+    return event;
+  }
+
   private StructuredTrace createTraceWithEventsAndEdges(
       Event[] events, Map<Integer, int[]> adjList) {
     StructuredTrace trace = createStructuredTrace(events);
@@ -366,21 +322,65 @@ public class ApiTraceGraphTest {
     return trace;
   }
 
-  private Event createEntryEventWithName(String eventName) {
-    Event event = createEntryEvent();
-    event.setEventName(eventName);
+  private StructuredTrace createStructuredTrace(Event... events) {
+    return createStructuredTraceWithEndTime(System.currentTimeMillis(), events);
+  }
+
+  private StructuredTrace createStructuredTraceWithEndTime(
+      long endTimeMillis, Event... events) {
+    return StructuredTrace.newBuilder()
+        .setCustomerId(TEST_CUSTOMER_ID)
+        .setTraceId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
+        .setStartTimeMillis(endTimeMillis - 10000)
+        .setEndTimeMillis(endTimeMillis)
+        .setAttributes(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build())
+        .setEntityList(new ArrayList<>())
+        .setEntityEdgeList(new ArrayList<>())
+        .setEventEdgeList(new ArrayList<>())
+        .setEntityEventEdgeList(new ArrayList<>())
+        .setEventList(Lists.newArrayList(events))
+        .build();
+  }
+
+  Event createEntryEvent() {
+    return createEventOfBoundaryType(
+        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY);
+  }
+
+  private Event createEventOfBoundaryType(
+      BoundaryTypeValue boundaryTypeValue) {
+    Event event = createEvent();
+    addEnrichedSpanAttribute(
+        event,
+        EnrichedSpanConstants.getValue(Api.API_BOUNDARY_TYPE),
+        EnrichedSpanConstants.getValue(boundaryTypeValue));
     return event;
   }
 
-  private Event createExitEventName(String eventName) {
-    Event event = createExitEvent();
-    event.setEventName(eventName);
-    return event;
+  private Event createEvent() {
+    return Event.newBuilder()
+        .setCustomerId(TEST_CUSTOMER_ID)
+        .setEventId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
+        .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
+        .setEnrichedAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
+        .build();
   }
 
-  private Event createUnspecifiedTypeEventWithName(String eventName) {
-    Event event = createUnspecifiedTypeEvent();
-    event.setEventName(eventName);
-    return event;
+  private void addEnrichedSpanAttribute(
+      Event event, String attributeKey, String attributeValue) {
+    event
+        .getEnrichedAttributes()
+        .getAttributeMap()
+        .put(attributeKey, AttributeValueCreator.create(attributeValue));
+  }
+
+  private Event createExitEvent() {
+    return createEventOfBoundaryType(
+        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_EXIT);
+  }
+
+  private Event createUnspecifiedTypeEvent() {
+    return createEventOfBoundaryType(
+        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_UNSPECIFIED);
   }
 }

@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ApiTraceGraph {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(ApiTraceGraph.class);
 
   private static final String UNKNOWN_SPAN_KIND_VALUE =
