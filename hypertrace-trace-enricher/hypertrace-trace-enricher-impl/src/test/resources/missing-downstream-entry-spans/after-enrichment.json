@@ -835,7 +835,16 @@
   ],
   "attributes": {
     "org.hypertrace.core.datamodel.Attributes": {
-      "attribute_map": {}
+      "attribute_map": {
+        "head.span.event.index.in.trace": {
+          "value": {
+            "string": "0"
+          },
+          "binary_value": null,
+          "value_list": null,
+          "value_map": null
+        }
+      }
     }
   },
   "start_time_millis": 1591218751899,
