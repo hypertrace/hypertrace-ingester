@@ -90,17 +90,17 @@ public class ApiTraceGraphTest {
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            new Event[]{aEntryHeadSpanEvent, aExitEvent, bEntryEvent},
+            new Event[] {aEntryHeadSpanEvent, aExitEvent, bEntryEvent},
             new HashMap<>() {
               {
-                put(0, new int[]{1});
-                put(1, new int[]{2});
+                put(0, new int[] {1});
+                put(1, new int[] {2});
               }
             });
 
     new ApiTraceGraph(trace);
-    String actualHeadSpanIndexInTrace = trace.getAttributes()
-        .getAttributeMap().get("head.span.event.index.in.trace").getValue();
+    String actualHeadSpanIndexInTrace =
+        trace.getAttributes().getAttributeMap().get("head.span.event.index.in.trace").getValue();
     assertEquals("0", actualHeadSpanIndexInTrace);
   }
 
@@ -114,19 +114,19 @@ public class ApiTraceGraphTest {
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            new Event[]{yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent, bEntryEvent},
+            new Event[] {yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent, bEntryEvent},
             new HashMap<>() {
               {
-                put(0, new int[]{1});
-                put(1, new int[]{2});
-                put(2, new int[]{3});
-                put(3, new int[]{4});
+                put(0, new int[] {1});
+                put(1, new int[] {2});
+                put(2, new int[] {3});
+                put(3, new int[] {4});
               }
             });
 
     new ApiTraceGraph(trace);
-    String actualHeadSpanIndexInTrace = trace.getAttributes()
-        .getAttributeMap().get("head.span.event.index.in.trace").getValue();
+    String actualHeadSpanIndexInTrace =
+        trace.getAttributes().getAttributeMap().get("head.span.event.index.in.trace").getValue();
     assertEquals("2", actualHeadSpanIndexInTrace);
   }
 
@@ -137,16 +137,15 @@ public class ApiTraceGraphTest {
 
     StructuredTrace trace =
         createTraceWithEventsAndEdges(
-            new Event[]{yEntryEvent, zEntryEvent},
+            new Event[] {yEntryEvent, zEntryEvent},
             new HashMap<>() {
               {
-                put(0, new int[]{1});
+                put(0, new int[] {1});
               }
             });
 
     new ApiTraceGraph(trace);
-    assertNull(trace.getAttributes()
-        .getAttributeMap().get("head.span.event.index.in.trace"));
+    assertNull(trace.getAttributes().getAttributeMap().get("head.span.event.index.in.trace"));
   }
 
   @Test
@@ -157,23 +156,31 @@ public class ApiTraceGraphTest {
     Event aExitEvent = createExitEventName("aExitEvent"); // 3
     Event bEntryEvent = createEntryEventWithName("bEvent"); // 4
 
-    Event[] allEvents = new Event[]{yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent,
-        bEntryEvent};
-    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
-      {
-        put(0, new int[]{1});
-        put(1, new int[]{2});
-        put(2, new int[]{3});
-        put(3, new int[]{4});
-      }
-    };
+    Event[] allEvents =
+        new Event[] {yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent, bEntryEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+            put(1, new int[] {2});
+            put(2, new int[] {3});
+            put(3, new int[] {4});
+          }
+        };
 
     StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     String expectedTotalNumberOfCalls = String.valueOf(eventEdges.size());
-    String actualTotalNumberOfCalls = apiTraceGraph.getApiNodeList().get(0).getHeadEvent()
-        .getEnrichedAttributes().getAttributeMap().get("total.number.of.trace.calls").getValue();
+    String actualTotalNumberOfCalls =
+        apiTraceGraph
+            .getApiNodeList()
+            .get(0)
+            .getHeadEvent()
+            .getEnrichedAttributes()
+            .getAttributeMap()
+            .get("total.number.of.trace.calls")
+            .getValue();
 
     assertEquals(expectedTotalNumberOfCalls, actualTotalNumberOfCalls);
   }
@@ -182,10 +189,9 @@ public class ApiTraceGraphTest {
   void totalNumberOfCallsAttributeNotAddedIfThereIsOnlyOneEvent() {
     Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
 
-    Event[] allEvents = new Event[]{aEntryEvent};
+    Event[] allEvents = new Event[] {aEntryEvent};
 
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(allEvents, Collections.emptyMap());
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, Collections.emptyMap());
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
@@ -196,15 +202,15 @@ public class ApiTraceGraphTest {
     Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
     Event bEntryEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
 
-    Event[] allEvents = new Event[]{aEntryEvent, bEntryEvent};
-    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
-      {
-        put(0, new int[]{1});
-      }
-    };
+    Event[] allEvents = new Event[] {aEntryEvent, bEntryEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+          }
+        };
 
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(allEvents, eventEdges);
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
@@ -218,25 +224,32 @@ public class ApiTraceGraphTest {
     Event aExitEvent = createExitEventName("aExitEvent"); // 3
     Event bEntryEvent = createEntryEventWithName("bEvent"); // 4
 
-    Event[] allEvents = new Event[]{yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent,
-        bEntryEvent};
-    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
-      {
-        put(0, new int[]{1});
-        put(1, new int[]{2});
-        put(2, new int[]{3});
-        put(3, new int[]{4});
-      }
-    };
+    Event[] allEvents =
+        new Event[] {yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent, bEntryEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+            put(1, new int[] {2});
+            put(2, new int[] {3});
+            put(3, new int[] {4});
+          }
+        };
 
     StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-    String expectedTotalNumberOfUniqueApiNodes = String
-        .valueOf(apiTraceGraph.getApiNodeList().size());
-    String actualTotalNumberOfCalls = apiTraceGraph.getApiNodeList().get(0).getHeadEvent()
-        .getEnrichedAttributes().getAttributeMap().get("total.number.of.unique.trace.api.nodes")
-        .getValue();
+    String expectedTotalNumberOfUniqueApiNodes =
+        String.valueOf(apiTraceGraph.getApiNodeList().size());
+    String actualTotalNumberOfCalls =
+        apiTraceGraph
+            .getApiNodeList()
+            .get(0)
+            .getHeadEvent()
+            .getEnrichedAttributes()
+            .getAttributeMap()
+            .get("total.number.of.unique.trace.api.nodes")
+            .getValue();
 
     assertEquals(expectedTotalNumberOfUniqueApiNodes, actualTotalNumberOfCalls);
   }
@@ -246,12 +259,13 @@ public class ApiTraceGraphTest {
     Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
     Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
 
-    Event[] allEvents = new Event[]{yEntryEvent, zEntryEvent};
-    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
-      {
-        put(0, new int[]{1});
-      }
-    };
+    Event[] allEvents = new Event[] {yEntryEvent, zEntryEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+          }
+        };
 
     StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
 
@@ -266,20 +280,27 @@ public class ApiTraceGraphTest {
     Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
     Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
     Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
-    Event[] allEvents = new Event[]{yEntryEvent, zEntryEvent, aEntryHeadSpanEvent};
-    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
-      {
-        put(0, new int[]{1});
-        put(1, new int[]{2});
-      }
-    };
+    Event[] allEvents = new Event[] {yEntryEvent, zEntryEvent, aEntryHeadSpanEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+            put(1, new int[] {2});
+          }
+        };
 
     StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-    String actualTotalNumberOfCalls = apiTraceGraph.getApiNodeList().get(0).getHeadEvent()
-        .getEnrichedAttributes().getAttributeMap().get("total.number.of.unique.trace.api.nodes")
-        .getValue();
+    String actualTotalNumberOfCalls =
+        apiTraceGraph
+            .getApiNodeList()
+            .get(0)
+            .getHeadEvent()
+            .getEnrichedAttributes()
+            .getAttributeMap()
+            .get("total.number.of.unique.trace.api.nodes")
+            .getValue();
 
     assertEquals("1", actualTotalNumberOfCalls);
   }
@@ -326,8 +347,7 @@ public class ApiTraceGraphTest {
     return createStructuredTraceWithEndTime(System.currentTimeMillis(), events);
   }
 
-  private StructuredTrace createStructuredTraceWithEndTime(
-      long endTimeMillis, Event... events) {
+  private StructuredTrace createStructuredTraceWithEndTime(long endTimeMillis, Event... events) {
     return StructuredTrace.newBuilder()
         .setCustomerId(TEST_CUSTOMER_ID)
         .setTraceId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
@@ -343,12 +363,10 @@ public class ApiTraceGraphTest {
   }
 
   Event createEntryEvent() {
-    return createEventOfBoundaryType(
-        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY);
+    return createEventOfBoundaryType(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_ENTRY);
   }
 
-  private Event createEventOfBoundaryType(
-      BoundaryTypeValue boundaryTypeValue) {
+  private Event createEventOfBoundaryType(BoundaryTypeValue boundaryTypeValue) {
     Event event = createEvent();
     addEnrichedSpanAttribute(
         event,
@@ -366,8 +384,7 @@ public class ApiTraceGraphTest {
         .build();
   }
 
-  private void addEnrichedSpanAttribute(
-      Event event, String attributeKey, String attributeValue) {
+  private void addEnrichedSpanAttribute(Event event, String attributeKey, String attributeValue) {
     event
         .getEnrichedAttributes()
         .getAttributeMap()
@@ -375,12 +392,10 @@ public class ApiTraceGraphTest {
   }
 
   private Event createExitEvent() {
-    return createEventOfBoundaryType(
-        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_EXIT);
+    return createEventOfBoundaryType(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_EXIT);
   }
 
   private Event createUnspecifiedTypeEvent() {
-    return createEventOfBoundaryType(
-        BoundaryTypeValue.BOUNDARY_TYPE_VALUE_UNSPECIFIED);
+    return createEventOfBoundaryType(BoundaryTypeValue.BOUNDARY_TYPE_VALUE_UNSPECIFIED);
   }
 }
