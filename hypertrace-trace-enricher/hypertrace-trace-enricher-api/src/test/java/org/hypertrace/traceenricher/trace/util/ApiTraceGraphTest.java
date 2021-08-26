@@ -730,7 +730,7 @@ public class ApiTraceGraphTest {
     Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
     Event bEntryEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
 
-    Event[] allEvents = new Event[]{aEntryEvent,bEntryEvent};
+    Event[] allEvents = new Event[]{aEntryEvent, bEntryEvent};
     HashMap<Integer, int[]> eventEdges = new HashMap<>() {
       {
         put(0, new int[]{1});
@@ -766,10 +766,55 @@ public class ApiTraceGraphTest {
     StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
 
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-    String expectedTotalNumberOfUniqueApiNodes = String.valueOf(apiTraceGraph.getApiNodeList().size());
+    String expectedTotalNumberOfUniqueApiNodes = String
+        .valueOf(apiTraceGraph.getApiNodeList().size());
     String actualTotalNumberOfCalls = apiTraceGraph.getApiNodeList().get(0).getHeadEvent()
-        .getEnrichedAttributes().getAttributeMap().get("total.number.of.unique.trace.api.nodes").getValue();
+        .getEnrichedAttributes().getAttributeMap().get("total.number.of.unique.trace.api.nodes")
+        .getValue();
 
     assertEquals(expectedTotalNumberOfUniqueApiNodes, actualTotalNumberOfCalls);
+  }
+
+  @Test
+  void totalNumberOfUniqueApiNodeAttributeNotAddedIfNoApiNodes() {
+    Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+
+    Event[] allEvents = new Event[]{yEntryEvent, zEntryEvent};
+    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
+      {
+        put(0, new int[]{1});
+      }
+    };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    // we won't be able to get head span to check attribute presence if nodes list is empty, hence
+    // this assertion
+    assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
+  }
+
+  @Test
+  void totalNumberOfUniqueApiNodeAttributeEqualsToOneIfAtLeastOneNodeExist() {
+    Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
+    Event[] allEvents = new Event[]{yEntryEvent, zEntryEvent, aEntryHeadSpanEvent};
+    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
+      {
+        put(0, new int[]{1});
+        put(1, new int[]{2});
+      }
+    };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    String actualTotalNumberOfCalls = apiTraceGraph.getApiNodeList().get(0).getHeadEvent()
+        .getEnrichedAttributes().getAttributeMap().get("total.number.of.unique.trace.api.nodes")
+        .getValue();
+
+    assertEquals("1", actualTotalNumberOfCalls);
   }
 }
