@@ -43,6 +43,7 @@ public class ApiTraceGraph {
       EnrichedSpanConstants.getValue(AttributeValue.ATTRIBUTE_VALUE_UNKNOWN);
   private static final String HEAD_SPAN_ID_TRACE_ATTRIBUTE = "head.span.event.index.in.trace";
   private static final String TOTAL_NUMBER_OF_TRACE_CALLS = "total.number.of.trace.calls";
+  private static final String TOTAL_NUMBER_OF_UNIQUE_API_NODES = "total.number.of.unique.trace.api.nodes";
 
   private final StructuredTrace trace;
   private final List<ApiNode<Event>> apiNodeList;
@@ -94,6 +95,7 @@ public class ApiTraceGraph {
     enrichHeadSpanWithApiCallGraphDepthTo(true);
     addHeadSpanIdTraceAttribute();
     addTotalAmountOfCallsToFirstNodeHeadSpanAttribute();
+    addTotalNumberOfUniqueApiNodesHeadSpanAttribute();
   }
 
   public StructuredTrace getTrace() {
@@ -557,6 +559,16 @@ public class ApiTraceGraph {
       if (headSpan != null) {
         headSpan.getEnrichedAttributes().getAttributeMap().put(TOTAL_NUMBER_OF_TRACE_CALLS,
             AttributeValueCreator.create(trace.getEventEdgeList().size()));
+      }
+    }
+  }
+
+  private void addTotalNumberOfUniqueApiNodesHeadSpanAttribute() {
+    if (!apiNodeList.isEmpty()) {
+      Event headSpan = apiNodeList.get(0).getHeadEvent();
+      if (headSpan != null) {
+        headSpan.getEnrichedAttributes().getAttributeMap().put(TOTAL_NUMBER_OF_UNIQUE_API_NODES,
+            AttributeValueCreator.create(apiNodeList.size()));
       }
     }
   }
