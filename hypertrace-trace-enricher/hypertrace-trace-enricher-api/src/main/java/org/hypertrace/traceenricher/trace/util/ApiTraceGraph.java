@@ -1,9 +1,5 @@
 package org.hypertrace.traceenricher.trace.util;
 
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.API_CALL_GRAPH_DEPTH;
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TRACE_END_TIME_MILLIS;
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TRACE_START_TIME_MILLIS;
-
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -92,7 +88,6 @@ public class ApiTraceGraph {
     buildApiTraceGraph();
     buildApiEntryBoundaryEventWithNoIncomingEdge();
     buildApiExitBoundaryEventWithNoOutgoingEdge();
-    enrichHeadSpanWithApiCallGraphDepthTo(true);
     addHeadSpanIdTraceAttribute();
     addTotalAmountOfCallsToFirstNodeHeadSpanAttribute();
     addTotalNumberOfUniqueApiNodesHeadSpanAttribute();
@@ -145,78 +140,6 @@ public class ApiTraceGraph {
                 apiExitBoundaryEventIdxWithNoOutgoingEdge.contains(
                     eventIdToIndexInTrace.get(v.getEventId())))
         .collect(Collectors.toList());
-  }
-
-  private void enrichHeadSpanWithApiCallGraphDepthTo(boolean calculateApiCallGraphDepth) {
-    if (apiNodeList != null && !apiNodeList.isEmpty()) {
-      apiNodeList
-          .get(0)
-          .getEntryApiBoundaryEvent()
-          .map(
-              headSpan -> {
-                if (calculateApiCallGraphDepth) {
-                  int depth = calculateApiCallGraphDepth();
-                  enrichEventWithApiCallGraphDepthAttribute(headSpan, depth);
-                }
-                enrichEventWithTraceStartTimeAttribute(headSpan, trace.getStartTimeMillis());
-                enrichEventWithTraceEndTimeAttribute(headSpan, trace.getEndTimeMillis());
-                return headSpan;
-              });
-    }
-  }
-
-  private int calculateApiCallGraphDepth() {
-    if (trace == null) {
-      return 0;
-    }
-
-    if (apiNodeList.isEmpty() || apiNodeList.size() == 1) {
-      return apiNodeList.size();
-    }
-
-    int depth = 0;
-    Queue<Integer> queue = new LinkedList<>();
-    queue.offer(0);
-
-    while (!queue.isEmpty()) {
-      int sizeAtCurrentDepth = queue.size();
-
-      for (int i = 0; i < sizeAtCurrentDepth; i++) {
-        int nodeIndex = queue.remove();
-        Set<Integer> nodeEdgesIndexes = apiNodeIdxToEdges.get(nodeIndex);
-        if (nodeEdgesIndexes != null && !nodeEdgesIndexes.isEmpty()) {
-          for (int edgeIndex : nodeEdgesIndexes) {
-            ApiNodeEventEdge edge = apiNodeEventEdgeList.get(edgeIndex);
-            queue.offer(edge.getTgtApiNodeIndex());
-          }
-        }
-      }
-      depth++;
-    }
-    return depth;
-  }
-
-  private void enrichEventWithApiCallGraphDepthAttribute(Event event, int depth) {
-    if (depth > 0) {
-      event
-          .getEnrichedAttributes()
-          .getAttributeMap()
-          .put(API_CALL_GRAPH_DEPTH, AttributeValueCreator.create(depth));
-    }
-  }
-
-  private void enrichEventWithTraceStartTimeAttribute(Event event, long startTime) {
-    event
-        .getEnrichedAttributes()
-        .getAttributeMap()
-        .put(TRACE_START_TIME_MILLIS, AttributeValueCreator.create(String.valueOf(startTime)));
-  }
-
-  private void enrichEventWithTraceEndTimeAttribute(Event event, long endTime) {
-    event
-        .getEnrichedAttributes()
-        .getAttributeMap()
-        .put(TRACE_END_TIME_MILLIS, AttributeValueCreator.create(String.valueOf(endTime)));
   }
 
   private void buildApiTraceGraph() {

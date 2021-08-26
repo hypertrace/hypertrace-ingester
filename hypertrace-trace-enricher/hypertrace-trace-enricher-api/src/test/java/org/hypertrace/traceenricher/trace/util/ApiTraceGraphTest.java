@@ -1,7 +1,6 @@
 package org.hypertrace.traceenricher.trace.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -81,477 +80,6 @@ public class ApiTraceGraphTest {
               assertTrue(eventToApiNodes.containsKey(e.getEventId()));
               assertEquals(1, eventToApiNodes.get(e.getEventId()).size());
             });
-  }
-
-  /**
-   * A->B->D A->C A->E Depth = 3
-   */
-  @Test
-  void traceWithGraphOfThreeLevelsContainsHeadSpanWithDepthAttributeEqualToThree() {
-    Event aEntryEvent = createEntryEventWithName("aEntryEvent"); // 0
-    Event aExitEvent = createExitEventName("aExitEvent"); // 1
-    Event aExitEvent2 = createExitEventName("aExitEvent2"); // 2
-    Event aExitEvent3 = createExitEventName("aExitEvent3"); // 3
-
-    Event bEntryEvent = createEntryEventWithName("bEntryEvent"); // 4
-    Event bExitEvent = createExitEventName("bExitEvent"); // 5
-
-    Event cEntryEvent = createEntryEventWithName("cEntryEvent"); // 6
-    Event dEntryEvent = createEntryEventWithName("dEntryEvent"); // 7
-    Event eEntryEvent = createEntryEventWithName("eEntryEvent"); // 8
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(
-            new Event[]{
-                aEntryEvent,
-                aExitEvent,
-                aExitEvent2,
-                aExitEvent3,
-                bEntryEvent,
-                bExitEvent,
-                cEntryEvent,
-                dEntryEvent,
-                eEntryEvent
-            },
-            new HashMap<>() {
-              {
-                put(0, new int[]{1, 2, 3});
-                put(1, new int[]{4});
-                put(2, new int[]{6});
-                put(3, new int[]{8});
-                put(4, new int[]{5});
-                put(5, new int[]{7});
-              }
-            });
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-    String actualDepth =
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get("head_span.api_call_graph_depth")
-            .getValue();
-    assertEquals("3", actualDepth);
-  }
-
-  @Test
-  void
-  traceWithGraphOfThreeLevelsAndDifferentTypesOfEventsContainsHeadSpanWithDepthAttributeEqualToThree() {
-    Event aEntryEvent = createEntryEventWithName("aEntryEvent"); // 0
-    Event aUnspecifiedEvent =
-        createUnspecifiedTypeEventWithName("aEvent"); // 1
-    Event aUnspecifiedEvent2 =
-        createUnspecifiedTypeEventWithName("aEvent2"); // 2
-    Event aExitEvent = createExitEventName("aExitEvent"); // 3
-    Event aExitEvent2 = createExitEventName("aExitEvent2"); // 4
-
-    Event bEntryEvent = createEntryEventWithName("bEntryEvent"); // 5
-    Event bUnspecifiedEvent =
-        createUnspecifiedTypeEventWithName("bEvent"); // 6
-    Event bUnspecifiedEvent2 =
-        createUnspecifiedTypeEventWithName("bEvent2"); // 7
-    Event bExitEvent = createExitEventName("bExitEvent"); // 8
-
-    Event cEntryEvent = createEntryEventWithName("cEntryEvent"); // 9
-    Event dEntryEvent = createEntryEventWithName("dEntryEvent"); // 10
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(
-            new Event[]{
-                aEntryEvent,
-                aUnspecifiedEvent,
-                aUnspecifiedEvent2,
-                aExitEvent,
-                aExitEvent2,
-                bEntryEvent,
-                bUnspecifiedEvent,
-                bUnspecifiedEvent2,
-                bExitEvent,
-                cEntryEvent,
-                dEntryEvent
-            },
-            new HashMap<>() {
-              {
-                put(0, new int[]{1, 4});
-                put(1, new int[]{2});
-                put(2, new int[]{3});
-                put(3, new int[]{5});
-                put(4, new int[]{9});
-                put(5, new int[]{6});
-                put(6, new int[]{7});
-                put(7, new int[]{8});
-                put(8, new int[]{10});
-              }
-            });
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-    String actualDepth =
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get("head_span.api_call_graph_depth")
-            .getValue();
-    assertEquals("3", actualDepth);
-  }
-
-  /**
-   * Calls sequence A->B->C->A->B->A->B Depth = 7
-   */
-  @Test
-  void traceWithMultipleCyclesContainsHeadSpanWithDepthAttributeEqualToSeven() {
-    Event aEntryEvent = createEntryEventWithName("aEntryEvent"); // 0
-    Event aExitEvent = createExitEventName("aExitEvent"); // 1
-    // A->B
-    Event bEntryEvent = createEntryEventWithName("bEntryEvent"); // 2
-    Event bExitEvent = createExitEventName("bExitEvent"); // 3
-    // B->C
-    Event cEntryEvent = createEntryEventWithName("cEntryEvent"); // 4
-    Event cExitEvent = createExitEventName("cExitEvent"); // 5
-    // C->A
-    Event aEntryEvent2 = createEntryEventWithName("aEntryEvent2"); // 6
-    Event aExitEvent2 = createExitEventName("aExitEvent2"); // 7
-    // A->B
-    Event bEntryEvent2 = createEntryEventWithName("bEntryEvent2"); // 8
-    Event bExitEvent2 = createExitEventName("bExitEvent2"); // 9
-    // B->A
-    Event aEntryEvent3 = createEntryEventWithName("aEntryEvent3"); // 10
-    Event aExitEvent3 = createExitEventName("aExitEvent3"); // 11
-    // A->B
-    Event bEntryEvent3 = createEntryEventWithName("bEntryEvent3"); // 12
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(
-            new Event[]{
-                aEntryEvent,
-                aExitEvent,
-                bEntryEvent,
-                bExitEvent,
-                cEntryEvent,
-                cExitEvent,
-                aEntryEvent2,
-                aExitEvent2,
-                bEntryEvent2,
-                bExitEvent2,
-                aEntryEvent3,
-                aExitEvent3,
-                bEntryEvent3,
-            },
-            new HashMap<>() {
-              {
-                put(0, new int[]{1});
-                put(1, new int[]{2});
-                put(2, new int[]{3});
-                put(3, new int[]{4});
-                put(4, new int[]{5});
-                put(5, new int[]{6});
-                put(6, new int[]{7});
-                put(7, new int[]{8});
-                put(8, new int[]{9});
-                put(9, new int[]{10});
-                put(10, new int[]{11});
-                put(11, new int[]{12});
-              }
-            });
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-    String actualDepth =
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get("head_span.api_call_graph_depth")
-            .getValue();
-    assertEquals("7", actualDepth);
-  }
-
-  @Test
-  void traceWithOneNodeContainsHeadSpanWithDepthAttributeEqualToOne() {
-    Event aEntryEvent = createEntryEventWithName("aEntryEvent");
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(new Event[]{aEntryEvent}, new HashMap<>());
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-    String actualDepth =
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get("head_span.api_call_graph_depth")
-            .getValue();
-    assertEquals("1", actualDepth);
-  }
-
-  @Test
-  void noHeadSpanForTraceWithOneNonApiBoundaryEvent() {
-    Event aEvent = createUnspecifiedTypeEventWithName("aEvent");
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(new Event[]{aEvent}, new HashMap<>());
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
-  }
-
-  @Test
-  void traceWithMultipleDisconnectedNodesContainsHeadSpanWillNotContainDepthAttribute() {
-    Event aEntryEvent = createEntryEventWithName("aEntryEvent");
-    Event bEntryEvent = createEntryEventWithName("bEntryEvent");
-    Event cEntryEvent = createEntryEventWithName("cEntryEvent");
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(
-            new Event[]{aEntryEvent, bEntryEvent, cEntryEvent}, new HashMap<>());
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-
-    assertFalse(
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .containsKey("head_span.call_graph_depth"));
-  }
-
-  /**
-   * Fractured trace A B->C
-   */
-  @Test
-  void fracturedTraceHeadSpanWillNotContainApiCallDepthAttribute() {
-    Event aEntryEvent = createEntryEventWithName("aEntryEvent");
-    Event bEntryEvent = createEntryEventWithName("bEntryEvent");
-    Event bExitEvent = createExitEventName("bExitEvent");
-    Event cEntryEvent = createEntryEventWithName("cEntryEvent");
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(
-            new Event[]{aEntryEvent, bEntryEvent, bExitEvent, cEntryEvent},
-            new HashMap<>() {
-              {
-                put(1, new int[]{2});
-                put(2, new int[]{3});
-              }
-            });
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-    assertFalse(
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .containsKey("head_span.call_graph_depth"));
-  }
-
-  @Test
-  void emptyTraceHeadSpanWillNotContainApiCallDepthAttribute() {
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(new Event[]{}, new HashMap<>());
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
-  }
-
-  @Test
-  void noHeadSpanForTraceWithNoApiBoundaryEvents() {
-    Event aEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
-    Event bEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
-    Event cEvent = createUnspecifiedTypeEventWithName("cEvent"); // 2
-    Event dEvent = createUnspecifiedTypeEventWithName("dEvent"); // 3
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(
-            new Event[]{aEvent, bEvent, cEvent, dEvent},
-            new HashMap<>() {
-              {
-                put(0, new int[]{1});
-                put(1, new int[]{2});
-                put(2, new int[]{3});
-              }
-            });
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-    assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
-  }
-
-  @Test
-  void headSpanOfTraceWithOneApiBoundaryEventContainDepthAttributeEqualToOne() {
-    Event aEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
-    Event bEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
-    Event cEvent = createUnspecifiedTypeEventWithName("cEvent"); // 2
-    Event dEntryEvent = createEntryEventWithName("dEvent"); // 3
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(
-            new Event[]{aEvent, bEvent, cEvent, dEntryEvent},
-            new HashMap<>() {
-              {
-                put(0, new int[]{1});
-                put(1, new int[]{2});
-                put(2, new int[]{3});
-              }
-            });
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-    String actualDepth =
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get("head_span.api_call_graph_depth")
-            .getValue();
-    assertEquals("1", actualDepth);
-  }
-
-  @Test
-  void
-  headSpanOfTraceWithTwoApiNodesWithEdgeBetweenThemContainsDepthAttributeEqualToTwo() {
-    Event aEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
-    Event bEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
-    Event cEvent = createUnspecifiedTypeEventWithName("cEvent"); // 2
-    Event dEntryEvent = createEntryEventWithName("dEvent"); // 3
-    Event dExitEvent = createExitEventName("dExitEvent"); // 4
-    Event hEntryEvent = createEntryEventWithName("dEvent"); // 5
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(
-            new Event[]{aEvent, bEvent, cEvent, dEntryEvent, dExitEvent, hEntryEvent},
-            new HashMap<>() {
-              {
-                put(0, new int[]{1});
-                put(1, new int[]{2});
-                put(2, new int[]{3});
-                put(3, new int[]{4});
-                put(4, new int[]{5});
-              }
-            });
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-    String actualDepth =
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get("head_span.api_call_graph_depth")
-            .getValue();
-    assertEquals("2", actualDepth);
-  }
-
-  /*
-   * A->B->C->D
-   *       C->E
-   * E and D are entries at same 1st level and H entry on 2d level, hence depth = 2
-   */
-  @Test
-  void
-  headSpanOfTraceWithThreeBoundaryEventsWithStartingEntryEventContainsDepthAttributeEqualToTwo() {
-    Event aEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
-    Event bEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
-    Event cEntryEvent = createEntryEventWithName("cEvent"); // 2
-    Event cToDExitEvent = createExitEventName("C->D"); // 3
-    Event cToIExitEvent = createExitEventName("C->I"); // 4
-    Event dEntryEvent = createEntryEventWithName("dEvent"); // 5
-    Event iEntryEvent = createEntryEventWithName("iEvent"); // 6
-
-    StructuredTrace trace =
-        createTraceWithEventsAndEdges(
-            new Event[]{
-                aEvent, bEvent, cEntryEvent, cToDExitEvent, cToIExitEvent, dEntryEvent, iEntryEvent
-            },
-            new HashMap<>() {
-              {
-                put(0, new int[]{1});
-                put(1, new int[]{2});
-                put(2, new int[]{3, 4});
-                put(3, new int[]{5});
-                put(4, new int[]{6});
-              }
-            });
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-    String actualDepth =
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get("head_span.api_call_graph_depth")
-            .getValue();
-    assertEquals("2", actualDepth);
-  }
-
-  private StructuredTrace createTraceWithEventsAndEdges(
-      Event[] events, Map<Integer, int[]> adjList) {
-    StructuredTrace trace = createStructuredTrace(events);
-    List<Edge> eventEdgeList = new ArrayList<>();
-
-    adjList.forEach(
-        (src, list) -> {
-          for (int target : list) {
-            eventEdgeList.add(
-                Edge.newBuilder()
-                    .setSrcIndex(src)
-                    .setTgtIndex(target)
-                    .setEdgeType(EdgeType.EVENT_EVENT)
-                    .build());
-          }
-        });
-    trace.setEventEdgeList(eventEdgeList);
-    return trace;
-  }
-
-  private Event createEntryEventWithName(String eventName) {
-    Event event = createEntryEvent();
-    event.setEventName(eventName);
-    return event;
-  }
-
-  private Event createExitEventName(String eventName) {
-    Event event = createExitEvent();
-    event.setEventName(eventName);
-    return event;
-  }
-
-  private Event createUnspecifiedTypeEventWithName(String eventName) {
-    Event event = createUnspecifiedTypeEvent();
-    event.setEventName(eventName);
-    return event;
-  }
-
-  @Test
-  void headSpanContainsTraceStartAndEndTimeAttributes() {
-    Event event = createEntryEventWithName("aEntryEvent");
-
-    StructuredTrace trace = createStructuredTrace(event);
-
-    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
-
-    Event headEvent = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-    String startTime =
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get("head_span.trace_start_time_millis")
-            .getValue();
-    String endTime =
-        headEvent
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get("head_span.trace_end_time_millis")
-            .getValue();
-
-    assertEquals(String.valueOf(trace.getStartTimeMillis()), startTime);
-    assertEquals(String.valueOf(trace.getEndTimeMillis()), endTime);
   }
 
   private StructuredTrace createStructuredTrace(Event... events) {
@@ -816,5 +344,43 @@ public class ApiTraceGraphTest {
         .getValue();
 
     assertEquals("1", actualTotalNumberOfCalls);
+  }
+
+  private StructuredTrace createTraceWithEventsAndEdges(
+      Event[] events, Map<Integer, int[]> adjList) {
+    StructuredTrace trace = createStructuredTrace(events);
+    List<Edge> eventEdgeList = new ArrayList<>();
+
+    adjList.forEach(
+        (src, list) -> {
+          for (int target : list) {
+            eventEdgeList.add(
+                Edge.newBuilder()
+                    .setSrcIndex(src)
+                    .setTgtIndex(target)
+                    .setEdgeType(EdgeType.EVENT_EVENT)
+                    .build());
+          }
+        });
+    trace.setEventEdgeList(eventEdgeList);
+    return trace;
+  }
+
+  private Event createEntryEventWithName(String eventName) {
+    Event event = createEntryEvent();
+    event.setEventName(eventName);
+    return event;
+  }
+
+  private Event createExitEventName(String eventName) {
+    Event event = createExitEvent();
+    event.setEventName(eventName);
+    return event;
+  }
+
+  private Event createUnspecifiedTypeEventWithName(String eventName) {
+    Event event = createUnspecifiedTypeEvent();
+    event.setEventName(eventName);
+    return event;
   }
 }
