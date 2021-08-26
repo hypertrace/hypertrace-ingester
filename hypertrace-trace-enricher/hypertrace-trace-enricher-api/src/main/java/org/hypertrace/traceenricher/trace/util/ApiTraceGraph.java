@@ -88,9 +88,7 @@ public class ApiTraceGraph {
     buildApiTraceGraph();
     buildApiEntryBoundaryEventWithNoIncomingEdge();
     buildApiExitBoundaryEventWithNoOutgoingEdge();
-    addHeadSpanIdTraceAttribute();
-    addTotalAmountOfCallsToFirstNodeHeadSpanAttribute();
-    addTotalNumberOfUniqueApiNodesHeadSpanAttribute();
+    enrichWithHeadSpanAttributes();
   }
 
   public StructuredTrace getTrace() {
@@ -464,35 +462,35 @@ public class ApiTraceGraph {
     return set.stream().map(v -> trace.getEventList().get(v)).collect(Collectors.toList());
   }
 
-  private void addHeadSpanIdTraceAttribute() {
+  private void enrichWithHeadSpanAttributes() {
     if (!apiNodeList.isEmpty()) {
-      ByteBuffer headSpanId = apiNodeList.get(0).getHeadEvent().getEventId();
-      Integer headSpanEventIndexInTrace = eventIdToIndexInTrace.get(headSpanId);
-      if (headSpanEventIndexInTrace != null) {
-        trace.getAttributes().getAttributeMap().put(HEAD_SPAN_ID_TRACE_ATTRIBUTE,
-            AttributeValueCreator
-                .create(headSpanEventIndexInTrace));
+      Event firstNodeHeadSpan = apiNodeList.get(0).getHeadEvent();
+      if (firstNodeHeadSpan != null) {
+        addHeadSpanIdTraceAttribute(firstNodeHeadSpan);
+        addTotalAmountOfCallsToHeadSpanAttribute(firstNodeHeadSpan);
+        addTotalNumberOfUniqueApiNodesHeadSpanAttribute(firstNodeHeadSpan);
       }
     }
   }
 
-  private void addTotalAmountOfCallsToFirstNodeHeadSpanAttribute() {
-    if (!apiNodeList.isEmpty() && !trace.getEventEdgeList().isEmpty()) {
-      Event headSpan = apiNodeList.get(0).getHeadEvent();
-      if (headSpan != null) {
+  private void addHeadSpanIdTraceAttribute(Event headSpan) {
+    Integer headSpanEventIndexInTrace = eventIdToIndexInTrace.get(headSpan.getEventId());
+    if (headSpanEventIndexInTrace != null) {
+      trace.getAttributes().getAttributeMap().put(HEAD_SPAN_ID_TRACE_ATTRIBUTE,
+          AttributeValueCreator
+              .create(headSpanEventIndexInTrace));
+    }
+  }
+
+  private void addTotalAmountOfCallsToHeadSpanAttribute(Event headSpan) {
+    if (!trace.getEventEdgeList().isEmpty()) {
         headSpan.getEnrichedAttributes().getAttributeMap().put(TOTAL_NUMBER_OF_TRACE_CALLS,
             AttributeValueCreator.create(trace.getEventEdgeList().size()));
-      }
     }
   }
 
-  private void addTotalNumberOfUniqueApiNodesHeadSpanAttribute() {
-    if (!apiNodeList.isEmpty()) {
-      Event headSpan = apiNodeList.get(0).getHeadEvent();
-      if (headSpan != null) {
-        headSpan.getEnrichedAttributes().getAttributeMap().put(TOTAL_NUMBER_OF_UNIQUE_API_NODES,
-            AttributeValueCreator.create(apiNodeList.size()));
-      }
-    }
+  private void addTotalNumberOfUniqueApiNodesHeadSpanAttribute(Event headSpan) {
+    headSpan.getEnrichedAttributes().getAttributeMap().put(TOTAL_NUMBER_OF_UNIQUE_API_NODES,
+        AttributeValueCreator.create(apiNodeList.size()));
   }
 }
