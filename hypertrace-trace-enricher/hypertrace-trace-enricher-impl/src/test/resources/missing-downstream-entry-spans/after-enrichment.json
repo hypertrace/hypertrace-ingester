@@ -111,6 +111,22 @@
               "value_list": null,
               "value_map": null
             },
+            "total.number.of.unique.trace.api.nodes": {
+              "value": {
+                "string": "1"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
+            "total.number.of.trace.calls": {
+              "value": {
+                "string": "5"
+              },
+              "binary_value": null,
+              "value_list": null,
+              "value_map": null
+            },
             "SERVICE_ID": {
               "value": {
                 "string": "api_01-id"
