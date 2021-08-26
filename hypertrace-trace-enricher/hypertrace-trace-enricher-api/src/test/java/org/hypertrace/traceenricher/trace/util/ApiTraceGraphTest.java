@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.trace.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.Lists;
@@ -20,6 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.EdgeType;
@@ -638,5 +640,81 @@ public class ApiTraceGraphTest {
   private Event createUnspecifiedTypeEvent(String customerId) {
     return createEventOfBoundaryTypeForCustomer(
         BoundaryTypeValue.BOUNDARY_TYPE_VALUE_UNSPECIFIED, customerId);
+  }
+
+  @Test
+  void headSpanIndexInTraceIsAddedToTraceAttribute() {
+    String customerId = "testCustomer";
+
+    Event aEntryHeadSpanEvent = createEntryEventWithCustomerAndName(customerId, "aEvent"); // 0
+    Event aExitEvent = createExitEventWithCustomerAndName(customerId, "aExitEvent"); // 1
+    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEvent"); // 2
+
+    StructuredTrace trace =
+        createTraceWithEventsAndEdges(
+            customerId,
+            new Event[]{aEntryHeadSpanEvent, aExitEvent, bEntryEvent},
+            new HashMap<>() {
+              {
+                put(0, new int[]{1});
+                put(1, new int[]{2});
+              }
+            });
+
+    new ApiTraceGraph(trace);
+    String actualHeadSpanIndexInTrace = trace.getAttributes()
+        .getAttributeMap().get("head.span.event.index.in.trace").getValue();
+    assertEquals("0", actualHeadSpanIndexInTrace);
+  }
+
+  @Test
+  void headSpanIndexInTracePlacedAtIndexTwoIsAddedToTraceAttributeWithValueTwo() {
+    String customerId = "testCustomer";
+
+    Event yEntryEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "yEvent"); // 0
+    Event zEntryEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "zEvent"); // 1
+    Event aEntryHeadSpanEvent = createEntryEventWithCustomerAndName(customerId, "aEvent"); // 2
+    Event aExitEvent = createExitEventWithCustomerAndName(customerId, "aExitEvent"); // 3
+    Event bEntryEvent = createEntryEventWithCustomerAndName(customerId, "bEvent"); // 4
+
+    StructuredTrace trace =
+        createTraceWithEventsAndEdges(
+            customerId,
+            new Event[]{yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent, bEntryEvent},
+            new HashMap<>() {
+              {
+                put(0, new int[]{1});
+                put(1, new int[]{2});
+                put(2, new int[]{3});
+                put(3, new int[]{4});
+              }
+            });
+
+    new ApiTraceGraph(trace);
+    String actualHeadSpanIndexInTrace = trace.getAttributes()
+        .getAttributeMap().get("head.span.event.index.in.trace").getValue();
+    assertEquals("2", actualHeadSpanIndexInTrace);
+  }
+
+  @Test
+  void headSpanIndexInTraceNotAddedToTraceAttributeIfNoApiNodesInTrace() {
+    String customerId = "testCustomer";
+
+    Event yEntryEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "yEvent"); // 0
+    Event zEntryEvent = createUnspecifiedTypeEventWithCustomerAndName(customerId, "zEvent"); // 1
+
+    StructuredTrace trace =
+        createTraceWithEventsAndEdges(
+            customerId,
+            new Event[]{yEntryEvent, zEntryEvent},
+            new HashMap<>() {
+              {
+                put(0, new int[]{1});
+              }
+            });
+
+    new ApiTraceGraph(trace);
+    assertNull(trace.getAttributes()
+        .getAttributeMap().get("head.span.event.index.in.trace"));
   }
 }

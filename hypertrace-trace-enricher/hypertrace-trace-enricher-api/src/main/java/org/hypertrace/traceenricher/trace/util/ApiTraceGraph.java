@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.ApiNodeEventEdge;
+import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -41,6 +42,7 @@ public class ApiTraceGraph {
 
   private static final String UNKNOWN_SPAN_KIND_VALUE =
       EnrichedSpanConstants.getValue(AttributeValue.ATTRIBUTE_VALUE_UNKNOWN);
+  private static final String HEAD_SPAN_ID_TRACE_ATTRIBUTE = "head.span.event.index.in.trace";
 
   private final StructuredTrace trace;
   private final List<ApiNode<Event>> apiNodeList;
@@ -90,6 +92,7 @@ public class ApiTraceGraph {
     buildApiEntryBoundaryEventWithNoIncomingEdge();
     buildApiExitBoundaryEventWithNoOutgoingEdge();
     enrichHeadSpanWithApiCallGraphDepthTo(true);
+    addHeadSpanIdTraceAttribute();
   }
 
   public StructuredTrace getTrace() {
@@ -533,5 +536,17 @@ public class ApiTraceGraph {
 
   private List<Event> getEventsForIndices(Set<Integer> set) {
     return set.stream().map(v -> trace.getEventList().get(v)).collect(Collectors.toList());
+  }
+
+  private void addHeadSpanIdTraceAttribute() {
+    if (!apiNodeList.isEmpty()) {
+      ByteBuffer headSpanId = apiNodeList.get(0).getHeadEvent().getEventId();
+      Integer headSpanEventIndexInTrace = eventIdToIndexInTrace.get(headSpanId);
+      if (headSpanEventIndexInTrace != null) {
+        trace.getAttributes().getAttributeMap().put(HEAD_SPAN_ID_TRACE_ATTRIBUTE,
+            AttributeValueCreator
+                .create(String.valueOf(headSpanEventIndexInTrace)));
+      }
+    }
   }
 }
