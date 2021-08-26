@@ -743,4 +743,33 @@ public class ApiTraceGraphTest {
     ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
     assertTrue(apiTraceGraph.getApiNodeList().isEmpty());
   }
+
+  @Test
+  void totalNumberOfUniqueApiNodeIsAvailableInHeadSpanAttribute() {
+    Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
+    Event aExitEvent = createExitEventName("aExitEvent"); // 3
+    Event bEntryEvent = createEntryEventWithName("bEvent"); // 4
+
+    Event[] allEvents = new Event[]{yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent,
+        bEntryEvent};
+    HashMap<Integer, int[]> eventEdges = new HashMap<>() {
+      {
+        put(0, new int[]{1});
+        put(1, new int[]{2});
+        put(2, new int[]{3});
+        put(3, new int[]{4});
+      }
+    };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    ApiTraceGraph apiTraceGraph = new ApiTraceGraph(trace);
+    String expectedTotalNumberOfUniqueApiNodes = String.valueOf(apiTraceGraph.getApiNodeList().size());
+    String actualTotalNumberOfCalls = apiTraceGraph.getApiNodeList().get(0).getHeadEvent()
+        .getEnrichedAttributes().getAttributeMap().get("total.number.of.unique.trace.api.nodes").getValue();
+
+    assertEquals(expectedTotalNumberOfUniqueApiNodes, actualTotalNumberOfCalls);
+  }
 }

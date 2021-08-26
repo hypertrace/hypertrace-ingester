@@ -93,7 +93,7 @@ public class ApiTraceGraph {
     buildApiExitBoundaryEventWithNoOutgoingEdge();
     enrichHeadSpanWithApiCallGraphDepthTo(true);
     addHeadSpanIdTraceAttribute();
-    addTotalAmountOfCallsToFirstNodeHeadSpan();
+    addTotalAmountOfCallsToFirstNodeHeadSpanAttribute();
   }
 
   public StructuredTrace getTrace() {
@@ -551,7 +551,7 @@ public class ApiTraceGraph {
     }
   }
 
-  private void addTotalAmountOfCallsToFirstNodeHeadSpan() {
+  private void addTotalAmountOfCallsToFirstNodeHeadSpanAttribute() {
     if (!apiNodeList.isEmpty() && !trace.getEventEdgeList().isEmpty()) {
       Event headSpan = apiNodeList.get(0).getHeadEvent();
       if (headSpan != null) {
