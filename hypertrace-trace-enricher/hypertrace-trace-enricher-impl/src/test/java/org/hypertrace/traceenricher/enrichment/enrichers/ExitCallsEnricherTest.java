@@ -1,5 +1,10 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.assertTraceEventsDoNotContainAttribute;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createEntryEventWithName;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createExitEventName;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createTraceWithEventsAndEdges;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createUnspecifiedTypeEventWithName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.Maps;
@@ -7,6 +12,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,6 +30,7 @@ import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.junit.jupiter.api.Test;
 
 public class ExitCallsEnricherTest {
+  private static final String TOTAL_NUMBER_OF_API_EXIT_CALLS = "num.api.exit.calls";
 
   @Test
   public void testEnrichTrace_HotrodTrace() throws IOException {
@@ -127,5 +135,77 @@ public class ExitCallsEnricherTest {
       apiNode.getEvents().forEach(v -> map.put(v.getEventId(), finalIndex));
     }
     return map;
+  }
+
+  @Test
+  void totalNumberOfApiExitCallsIsAvailableInHeadSpanAttribute() {
+    Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
+    Event aExitEvent = createExitEventName("aExitEvent"); // 3
+    Event bEntryEvent = createEntryEventWithName("bEvent"); // 4
+
+    Event[] allEvents =
+        new Event[] {yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent, bEntryEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+            put(1, new int[] {2});
+            put(2, new int[] {3});
+            put(3, new int[] {4});
+          }
+        };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
+    traceStatsEnricher.enrichTrace(trace);
+
+    String expectedTotalNumberOfCalls = String.valueOf(eventEdges.size());
+    String actualTotalNumberOfCalls =
+        trace
+            .getEventList()
+            .get(2)
+            .getEnrichedAttributes()
+            .getAttributeMap()
+            .get(TOTAL_NUMBER_OF_API_EXIT_CALLS)
+            .getValue();
+
+    assertEquals(expectedTotalNumberOfCalls, actualTotalNumberOfCalls);
+  }
+
+  @Test
+  void totalNumberOfCallsAttributeNotAddedIfThereIsOnlyOneEvent() {
+    Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+
+    Event[] allEvents = new Event[] {aEntryEvent};
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, Collections.emptyMap());
+
+    TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
+    traceStatsEnricher.enrichTrace(trace);
+
+    assertTraceEventsDoNotContainAttribute(trace, TOTAL_NUMBER_OF_API_EXIT_CALLS);
+  }
+
+  @Test
+  void totalNumberOfCallsAttributeNotAddedIfThereEventsButNoApiNodes() {
+    Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+    Event bEntryEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
+
+    Event[] allEvents = new Event[] {aEntryEvent, bEntryEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+          }
+        };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
+    traceStatsEnricher.enrichTrace(trace);
+    assertTraceEventsDoNotContainAttribute(trace, TOTAL_NUMBER_OF_API_EXIT_CALLS);
   }
 }
