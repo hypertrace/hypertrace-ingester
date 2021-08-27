@@ -3,7 +3,6 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.Lists;
 import java.nio.ByteBuffer;
@@ -22,7 +21,6 @@ import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
-import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.junit.jupiter.api.Test;
 
 class TraceStatsEnricherTest {

@@ -12,7 +12,7 @@ public class EnrichedSpanConstants {
   public static final String API_EXIT_CALLS_ATTRIBUTE = "API_EXIT_CALLS";
   public static final String API_CALLEE_NAME_COUNT_ATTRIBUTE = "API_CALLEE_NAME_COUNT";
   public static final String API_TRACE_ERROR_SPAN_COUNT_ATTRIBUTE = "API_TRACE_ERROR_SPAN_COUNT";
-  public static final String HEAD_SPAN_ID_TRACE_ATTRIBUTE = "head.event.id";
+  public static final String HEAD_EVENT_ID = "head.event.id";
   public static final String TOTAL_NUMBER_OF_TRACE_CALLS = "num.trace.calls";
   public static final String TOTAL_NUMBER_OF_UNIQUE_API_NODES = "num.unique.apis";
   /**

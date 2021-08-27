@@ -1,9 +1,5 @@
 package org.hypertrace.traceenricher.trace.util;
 
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.HEAD_SPAN_ID_TRACE_ATTRIBUTE;
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TOTAL_NUMBER_OF_TRACE_CALLS;
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TOTAL_NUMBER_OF_UNIQUE_API_NODES;
-
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
