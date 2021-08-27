@@ -83,8 +83,7 @@ public class ExitCallsEnricher extends AbstractTraceEnricher {
   private void addTotalNumberOfApiCallsEnrichedAttribute(
       ApiTraceGraph apiTraceGraph, int totalTraceExitCallCount) {
     if (!apiTraceGraph.getApiNodeList().isEmpty()
-        && apiTraceGraph.getApiNodeList().get(0).getHeadEvent() != null
-     ) {
+        && apiTraceGraph.getApiNodeList().get(0).getHeadEvent() != null) {
       addEnrichedAttribute(
           apiTraceGraph.getApiNodeList().get(0).getHeadEvent(),
           EnrichedSpanConstants.TOTAL_NUMBER_OF_API_EXIT_CALLS,

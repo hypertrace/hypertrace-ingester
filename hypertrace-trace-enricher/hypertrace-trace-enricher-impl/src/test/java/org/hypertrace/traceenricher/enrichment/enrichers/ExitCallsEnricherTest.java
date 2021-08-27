@@ -149,13 +149,7 @@ public class ExitCallsEnricherTest {
 
     Event[] allEvents =
         new Event[] {
-          yEvent,
-          zEvent,
-          aEntryHeadSpanEvent,
-          aExitEvent,
-          aExitEvent1,
-          aExitEvent2,
-          bEntryEvent
+          yEvent, zEvent, aEntryHeadSpanEvent, aExitEvent, aExitEvent1, aExitEvent2, bEntryEvent
         };
     HashMap<Integer, int[]> eventEdges =
         new HashMap<>() {

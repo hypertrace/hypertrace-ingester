@@ -128,5 +128,4 @@ public class TestUtils {
         .setEventList(Lists.newArrayList(events))
         .build();
   }
-
 }
