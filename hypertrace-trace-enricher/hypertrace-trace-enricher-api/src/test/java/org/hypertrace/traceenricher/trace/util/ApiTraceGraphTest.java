@@ -36,6 +36,9 @@ import org.junit.jupiter.api.Test;
 public class ApiTraceGraphTest {
 
   public static final String TEST_CUSTOMER_ID = "testCustomerId";
+  public static final String HEAD_SPAN_EVENT_INDEX_IN_TRACE = "head.event.id";
+  public static final String TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES = "num.unique.apis";
+  public static final String TOTAL_NUMBER_OF_TRACE_CALLS = "num.trace.calls";
 
   @Test
   public void testApiTraceGraph_HotrodTrace() throws IOException {
@@ -100,7 +103,7 @@ public class ApiTraceGraphTest {
 
     new ApiTraceGraph(trace);
     String actualHeadSpanIndexInTrace =
-        trace.getAttributes().getAttributeMap().get("head.span.event.index.in.trace").getValue();
+        trace.getAttributes().getAttributeMap().get(HEAD_SPAN_EVENT_INDEX_IN_TRACE).getValue();
     assertEquals("0", actualHeadSpanIndexInTrace);
   }
 
@@ -126,7 +129,7 @@ public class ApiTraceGraphTest {
 
     new ApiTraceGraph(trace);
     String actualHeadSpanIndexInTrace =
-        trace.getAttributes().getAttributeMap().get("head.span.event.index.in.trace").getValue();
+        trace.getAttributes().getAttributeMap().get(HEAD_SPAN_EVENT_INDEX_IN_TRACE).getValue();
     assertEquals("2", actualHeadSpanIndexInTrace);
   }
 
@@ -145,7 +148,7 @@ public class ApiTraceGraphTest {
             });
 
     new ApiTraceGraph(trace);
-    assertNull(trace.getAttributes().getAttributeMap().get("head.span.event.index.in.trace"));
+    assertNull(trace.getAttributes().getAttributeMap().get(HEAD_SPAN_EVENT_INDEX_IN_TRACE));
   }
 
   @Test
@@ -179,7 +182,7 @@ public class ApiTraceGraphTest {
             .getHeadEvent()
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("total.number.of.trace.calls")
+            .get(TOTAL_NUMBER_OF_TRACE_CALLS)
             .getValue();
 
     assertEquals(expectedTotalNumberOfCalls, actualTotalNumberOfCalls);
@@ -248,7 +251,7 @@ public class ApiTraceGraphTest {
             .getHeadEvent()
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("total.number.of.unique.trace.api.nodes")
+            .get(TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES)
             .getValue();
 
     assertEquals(expectedTotalNumberOfUniqueApiNodes, actualTotalNumberOfCalls);
@@ -299,7 +302,7 @@ public class ApiTraceGraphTest {
             .getHeadEvent()
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get("total.number.of.unique.trace.api.nodes")
+            .get(TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES)
             .getValue();
 
     assertEquals("1", actualTotalNumberOfCalls);

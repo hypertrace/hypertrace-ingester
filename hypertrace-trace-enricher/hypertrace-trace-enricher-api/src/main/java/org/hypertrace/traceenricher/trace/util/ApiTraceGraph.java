@@ -1,5 +1,9 @@
 package org.hypertrace.traceenricher.trace.util;
 
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.HEAD_SPAN_ID_TRACE_ATTRIBUTE;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TOTAL_NUMBER_OF_TRACE_CALLS;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TOTAL_NUMBER_OF_UNIQUE_API_NODES;
+
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -36,10 +40,6 @@ public class ApiTraceGraph {
 
   private static final String UNKNOWN_SPAN_KIND_VALUE =
       EnrichedSpanConstants.getValue(AttributeValue.ATTRIBUTE_VALUE_UNKNOWN);
-  private static final String HEAD_SPAN_ID_TRACE_ATTRIBUTE = "head.span.event.index.in.trace";
-  private static final String TOTAL_NUMBER_OF_TRACE_CALLS = "total.number.of.trace.calls";
-  private static final String TOTAL_NUMBER_OF_UNIQUE_API_NODES =
-      "num.unique.apis";
 
   private final StructuredTrace trace;
   private final List<ApiNode<Event>> apiNodeList;
