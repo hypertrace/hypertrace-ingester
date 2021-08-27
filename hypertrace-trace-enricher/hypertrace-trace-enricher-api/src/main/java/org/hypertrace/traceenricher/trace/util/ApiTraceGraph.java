@@ -28,7 +28,6 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
-import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.AttributeValue;
@@ -88,7 +87,6 @@ public class ApiTraceGraph {
     buildApiTraceGraph();
     buildApiEntryBoundaryEventWithNoIncomingEdge();
     buildApiExitBoundaryEventWithNoOutgoingEdge();
-    enrichWithHeadSpanAttributes();
   }
 
   public StructuredTrace getTrace() {
@@ -460,46 +458,5 @@ public class ApiTraceGraph {
 
   private List<Event> getEventsForIndices(Set<Integer> set) {
     return set.stream().map(v -> trace.getEventList().get(v)).collect(Collectors.toList());
-  }
-
-  private void enrichWithHeadSpanAttributes() {
-    if (!apiNodeList.isEmpty()) {
-      Event firstNodeHeadSpan = apiNodeList.get(0).getHeadEvent();
-      if (firstNodeHeadSpan != null) {
-        addHeadSpanIdTraceAttribute(firstNodeHeadSpan);
-        addTotalAmountOfCallsToHeadSpanAttribute(firstNodeHeadSpan);
-        addTotalNumberOfUniqueApiNodesHeadSpanAttribute(firstNodeHeadSpan);
-      }
-    }
-  }
-
-  private void addHeadSpanIdTraceAttribute(Event headSpan) {
-    Integer headSpanEventIndexInTrace = eventIdToIndexInTrace.get(headSpan.getEventId());
-    if (headSpanEventIndexInTrace != null) {
-      trace
-          .getAttributes()
-          .getAttributeMap()
-          .put(
-              HEAD_SPAN_ID_TRACE_ATTRIBUTE,
-              AttributeValueCreator.create(headSpanEventIndexInTrace));
-    }
-  }
-
-  private void addTotalAmountOfCallsToHeadSpanAttribute(Event headSpan) {
-    if (!trace.getEventEdgeList().isEmpty()) {
-      headSpan
-          .getEnrichedAttributes()
-          .getAttributeMap()
-          .put(
-              TOTAL_NUMBER_OF_TRACE_CALLS,
-              AttributeValueCreator.create(trace.getEventEdgeList().size()));
-    }
-  }
-
-  private void addTotalNumberOfUniqueApiNodesHeadSpanAttribute(Event headSpan) {
-    headSpan
-        .getEnrichedAttributes()
-        .getAttributeMap()
-        .put(TOTAL_NUMBER_OF_UNIQUE_API_NODES, AttributeValueCreator.create(apiNodeList.size()));
   }
 }
