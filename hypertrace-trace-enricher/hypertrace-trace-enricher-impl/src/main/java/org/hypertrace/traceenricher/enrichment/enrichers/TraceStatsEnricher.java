@@ -5,6 +5,7 @@ import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanCo
 import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TOTAL_NUMBER_OF_UNIQUE_API_NODES;
 
 import java.util.List;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
@@ -18,27 +19,26 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
   @Override
   public void enrichTrace(StructuredTrace trace) {
     ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
-    if (!apiTraceGraph.getApiNodeList().isEmpty()) {
-      Event firstNodeHeadSpan = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
-      if (firstNodeHeadSpan != null) {
-        addHeadSpanIdTraceAttribute(trace, firstNodeHeadSpan);
-        addTotalAmountOfCallsToHeadSpanAttribute(trace, firstNodeHeadSpan);
-        addTotalNumberOfUniqueApiNodesHeadSpanAttribute(apiTraceGraph.getApiNodeList(), firstNodeHeadSpan);
-      }
+    if (apiTraceGraph.getApiNodeList().isEmpty()) {
+      return;
     }
+    Event firstNodeHeadSpan = apiTraceGraph.getApiNodeList().get(0).getHeadEvent();
+    if (firstNodeHeadSpan == null) {
+      return;
+    }
+    addHeadSpanIdTraceAttribute(trace, firstNodeHeadSpan);
+    addTotalAmountOfCallsToHeadSpanAttribute(trace, firstNodeHeadSpan);
+    addTotalNumberOfUniqueApiNodesHeadSpanAttribute(
+        apiTraceGraph.getApiNodeList(), firstNodeHeadSpan);
   }
 
   private void addHeadSpanIdTraceAttribute(StructuredTrace trace, Event headSpan) {
-    int headSpanEventIndexInTrace = trace.getEventList().indexOf(headSpan);
-    trace
-        .getAttributes()
-        .getAttributeMap()
-        .put(
-            HEAD_EVENT_ID,
-            AttributeValueCreator.create(headSpanEventIndexInTrace));
+    AttributeValue attribute =
+        AttributeValue.newBuilder().setBinaryValue(headSpan.getEventId()).build();
+    trace.getAttributes().getAttributeMap().put(HEAD_EVENT_ID, attribute);
   }
 
-  private void addTotalAmountOfCallsToHeadSpanAttribute(StructuredTrace trace,Event headSpan) {
+  private void addTotalAmountOfCallsToHeadSpanAttribute(StructuredTrace trace, Event headSpan) {
     if (!trace.getEventEdgeList().isEmpty()) {
       headSpan
           .getEnrichedAttributes()
@@ -49,7 +49,8 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
     }
   }
 
-  private void addTotalNumberOfUniqueApiNodesHeadSpanAttribute(List<ApiNode<Event>> apiNodeList, Event headSpan) {
+  private void addTotalNumberOfUniqueApiNodesHeadSpanAttribute(
+      List<ApiNode<Event>> apiNodeList, Event headSpan) {
     headSpan
         .getEnrichedAttributes()
         .getAttributeMap()

@@ -26,12 +26,12 @@ import org.junit.jupiter.api.Test;
 class TraceStatsEnricherTest {
 
   public static final String TEST_CUSTOMER_ID = "testCustomerId";
-  public static final String HEAD_SPAN_EVENT_INDEX_IN_TRACE = "head.event.id";
+  public static final String HEAD_EVENT_ID = "head.event.id";
   public static final String TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES = "num.unique.apis";
   public static final String TOTAL_NUMBER_OF_TRACE_CALLS = "num.trace.calls";
 
   @Test
-  void headSpanIndexInTraceIsAddedToTraceAttribute() {
+  void headSpanIdIsAddedToTraceAttribute() {
     Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 0
     Event aExitEvent = createExitEventName("aExitEvent"); // 1
     Event bEntryEvent = createEntryEventWithName("bEvent"); // 2
@@ -48,9 +48,10 @@ class TraceStatsEnricherTest {
 
     TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
     traceStatsEnricher.enrichTrace(trace);
-    String actualHeadSpanIndexInTrace =
-        trace.getAttributes().getAttributeMap().get(HEAD_SPAN_EVENT_INDEX_IN_TRACE).getValue();
-    assertEquals("0", actualHeadSpanIndexInTrace);
+    ByteBuffer actualHeadSpanId = aEntryHeadSpanEvent.getEventId();
+    assertEquals(
+        actualHeadSpanId,
+        trace.getAttributes().getAttributeMap().get(HEAD_EVENT_ID).getBinaryValue());
   }
 
   @Test
@@ -75,9 +76,10 @@ class TraceStatsEnricherTest {
 
     TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
     traceStatsEnricher.enrichTrace(trace);
-    String actualHeadSpanIndexInTrace =
-        trace.getAttributes().getAttributeMap().get(HEAD_SPAN_EVENT_INDEX_IN_TRACE).getValue();
-    assertEquals("2", actualHeadSpanIndexInTrace);
+    ByteBuffer expectedHeadSpanId = aEntryHeadSpanEvent.getEventId();
+    ByteBuffer actualHeadSpanIndexInTrace =
+        trace.getAttributes().getAttributeMap().get(HEAD_EVENT_ID).getBinaryValue();
+    assertEquals(expectedHeadSpanId, actualHeadSpanIndexInTrace);
   }
 
   @Test
@@ -96,7 +98,7 @@ class TraceStatsEnricherTest {
 
     TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
     traceStatsEnricher.enrichTrace(trace);
-    assertNull(trace.getAttributes().getAttributeMap().get(HEAD_SPAN_EVENT_INDEX_IN_TRACE));
+    assertNull(trace.getAttributes().getAttributeMap().get(HEAD_EVENT_ID));
   }
 
   @Test
@@ -176,9 +178,7 @@ class TraceStatsEnricherTest {
   }
 
   private void assertTraceEventsDoNotContainAttribute(StructuredTrace trace, String attributeKey) {
-    trace
-        .getEventList()
-        .forEach(event -> assertEventDoesNotContainAttribute(event, attributeKey));
+    trace.getEventList().forEach(event -> assertEventDoesNotContainAttribute(event, attributeKey));
   }
 
   @Test
