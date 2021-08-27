@@ -39,7 +39,7 @@ public class ApiTraceGraph {
   private static final String HEAD_SPAN_ID_TRACE_ATTRIBUTE = "head.span.event.index.in.trace";
   private static final String TOTAL_NUMBER_OF_TRACE_CALLS = "total.number.of.trace.calls";
   private static final String TOTAL_NUMBER_OF_UNIQUE_API_NODES =
-      "total.number.of.unique.trace.api.nodes";
+      "num.unique.apis";
 
   private final StructuredTrace trace;
   private final List<ApiNode<Event>> apiNodeList;
