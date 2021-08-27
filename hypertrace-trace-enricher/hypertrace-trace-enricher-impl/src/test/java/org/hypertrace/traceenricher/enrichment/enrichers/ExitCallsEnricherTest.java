@@ -139,30 +139,39 @@ public class ExitCallsEnricherTest {
 
   @Test
   void totalNumberOfApiExitCallsIsAvailableInHeadSpanAttribute() {
-    Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
-    Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+    Event yEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
     Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
     Event aExitEvent = createExitEventName("aExitEvent"); // 3
-    Event bEntryEvent = createEntryEventWithName("bEvent"); // 4
+    Event aExitEvent1 = createExitEventName("aExitEvent1"); // 4
+    Event aExitEvent2 = createExitEventName("aExitEvent2"); // 5
+    Event bEntryEvent = createEntryEventWithName("bEvent"); // 6
 
     Event[] allEvents =
-        new Event[] {yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent, bEntryEvent};
+        new Event[] {
+          yEvent,
+          zEvent,
+          aEntryHeadSpanEvent,
+          aExitEvent,
+          aExitEvent1,
+          aExitEvent2,
+          bEntryEvent
+        };
     HashMap<Integer, int[]> eventEdges =
         new HashMap<>() {
           {
             put(0, new int[] {1});
             put(1, new int[] {2});
-            put(2, new int[] {3});
-            put(3, new int[] {4});
+            put(2, new int[] {3, 4, 5});
+            put(3, new int[] {6});
           }
         };
 
     StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
 
-    TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
-    traceStatsEnricher.enrichTrace(trace);
+    ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
+    exitCallsEnricher.enrichTrace(trace);
 
-    String expectedTotalNumberOfCalls = String.valueOf(eventEdges.size());
     String actualTotalNumberOfCalls =
         trace
             .getEventList()
@@ -172,7 +181,7 @@ public class ExitCallsEnricherTest {
             .get(TOTAL_NUMBER_OF_API_EXIT_CALLS)
             .getValue();
 
-    assertEquals(expectedTotalNumberOfCalls, actualTotalNumberOfCalls);
+    assertEquals("3", actualTotalNumberOfCalls);
   }
 
   @Test
@@ -183,8 +192,8 @@ public class ExitCallsEnricherTest {
 
     StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, Collections.emptyMap());
 
-    TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
-    traceStatsEnricher.enrichTrace(trace);
+    ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
+    exitCallsEnricher.enrichTrace(trace);
 
     assertTraceEventsDoNotContainAttribute(trace, TOTAL_NUMBER_OF_API_EXIT_CALLS);
   }
@@ -204,8 +213,30 @@ public class ExitCallsEnricherTest {
 
     StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
 
-    TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
-    traceStatsEnricher.enrichTrace(trace);
+    ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
+    exitCallsEnricher.enrichTrace(trace);
+    assertTraceEventsDoNotContainAttribute(trace, TOTAL_NUMBER_OF_API_EXIT_CALLS);
+  }
+
+  @Test
+  void totalNumberOfCallsAttributeNotAddedIfThereIsApiNodeButNoExitCalls() {
+    Event yEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
+
+    Event[] allEvents = new Event[] {yEvent, zEvent, aEntryHeadSpanEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+            put(1, new int[] {2});
+          }
+        };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
+    exitCallsEnricher.enrichTrace(trace);
     assertTraceEventsDoNotContainAttribute(trace, TOTAL_NUMBER_OF_API_EXIT_CALLS);
   }
 }

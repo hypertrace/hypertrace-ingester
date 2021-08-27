@@ -1,7 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.HEAD_EVENT_ID;
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TOTAL_NUMBER_OF_TRACE_CALLS;
 import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TOTAL_NUMBER_OF_UNIQUE_API_NODES;
 
 import java.util.List;
@@ -27,7 +26,6 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
       return;
     }
     addHeadSpanIdTraceAttribute(trace, firstNodeHeadSpan);
-    addTotalAmountOfCallsToHeadSpanAttribute(trace, firstNodeHeadSpan);
     addTotalNumberOfUniqueApiNodesHeadSpanAttribute(
         apiTraceGraph.getApiNodeList(), firstNodeHeadSpan);
   }
@@ -36,17 +34,6 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
     AttributeValue attribute =
         AttributeValue.newBuilder().setBinaryValue(headSpan.getEventId()).build();
     trace.getAttributes().getAttributeMap().put(HEAD_EVENT_ID, attribute);
-  }
-
-  private void addTotalAmountOfCallsToHeadSpanAttribute(StructuredTrace trace, Event headSpan) {
-    if (!trace.getEventEdgeList().isEmpty()) {
-      headSpan
-          .getEnrichedAttributes()
-          .getAttributeMap()
-          .put(
-              TOTAL_NUMBER_OF_TRACE_CALLS,
-              AttributeValueCreator.create(trace.getEventEdgeList().size()));
-    }
   }
 
   private void addTotalNumberOfUniqueApiNodesHeadSpanAttribute(

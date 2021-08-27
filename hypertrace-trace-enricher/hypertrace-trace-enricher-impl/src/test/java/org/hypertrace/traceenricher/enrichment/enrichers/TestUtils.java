@@ -109,6 +109,10 @@ public class TestUtils {
     return trace;
   }
 
+  private static StructuredTrace createStructuredTrace(Event... events) {
+    return createStructuredTraceWithEndTime(System.currentTimeMillis(), events);
+  }
+
   private static StructuredTrace createStructuredTraceWithEndTime(
       long endTimeMillis, Event... events) {
     return StructuredTrace.newBuilder()
@@ -125,7 +129,4 @@ public class TestUtils {
         .build();
   }
 
-  private static StructuredTrace createStructuredTrace(Event... events) {
-    return createStructuredTraceWithEndTime(System.currentTimeMillis(), events);
-  }
 }
