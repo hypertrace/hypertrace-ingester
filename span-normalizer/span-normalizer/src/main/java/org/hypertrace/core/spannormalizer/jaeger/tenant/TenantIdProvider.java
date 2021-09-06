@@ -6,9 +6,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 
 public interface TenantIdProvider {
+
   Optional<String> getTenantIdTagKey();
 
-  Optional<String> getTenantId(Map<String, JaegerSpanInternalModel.KeyValue> tags);
+  Optional<String> getTenantId(
+      JaegerSpanInternalModel.Span span, Map<String, JaegerSpanInternalModel.KeyValue> tags);
 
   void logWarning(Logger logger, JaegerSpanInternalModel.Span span);
 }

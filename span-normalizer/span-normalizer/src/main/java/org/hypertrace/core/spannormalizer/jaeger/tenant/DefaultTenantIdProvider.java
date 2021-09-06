@@ -23,7 +23,8 @@ public class DefaultTenantIdProvider implements TenantIdProvider {
   }
 
   @Override
-  public Optional<String> getTenantId(Map<String, KeyValue> tags) {
+  public Optional<String> getTenantId(
+      JaegerSpanInternalModel.Span span, Map<String, KeyValue> tags) {
     return defaultTenantId;
   }
 
