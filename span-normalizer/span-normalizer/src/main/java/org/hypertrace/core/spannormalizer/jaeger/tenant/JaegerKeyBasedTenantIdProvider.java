@@ -29,17 +29,16 @@ public class JaegerKeyBasedTenantIdProvider implements TenantIdProvider {
   /**
    * gets the tenant id from process tags, with a fallback to getting it from the span tags.
    *
-   * @param span
-   * @param tags
+   * @param spanTags
+   * @param processTags
    * @return the tenant id if it is present in the process tags or span tags; otherwise, returns an
    *     empty optional.
    */
   @Override
-  public Optional<String> getTenantId(Span span, Map<String, KeyValue> tags) {
-    return span.getProcess().getTagsList().stream()
-        .filter(t -> t.getKey().equals(tenantIdKey))
-        .findFirst()
-        .or(() -> Optional.ofNullable(tags.get(tenantIdKey)))
+  public Optional<String> getTenantId(
+      Map<String, KeyValue> spanTags, Map<String, KeyValue> processTags) {
+    return Optional.ofNullable(processTags.get(tenantIdKey))
+        .or(() -> Optional.ofNullable(spanTags.get(tenantIdKey)))
         .map(KeyValue::getVStr);
   }
 

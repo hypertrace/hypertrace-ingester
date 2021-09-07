@@ -85,18 +85,22 @@ public class JaegerSpanPreProcessor
 
   @VisibleForTesting
   PreProcessedSpan preProcessSpan(Span span) {
-    Map<String, JaegerSpanInternalModel.KeyValue> tags =
+    Map<String, JaegerSpanInternalModel.KeyValue> spanTags =
         span.getTagsList().stream()
             .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
+    Map<String, JaegerSpanInternalModel.KeyValue> processTags =
+        span.getProcess().getTagsList().stream()
+            .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
 
-    Optional<String> maybeTenantId = tenantIdHandler.getAllowedTenantId(span, tags);
+    Optional<String> maybeTenantId =
+        tenantIdHandler.getAllowedTenantId(span, spanTags, processTags);
     if (maybeTenantId.isEmpty()) {
       return null;
     }
 
     String tenantId = maybeTenantId.get();
 
-    if (spanFilter.shouldDropSpan(span, tags)) {
+    if (spanFilter.shouldDropSpan(span, spanTags)) {
       // increment dropped counter at tenant level
       tenantToSpansDroppedCount
           .computeIfAbsent(

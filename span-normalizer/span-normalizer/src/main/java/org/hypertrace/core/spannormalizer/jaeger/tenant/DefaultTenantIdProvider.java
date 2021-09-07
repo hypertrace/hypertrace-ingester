@@ -24,7 +24,7 @@ public class DefaultTenantIdProvider implements TenantIdProvider {
 
   @Override
   public Optional<String> getTenantId(
-      JaegerSpanInternalModel.Span span, Map<String, KeyValue> tags) {
+      Map<String, KeyValue> spanTags, Map<String, KeyValue> processTags) {
     return defaultTenantId;
   }
 
