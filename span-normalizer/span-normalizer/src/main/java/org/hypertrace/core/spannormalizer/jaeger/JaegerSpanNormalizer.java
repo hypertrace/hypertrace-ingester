@@ -112,7 +112,9 @@ public class JaegerSpanNormalizer {
               tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
       rawSpanBuilder.setEvent(event);
       rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
-      resourceNormalizer.normalize(jaegerSpan).ifPresent(rawSpanBuilder::setResource);
+      resourceNormalizer
+          .normalize(jaegerSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey())
+          .ifPresent(rawSpanBuilder::setResource);
 
       // build raw span
       RawSpan rawSpan = rawSpanBuilder.build();
