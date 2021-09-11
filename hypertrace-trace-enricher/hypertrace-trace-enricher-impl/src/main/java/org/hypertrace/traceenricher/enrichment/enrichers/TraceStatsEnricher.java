@@ -4,11 +4,14 @@ import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanCo
 import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TOTAL_NUMBER_OF_UNIQUE_API_NODES;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
@@ -38,9 +41,13 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
 
   private void addTotalNumberOfUniqueApiNodesHeadSpanAttribute(
       List<ApiNode<Event>> apiNodeList, Event headSpan) {
+    Set<String> uniqueApiIds = apiNodeList.stream()
+        .map(eventApiNode -> EnrichedSpanUtils.getApiId(eventApiNode.getHeadEvent()))
+        .collect(Collectors.toSet());
+
     headSpan
         .getEnrichedAttributes()
         .getAttributeMap()
-        .put(TOTAL_NUMBER_OF_UNIQUE_API_NODES, AttributeValueCreator.create(apiNodeList.size()));
+        .put(TOTAL_NUMBER_OF_UNIQUE_API_NODES, AttributeValueCreator.create(uniqueApiIds.size()));
   }
 }
