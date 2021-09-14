@@ -12,11 +12,13 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.junit.jupiter.api.Test;
 
 class TraceStatsEnricherTest {
   private static final String HEAD_EVENT_ID = "head.event.id";
   private static final String TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES = "num.unique.apis";
+  private static final String API_ID = "API_ID";
 
   @Test
   void headSpanIdIsAddedToTraceAttribute() {
@@ -97,6 +99,9 @@ class TraceStatsEnricherTest {
     Event aExitEvent = createExitEventName("aExitEvent"); // 3
     Event bEntryEvent = createEntryEventWithName("bEvent"); // 4
 
+    addApiIdAttr(aEntryHeadSpanEvent, "aIpiId");
+    addApiIdAttr(bEntryEvent, "bApiId");
+
     Event[] allEvents =
         new Event[] {yEntryEvent, zEntryEvent, aEntryHeadSpanEvent, aExitEvent, bEntryEvent};
     HashMap<Integer, int[]> eventEdges =
@@ -126,6 +131,13 @@ class TraceStatsEnricherTest {
     assertEquals("2", actualTotalNumberOfCalls);
   }
 
+  private void addApiIdAttr(Event event, String attributeValue) {
+    event
+        .getEnrichedAttributes()
+        .getAttributeMap()
+        .put(API_ID, AttributeValueCreator.create(attributeValue));
+  }
+
   @Test
   void totalNumberOfUniqueApiNodeAttributeNotAddedIfNoApiNodes() {
     Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
@@ -151,6 +163,7 @@ class TraceStatsEnricherTest {
     Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
     Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
     Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
+    addApiIdAttr(aEntryHeadSpanEvent, "aApiId");
     Event[] allEvents = new Event[] {yEntryEvent, zEntryEvent, aEntryHeadSpanEvent};
     HashMap<Integer, int[]> eventEdges =
         new HashMap<>() {
@@ -174,5 +187,57 @@ class TraceStatsEnricherTest {
             .getValue();
 
     assertEquals("1", actualTotalNumberOfCalls);
+  }
+
+  @Test
+  void totalNumberOfUniqueApiNodeAttributeEqualsToTwoEvenThoughFourNodesExist() {
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 0
+    addApiIdAttr(aEntryHeadSpanEvent, "aApiId");
+
+    Event aExitEventOne = createExitEventName("aEventOne"); // 1
+    Event aExitEvenTwo = createExitEventName("aEventTwo"); // 2
+    Event aExitEvenThree = createExitEventName("aEventThree"); // 3
+
+    Event bEntryEventOne = createEntryEventWithName("bEventOne"); // 4
+    Event bEntryEventTwo = createEntryEventWithName("bEventTwo"); // 5
+    Event bEntryEventThree = createEntryEventWithName("bEventThree"); // 6
+    addApiIdAttr(bEntryEventOne, "bApiId");
+    addApiIdAttr(bEntryEventTwo, "bApiId");
+    addApiIdAttr(bEntryEventThree, "bApiId");
+
+    Event[] allEvents =
+        new Event[] {
+          aEntryHeadSpanEvent,
+          aExitEventOne,
+          aExitEvenThree,
+          aExitEvenTwo,
+          bEntryEventOne,
+          bEntryEventTwo,
+          bEntryEventThree
+        };
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1, 2, 3});
+            put(1, new int[] {4});
+            put(2, new int[] {5});
+            put(3, new int[] {6});
+          }
+        };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
+    traceStatsEnricher.enrichTrace(trace);
+    String actualTotalNumberOfCalls =
+        trace
+            .getEventList()
+            .get(0)
+            .getEnrichedAttributes()
+            .getAttributeMap()
+            .get(TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES)
+            .getValue();
+
+    assertEquals("2", actualTotalNumberOfCalls);
   }
 }
