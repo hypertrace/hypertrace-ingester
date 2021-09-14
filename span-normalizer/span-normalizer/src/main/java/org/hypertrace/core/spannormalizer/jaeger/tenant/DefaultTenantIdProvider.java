@@ -23,7 +23,8 @@ public class DefaultTenantIdProvider implements TenantIdProvider {
   }
 
   @Override
-  public Optional<String> getTenantId(Map<String, KeyValue> tags) {
+  public Optional<String> getTenantId(
+      Map<String, KeyValue> spanTags, Map<String, KeyValue> processTags) {
     return defaultTenantId;
   }
 

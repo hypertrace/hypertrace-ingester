@@ -13,7 +13,7 @@ import org.hypertrace.core.span.constants.v1.SpanAttribute;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class JaegerSpanPreProcessorTest {
+class JaegerSpanPreProcessorTest {
 
   private final Random random = new Random();
 
@@ -57,7 +57,7 @@ public class JaegerSpanPreProcessorTest {
     PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span1);
     Assertions.assertEquals("default-tenant", preProcessedSpan.getTenantId());
 
-    // provided tenant id
+    // provided tenant id in span tags
     configs = new HashMap<>(getCommonConfig());
     configs.putAll(Map.of("processor", Map.of("tenantIdTagKey", "tenant-key")));
     jaegerSpanPreProcessor = new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs));
@@ -68,6 +68,16 @@ public class JaegerSpanPreProcessorTest {
             .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
             .build();
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span2);
+    Assertions.assertEquals(tenantId, preProcessedSpan.getTenantId());
+
+    // provided tenant id in process tags
+    process =
+        Process.newBuilder()
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .build();
+
+    Span span3 = Span.newBuilder().setProcess(process).build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span3);
     Assertions.assertEquals(tenantId, preProcessedSpan.getTenantId());
   }
 
