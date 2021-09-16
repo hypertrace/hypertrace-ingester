@@ -80,7 +80,7 @@ public class ExitCallsEnricher extends AbstractTraceEnricher {
     return eventToExitInfo;
   }
 
-  private void addTotalNumberOfApiCallsEnrichedAttribute(
+  private void addApiExitCallsCountEnrichedAttribute(
       ApiTraceGraph apiTraceGraph, int totalTraceExitCallCount) {
     if (!apiTraceGraph.getApiNodeList().isEmpty()
         && apiTraceGraph.getApiNodeList().get(0).getHeadEvent() != null) {
