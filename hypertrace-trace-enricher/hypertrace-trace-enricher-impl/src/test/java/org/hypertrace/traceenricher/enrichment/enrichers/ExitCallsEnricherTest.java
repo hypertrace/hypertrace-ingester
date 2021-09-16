@@ -30,7 +30,7 @@ import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.junit.jupiter.api.Test;
 
 public class ExitCallsEnricherTest {
-  private static final String TOTAL_NUMBER_OF_API_EXIT_CALLS = "num.api.exit.calls";
+  private static final String API_EXIT_CALLS_COUNT = "api.exit.calls.count";
 
   @Test
   public void testEnrichTrace_HotrodTrace() throws IOException {
@@ -172,7 +172,7 @@ public class ExitCallsEnricherTest {
             .get(2)
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get(TOTAL_NUMBER_OF_API_EXIT_CALLS)
+            .get(API_EXIT_CALLS_COUNT)
             .getValue();
 
     assertEquals("3", actualTotalNumberOfCalls);
@@ -189,7 +189,7 @@ public class ExitCallsEnricherTest {
     ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
     exitCallsEnricher.enrichTrace(trace);
 
-    assertTraceEventsDoNotContainAttribute(trace, TOTAL_NUMBER_OF_API_EXIT_CALLS);
+    assertTraceEventsDoNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
   }
 
   @Test
@@ -209,7 +209,7 @@ public class ExitCallsEnricherTest {
 
     ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
     exitCallsEnricher.enrichTrace(trace);
-    assertTraceEventsDoNotContainAttribute(trace, TOTAL_NUMBER_OF_API_EXIT_CALLS);
+    assertTraceEventsDoNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
   }
 
   @Test
@@ -237,7 +237,7 @@ public class ExitCallsEnricherTest {
             .get(2)
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get(TOTAL_NUMBER_OF_API_EXIT_CALLS)
+            .get(API_EXIT_CALLS_COUNT)
             .getValue();
 
     assertEquals("0", actualTotalNumberOfCalls);

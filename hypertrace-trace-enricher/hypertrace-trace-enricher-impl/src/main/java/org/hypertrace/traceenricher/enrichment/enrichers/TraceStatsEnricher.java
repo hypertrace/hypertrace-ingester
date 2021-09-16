@@ -1,7 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.HEAD_EVENT_ID;
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.TOTAL_NUMBER_OF_UNIQUE_API_NODES;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.UNIQUE_API_NODES_COUNT;
 
 import java.util.List;
 import java.util.Objects;
@@ -53,6 +53,6 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
     headSpan
         .getEnrichedAttributes()
         .getAttributeMap()
-        .put(TOTAL_NUMBER_OF_UNIQUE_API_NODES, AttributeValueCreator.create(uniqueApiIds.size()));
+        .put(UNIQUE_API_NODES_COUNT, AttributeValueCreator.create(uniqueApiIds.size()));
   }
 }

@@ -75,7 +75,7 @@ public class ExitCallsEnricher extends AbstractTraceEnricher {
       apiNode.getEvents().forEach(e -> eventToExitInfo.put(e.getEventId(), apiExitCallInfo));
     }
 
-    addTotalNumberOfApiCallsEnrichedAttribute(apiTraceGraph, totalTraceExitCallCount);
+    addApiExitCallsCountEnrichedAttribute(apiTraceGraph, totalTraceExitCallCount);
 
     return eventToExitInfo;
   }
@@ -86,7 +86,7 @@ public class ExitCallsEnricher extends AbstractTraceEnricher {
         && apiTraceGraph.getApiNodeList().get(0).getHeadEvent() != null) {
       addEnrichedAttribute(
           apiTraceGraph.getApiNodeList().get(0).getHeadEvent(),
-          EnrichedSpanConstants.TOTAL_NUMBER_OF_API_EXIT_CALLS,
+          EnrichedSpanConstants.API_EXIT_CALLS_COUNT,
           AttributeValueCreator.create(totalTraceExitCallCount));
     }
   }

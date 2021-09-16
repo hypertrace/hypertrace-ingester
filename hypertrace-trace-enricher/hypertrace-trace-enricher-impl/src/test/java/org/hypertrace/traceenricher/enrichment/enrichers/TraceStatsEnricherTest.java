@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 class TraceStatsEnricherTest {
   private static final String HEAD_EVENT_ID = "head.event.id";
-  private static final String TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES = "num.unique.apis";
+  private static final String UNIQUE_API_NODES_COUNT = "unique.apis.count";
   private static final String API_ID = "API_ID";
 
   @Test
@@ -125,7 +125,7 @@ class TraceStatsEnricherTest {
             .get(2)
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get(TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES)
+            .get(UNIQUE_API_NODES_COUNT)
             .getValue();
 
     assertEquals("2", actualTotalNumberOfCalls);
@@ -155,7 +155,7 @@ class TraceStatsEnricherTest {
 
     TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
     traceStatsEnricher.enrichTrace(trace);
-    assertTraceEventsDoNotContainAttribute(trace, TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES);
+    assertTraceEventsDoNotContainAttribute(trace, UNIQUE_API_NODES_COUNT);
   }
 
   @Test
@@ -183,7 +183,7 @@ class TraceStatsEnricherTest {
             .get(2)
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get(TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES)
+            .get(UNIQUE_API_NODES_COUNT)
             .getValue();
 
     assertEquals("1", actualTotalNumberOfCalls);
@@ -235,7 +235,7 @@ class TraceStatsEnricherTest {
             .get(0)
             .getEnrichedAttributes()
             .getAttributeMap()
-            .get(TOTAL_NUMBER_OF_UNIQUE_TRACE_API_NODES)
+            .get(UNIQUE_API_NODES_COUNT)
             .getValue();
 
     assertEquals("2", actualTotalNumberOfCalls);
