@@ -1,6 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.assertTraceEventsDoNotContainAttribute;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.assertTraceDoesNotContainAttribute;
 import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createEntryEventWithName;
 import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createExitEventName;
 import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createTraceWithEventsAndEdges;
@@ -189,7 +189,7 @@ public class ExitCallsEnricherTest {
     ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
     exitCallsEnricher.enrichTrace(trace);
 
-    assertTraceEventsDoNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
+    assertTraceDoesNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
   }
 
   @Test
@@ -209,7 +209,7 @@ public class ExitCallsEnricherTest {
 
     ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
     exitCallsEnricher.enrichTrace(trace);
-    assertTraceEventsDoNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
+    assertTraceDoesNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
   }
 
   @Test

@@ -30,8 +30,7 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
       return;
     }
     addHeadSpanIdTraceAttribute(trace, firstNodeHeadSpan);
-    addTotalNumberOfUniqueApiNodesHeadSpanAttribute(
-        apiTraceGraph.getApiNodeList(), firstNodeHeadSpan);
+    addUniqueApiNodesCountTraceAttribute(apiTraceGraph.getApiNodeList(), trace);
   }
 
   private void addHeadSpanIdTraceAttribute(StructuredTrace trace, Event headSpan) {
@@ -40,8 +39,8 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
     trace.getAttributes().getAttributeMap().put(HEAD_EVENT_ID, attribute);
   }
 
-  private void addTotalNumberOfUniqueApiNodesHeadSpanAttribute(
-      List<ApiNode<Event>> apiNodeList, Event headSpan) {
+  private void addUniqueApiNodesCountTraceAttribute(
+      List<ApiNode<Event>> apiNodeList, StructuredTrace trace) {
     Set<String> uniqueApiIds =
         apiNodeList.stream()
             .filter(eventApiNode -> eventApiNode.getEntryApiBoundaryEvent().isPresent())
@@ -50,8 +49,8 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
                     EnrichedSpanUtils.getApiId(eventApiNode.getEntryApiBoundaryEvent().get()))
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
-    headSpan
-        .getEnrichedAttributes()
+    trace
+        .getAttributes()
         .getAttributeMap()
         .put(UNIQUE_API_NODES_COUNT, AttributeValueCreator.create(uniqueApiIds.size()));
   }

@@ -24,13 +24,8 @@ public class TestUtils {
 
   private TestUtils() {}
 
-  public static void assertEventDoesNotContainAttribute(Event event, String attributeKey) {
-    assertFalse(event.getEnrichedAttributes().getAttributeMap().containsKey(attributeKey));
-  }
-
-  public static void assertTraceEventsDoNotContainAttribute(
-      StructuredTrace trace, String attributeKey) {
-    trace.getEventList().forEach(event -> assertEventDoesNotContainAttribute(event, attributeKey));
+  public static void assertTraceDoesNotContainAttribute(StructuredTrace trace, String attributeKey) {
+    assertFalse(trace.getAttributes().getAttributeMap().containsKey(attributeKey));
   }
 
   public static Event createUnspecifiedTypeEventWithName(String eventName) {

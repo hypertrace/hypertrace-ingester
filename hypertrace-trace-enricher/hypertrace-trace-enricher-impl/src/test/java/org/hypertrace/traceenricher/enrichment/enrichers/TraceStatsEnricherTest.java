@@ -1,6 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.assertTraceEventsDoNotContainAttribute;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.assertTraceDoesNotContainAttribute;
 import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createEntryEventWithName;
 import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createExitEventName;
 import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createTraceWithEventsAndEdges;
@@ -92,7 +92,7 @@ class TraceStatsEnricherTest {
   }
 
   @Test
-  void totalNumberOfUniqueApiNodeIsAvailableInHeadSpanAttribute() {
+  void totalNumberOfUniqueApiNodeIsAvailableInTraceAttribute() {
     Event yEntryEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
     Event zEntryEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
     Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
@@ -120,10 +120,7 @@ class TraceStatsEnricherTest {
     traceStatsEnricher.enrichTrace(trace);
 
     String actualTotalNumberOfCalls =
-        trace
-            .getEventList()
-            .get(2)
-            .getEnrichedAttributes()
+        trace.getAttributes()
             .getAttributeMap()
             .get(UNIQUE_API_NODES_COUNT)
             .getValue();
@@ -155,7 +152,7 @@ class TraceStatsEnricherTest {
 
     TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
     traceStatsEnricher.enrichTrace(trace);
-    assertTraceEventsDoNotContainAttribute(trace, UNIQUE_API_NODES_COUNT);
+    assertTraceDoesNotContainAttribute(trace, UNIQUE_API_NODES_COUNT);
   }
 
   @Test
@@ -179,9 +176,7 @@ class TraceStatsEnricherTest {
     traceStatsEnricher.enrichTrace(trace);
     String actualTotalNumberOfCalls =
         trace
-            .getEventList()
-            .get(2)
-            .getEnrichedAttributes()
+            .getAttributes()
             .getAttributeMap()
             .get(UNIQUE_API_NODES_COUNT)
             .getValue();
@@ -231,9 +226,7 @@ class TraceStatsEnricherTest {
     traceStatsEnricher.enrichTrace(trace);
     String actualTotalNumberOfCalls =
         trace
-            .getEventList()
-            .get(0)
-            .getEnrichedAttributes()
+            .getAttributes()
             .getAttributeMap()
             .get(UNIQUE_API_NODES_COUNT)
             .getValue();
