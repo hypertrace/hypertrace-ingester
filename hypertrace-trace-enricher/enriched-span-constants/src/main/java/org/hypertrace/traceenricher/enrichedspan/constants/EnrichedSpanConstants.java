@@ -13,7 +13,7 @@ public class EnrichedSpanConstants {
   public static final String API_CALLEE_NAME_COUNT_ATTRIBUTE = "API_CALLEE_NAME_COUNT";
   public static final String API_TRACE_ERROR_SPAN_COUNT_ATTRIBUTE = "API_TRACE_ERROR_SPAN_COUNT";
   public static final String HEAD_EVENT_ID = "head.event.id";
-  public static final String TOTAL_NUMBER_OF_API_EXIT_CALLS = "num.api.exit.calls";
+  public static final String API_EXIT_CALLS_COUNT = "api.exit.calls.count";
   public static final String TOTAL_NUMBER_OF_UNIQUE_API_NODES = "num.unique.apis";
   /**
    * Returns the constant value for the given Enum.
