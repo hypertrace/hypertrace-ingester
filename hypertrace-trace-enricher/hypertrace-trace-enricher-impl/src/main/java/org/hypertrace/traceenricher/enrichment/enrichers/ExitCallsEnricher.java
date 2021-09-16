@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.API_EXIT_CALLS_COUNT;
+
 import com.google.common.collect.Maps;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -75,19 +77,18 @@ public class ExitCallsEnricher extends AbstractTraceEnricher {
       apiNode.getEvents().forEach(e -> eventToExitInfo.put(e.getEventId(), apiExitCallInfo));
     }
 
-    addApiExitCallsCountEnrichedAttribute(apiTraceGraph, totalTraceExitCallCount);
+    addApiExitCallsCountTraceAttribute(trace, totalTraceExitCallCount);
 
     return eventToExitInfo;
   }
 
-  private void addApiExitCallsCountEnrichedAttribute(
-      ApiTraceGraph apiTraceGraph, int totalTraceExitCallCount) {
-    if (!apiTraceGraph.getApiNodeList().isEmpty()
-        && apiTraceGraph.getApiNodeList().get(0).getHeadEvent() != null) {
-      addEnrichedAttribute(
-          apiTraceGraph.getApiNodeList().get(0).getHeadEvent(),
-          EnrichedSpanConstants.API_EXIT_CALLS_COUNT,
-          AttributeValueCreator.create(totalTraceExitCallCount));
+  private void addApiExitCallsCountTraceAttribute(
+      StructuredTrace trace, int totalTraceExitCallCount) {
+    if (totalTraceExitCallCount > 0) {
+      trace
+          .getAttributes()
+          .getAttributeMap()
+          .put(API_EXIT_CALLS_COUNT, AttributeValueCreator.create(totalTraceExitCallCount));
     }
   }
 

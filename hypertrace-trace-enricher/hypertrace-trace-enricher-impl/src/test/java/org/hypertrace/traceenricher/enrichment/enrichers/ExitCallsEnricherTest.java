@@ -138,7 +138,7 @@ public class ExitCallsEnricherTest {
   }
 
   @Test
-  void totalNumberOfApiExitCallsIsAvailableInHeadSpanAttribute() {
+  void apiExitCallsIsAvailableInTraceAttribute() {
     Event yEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
     Event zEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
     Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
@@ -167,19 +167,13 @@ public class ExitCallsEnricherTest {
     exitCallsEnricher.enrichTrace(trace);
 
     String actualTotalNumberOfCalls =
-        trace
-            .getEventList()
-            .get(2)
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get(API_EXIT_CALLS_COUNT)
-            .getValue();
+        trace.getAttributes().getAttributeMap().get(API_EXIT_CALLS_COUNT).getValue();
 
     assertEquals("3", actualTotalNumberOfCalls);
   }
 
   @Test
-  void totalNumberOfCallsAttributeNotAddedIfThereIsOnlyOneEvent() {
+  void apiExitCallsCountAttributeNotAddedIfThereIsOnlyOneEventAndNoApiNodes() {
     Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
 
     Event[] allEvents = new Event[] {aEntryEvent};
@@ -193,7 +187,7 @@ public class ExitCallsEnricherTest {
   }
 
   @Test
-  void totalNumberOfCallsAttributeNotAddedIfThereEventsButNoApiNodes() {
+  void apiExitCallsCountAttributeNotAddedIfThereAreEventsAndNoApiNodes() {
     Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
     Event bEntryEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
 
@@ -209,11 +203,12 @@ public class ExitCallsEnricherTest {
 
     ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
     exitCallsEnricher.enrichTrace(trace);
+
     assertTraceDoesNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
   }
 
   @Test
-  void totalNumberOfCallsZeroIsApiNodeButNoExitCalls() {
+  void apiExitCallsCountAttributeNotAddedIfApiNodeExistButNoExitCalls() {
     Event yEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
     Event zEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
     Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
@@ -231,15 +226,7 @@ public class ExitCallsEnricherTest {
 
     ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
     exitCallsEnricher.enrichTrace(trace);
-    String actualTotalNumberOfCalls =
-        trace
-            .getEventList()
-            .get(2)
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .get(API_EXIT_CALLS_COUNT)
-            .getValue();
 
-    assertEquals("0", actualTotalNumberOfCalls);
+    assertTraceDoesNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
   }
 }
