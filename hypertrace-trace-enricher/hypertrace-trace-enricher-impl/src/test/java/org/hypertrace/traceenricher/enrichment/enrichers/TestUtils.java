@@ -24,7 +24,8 @@ public class TestUtils {
 
   private TestUtils() {}
 
-  public static void assertTraceDoesNotContainAttribute(StructuredTrace trace, String attributeKey) {
+  public static void assertTraceDoesNotContainAttribute(
+      StructuredTrace trace, String attributeKey) {
     assertFalse(trace.getAttributes().getAttributeMap().containsKey(attributeKey));
   }
 

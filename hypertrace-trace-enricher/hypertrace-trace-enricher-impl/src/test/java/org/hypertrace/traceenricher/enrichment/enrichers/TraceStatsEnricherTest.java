@@ -120,10 +120,7 @@ class TraceStatsEnricherTest {
     traceStatsEnricher.enrichTrace(trace);
 
     String actualTotalNumberOfCalls =
-        trace.getAttributes()
-            .getAttributeMap()
-            .get(UNIQUE_API_NODES_COUNT)
-            .getValue();
+        trace.getAttributes().getAttributeMap().get(UNIQUE_API_NODES_COUNT).getValue();
 
     assertEquals("2", actualTotalNumberOfCalls);
   }
@@ -175,11 +172,7 @@ class TraceStatsEnricherTest {
     TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
     traceStatsEnricher.enrichTrace(trace);
     String actualTotalNumberOfCalls =
-        trace
-            .getAttributes()
-            .getAttributeMap()
-            .get(UNIQUE_API_NODES_COUNT)
-            .getValue();
+        trace.getAttributes().getAttributeMap().get(UNIQUE_API_NODES_COUNT).getValue();
 
     assertEquals("1", actualTotalNumberOfCalls);
   }
@@ -225,11 +218,7 @@ class TraceStatsEnricherTest {
     TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
     traceStatsEnricher.enrichTrace(trace);
     String actualTotalNumberOfCalls =
-        trace
-            .getAttributes()
-            .getAttributeMap()
-            .get(UNIQUE_API_NODES_COUNT)
-            .getValue();
+        trace.getAttributes().getAttributeMap().get(UNIQUE_API_NODES_COUNT).getValue();
 
     assertEquals("2", actualTotalNumberOfCalls);
   }
