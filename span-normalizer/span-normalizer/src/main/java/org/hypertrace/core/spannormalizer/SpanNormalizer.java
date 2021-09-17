@@ -66,7 +66,7 @@ public class SpanNormalizer extends KafkaStreamsApp {
       secondProcessor =
           streamsBuilder.stream(
               "otel-metrics", Consumed.with(Serdes.ByteArray(), new OtelMetricSerde()));
-      inputStreams.put(inputTopic, secondProcessor);
+      inputStreams.put("otel-metrics", secondProcessor);
     }
 
     KStream<byte[], ResourceMetrics> otelMetricStream =
