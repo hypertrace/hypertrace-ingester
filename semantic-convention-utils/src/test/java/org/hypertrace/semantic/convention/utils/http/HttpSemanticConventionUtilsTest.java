@@ -226,7 +226,7 @@ public class HttpSemanticConventionUtilsTest {
   @Test
   public void testGetHttpPath() {
     Event event =
-        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/list?url=www.google.com");
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path");
     assertEquals(Optional.of("/path"), HttpSemanticConventionUtils.getHttpPath(event));
 
     event = mock(Event.class);
