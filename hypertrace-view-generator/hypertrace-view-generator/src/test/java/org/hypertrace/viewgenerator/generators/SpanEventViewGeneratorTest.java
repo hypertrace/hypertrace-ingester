@@ -96,6 +96,35 @@ public class SpanEventViewGeneratorTest {
   }
 
   @Test
+  public void testGetRequestUrl() {
+    Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "http.server_name",
+                        AttributeValue.newBuilder().setValue("0.0.0.0").build(),
+                        "net.host.port",
+                        AttributeValue.newBuilder().setValue("8000").build(),
+                        "http.route",
+                        AttributeValue.newBuilder().setValue("/list").build(),
+                        "http.method",
+                        AttributeValue.newBuilder().setValue("GET").build(),
+                        "http.scheme",
+                        AttributeValue.newBuilder().setValue("http").build(),
+                        "http.host",
+                        AttributeValue.newBuilder().setValue("34.33.33.33:8000").build(),
+                        "http.target",
+                        AttributeValue.newBuilder().setValue("/list?url=www.google.com").build()))
+                .build());
+
+    Assertions.assertEquals(
+        "http://34.33.33.33:8000/list?url=www.google.com",
+        spanEventViewGenerator.getRequestUrl(e, Protocol.PROTOCOL_HTTP));
+  }
+
+  @Test
   public void testSpanEventViewGen_HotrodTrace() throws IOException {
     URL resource =
         Thread.currentThread().getContextClassLoader().getResource("StructuredTrace-Hotrod.avro");
