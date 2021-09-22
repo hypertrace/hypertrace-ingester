@@ -7,6 +7,7 @@ import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstan
 
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serdes;
@@ -54,36 +55,7 @@ public class SpanNormalizer extends KafkaStreamsApp {
         inputStream.transform(JaegerSpanPreProcessor::new);
     preProcessedStream.transform(JaegerSpanToAvroRawSpanTransformer::new).to(outputTopic);
     preProcessedStream.transform(JaegerSpanToLogRecordsTransformer::new).to(outputTopicRawLogs);
-
-    // add metrics processor
-
-    //    KStream<byte[], ResourceMetrics> secondProcessor =
-    //        (KStream<byte[], ResourceMetrics>) inputStreams.get("otlp-metrics");
-    //    if (secondProcessor == null) {
-    //      secondProcessor =
-    //          streamsBuilder.stream(
-    //              "otlp-metrics", Consumed.with(Serdes.ByteArray(), new OtelMetricSerde()));
-    //      inputStreams.put("otlp-metrics", secondProcessor);
-    //    }
-    //
-    //    KStream<byte[], ResourceMetrics> otelMetricStream =
-    //        secondProcessor.transform(OtelMetricProcessor::new);
-
     return streamsBuilder;
-  }
-
-  private void addStreamIfNeeded(
-      StreamsBuilder streamsBuilder,
-      Map<String, KStream<?, ?>> inputStreams,
-      String inputTopicName,
-      String nodeName) {
-    KStream<?, ?> inputStream = inputStreams.get(inputTopicName);
-    if (inputStream == null) {
-      inputStream =
-          streamsBuilder.stream(
-              inputTopicName, Consumed.with(Serdes.String(), null).withName(nodeName));
-      inputStreams.put(inputTopicName, inputStream);
-    }
   }
 
   @Override
@@ -99,7 +71,7 @@ public class SpanNormalizer extends KafkaStreamsApp {
   @Override
   public List<String> getInputTopics(Map<String, Object> properties) {
     Config jobConfig = getJobConfig(properties);
-    return List.of(jobConfig.getString(INPUT_TOPIC_CONFIG_KEY), "otel-metrics");
+    return Collections.singletonList(jobConfig.getString(INPUT_TOPIC_CONFIG_KEY));
   }
 
   @Override
