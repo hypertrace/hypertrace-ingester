@@ -17,6 +17,8 @@ import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.serviceframework.config.ConfigUtils;
 import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.hypertrace.core.viewgenerator.service.MultiViewGeneratorLauncher;
+import org.hypertrace.metrics.generator.MetricsGenerator;
+import org.hypertrace.metrics.processor.MetricsProcessor;
 import org.hypertrace.traceenricher.trace.enricher.TraceEnricher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +50,12 @@ public class HypertraceIngester extends KafkaStreamsApp {
         break;
       case "all-views":
         kafkaStreamsApp = new MultiViewGeneratorLauncher(ConfigClientFactory.getClient());
+        break;
+      case "hypertrace-metrics-generator":
+        kafkaStreamsApp = new MetricsGenerator(ConfigClientFactory.getClient());
+        break;
+      case "hypertrace-metrics-processor":
+        kafkaStreamsApp = new MetricsProcessor(ConfigClientFactory.getClient());
         break;
       default:
         throw new RuntimeException(String.format("Invalid configured sub-topology : [%s]", name));

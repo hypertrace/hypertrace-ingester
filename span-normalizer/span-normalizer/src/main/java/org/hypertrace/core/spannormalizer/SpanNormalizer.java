@@ -7,7 +7,6 @@ import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstan
 
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
-import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serdes;
@@ -21,8 +20,6 @@ import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToAvroRawSpanTransformer;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToLogRecordsTransformer;
 import org.hypertrace.core.spannormalizer.jaeger.PreProcessedSpan;
-import org.hypertrace.core.spannormalizer.otel.OtelMetricProcessor;
-import org.hypertrace.core.spannormalizer.otel.OtelMetricSerde;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,17 +57,17 @@ public class SpanNormalizer extends KafkaStreamsApp {
 
     // add metrics processor
 
-    KStream<byte[], ResourceMetrics> secondProcessor =
-        (KStream<byte[], ResourceMetrics>) inputStreams.get("otel-metrics");
-    if (secondProcessor == null) {
-      secondProcessor =
-          streamsBuilder.stream(
-              "otel-metrics", Consumed.with(Serdes.ByteArray(), new OtelMetricSerde()));
-      inputStreams.put("otel-metrics", secondProcessor);
-    }
-
-    KStream<byte[], ResourceMetrics> otelMetricStream =
-        secondProcessor.transform(OtelMetricProcessor::new);
+    //    KStream<byte[], ResourceMetrics> secondProcessor =
+    //        (KStream<byte[], ResourceMetrics>) inputStreams.get("otlp-metrics");
+    //    if (secondProcessor == null) {
+    //      secondProcessor =
+    //          streamsBuilder.stream(
+    //              "otlp-metrics", Consumed.with(Serdes.ByteArray(), new OtelMetricSerde()));
+    //      inputStreams.put("otlp-metrics", secondProcessor);
+    //    }
+    //
+    //    KStream<byte[], ResourceMetrics> otelMetricStream =
+    //        secondProcessor.transform(OtelMetricProcessor::new);
 
     return streamsBuilder;
   }
