@@ -42,6 +42,7 @@ dependencies {
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
   implementation(project(":hypertrace-metrics-generator:hypertrace-metrics-generator"))
   implementation(project(":hypertrace-metrics-processor:hypertrace-metrics-processor"))
+  implementation(project(":hypertrace-metrics-exporter:hypertrace-metrics-exporter"))
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
@@ -68,7 +69,8 @@ tasks.register<Copy>("copyServiceConfigs") {
       createCopySpec("hypertrace-trace-enricher", "hypertrace-trace-enricher", "main", "common"),
       createCopySpec("hypertrace-view-generator", "hypertrace-view-generator", "main", "common"),
       createCopySpec("hypertrace-metrics-generator", "hypertrace-metrics-generator", "main", "common"),
-      createCopySpec("hypertrace-metrics-processor", "hypertrace-metrics-processor", "main", "common")
+      createCopySpec("hypertrace-metrics-processor", "hypertrace-metrics-processor", "main", "common"),
+      createCopySpec("hypertrace-metrics-exporter", "hypertrace-metrics-exporter", "main", "common")
   ).into("./build/resources/main/configs/")
 }
 
@@ -110,7 +112,8 @@ tasks.register<Copy>("copyServiceConfigsTest") {
       createCopySpec("hypertrace-trace-enricher", "hypertrace-trace-enricher", "test", "hypertrace-trace-enricher"),
       createCopySpec("hypertrace-view-generator", "hypertrace-view-generator", "test", "hypertrace-view-generator"),
       createCopySpec("hypertrace-metrics-generator", "hypertrace-metrics-generator", "test", "hypertrace-metrics-generator"),
-      createCopySpec("hypertrace-metrics-processor", "hypertrace-metrics-processor", "test", "hypertrace-metrics-processor")
+      createCopySpec("hypertrace-metrics-processor", "hypertrace-metrics-processor", "test", "hypertrace-metrics-processor"),
+      createCopySpec("hypertrace-metrics-exporter", "hypertrace-metrics-exporter", "test", "hypertrace-metrics-exporter")
   ).into("./build/resources/test/configs/")
 }
 
