@@ -34,6 +34,7 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final ManagedChannel configServiceChannel;
   private final ManagedChannel entityServiceChannel;
   private final EdsCacheClient edsCacheClient;
+  private final EntityDataClient entityDataClient;
   private final CachingAttributeClient cachingAttributeClient;
   private final EntityCache entityCache;
   private final TraceEntityAccessor entityAccessor;
@@ -63,11 +64,12 @@ public class DefaultClientRegistry implements ClientRegistry {
         new EdsCacheClient(
             new EntityDataServiceClient(this.entityServiceChannel),
             EntityServiceClientConfig.from(config).getCacheConfig());
+    this.entityDataClient = EntityDataClient.builder(this.entityServiceChannel).build();
     this.entityCache = new EntityCache(this.edsCacheClient);
     this.entityAccessor =
         new TraceEntityAccessorBuilder(
                 EntityTypeClient.builder(this.entityServiceChannel).build(),
-                EntityDataClient.builder(this.entityServiceChannel).build(),
+                this.entityDataClient,
                 this.cachingAttributeClient)
             .withEntityWriteThrottleDuration(
                 config.hasPath(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
@@ -104,6 +106,11 @@ public class DefaultClientRegistry implements ClientRegistry {
   @Override
   public EdsCacheClient getEdsCacheClient() {
     return this.edsCacheClient;
+  }
+
+  @Override
+  public EntityDataClient getEntityDataClient() {
+    return this.entityDataClient;
   }
 
   @Override
