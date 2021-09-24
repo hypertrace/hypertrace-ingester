@@ -35,8 +35,9 @@ public class MetricsExporter extends PlatformService {
   public void doStart() {
     while (true) {
       List<ResourceMetrics> resourceMetrics = metricsConsumer.consume();
+      CompletableResultCode result;
       if (!resourceMetrics.isEmpty()) {
-        CompletableResultCode result = otlpGrpcExporter.export(resourceMetrics);
+        result = otlpGrpcExporter.export(resourceMetrics);
         result.join(1, TimeUnit.MINUTES);
       }
       waitForSec(1);
