@@ -112,7 +112,9 @@ public class StructuredTracesEnrichmentTest {
     EnrichmentRegistry enrichmentRegistry = new EnrichmentRegistry();
     enrichmentRegistry.registerEnrichers(enricherToRegister);
     return new EnrichmentProcessor(
-        enrichmentRegistry.getOrderedRegisteredEnrichers(), clientRegistry);
+        enrichmentRegistry.getOrderedRegisteredEnrichers(),
+        clientRegistry,
+        configs.getConfig("enricher.executors"));
   }
 
   @Test

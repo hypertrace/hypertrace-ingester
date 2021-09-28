@@ -2,6 +2,7 @@ package org.hypertrace.traceenricher.trace.enricher;
 
 import static org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants.ENRICHER_CLIENTS_CONFIG_KEY;
 import static org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants.ENRICHER_CONFIG_TEMPLATE;
+import static org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants.ENRICHER_EXECUTORS_CONFIG_KEY;
 import static org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants.ENRICHER_NAMES_CONFIG_KEY;
 import static org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants.STRUCTURED_TRACES_ENRICHMENT_JOB_CONFIG_KEY;
 
@@ -54,7 +55,9 @@ public class StructuredTraceEnrichProcessor
           clientRegistry = new DefaultClientRegistry(this.getClientsConfig(context.appConfigs()));
           processor =
               new EnrichmentProcessor(
-                  enrichmentRegistry.getOrderedRegisteredEnrichers(), clientRegistry);
+                  enrichmentRegistry.getOrderedRegisteredEnrichers(),
+                  clientRegistry,
+                  this.getExecutorsConfig(context.appConfigs()));
         }
       }
     }
@@ -101,6 +104,11 @@ public class StructuredTraceEnrichProcessor
   private Config getClientsConfig(Map<String, Object> properties) {
     Config jobConfig = (Config) properties.get(STRUCTURED_TRACES_ENRICHMENT_JOB_CONFIG_KEY);
     return jobConfig.getConfig(ENRICHER_CLIENTS_CONFIG_KEY);
+  }
+
+  private Config getExecutorsConfig(Map<String, Object> properties) {
+    Config jobConfig = (Config) properties.get(STRUCTURED_TRACES_ENRICHMENT_JOB_CONFIG_KEY);
+    return jobConfig.getConfig(ENRICHER_EXECUTORS_CONFIG_KEY);
   }
 
   private String getEnricherConfigPath(String enricher) {
