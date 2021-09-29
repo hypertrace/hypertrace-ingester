@@ -37,6 +37,9 @@ data:
     }
 
     enricher {
+      executors = {
+        thread.pool.size = {{ .Values.traceEnricherConfig.enricherExecutorsThreadPoolSize }}
+      }
       clients = {
         entity.service.config = {
           host = {{ .Values.traceEnricherConfig.entityServiceHost }}

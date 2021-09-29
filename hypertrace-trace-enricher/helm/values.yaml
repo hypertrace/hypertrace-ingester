@@ -91,6 +91,7 @@ traceEnricherConfig:
   # All other streams config goes here.
   # Remove the flower braces and add key: value pair here.
   extraKafkaStreamsConfig: {}
+  enricherExecutorsThreadPoolSize: 4 # should be atleast set equal to kafkaStreamsConfig.numStreamThreads
   entityServiceHost: entity-service
   entityServicePort: 50061
   attributeServiceHost: attribute-service
