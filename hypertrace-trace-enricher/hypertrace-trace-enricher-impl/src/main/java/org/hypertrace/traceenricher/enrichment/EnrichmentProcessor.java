@@ -1,16 +1,14 @@
 package org.hypertrace.traceenricher.enrichment;
 
+import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.typesafe.config.Config;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
@@ -32,7 +30,7 @@ public class EnrichmentProcessor {
   private static final Timer enrichmentArrivalTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
   private final List<Enricher> enrichers = new ArrayList<>();
-  private final ExecutorService executorService;
+  private final SimpleTimeLimiter simpleTimeLimiter;
   private final Duration enricherTaskTimeout;
 
   public EnrichmentProcessor(
@@ -47,7 +45,9 @@ public class EnrichmentProcessor {
         LOG.error("Exception initializing enricher:{}", enricherInfo, e);
       }
     }
-    executorService = Executors.newFixedThreadPool(executorsConfig.getInt(THREAD_POOL_SIZE));
+    simpleTimeLimiter =
+        SimpleTimeLimiter.create(
+            Executors.newFixedThreadPool(executorsConfig.getInt(THREAD_POOL_SIZE)));
     enricherTaskTimeout = executorsConfig.getDuration(ENRICHER_TASK_TIMEOUT);
   }
 
@@ -57,23 +57,11 @@ public class EnrichmentProcessor {
         trace, enrichmentArrivalTimer, ENRICHMENT_ARRIVAL_TIME);
     AvroToJsonLogger.log(LOG, "Structured Trace before all the enrichment is: {}", trace);
     for (Enricher enricher : enrichers) {
-      FutureTask<Void> task =
-          new FutureTask<>(
-              () -> {
-                applyEnricher(enricher, trace);
-                return null;
-              });
       try {
-        executorService.submit(task);
-        task.get(enricherTaskTimeout.toSeconds(), TimeUnit.SECONDS);
-      } catch (TimeoutException | InterruptedException e) {
-        boolean cancelStatus = task.cancel(true);
-        LOG.error(
-            "Could not apply the enricher: {} to the trace with traceId: {}. Task is cancelled with status {}",
-            enricher.getClass().getCanonicalName(),
-            HexUtils.getHex(trace.getTraceId()),
-            cancelStatus,
-            e);
+        simpleTimeLimiter.callWithTimeout(
+            () -> applyEnricher(enricher, trace),
+            enricherTaskTimeout.toSeconds(),
+            TimeUnit.SECONDS);
       } catch (Exception e) {
         LOG.error(
             "Could not apply the enricher: {} to the trace with traceId: {}",
@@ -85,7 +73,7 @@ public class EnrichmentProcessor {
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
   }
 
-  private void applyEnricher(Enricher enricher, StructuredTrace trace) {
+  private Void applyEnricher(Enricher enricher, StructuredTrace trace) {
     // Enrich entities
     List<Entity> entityList = trace.getEntityList();
     LOG.debug("Enriching Entities for {}", enricher.getClass().getName());
@@ -124,5 +112,6 @@ public class EnrichmentProcessor {
 
     // Enrich trace attributes/metrics
     enricher.enrichTrace(trace);
+    return null;
   }
 }
