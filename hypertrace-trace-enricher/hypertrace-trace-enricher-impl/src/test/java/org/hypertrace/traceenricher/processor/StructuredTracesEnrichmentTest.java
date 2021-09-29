@@ -119,8 +119,7 @@ public class StructuredTracesEnrichmentTest {
 
   @Test
   public void testTraceMissingDownstreamEntrySpans() throws IOException, URISyntaxException {
-    String schemaStr =
-        readStructuredTraceSchema("missing-downstream-entry-spans/structured-trace-schema.json");
+    String schemaStr = readStructuredTraceSchema("structured-trace-schema.json");
     Schema schema = (new Schema.Parser()).parse(schemaStr);
 
     StructuredTrace structuredTrace =
@@ -131,6 +130,20 @@ public class StructuredTracesEnrichmentTest {
             "missing-downstream-entry-spans/after-enrichment.json", schema);
     enrichmentProcessor.process(structuredTrace);
     Assertions.assertEquals(6, structuredTrace.getEventList().size());
+    Assertions.assertEquals(expectedEnrichedStructuredTrace, structuredTrace);
+  }
+
+  @Test
+  public void testTraceWithLongUserAgentSpans() throws IOException, URISyntaxException {
+    String schemaStr = readStructuredTraceSchema("structured-trace-schema.json");
+    Schema schema = (new Schema.Parser()).parse(schemaStr);
+
+    StructuredTrace structuredTrace =
+        readInStructuredTraceFromJson("long-user-agent-spans/before-enrichment.json", schema);
+    StructuredTrace expectedEnrichedStructuredTrace =
+        readInStructuredTraceFromJson("long-user-agent-spans/after-enrichment.json", schema);
+    enrichmentProcessor.process(structuredTrace);
+    Assertions.assertEquals(1, structuredTrace.getEventList().size());
     Assertions.assertEquals(expectedEnrichedStructuredTrace, structuredTrace);
   }
 

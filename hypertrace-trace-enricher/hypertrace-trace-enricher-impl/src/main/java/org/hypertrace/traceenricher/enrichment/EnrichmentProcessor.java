@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
@@ -65,13 +66,19 @@ public class EnrichmentProcessor {
       try {
         executorService.submit(task);
         task.get(enricherTaskTimeout.toSeconds(), TimeUnit.SECONDS);
-      } catch (Exception e) {
+      } catch (TimeoutException | InterruptedException e) {
         boolean cancelStatus = task.cancel(true);
         LOG.error(
             "Could not apply the enricher: {} to the trace with traceId: {}. Task is cancelled with status {}",
             enricher.getClass().getCanonicalName(),
             HexUtils.getHex(trace.getTraceId()),
             cancelStatus,
+            e);
+      } catch (Exception e) {
+        LOG.error(
+            "Could not apply the enricher: {} to the trace with traceId: {}",
+            enricher.getClass().getCanonicalName(),
+            HexUtils.getHex(trace.getTraceId()),
             e);
       }
     }
