@@ -29,9 +29,12 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
   private static final String CACHE_CONFIG_KEY = "cache";
   private static final String CACHE_CONFIG_MAX_SIZE = "maxSize";
   private static final int CACHE_MAX_SIZE_DEFAULT = 10000;
+  private static final String USER_AGENT_MAX_LENGTH_KEY = "max-length";
+  private static final int DEFAULT_USER_AGENT_MAX_LENGTH = 1000;
   private final UserAgentStringParser userAgentStringParser =
       UADetectorServiceFactory.getResourceModuleParser();
   @Nullable private LoadingCache<String, ReadableUserAgent> userAgentCache;
+  private int userAgentMaxLength;
 
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {
@@ -54,6 +57,11 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
                     }
                   });
     }
+    if (enricherConfig.hasPath(USER_AGENT_MAX_LENGTH_KEY)) {
+      userAgentMaxLength = enricherConfig.getInt(USER_AGENT_MAX_LENGTH_KEY);
+    } else {
+      userAgentMaxLength = DEFAULT_USER_AGENT_MAX_LENGTH;
+    }
   }
 
   @Override
@@ -71,10 +79,14 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
     Optional<String> mayBeUserAgent = getUserAgent(event);
 
     if (mayBeUserAgent.isPresent()) {
+      String userAgentStr = mayBeUserAgent.get();
+      if (userAgentStr.length() > userAgentMaxLength) {
+        userAgentStr = userAgentStr.substring(0, userAgentMaxLength);
+      }
       ReadableUserAgent userAgent =
           userAgentCache != null
-              ? userAgentCache.getUnchecked(mayBeUserAgent.get())
-              : userAgentStringParser.parse(mayBeUserAgent.get());
+              ? userAgentCache.getUnchecked(userAgentStr)
+              : userAgentStringParser.parse(userAgentStr);
       addEnrichedAttribute(
           event,
           EnrichedSpanConstants.getValue(UserAgent.USER_AGENT_NAME),
