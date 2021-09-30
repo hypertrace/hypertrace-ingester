@@ -38,6 +38,8 @@ dependencies {
   implementation("io.opentelemetry:opentelemetry-exporter-otlp-common:1.4.1")
   implementation("io.opentelemetry:opentelemetry-sdk-metrics:1.4.1-alpah")
   implementation("io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.4.1-alpha")
+  implementation("io.opentelemetry:opentelemetry-exporters-prometheus:0.9.1")
+
 
   // kafka
   implementation("org.apache.kafka:kafka-clients:2.6.0")

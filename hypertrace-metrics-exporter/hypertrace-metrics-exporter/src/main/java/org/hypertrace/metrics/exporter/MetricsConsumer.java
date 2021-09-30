@@ -47,7 +47,7 @@ public class MetricsConsumer {
             LOGGER.error("Invalid record with exception", e);
           }
         });
-
+    consumer.commitSync();
     return resourceMetrics;
   }
 
