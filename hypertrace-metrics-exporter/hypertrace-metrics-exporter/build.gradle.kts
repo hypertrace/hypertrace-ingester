@@ -27,8 +27,8 @@ tasks.test {
 dependencies {
   // common and framework
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.30-SNAPSHOT")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.30-SNAPSHOT")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
 
   // open telemetry
@@ -38,8 +38,14 @@ dependencies {
   implementation("io.opentelemetry:opentelemetry-exporter-otlp-common:1.4.1")
   implementation("io.opentelemetry:opentelemetry-sdk-metrics:1.4.1-alpah")
   implementation("io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.4.1-alpha")
-  implementation("io.opentelemetry:opentelemetry-exporters-prometheus:0.9.1")
+  implementation("io.opentelemetry:opentelemetry-exporter-prometheus:1.4.1-alpha")
 
+  // jetty server
+  implementation("org.eclipse.jetty:jetty-server:9.4.42.v20210604")
+  implementation("org.eclipse.jetty:jetty-servlet:9.4.42.v20210604")
+
+  // prometheus metrics servelet
+  implementation("io.prometheus:simpleclient_servlet:0.6.0")
 
   // kafka
   implementation("org.apache.kafka:kafka-clients:2.6.0")

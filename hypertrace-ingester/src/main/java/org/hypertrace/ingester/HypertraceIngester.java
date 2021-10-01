@@ -17,7 +17,7 @@ import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.serviceframework.config.ConfigUtils;
 import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.hypertrace.core.viewgenerator.service.MultiViewGeneratorLauncher;
-import org.hypertrace.metrics.exporter.MetricsExporter;
+import org.hypertrace.metrics.exporter.MetricsExporterEntryService;
 import org.hypertrace.metrics.generator.MetricsGenerator;
 import org.hypertrace.metrics.processor.MetricsProcessor;
 import org.hypertrace.traceenricher.trace.enricher.TraceEnricher;
@@ -32,13 +32,14 @@ public class HypertraceIngester extends KafkaStreamsApp {
   private static final String HYPERTRACE_INGESTER_JOB_CONFIG = "hypertrace-ingester-job-config";
 
   private Map<String, Pair<String, KafkaStreamsApp>> jobNameToSubTopology = new HashMap<>();
-  private MetricsExporter metricsExporter;
+  private MetricsExporterEntryService metricsExporter;
   private Thread metricsExporterThread;
 
   public HypertraceIngester(ConfigClient configClient) {
     super(configClient);
     metricsExporter =
-        new MetricsExporter(configClient, getSubJobConfig("hypertrace-metrics-exporter"));
+        new MetricsExporterEntryService(
+            configClient, getSubJobConfig("hypertrace-metrics-exporter"));
   }
 
   @Override

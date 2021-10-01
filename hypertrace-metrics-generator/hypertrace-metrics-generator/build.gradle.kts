@@ -27,8 +27,8 @@ tasks.test {
 dependencies {
   // common and framework
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.30-SNAPSHOT")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.30-SNAPSHOT")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
 
   // open telemetry

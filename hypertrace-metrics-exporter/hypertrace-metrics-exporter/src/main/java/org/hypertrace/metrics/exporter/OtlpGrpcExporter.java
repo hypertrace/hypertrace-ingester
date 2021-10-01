@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OtlpGrpcExporter {
+public class OtlpGrpcExporter implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OtlpGrpcExporter.class);
 
@@ -38,6 +38,8 @@ public class OtlpGrpcExporter {
     timeoutNanos = timeOut;
     metricsService = MetricsServiceGrpc.newFutureStub(channel);
   }
+
+  public void run() {}
 
   public CompletableResultCode export(List<ResourceMetrics> metrics) {
     ExportMetricsServiceRequest exportMetricsServiceRequest =
