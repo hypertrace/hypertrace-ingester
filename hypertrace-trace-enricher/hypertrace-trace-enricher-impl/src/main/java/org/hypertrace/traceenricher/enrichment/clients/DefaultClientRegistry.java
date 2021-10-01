@@ -9,9 +9,12 @@ import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClien
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
+import org.hypertrace.core.grpcutils.client.RequestContextClientCallCredsProviderFactory;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
+import org.hypertrace.entity.query.service.v1.EntityQueryServiceGrpc;
+import org.hypertrace.entity.query.service.v1.EntityQueryServiceGrpc.EntityQueryServiceBlockingStub;
 import org.hypertrace.entity.service.client.config.EntityServiceClientConfig;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.trace.accessor.entities.TraceEntityAccessor;
@@ -111,6 +114,13 @@ public class DefaultClientRegistry implements ClientRegistry {
   @Override
   public EntityDataClient getEntityDataClient() {
     return this.entityDataClient;
+  }
+
+  @Override
+  public EntityQueryServiceBlockingStub getEntityQueryServiceClient() {
+    return EntityQueryServiceGrpc.newBlockingStub(entityServiceChannel)
+        .withCallCredentials(
+            RequestContextClientCallCredsProviderFactory.getClientCallCredsProvider().get());
   }
 
   @Override
