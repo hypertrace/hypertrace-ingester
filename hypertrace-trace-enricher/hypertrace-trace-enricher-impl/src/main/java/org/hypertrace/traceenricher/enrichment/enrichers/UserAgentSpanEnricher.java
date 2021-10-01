@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.typesafe.config.Config;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -15,6 +16,7 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
@@ -31,6 +33,7 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
   private static final int CACHE_MAX_SIZE_DEFAULT = 10000;
   private static final String USER_AGENT_MAX_LENGTH_KEY = "user.agent.max.length";
   private static final int DEFAULT_USER_AGENT_MAX_LENGTH = 1000;
+  private static final String DOT = ".";
   private final UserAgentStringParser userAgentStringParser =
       UADetectorServiceFactory.getResourceModuleParser();
   @Nullable private LoadingCache<String, ReadableUserAgent> userAgentCache;
@@ -56,6 +59,10 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
                       return userAgentStringParser.parse(userAgentString);
                     }
                   });
+      PlatformMetricsRegistry.registerCache(
+          this.getClass().getName() + DOT + "userAgentCache",
+          userAgentCache,
+          Collections.emptyMap());
     }
     if (enricherConfig.hasPath(USER_AGENT_MAX_LENGTH_KEY)) {
       userAgentMaxLength = enricherConfig.getInt(USER_AGENT_MAX_LENGTH_KEY);
