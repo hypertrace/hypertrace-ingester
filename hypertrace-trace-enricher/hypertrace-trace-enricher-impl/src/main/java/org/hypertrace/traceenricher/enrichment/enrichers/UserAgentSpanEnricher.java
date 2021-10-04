@@ -30,7 +30,7 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
   private static final String CACHE_CONFIG_MAX_SIZE = "maxSize";
   private static final int CACHE_MAX_SIZE_DEFAULT = 10000;
   private static final String USER_AGENT_MAX_LENGTH_KEY = "user.agent.max.length";
-  private static final int DEFAULT_USER_AGENT_MAX_LENGTH = 1000;
+  private static final int DEFAULT_USER_AGENT_MAX_LENGTH = 10000;
   private final UserAgentStringParser userAgentStringParser =
       UADetectorServiceFactory.getResourceModuleParser();
   @Nullable private LoadingCache<String, ReadableUserAgent> userAgentCache;
