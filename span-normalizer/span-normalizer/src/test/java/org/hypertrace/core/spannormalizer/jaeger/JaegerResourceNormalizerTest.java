@@ -26,7 +26,8 @@ class JaegerResourceNormalizerTest {
                     List.of(
                         Map.entry("first", "first-value"),
                         Map.entry("second", "second-value"),
-                        Map.entry("third", "third-value"))))
+                        Map.entry("third", "third-value"))),
+                Optional.empty())
             .orElseThrow();
 
     assertEquals(3, createdResource.getAttributes().getAttributeMap().size());
@@ -44,7 +45,8 @@ class JaegerResourceNormalizerTest {
         normalizer
             .normalize(
                 buildInputSpanWithResourceAttributes(
-                    List.of(Map.entry("foo", "bar"), Map.entry("foo", "baz"))))
+                    List.of(Map.entry("foo", "bar"), Map.entry("foo", "baz"))),
+                Optional.empty())
             .orElseThrow();
 
     assertEquals(1, createdResource.getAttributes().getAttributeMap().size());
@@ -55,7 +57,31 @@ class JaegerResourceNormalizerTest {
   void returnsEmptyOptionalIfNoResourceAttributes() {
     assertEquals(
         Optional.empty(),
-        normalizer.normalize(buildInputSpanWithResourceAttributes(Collections.emptyList())));
+        normalizer.normalize(
+            buildInputSpanWithResourceAttributes(Collections.emptyList()), Optional.empty()));
+  }
+
+  @Test
+  void returnsEmptyOptionalWithOnlyTenantIdKey() {
+    assertEquals(
+        Optional.empty(),
+        normalizer.normalize(
+            buildInputSpanWithResourceAttributes(List.of(Map.entry("tenant-key", "tenant-id"))),
+            Optional.of("tenant-key")));
+  }
+
+  @Test
+  void ignoresTenantIdKey() {
+    Resource createdResource =
+        normalizer
+            .normalize(
+                buildInputSpanWithResourceAttributes(
+                    List.of(Map.entry("foo", "bar"), Map.entry("tenant-key", "tenant-id"))),
+                Optional.of("tenant-key"))
+            .orElseThrow();
+
+    assertEquals(1, createdResource.getAttributes().getAttributeMap().size());
+    assertEquals("bar", createdResource.getAttributes().getAttributeMap().get("foo").getValue());
   }
 
   // Take a list of pairs instead of a map so we can test dupe behavior

@@ -70,6 +70,7 @@ public class EndpointEnricher extends AbstractTraceEnricher {
     // Lookup the service id from the span. If we can't find a service id, we can't really
     // associate API details with that span.
     String serviceId = EnrichedSpanUtils.getServiceId(event);
+    String serviceName = EnrichedSpanUtils.getServiceName(event);
     String customerId = trace.getCustomerId();
     if (serviceId == null) {
       LOGGER.warn(
@@ -84,7 +85,8 @@ public class EndpointEnricher extends AbstractTraceEnricher {
     Entity apiEntity = null;
     try {
       apiEntity =
-          getOperationNameBasedEndpointDiscoverer(customerId, serviceId).getApiEntity(event);
+          getOperationNameBasedEndpointDiscoverer(customerId, serviceId, serviceName)
+              .getApiEntity(event);
     } catch (Exception e) {
       LOGGER.error(
           "Unable to get apiEntity for tenantId {}, serviceId {} and event {}",
@@ -142,10 +144,12 @@ public class EndpointEnricher extends AbstractTraceEnricher {
   }
 
   private OperationNameBasedEndpointDiscoverer getOperationNameBasedEndpointDiscoverer(
-      String customerId, String serviceId) {
+      String customerId, String serviceId, String serviceName) {
     serviceIdToEndpointDiscoverer.computeIfAbsent(
         serviceId,
-        e -> new OperationNameBasedEndpointDiscoverer(customerId, serviceId, apiEntityDao));
+        e ->
+            new OperationNameBasedEndpointDiscoverer(
+                customerId, serviceId, serviceName, apiEntityDao));
     return serviceIdToEndpointDiscoverer.get(serviceId);
   }
 

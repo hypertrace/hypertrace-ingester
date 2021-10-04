@@ -1,5 +1,10 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.assertTraceDoesNotContainAttribute;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createEntryEventWithName;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createExitEventName;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createTraceWithEventsAndEdges;
+import static org.hypertrace.traceenricher.enrichment.enrichers.TestUtils.createUnspecifiedTypeEventWithName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.Maps;
@@ -7,6 +12,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,6 +30,7 @@ import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.junit.jupiter.api.Test;
 
 public class ExitCallsEnricherTest {
+  private static final String API_EXIT_CALLS_COUNT = "api.exit.calls.count";
 
   @Test
   public void testEnrichTrace_HotrodTrace() throws IOException {
@@ -127,5 +135,98 @@ public class ExitCallsEnricherTest {
       apiNode.getEvents().forEach(v -> map.put(v.getEventId(), finalIndex));
     }
     return map;
+  }
+
+  @Test
+  void apiExitCallsIsAvailableInTraceAttribute() {
+    Event yEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
+    Event aExitEvent = createExitEventName("aExitEvent"); // 3
+    Event aExitEvent1 = createExitEventName("aExitEvent1"); // 4
+    Event aExitEvent2 = createExitEventName("aExitEvent2"); // 5
+    Event bEntryEvent = createEntryEventWithName("bEvent"); // 6
+
+    Event[] allEvents =
+        new Event[] {
+          yEvent, zEvent, aEntryHeadSpanEvent, aExitEvent, aExitEvent1, aExitEvent2, bEntryEvent
+        };
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+            put(1, new int[] {2});
+            put(2, new int[] {3, 4, 5});
+            put(3, new int[] {6});
+          }
+        };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
+    exitCallsEnricher.enrichTrace(trace);
+
+    String actualTotalNumberOfCalls =
+        trace.getAttributes().getAttributeMap().get(API_EXIT_CALLS_COUNT).getValue();
+
+    assertEquals("3", actualTotalNumberOfCalls);
+  }
+
+  @Test
+  void apiExitCallsCountAttributeNotAddedIfThereIsOnlyOneEventAndNoApiNodes() {
+    Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+
+    Event[] allEvents = new Event[] {aEntryEvent};
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, Collections.emptyMap());
+
+    ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
+    exitCallsEnricher.enrichTrace(trace);
+
+    assertTraceDoesNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
+  }
+
+  @Test
+  void apiExitCallsCountAttributeNotAddedIfThereAreEventsAndNoApiNodes() {
+    Event aEntryEvent = createUnspecifiedTypeEventWithName("aEvent"); // 0
+    Event bEntryEvent = createUnspecifiedTypeEventWithName("bEvent"); // 1
+
+    Event[] allEvents = new Event[] {aEntryEvent, bEntryEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+          }
+        };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
+    exitCallsEnricher.enrichTrace(trace);
+
+    assertTraceDoesNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
+  }
+
+  @Test
+  void apiExitCallsCountAttributeNotAddedIfApiNodeExistButNoExitCalls() {
+    Event yEvent = createUnspecifiedTypeEventWithName("yEvent"); // 0
+    Event zEvent = createUnspecifiedTypeEventWithName("zEvent"); // 1
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 2
+
+    Event[] allEvents = new Event[] {yEvent, zEvent, aEntryHeadSpanEvent};
+    HashMap<Integer, int[]> eventEdges =
+        new HashMap<>() {
+          {
+            put(0, new int[] {1});
+            put(1, new int[] {2});
+          }
+        };
+
+    StructuredTrace trace = createTraceWithEventsAndEdges(allEvents, eventEdges);
+
+    ExitCallsEnricher exitCallsEnricher = new ExitCallsEnricher();
+    exitCallsEnricher.enrichTrace(trace);
+
+    assertTraceDoesNotContainAttribute(trace, API_EXIT_CALLS_COUNT);
   }
 }

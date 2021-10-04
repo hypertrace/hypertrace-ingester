@@ -8,10 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import org.hypertrace.core.span.constants.RawSpanConstants;
+import org.hypertrace.core.span.constants.v1.SpanAttribute;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class JaegerSpanPreProcessorTest {
+class JaegerSpanPreProcessorTest {
 
   private final Random random = new Random();
 
@@ -55,7 +57,7 @@ public class JaegerSpanPreProcessorTest {
     PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span1);
     Assertions.assertEquals("default-tenant", preProcessedSpan.getTenantId());
 
-    // provided tenant id
+    // provided tenant id in span tags
     configs = new HashMap<>(getCommonConfig());
     configs.putAll(Map.of("processor", Map.of("tenantIdTagKey", "tenant-key")));
     jaegerSpanPreProcessor = new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs));
@@ -66,6 +68,16 @@ public class JaegerSpanPreProcessorTest {
             .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
             .build();
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span2);
+    Assertions.assertEquals(tenantId, preProcessedSpan.getTenantId());
+
+    // provided tenant id in process tags
+    process =
+        Process.newBuilder()
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .build();
+
+    Span span3 = Span.newBuilder().setProcess(process).build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span3);
     Assertions.assertEquals(tenantId, preProcessedSpan.getTenantId());
   }
 
@@ -176,6 +188,179 @@ public class JaegerSpanPreProcessorTest {
             .addTags(KeyValue.newBuilder().setKey("k2").setVStr("v2").build())
             .build();
     PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+  }
+
+  @Test
+  public void testDropSpan_RootSpan_EmptyExclusionList() {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey", "tenant-key",
+                "rootExitSpanDropCriterion.alwaysDrop", "true")));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs));
+    Process process = Process.newBuilder().setServiceName("testService").build();
+
+    // root exit span
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
+            .addTags(KeyValue.newBuilder().setKey("k2").setVStr("v2").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND))
+                    .setVStr("client")
+                    .build())
+            .build();
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
+            .addTags(KeyValue.newBuilder().setKey("k2").setVStr("v2").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND))
+                    .setVStr("server")
+                    .build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+  }
+
+  /** Always drop except when there is a match from the exclusion list */
+  @Test
+  public void testDropSpan_RootSpan_AlwaysDrop_ExclusionList() {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey", "tenant-key",
+                "rootExitSpanDropCriterion.alwaysDrop", "true",
+                "rootExitSpanDropCriterion.exclusionsMatchCriterion",
+                    List.of("foo:bar,k1:v1", "k2:v2"))));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs));
+    Process process = Process.newBuilder().setServiceName("testService").build();
+
+    // root exit span
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
+            .addTags(KeyValue.newBuilder().setKey("k1").setVStr("v1").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND))
+                    .setVStr("client")
+                    .build())
+            .build();
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("k2").setVStr("v2").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND))
+                    .setVStr("client")
+                    .build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("k3").setVStr("v3").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND))
+                    .setVStr("client")
+                    .build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+  }
+
+  /** Always keep except when there is a match from the exclusion list */
+  @Test
+  public void testDropSpan_RootSpan_NotAlwaysDrop_ExclusionList() {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey", "tenant-key",
+                "rootExitSpanDropCriterion.alwaysDrop", "false",
+                "rootExitSpanDropCriterion.exclusionsMatchCriterion",
+                    List.of("foo:bar,k1:v1", "k2:v2"))));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs));
+    Process process = Process.newBuilder().setServiceName("testService").build();
+
+    // root exit span
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
+            .addTags(KeyValue.newBuilder().setKey("k1").setVStr("v1").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND))
+                    .setVStr("client")
+                    .build())
+            .build();
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("k2").setVStr("v2").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND))
+                    .setVStr("client")
+                    .build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("k3").setVStr("v3").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey(RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND))
+                    .setVStr("client")
+                    .build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNotNull(preProcessedSpan);
   }
 

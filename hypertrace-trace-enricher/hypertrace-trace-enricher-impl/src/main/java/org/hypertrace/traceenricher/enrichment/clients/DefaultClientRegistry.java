@@ -3,21 +3,24 @@ package org.hypertrace.traceenricher.enrichment.clients;
 import com.typesafe.config.Config;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
+import org.hypertrace.core.grpcutils.client.RequestContextClientCallCredsProviderFactory;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
+import org.hypertrace.entity.query.service.v1.EntityQueryServiceGrpc;
+import org.hypertrace.entity.query.service.v1.EntityQueryServiceGrpc.EntityQueryServiceBlockingStub;
 import org.hypertrace.entity.service.client.config.EntityServiceClientConfig;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
+import org.hypertrace.trace.accessor.entities.TraceEntityAccessor;
+import org.hypertrace.trace.accessor.entities.TraceEntityAccessorBuilder;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReaderFactory;
-import org.hypertrace.trace.reader.entities.TraceEntityReader;
-import org.hypertrace.trace.reader.entities.TraceEntityReaderBuilder;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 
 public class DefaultClientRegistry implements ClientRegistry {
@@ -27,23 +30,31 @@ public class DefaultClientRegistry implements ClientRegistry {
   private static final String CONFIG_SERVICE_PORT_KEY = "config.service.config.port";
   private static final String ENTITY_SERVICE_HOST_KEY = "entity.service.config.host";
   private static final String ENTITY_SERVICE_PORT_KEY = "entity.service.config.port";
+  private static final String TRACE_ENTITY_WRITE_THROTTLE_DURATION =
+      "trace.entity.write.throttle.duration";
 
   private final ManagedChannel attributeServiceChannel;
   private final ManagedChannel configServiceChannel;
   private final ManagedChannel entityServiceChannel;
   private final EdsCacheClient edsCacheClient;
+  private final EntityDataClient entityDataClient;
   private final CachingAttributeClient cachingAttributeClient;
   private final EntityCache entityCache;
-  private final TraceEntityReader<StructuredTrace, Event> entityReader;
+  private final TraceEntityAccessor entityAccessor;
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
+  private final GrpcChannelRegistry grpcChannelRegistry = new GrpcChannelRegistry();
 
   public DefaultClientRegistry(Config config) {
     this.attributeServiceChannel =
-        this.buildChannel(config, ATTRIBUTE_SERVICE_HOST_KEY, ATTRIBUTE_SERVICE_PORT_KEY);
+        this.buildChannel(
+            config.getString(ATTRIBUTE_SERVICE_HOST_KEY),
+            config.getInt(ATTRIBUTE_SERVICE_PORT_KEY));
     this.configServiceChannel =
-        this.buildChannel(config, CONFIG_SERVICE_HOST_KEY, CONFIG_SERVICE_PORT_KEY);
+        this.buildChannel(
+            config.getString(CONFIG_SERVICE_HOST_KEY), config.getInt(CONFIG_SERVICE_PORT_KEY));
     this.entityServiceChannel =
-        this.buildChannel(config, ENTITY_SERVICE_HOST_KEY, ENTITY_SERVICE_PORT_KEY);
+        this.buildChannel(
+            config.getString(ENTITY_SERVICE_HOST_KEY), config.getInt(ENTITY_SERVICE_PORT_KEY));
 
     this.cachingAttributeClient =
         CachingAttributeClient.builder(this.attributeServiceChannel)
@@ -56,12 +67,17 @@ public class DefaultClientRegistry implements ClientRegistry {
         new EdsCacheClient(
             new EntityDataServiceClient(this.entityServiceChannel),
             EntityServiceClientConfig.from(config).getCacheConfig());
+    this.entityDataClient = EntityDataClient.builder(this.entityServiceChannel).build();
     this.entityCache = new EntityCache(this.edsCacheClient);
-    this.entityReader =
-        new TraceEntityReaderBuilder(
+    this.entityAccessor =
+        new TraceEntityAccessorBuilder(
                 EntityTypeClient.builder(this.entityServiceChannel).build(),
-                EntityDataClient.builder(this.entityServiceChannel).build(),
+                this.entityDataClient,
                 this.cachingAttributeClient)
+            .withEntityWriteThrottleDuration(
+                config.hasPath(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
+                    ? config.getDuration(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
+                    : Duration.ofSeconds(15))
             .build();
   }
 
@@ -81,8 +97,8 @@ public class DefaultClientRegistry implements ClientRegistry {
   }
 
   @Override
-  public TraceEntityReader<StructuredTrace, Event> getEntityReader() {
-    return this.entityReader;
+  public TraceEntityAccessor getTraceEntityAccessor() {
+    return this.entityAccessor;
   }
 
   @Override
@@ -96,6 +112,18 @@ public class DefaultClientRegistry implements ClientRegistry {
   }
 
   @Override
+  public EntityDataClient getEntityDataClient() {
+    return this.entityDataClient;
+  }
+
+  @Override
+  public EntityQueryServiceBlockingStub getEntityQueryServiceClient() {
+    return EntityQueryServiceGrpc.newBlockingStub(entityServiceChannel)
+        .withCallCredentials(
+            RequestContextClientCallCredsProviderFactory.getClientCallCredsProvider().get());
+  }
+
+  @Override
   public EntityCache getEntityCache() {
     return this.entityCache;
   }
@@ -106,14 +134,10 @@ public class DefaultClientRegistry implements ClientRegistry {
   }
 
   public void shutdown() {
-    this.attributeServiceChannel.shutdown();
-    this.configServiceChannel.shutdown();
-    this.entityServiceChannel.shutdown();
+    this.grpcChannelRegistry.shutdown();
   }
 
-  private ManagedChannel buildChannel(Config config, String hostKey, String portKey) {
-    return ManagedChannelBuilder.forAddress(config.getString(hostKey), config.getInt(portKey))
-        .usePlaintext()
-        .build();
+  protected ManagedChannel buildChannel(String host, int port) {
+    return this.grpcChannelRegistry.forPlaintextAddress(host, port);
   }
 }

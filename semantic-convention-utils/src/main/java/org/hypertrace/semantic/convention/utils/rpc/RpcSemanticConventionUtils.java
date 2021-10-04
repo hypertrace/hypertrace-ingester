@@ -7,11 +7,22 @@ import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
-import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.*;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_X_FORWARDED_FOR;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +34,7 @@ import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemantic
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.CensusResponse;
+import org.hypertrace.core.span.constants.v1.Envoy;
 import org.hypertrace.core.span.constants.v1.Grpc;
 import org.hypertrace.core.span.normalizer.constants.OTelRpcSystem;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
@@ -34,6 +46,10 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
  * system
  */
 public class RpcSemanticConventionUtils {
+
+  private static final Joiner DOT_JOINER = Joiner.on(".");
+  private static final String LOCALHOST = "localhost";
+  private static final String COLON = ":";
 
   // otel specific attributes
   private static final String OTEL_RPC_SYSTEM = OTelRpcSemanticConventions.RPC_SYSTEM.getValue();
@@ -62,6 +78,29 @@ public class RpcSemanticConventionUtils {
       List.of(
           RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
           RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE));
+
+  /**
+   * Differs from {@link
+   * org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils#getGrpcURI(Event) in
+   * authority resolution logic} }
+   *
+   * @param event object encapsulating span data
+   * @return uri for grpc span
+   */
+  public static Optional<String> getGrpcURL(Event event) {
+    if (SpanAttributeUtils.containsAttributeKey(event, OTHER_GRPC_HOST_PORT)) {
+      return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_GRPC_HOST_PORT));
+    }
+    // look for grpc authority
+    Optional<String> grpcAuthority = getSanitizedGrpcAuthority(event);
+    if (grpcAuthority.isPresent()) {
+      return grpcAuthority;
+    }
+    if (isRpcTypeGrpcForOTelFormat(event)) {
+      return SpanSemanticConventionUtils.getURIForOtelFormat(event);
+    }
+    return Optional.empty();
+  }
 
   /** @return attribute keys for grpc method */
   public static List<String> getAttributeKeysForGrpcMethod() {
@@ -93,10 +132,25 @@ public class RpcSemanticConventionUtils {
             event, getAttributeKeysForRpcService()));
   }
 
+  public static Optional<String> getRpcMethod(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(OTEL_SPAN_TAG_RPC_METHOD.getValue())));
+  }
+
   public static Optional<String> getRpcOperation(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, RpcSemanticConventionUtils.getAttributeKeysForGrpcMethod()));
+  }
+
+  public static Boolean isRpcSystemGrpc(Map<String, AttributeValue> attributeValueMap) {
+    if (attributeValueMap.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR) != null) {
+      String val = attributeValueMap.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR).getValue();
+      return StringUtils.isNotBlank(val)
+          && StringUtils.equals(val, OTelRpcSystem.OTEL_RPC_SYSTEM_GRPC.getValue());
+    }
+    return false;
   }
 
   /**
@@ -165,9 +219,15 @@ public class RpcSemanticConventionUtils {
           .getValue();
     }
 
+    if (isRpcSystemGrpc(attributeValueMap)
+        && attributeValueMap.get(RPC_ERROR_MESSAGE.getValue()) != null) {
+      return attributeValueMap.get(RPC_ERROR_MESSAGE.getValue()).getValue();
+    }
+
     if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE)) != null) {
       return attributeValueMap.get(RawSpanConstants.getValue(GRPC_ERROR_MESSAGE)).getValue();
     }
+
     return "";
   }
 
@@ -178,7 +238,7 @@ public class RpcSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
 
-    if (!check(attributeValueMap)) {
+    if (!isRpcSystemGrpc(attributeValueMap)) {
       return Optional.empty();
     }
 
@@ -198,7 +258,7 @@ public class RpcSemanticConventionUtils {
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
 
-    if (!check(attributeValueMap)) {
+    if (!isRpcSystemGrpc(attributeValueMap)) {
       return Optional.empty();
     }
 
@@ -215,7 +275,9 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null) {
+    if ((attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null)
+        || (isRpcSystemGrpc(attributeValueMap)
+            && attributeValueMap.get(RPC_REQUEST_BODY.getValue()) != null)) {
 
       if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE)) != null) {
         return Optional.of(
@@ -239,7 +301,9 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null) {
+    if ((attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null)
+        || (isRpcSystemGrpc(attributeValueMap)
+            && attributeValueMap.get(RPC_RESPONSE_BODY.getValue()) != null)) {
 
       if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE)) != null) {
         return Optional.of(
@@ -257,15 +321,111 @@ public class RpcSemanticConventionUtils {
     return Optional.empty();
   }
 
-  private static Boolean check(Map<String, AttributeValue> avm) {
-
-    if (avm.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR) != null) {
-      String val = avm.get(OTEL_SPAN_TAG_RPC_SYSTEM_ATTR).getValue();
-      if (StringUtils.isNotBlank(val)
-          && StringUtils.equals(val, OTelRpcSystem.OTEL_RPC_SYSTEM_GRPC.getValue())) {
-        return true;
-      }
+  public static Optional<String> getGrpcRequestMetadataPath(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
     }
-    return false;
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (!isRpcSystemGrpc(attributeValueMap)) {
+      return Optional.empty();
+    }
+
+    if (attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()) != null) {
+      return Optional.of(attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()).getValue());
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getGrpcXForwardedFor(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (!isRpcSystemGrpc(attributeValueMap)) {
+      return Optional.empty();
+    }
+
+    if (attributeValueMap.get(RPC_REQUEST_METADATA_X_FORWARDED_FOR.getValue()) != null) {
+      return Optional.ofNullable(
+          attributeValueMap.get(RPC_REQUEST_METADATA_X_FORWARDED_FOR.getValue()).getValue());
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getRpcPath(Event event) {
+    String service = getRpcService(event).orElse("");
+    String method = getRpcMethod(event).orElse("");
+
+    if (StringUtils.isNotBlank(service) && StringUtils.isNotBlank(method)) {
+      return Optional.of(DOT_JOINER.join(service, method));
+    }
+
+    return Optional.empty();
+  }
+
+  static Optional<String> getSanitizedGrpcAuthority(Event event) {
+
+    Optional<String> grpcAuthority = getGrpcAuthority(event);
+    if (grpcAuthority.isPresent()) {
+      return getSanitizedAuthorityValue(grpcAuthority.get());
+    } else if (SpanAttributeUtils.containsAttributeKey(
+        event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY))) {
+      return getSanitizedAuthorityValue(
+          SpanAttributeUtils.getStringAttribute(
+              event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY)));
+    }
+    return Optional.empty();
+  }
+
+  static Optional<String> getSanitizedAuthorityValue(String value) {
+    if (StringUtils.isBlank(value)) {
+      return Optional.empty();
+    }
+    // authority part of the uri assumes this format: <userinfo@host:port>
+    // parsing it as uri doesn't work, since this is not in url format
+    // allow for string of type <xyz> or <xyz:port> or <abc@xyz:port>
+    List<String> list = Splitter.on(COLON).splitToList(value);
+    if (list.size() <= 2 && !value.contains("/")) {
+      String host = list.get(0);
+      Optional<String> port =
+          (list.size() == 2 && !StringUtils.isBlank(list.get(1)))
+              ? Optional.of(list.get(1))
+              : Optional.empty();
+      // reject string of type <:9000> where userinfo@host part is empty
+      if (StringUtils.isEmpty(host)) {
+        return Optional.empty();
+      }
+      if (host.contains("@")) {
+        List<String> firstHalf = Splitter.on("@").splitToList(host);
+        // reject string where host part is empty
+        if (firstHalf.size() < 2 || StringUtils.isEmpty(firstHalf.get(1))) {
+          return Optional.empty();
+        }
+        host = firstHalf.get(1);
+      }
+      if (LOCALHOST.equalsIgnoreCase(host)) {
+        return Optional.empty();
+      }
+      return port.isPresent()
+          ? Optional.of(String.format("%s:%s", host, port.get()))
+          : Optional.of(host);
+    }
+    // else string is of type url
+    try {
+      URI uri = new URI(value);
+      if (null != uri.getHost() && !LOCALHOST.equalsIgnoreCase(uri.getHost())) {
+        if (-1 != uri.getPort()) {
+          return Optional.of(String.format("%s:%s", uri.getHost(), uri.getPort()));
+        }
+        return Optional.of(uri.getHost());
+      }
+    } catch (URISyntaxException e) {
+      // ignore
+    }
+    return Optional.empty();
   }
 }

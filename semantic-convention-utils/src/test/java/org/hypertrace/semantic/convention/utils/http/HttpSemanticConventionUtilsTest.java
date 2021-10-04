@@ -14,11 +14,14 @@ import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPON
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRING;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH;
@@ -333,6 +336,37 @@ public class HttpSemanticConventionUtilsTest {
         createMockEventWithAttribute(
             RawSpanConstants.getValue(HTTP_REQUEST_QUERY_STRING), "a1=v1&a2=v2");
     assertEquals(Optional.of("a1=v1&a2=v2"), HttpSemanticConventionUtils.getHttpQueryString(event));
+  }
+
+  @Test
+  public void testGetHttpRequestHeaderPath() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH), "sample/http/request/header/path");
+    assertEquals(
+        Optional.of("sample/http/request/header/path"),
+        HttpSemanticConventionUtils.getHttpRequestHeaderPath(event));
+  }
+
+  @Test
+  public void testGetHttpXForwardedFor() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_REQUEST_X_FORWARDED_FOR_HEADER),
+            "forwarded for header val");
+    assertEquals(
+        Optional.of("forwarded for header val"),
+        HttpSemanticConventionUtils.getHttpXForwardedFor(event));
+  }
+
+  @Test
+  public void testGetHttpRequestContentType() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_TYPE), "application/text");
+    assertEquals(
+        Optional.of("application/text"),
+        HttpSemanticConventionUtils.getHttpRequestContentType(event));
   }
 
   @Test

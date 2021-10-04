@@ -16,6 +16,7 @@ import org.hypertrace.core.datamodel.EventRef;
 import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -31,19 +32,23 @@ import org.junit.jupiter.api.Test;
 public class ElasticsearchBackendProviderTest {
   private AbstractBackendEntityEnricher backendEntityEnricher;
   private StructuredTraceGraph structuredTraceGraph;
+  private StructuredTrace structuredTrace;
 
   @BeforeEach
   public void setup() {
     backendEntityEnricher = new MockBackendEntityEnricher();
     backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
 
+    structuredTrace = mock(StructuredTrace.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
   }
 
   @Test
   public void testBackendResolution() {
     BackendInfo backendInfo =
-        backendEntityEnricher.resolve(getElasticsearchEvent(), structuredTraceGraph).get();
+        backendEntityEnricher
+            .resolve(getElasticsearchEvent(), structuredTrace, structuredTraceGraph)
+            .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals("test-index", entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
@@ -59,7 +64,9 @@ public class ElasticsearchBackendProviderTest {
   @Test
   public void testBackendResolutionForOTEvent() {
     BackendInfo backendInfo =
-        backendEntityEnricher.resolve(getElasticsearchOTEvent(), structuredTraceGraph).get();
+        backendEntityEnricher
+            .resolve(getElasticsearchOTEvent(), structuredTrace, structuredTraceGraph)
+            .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals("test", entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();
@@ -75,7 +82,9 @@ public class ElasticsearchBackendProviderTest {
   @Test
   public void testBackendResolutionForOTelEvent() {
     BackendInfo backendInfo =
-        backendEntityEnricher.resolve(getElasticsearchOTelEvent(), structuredTraceGraph).get();
+        backendEntityEnricher
+            .resolve(getElasticsearchOTelEvent(), structuredTrace, structuredTraceGraph)
+            .get();
     Entity entity = backendInfo.getEntity();
     Assertions.assertEquals("test:2000", entity.getEntityName());
     Map<String, AttributeValue> attributes = backendInfo.getAttributes();

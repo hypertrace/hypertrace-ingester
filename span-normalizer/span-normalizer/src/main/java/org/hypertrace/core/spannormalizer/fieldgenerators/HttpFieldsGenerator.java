@@ -556,7 +556,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
       }
     } catch (MalformedURLException e) {
       // Should not happen Since the url in the request should be valid.
-      LOGGER.error("Error populating url parts", e);
+      LOGGER.warn("Error populating url parts - An invalid URL: {}, {}", urlStr, e.getMessage());
     }
   }
 

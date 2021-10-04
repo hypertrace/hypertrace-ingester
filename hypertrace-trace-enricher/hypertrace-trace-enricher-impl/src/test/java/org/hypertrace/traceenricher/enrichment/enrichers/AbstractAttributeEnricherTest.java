@@ -69,6 +69,7 @@ public class AbstractAttributeEnricherTest {
     lenient()
         .when(e.getMetrics())
         .thenReturn(Metrics.newBuilder().setMetricMap(new HashMap<>()).build());
+    when(e.getServiceName()).thenReturn("service");
     return e;
   }
 

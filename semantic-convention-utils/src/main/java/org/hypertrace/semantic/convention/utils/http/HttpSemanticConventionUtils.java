@@ -10,18 +10,23 @@ import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSem
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRING;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_UNDERSCORE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_METHOD;
+import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 
 import com.google.common.collect.Lists;
@@ -41,9 +46,13 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Utility class to fetch http span attributes */
 public class HttpSemanticConventionUtils {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpSemanticConventionUtils.class);
 
   // otel specific attributes
   private static final String OTEL_HTTP_METHOD = OTelHttpSemanticConventions.HTTP_METHOD.getValue();
@@ -115,6 +124,12 @@ public class HttpSemanticConventionUtils {
           RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
           OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue());
 
+  private static final List<String> STATUS_CODE_ATTRIBUTES =
+      List.of(
+          RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_STATUS_CODE),
+          RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE),
+          OTelHttpSemanticConventions.HTTP_STATUS_CODE.getValue());
+
   /** @return attribute keys for http method */
   public static List<String> getAttributeKeysForHttpMethod() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_HTTP_METHOD, OTEL_HTTP_METHOD));
@@ -127,6 +142,16 @@ public class HttpSemanticConventionUtils {
 
   public static List<String> getAttributeKeysForHttpTarget() {
     return Lists.newArrayList(Sets.newHashSet(OTEL_HTTP_TARGET));
+  }
+
+  public static boolean isAbsoluteUrl(String urlStr) {
+    try {
+      URL url = getNormalizedUrl(urlStr);
+      return url.toString().equals(urlStr);
+    } catch (MalformedURLException e) {
+      // ignore
+    }
+    return false;
   }
 
   /**
@@ -296,7 +321,8 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.of(getNormalizedUrl(url.get()).getAuthority());
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOGGER.warn(
+            "On extracting httpHost, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
     return Optional.ofNullable(
@@ -314,7 +340,8 @@ public class HttpSemanticConventionUtils {
         }
         return Optional.of(removeTrailingSlash(pathval));
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOGGER.warn(
+            "On extracting httpPath, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
     return path;
@@ -331,7 +358,7 @@ public class HttpSemanticConventionUtils {
       if (attributeValueMap.get(path) != null) {
         String s = attributeValueMap.get(path).getValue();
         if (StringUtils.isNotBlank(s) && s.startsWith(SLASH)) {
-          return getPathFromUrlObject(s).map(str -> removeTrailingSlash(str));
+          return getPathFromUrlObject(s).map(HttpSemanticConventionUtils::removeTrailingSlash);
         }
       }
     }
@@ -361,7 +388,8 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.of(getNormalizedUrl(url.get()).getProtocol());
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOGGER.warn(
+            "On extracting httpScheme, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
     return getHttpSchemeFromRawAttributes(event);
@@ -388,7 +416,7 @@ public class HttpSemanticConventionUtils {
     if (url.isPresent() && !isAbsoluteUrl(url.get())) {
       return Optional.empty();
     }
-    return getHttpUrlFromRawAttributes(event);
+    return url;
   }
 
   //  input url to populateurlparts
@@ -410,13 +438,17 @@ public class HttpSemanticConventionUtils {
       }
     }
 
-    // check for OTel format
-    Optional<String> httpUrlForOTelFormat = getHttpUrlForOTelFormat(attributeValueMap);
-    if (httpUrlFromRawAttributes != null
-        && (isAbsoluteUrl(httpUrlFromRawAttributes) || httpUrlForOTelFormat.isEmpty())) {
+    if (httpUrlFromRawAttributes != null && isAbsoluteUrl(httpUrlFromRawAttributes)) {
       return Optional.of(httpUrlFromRawAttributes);
     }
-    return httpUrlForOTelFormat;
+
+    // check for OTel format
+    Optional<String> httpUrlForOTelFormat = getHttpUrlForOTelFormat(attributeValueMap);
+    if (httpUrlForOTelFormat.isPresent()) {
+      return httpUrlForOTelFormat;
+    }
+
+    return Optional.ofNullable(httpUrlFromRawAttributes);
   }
 
   public static Optional<String> getHttpQueryString(Event event) {
@@ -430,7 +462,10 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.ofNullable(getNormalizedUrl(url.get()).getQuery());
       } catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOGGER.warn(
+            "On extracting httpQueryString, received an invalid URL: {}, {}",
+            url.get(),
+            e.getMessage());
       }
     }
     return queryString;
@@ -439,13 +474,56 @@ public class HttpSemanticConventionUtils {
   public static Optional<Integer> getHttpRequestSize(Event event) {
     String httpRequestSize =
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, REQUEST_SIZE_ATTRIBUTES);
-    return Optional.ofNullable(httpRequestSize).map(s -> Integer.parseInt(s));
+    return Optional.ofNullable(httpRequestSize).map(Integer::parseInt);
   }
 
   public static Optional<Integer> getHttpResponseSize(Event event) {
     String httpResponseSize =
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, RESPONSE_SIZE_ATTRIBUTES);
-    return Optional.ofNullable(httpResponseSize).map(s -> Integer.parseInt(s));
+    return Optional.ofNullable(httpResponseSize).map(Integer::parseInt);
+  }
+
+  public static int getHttpResponseStatusCode(Event event) {
+
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return 0;
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    for (String responseStatusCodeKey : STATUS_CODE_ATTRIBUTES) {
+      if (attributeValueMap.get(responseStatusCodeKey) != null) {
+        return Integer.parseInt(attributeValueMap.get(responseStatusCodeKey).getValue());
+      }
+    }
+
+    return 0;
+  }
+
+  public static Optional<String> getHttpRequestHeaderPath(Event event) {
+
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+    if (attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)) != null) {
+      return Optional.of(
+          attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)).getValue());
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getHttpXForwardedFor(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_X_FORWARDED_FOR_HEADER))));
+  }
+
+  public static Optional<String> getHttpRequestContentType(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_TYPE))));
   }
 
   static Optional<String> getPathFromUrlObject(String urlPath) {
@@ -453,7 +531,10 @@ public class HttpSemanticConventionUtils {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
     } catch (MalformedURLException e) {
-      e.printStackTrace();
+      LOGGER.warn(
+          "On extracting httpResponseStatusCode, received invalid URL path : {}, {}",
+          urlPath,
+          e.getMessage());
     }
     return Optional.empty();
   }
@@ -461,15 +542,5 @@ public class HttpSemanticConventionUtils {
   private static String removeTrailingSlash(String s) {
     // Ends with "/" and it's not home page path
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
-  }
-
-  static boolean isAbsoluteUrl(String urlStr) {
-    try {
-      URL url = getNormalizedUrl(urlStr);
-      return url.toString().equals(urlStr);
-    } catch (MalformedURLException e) {
-      // ignore
-    }
-    return false;
   }
 }

@@ -9,44 +9,53 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ApiEntityDaoTest {
+class ApiEntityDaoTest {
 
   private EdsClient edsClient;
-  private ApiEntityDao underTest;
+  private ApiEntityDao apiEntityDao;
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     edsClient = mock(EdsClient.class);
-    underTest = new ApiEntityDao(edsClient);
+    apiEntityDao = new ApiEntityDao(edsClient);
   }
 
   @Test
-  public void whenValidDataIsPassedExpectDaoToBeCalled() {
-    underTest.upsertApiEntity("tenant-1", "service-1", "OPERATION_NAME", "Driver:;getCustomers");
+  void whenValidDataIsPassedExpectDaoToBeCalled() {
+    apiEntityDao.upsertApiEntity(
+        "tenant-1", "service-1", "service1", "OPERATION_NAME", "Driver:;getCustomers");
     verify(edsClient).upsert(any(org.hypertrace.entity.data.service.v1.Entity.class));
   }
 
   @Test
-  public void whenParamsAreNullThenExpectNullPointerException() {
+  void whenParamsAreNullThenExpectNullPointerException() {
     Assertions.assertThrows(
         NullPointerException.class,
         () -> {
-          underTest.upsertApiEntity(null, "service-1", "OPERATION_NAME", "Driver:;getCustomers");
+          apiEntityDao.upsertApiEntity(
+              null, "service-1", "service1", "OPERATION_NAME", "Driver:;getCustomers");
         });
     Assertions.assertThrows(
         NullPointerException.class,
         () -> {
-          underTest.upsertApiEntity("tenant-1", null, "OPERATION_NAME", "Driver:;getCustomers");
+          apiEntityDao.upsertApiEntity(
+              "tenant-1", null, null, "OPERATION_NAME", "Driver:;getCustomers");
         });
     Assertions.assertThrows(
         NullPointerException.class,
         () -> {
-          underTest.upsertApiEntity("tenant-1", "service-1", null, "Driver:;getCustomers");
+          apiEntityDao.upsertApiEntity("tenant-1", "service-1", null, null, "Driver:;getCustomers");
         });
     Assertions.assertThrows(
         NullPointerException.class,
         () -> {
-          underTest.upsertApiEntity("tenant-1", "service-1", "OPERATION_NAME", null);
+          apiEntityDao.upsertApiEntity(
+              "tenant-1", "service-1", "service1", null, "Driver:;getCustomers");
+        });
+    Assertions.assertThrows(
+        NullPointerException.class,
+        () -> {
+          apiEntityDao.upsertApiEntity("tenant-1", "service-1", "service1", "OPERATION_NAME", null);
         });
   }
 }

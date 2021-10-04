@@ -35,18 +35,18 @@ tasks.test {
 
 dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-impl"))
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.16")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.23")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.23")
-  implementation("org.hypertrace.entity.service:entity-service-client:0.6.4")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.18")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
+  implementation("org.hypertrace.entity.service:entity-service-client:0.8.0")
 
   implementation("com.typesafe:config:1.4.1")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
   constraints {
-    runtimeOnly("io.netty:netty-codec-http2:4.1.63.Final") {
+    runtimeOnly("io.netty:netty-codec-http2:4.1.68.Final") {
       because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
     }
-    runtimeOnly("io.netty:netty-handler-proxy:4.1.63.Final") {
+    runtimeOnly("io.netty:netty-handler-proxy:4.1.68.Final") {
       because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
     }
     implementation("org.glassfish.jersey.core:jersey-common:2.34") {

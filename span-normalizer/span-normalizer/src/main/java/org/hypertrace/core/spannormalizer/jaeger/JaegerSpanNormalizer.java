@@ -43,7 +43,7 @@ import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
-import org.hypertrace.core.spannormalizer.fieldgenerators.FieldsGenerator;
+import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,6 @@ public class JaegerSpanNormalizer {
   private static final String SPAN_NORMALIZATION_TIME_METRIC = "span.normalization.time";
 
   private static JaegerSpanNormalizer INSTANCE;
-  private final FieldsGenerator fieldsGenerator;
   private final ConcurrentMap<String, Timer> tenantToSpanNormalizationTimer =
       new ConcurrentHashMap<>();
   private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
@@ -74,7 +73,6 @@ public class JaegerSpanNormalizer {
   }
 
   public JaegerSpanNormalizer(Config config) {
-    this.fieldsGenerator = new FieldsGenerator();
     this.tenantIdHandler = new TenantIdHandler(config);
   }
 
@@ -114,7 +112,9 @@ public class JaegerSpanNormalizer {
               tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
       rawSpanBuilder.setEvent(event);
       rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
-      resourceNormalizer.normalize(jaegerSpan).ifPresent(rawSpanBuilder::setResource);
+      resourceNormalizer
+          .normalize(jaegerSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey())
+          .ifPresent(rawSpanBuilder::setResource);
 
       // build raw span
       RawSpan rawSpan = rawSpanBuilder.build();
@@ -167,10 +167,10 @@ public class JaegerSpanNormalizer {
     eventBuilder.setAttributesBuilder(Attributes.newBuilder().setAttributeMap(attributeFieldMap));
 
     List<KeyValue> tagsList = jaegerSpan.getTagsList();
-    // Add the attributes to the eventBuilder and generate fields from the attributes
-    // 1. Adding all the attributes to the eventBuilder is still being done to maintain backwards
-    // compatibility. This
-    //    will stop once all consumers of event start using the fields.
+    // Stop populating first class fields for - grpc, rpc, http, and sql.
+    // see more details:
+    // https://github.com/hypertrace/hypertrace/issues/244
+    // https://github.com/hypertrace/hypertrace/issues/245
     for (KeyValue keyValue : tagsList) {
       // Convert all attributes to lower case so that we don't have to
       // deal with the case sensitivity across different layers in the
@@ -180,18 +180,8 @@ public class JaegerSpanNormalizer {
       if ((tenantIdKey.isPresent() && key.equals(tenantIdKey.get()))) {
         continue;
       }
-      attributeFieldMap.put(
-          key,
-          org.hypertrace.core.spannormalizer.util.AttributeValueCreator.createFromJaegerKeyValue(
-              keyValue));
-      // Generate a field from the keyValue
-      this.fieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder, tagsMap);
+      attributeFieldMap.put(key, JaegerHTTagsConverter.createFromJaegerKeyValue(keyValue));
     }
-
-    // Generate other fields if possible from the existing ones. eg. http scheme and query string
-    // from url
-    // note: attribute field map should be populated with attribute keys prior to this call
-    this.fieldsGenerator.populateOtherFields(eventBuilder, attributeFieldMap);
 
     // Jaeger Fields - flags, warnings, logs, jaeger service name in the Process
     JaegerFields.Builder jaegerFieldsBuilder = eventBuilder.getJaegerFieldsBuilder();

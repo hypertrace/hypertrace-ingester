@@ -22,12 +22,13 @@ import org.slf4j.LoggerFactory;
 public class JaegerSpanPreProcessor
     implements Transformer<byte[], Span, KeyValue<byte[], PreProcessedSpan>> {
 
+  static final String SPANS_COUNTER = "hypertrace.reported.spans";
+  private static final String DROPPED_SPANS_COUNTER = "hypertrace.reported.spans.dropped";
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
-
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
-  static final String SPANS_COUNTER = "hypertrace.reported.spans";
-
+  private static final ConcurrentMap<String, Counter> tenantToSpansDroppedCount =
+      new ConcurrentHashMap<>();
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
 
@@ -83,23 +84,35 @@ public class JaegerSpanPreProcessor
   }
 
   @VisibleForTesting
-  PreProcessedSpan preProcessSpan(Span value) {
-    Map<String, JaegerSpanInternalModel.KeyValue> tags =
-        value.getTagsList().stream()
+  PreProcessedSpan preProcessSpan(Span span) {
+    Map<String, JaegerSpanInternalModel.KeyValue> spanTags =
+        span.getTagsList().stream()
+            .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
+    Map<String, JaegerSpanInternalModel.KeyValue> processTags =
+        span.getProcess().getTagsList().stream()
             .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
 
-    Optional<String> maybeTenantId = tenantIdHandler.getAllowedTenantId(value, tags);
+    Optional<String> maybeTenantId =
+        tenantIdHandler.getAllowedTenantId(span, spanTags, processTags);
     if (maybeTenantId.isEmpty()) {
       return null;
     }
 
     String tenantId = maybeTenantId.get();
 
-    if (spanFilter.shouldDropSpan(tags)) {
+    if (spanFilter.shouldDropSpan(span, spanTags)) {
+      // increment dropped counter at tenant level
+      tenantToSpansDroppedCount
+          .computeIfAbsent(
+              tenantId,
+              tenant ->
+                  PlatformMetricsRegistry.registerCounter(
+                      DROPPED_SPANS_COUNTER, Map.of("tenantId", tenantId)))
+          .increment();
       return null;
     }
 
-    return new PreProcessedSpan(tenantId, value);
+    return new PreProcessedSpan(tenantId, span);
   }
 
   @Override

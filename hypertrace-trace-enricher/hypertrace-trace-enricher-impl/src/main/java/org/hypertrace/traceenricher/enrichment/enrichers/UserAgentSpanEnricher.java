@@ -1,7 +1,14 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.typesafe.config.Config;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
@@ -9,6 +16,7 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
@@ -16,11 +24,52 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.UserAgent;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
+import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 
 public class UserAgentSpanEnricher extends AbstractTraceEnricher {
 
-  private UserAgentStringParser userAgentStringParser =
+  private static final String CACHE_CONFIG_KEY = "cache";
+  private static final String CACHE_CONFIG_MAX_SIZE = "maxSize";
+  private static final int CACHE_MAX_SIZE_DEFAULT = 10000;
+  private static final String USER_AGENT_MAX_LENGTH_KEY = "user.agent.max.length";
+  private static final int DEFAULT_USER_AGENT_MAX_LENGTH = 1000;
+  private static final String DOT = ".";
+  private final UserAgentStringParser userAgentStringParser =
       UADetectorServiceFactory.getResourceModuleParser();
+  @Nullable private LoadingCache<String, ReadableUserAgent> userAgentCache;
+  private int userAgentMaxLength;
+
+  @Override
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {
+    if (enricherConfig.hasPath(CACHE_CONFIG_KEY)) {
+      Config enricherCacheConfig = enricherConfig.getConfig(CACHE_CONFIG_KEY);
+      int cacheSize =
+          enricherCacheConfig.hasPath(CACHE_CONFIG_MAX_SIZE)
+              ? enricherCacheConfig.getInt(CACHE_CONFIG_MAX_SIZE)
+              : CACHE_MAX_SIZE_DEFAULT;
+      userAgentCache =
+          CacheBuilder.newBuilder()
+              .maximumSize(cacheSize)
+              .recordStats()
+              .build(
+                  new CacheLoader<>() {
+                    @Override
+                    @ParametersAreNonnullByDefault
+                    public ReadableUserAgent load(String userAgentString) {
+                      return userAgentStringParser.parse(userAgentString);
+                    }
+                  });
+      PlatformMetricsRegistry.registerCache(
+          this.getClass().getName() + DOT + "userAgentCache",
+          userAgentCache,
+          Collections.emptyMap());
+    }
+    if (enricherConfig.hasPath(USER_AGENT_MAX_LENGTH_KEY)) {
+      userAgentMaxLength = enricherConfig.getInt(USER_AGENT_MAX_LENGTH_KEY);
+    } else {
+      userAgentMaxLength = DEFAULT_USER_AGENT_MAX_LENGTH;
+    }
+  }
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
@@ -37,7 +86,14 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
     Optional<String> mayBeUserAgent = getUserAgent(event);
 
     if (mayBeUserAgent.isPresent()) {
-      ReadableUserAgent userAgent = userAgentStringParser.parse(mayBeUserAgent.get());
+      String userAgentStr = mayBeUserAgent.get();
+      if (userAgentStr.length() > userAgentMaxLength) {
+        userAgentStr = userAgentStr.substring(0, userAgentMaxLength);
+      }
+      ReadableUserAgent userAgent =
+          userAgentCache != null
+              ? userAgentCache.getUnchecked(userAgentStr)
+              : userAgentStringParser.parse(userAgentStr);
       addEnrichedAttribute(
           event,
           EnrichedSpanConstants.getValue(UserAgent.USER_AGENT_NAME),

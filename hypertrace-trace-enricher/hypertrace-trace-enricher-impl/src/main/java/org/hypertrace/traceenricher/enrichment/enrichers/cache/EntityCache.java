@@ -3,12 +3,15 @@ package org.hypertrace.traceenricher.enrichment.enrichers.cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hypertrace.core.grpcutils.context.ContextualKey;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.entity.constants.v1.CommonAttribute;
 import org.hypertrace.entity.data.service.client.EdsClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
@@ -20,6 +23,7 @@ import org.hypertrace.entity.v1.entitytype.EntityType;
 
 /** Class that holds all the entity related caches used by the enrichers */
 public class EntityCache {
+  private static final String DOT = ".";
   private final EdsClient edsClient;
 
   /**
@@ -30,6 +34,7 @@ public class EntityCache {
       CacheBuilder.newBuilder()
           .maximumSize(10000)
           .expireAfterWrite(5, TimeUnit.MINUTES)
+          .recordStats()
           .build(
               new CacheLoader<>() {
                 public Optional<Entity> load(@Nonnull Pair<String, String> pair) {
@@ -89,28 +94,29 @@ public class EntityCache {
    * Cache of Backend identifying attributes to Entity Key: Map of identifying attributes Value:
    * Optional Backend entity
    */
-  private final LoadingCache<Pair<String, Map<String, AttributeValue>>, Optional<Entity>>
+  private final LoadingCache<ContextualKey<Map<String, AttributeValue>>, Optional<Entity>>
       backendIdAttrsToEntityCache =
           CacheBuilder.newBuilder()
               .maximumSize(10000)
               .expireAfterWrite(5, TimeUnit.MINUTES)
-              .build(
-                  new CacheLoader<>() {
-                    @Override
-                    public Optional<Entity> load(
-                        @Nonnull Pair<String, Map<String, AttributeValue>> pair) {
-                      ByTypeAndIdentifyingAttributes request =
-                          ByTypeAndIdentifyingAttributes.newBuilder()
-                              .setEntityType(EntityType.BACKEND.name())
-                              .putAllIdentifyingAttributes(pair.getRight())
-                              .build();
-                      return Optional.ofNullable(
-                          edsClient.getByTypeAndIdentifyingAttributes(pair.getLeft(), request));
-                    }
-                  });
+              .build(CacheLoader.from(this::loadBackendFromIdentifyingAttributes));
 
   public EntityCache(EdsClient edsClient) {
     this.edsClient = edsClient;
+    PlatformMetricsRegistry.registerCache(
+        this.getClass().getName() + DOT + "fqnToServiceEntity",
+        fqnToServiceEntity,
+        Collections.emptyMap());
+    PlatformMetricsRegistry.registerCache(
+        this.getClass().getName() + DOT + "nameToServiceEntities",
+        nameToServiceEntities,
+        Collections.emptyMap());
+    PlatformMetricsRegistry.registerCache(
+        this.getClass().getName() + DOT + "namespaceCache", namespaceCache, Collections.emptyMap());
+    PlatformMetricsRegistry.registerCache(
+        this.getClass().getName() + DOT + "backendIdAttrsToEntityCache",
+        backendIdAttrsToEntityCache,
+        Collections.emptyMap());
   }
 
   public LoadingCache<Pair<String, String>, Optional<Entity>> getFqnToServiceEntityCache() {
@@ -125,8 +131,20 @@ public class EntityCache {
     return namespaceCache;
   }
 
-  public LoadingCache<Pair<String, Map<String, AttributeValue>>, Optional<Entity>>
+  public LoadingCache<ContextualKey<Map<String, AttributeValue>>, Optional<Entity>>
       getBackendIdAttrsToEntityCache() {
     return backendIdAttrsToEntityCache;
+  }
+
+  protected Optional<Entity> loadBackendFromIdentifyingAttributes(
+      ContextualKey<Map<String, AttributeValue>> key) {
+    ByTypeAndIdentifyingAttributes request =
+        ByTypeAndIdentifyingAttributes.newBuilder()
+            .setEntityType(EntityType.BACKEND.name())
+            .putAllIdentifyingAttributes(key.getData())
+            .build();
+    return Optional.ofNullable(
+        edsClient.getByTypeAndIdentifyingAttributes(
+            key.getContext().getTenantId().orElseThrow(), request));
   }
 }

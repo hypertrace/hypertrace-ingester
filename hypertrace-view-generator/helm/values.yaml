@@ -348,42 +348,42 @@ kafka-topic-creator:
   helmHook: pre-install,pre-upgrade
   kafka:
     topics:
-      - name: backend-entity-view-events
+      backend-entity-view-events:
         replicationFactor: 1
         partitions: 2
         configs:
-          - retention.bytes=4294967296
-          - retention.ms=259200000
-      - name: raw-trace-view-events
+          retention.bytes: 4294967296
+          retention.ms: 86400000
+      raw-trace-view-events:
         replicationFactor: 1
         partitions: 2
         configs:
-          - retention.bytes=4294967296
-          - retention.ms=259200000
-      - name: raw-service-view-events
+          retention.bytes: 4294967296
+          retention.ms: 86400000
+      raw-service-view-events:
         replicationFactor: 1
         partitions: 2
         configs:
-          - retention.bytes=4294967296
-          - retention.ms=259200000
-      - name: service-call-view-events
+          retention.bytes: 4294967296
+          retention.ms: 86400000
+      service-call-view-events:
         replicationFactor: 1
         partitions: 2
         configs:
-          - retention.bytes=4294967296
-          - retention.ms=259200000
-      - name: span-event-view
+          retention.bytes: 4294967296
+          retention.ms: 86400000
+      span-event-view:
         replicationFactor: 1
         partitions: 2
         configs:
-          - retention.bytes=4294967296
-          - retention.ms=259200000
-      - name: log-event-view
+          retention.bytes: 4294967296
+          retention.ms: 86400000
+      log-event-view:
         replicationFactor: 1
         partitions: 2
         configs:
-          - retention.bytes=4294967296
-          - retention.ms=259200000
+          retention.bytes: 4294967296
+          retention.ms: 86400000
   zookeeper:
     address: zookeeper:2181
   imagePullSecrets: []

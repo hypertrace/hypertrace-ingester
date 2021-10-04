@@ -84,8 +84,9 @@ public class TenantIdHandler {
     }
   }
 
-  Optional<String> getAllowedTenantId(Span jaegerSpan, Map<String, KeyValue> tags) {
-    Optional<String> maybeTenantId = this.tenantIdProvider.getTenantId(tags);
+  Optional<String> getAllowedTenantId(
+      Span jaegerSpan, Map<String, KeyValue> spanTags, Map<String, KeyValue> processTags) {
+    Optional<String> maybeTenantId = this.tenantIdProvider.getTenantId(spanTags, processTags);
 
     if (maybeTenantId.isEmpty()) {
       tenantIdProvider.logWarning(LOG, jaegerSpan);

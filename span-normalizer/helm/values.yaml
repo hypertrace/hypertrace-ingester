@@ -110,26 +110,32 @@ logConfig:
     rolling:
       enabled: false
 
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
 kafka-topic-creator:
   enabled: true
   jobName: raw-spans-topic-creator
   helmHook: pre-install,pre-upgrade
   kafka:
     topics:
-      - name: raw-spans-from-jaeger-spans
+      raw-spans-from-jaeger-spans:
         replicationFactor: 3
         partitions: 8
         configs:
-          - retention.bytes=8589934592 # default = -1
-          - retention.ms=43200000 # default = 604800000 (7 days)
-          - max.message.bytes=1048588 # default = 1048588
-      - name: raw-logs
+          retention.bytes: 8589934592 # default = -1
+          retention.ms: 86400000 # default = 604800000 (7 days)
+          max.message.bytes: 1048588 # default = 1048588
+      raw-logs:
         replicationFactor: 3
         partitions: 8
         configs:
-          - retention.bytes=8589934592 # default = -1
-          - retention.ms=43200000 # default = 604800000 (7 days)
-          - max.message.bytes=1048588 # default = 1048588
+          retention.bytes: 8589934592 # default = -1
+          retention.ms: 86400000 # default = 604800000 (7 days)
+          max.message.bytes: 1048588 # default = 1048588
   zookeeper:
     address: zookeeper:2181
   imagePullSecrets: []
