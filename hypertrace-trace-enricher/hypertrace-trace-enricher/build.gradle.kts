@@ -35,7 +35,7 @@ tasks.test {
 
 dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-impl"))
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.18")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.19")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.0")
