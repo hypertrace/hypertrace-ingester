@@ -38,7 +38,7 @@ dependencies {
   implementation("org.hypertrace.core.datamodel:data-model:0.1.18")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
-  implementation("org.hypertrace.entity.service:entity-service-client:0.8.0")
+  implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
 
   implementation("com.typesafe:config:1.4.1")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
@@ -55,7 +55,7 @@ dependencies {
   }
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.36.1")
+  runtimeOnly("io.grpc:grpc-netty:1.41.0")
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
