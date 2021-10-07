@@ -69,7 +69,7 @@ public class StructuredTracesEnrichmentTest {
     // Not passing the Entity Data Service configuration, unless the container id
     // in the span data in inside EDS
     when(clientRegistry.getEdsCacheClient()).thenReturn(edsClient);
-    entityCache = new EntityCache(edsClient);
+    entityCache = new EntityCache(edsClient, Runnable::run);
     when(clientRegistry.getEntityCache()).thenReturn(entityCache);
 
     enrichmentProcessor = createEnricherProcessor(configs);

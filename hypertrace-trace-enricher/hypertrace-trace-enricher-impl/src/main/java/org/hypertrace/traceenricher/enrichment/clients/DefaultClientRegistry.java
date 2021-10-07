@@ -5,6 +5,7 @@ import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.Executor;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -44,7 +45,7 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
   private final GrpcChannelRegistry grpcChannelRegistry = new GrpcChannelRegistry();
 
-  public DefaultClientRegistry(Config config) {
+  public DefaultClientRegistry(Config config, Executor cacheLoaderExecutor) {
     this.attributeServiceChannel =
         this.buildChannel(
             config.getString(ATTRIBUTE_SERVICE_HOST_KEY),
@@ -66,9 +67,10 @@ public class DefaultClientRegistry implements ClientRegistry {
     this.edsCacheClient =
         new EdsCacheClient(
             new EntityDataServiceClient(this.entityServiceChannel),
-            EntityServiceClientConfig.from(config).getCacheConfig());
+            EntityServiceClientConfig.from(config).getCacheConfig(),
+            cacheLoaderExecutor);
     this.entityDataClient = EntityDataClient.builder(this.entityServiceChannel).build();
-    this.entityCache = new EntityCache(this.edsCacheClient);
+    this.entityCache = new EntityCache(this.edsCacheClient, cacheLoaderExecutor);
     this.entityAccessor =
         new TraceEntityAccessorBuilder(
                 EntityTypeClient.builder(this.entityServiceChannel).build(),
