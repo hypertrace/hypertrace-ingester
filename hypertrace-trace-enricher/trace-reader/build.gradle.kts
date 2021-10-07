@@ -12,8 +12,8 @@ dependencies {
   api("org.hypertrace.entity.service:entity-data-service-rx-client:0.8.5")
   api("org.hypertrace.core.datamodel:data-model:0.1.17")
   implementation("org.hypertrace.core.attribute.service:attribute-projection-registry:0.12.3")
-  implementation("org.hypertrace.core.grpcutils:grpc-client-rx-utils:0.5.2")
-  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.5.2")
+  implementation("org.hypertrace.core.grpcutils:grpc-client-rx-utils:0.6.1")
+  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.6.1")
   implementation("io.reactivex.rxjava3:rxjava:3.0.11")
 
   annotationProcessor("org.projectlombok:lombok:1.18.20")
