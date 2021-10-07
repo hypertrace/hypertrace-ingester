@@ -40,7 +40,7 @@ dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.36.1")
+  runtimeOnly("io.grpc:grpc-netty:1.40.1")
   constraints {
     runtimeOnly("io.netty:netty-codec-http2:4.1.68.Final") {
       because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
