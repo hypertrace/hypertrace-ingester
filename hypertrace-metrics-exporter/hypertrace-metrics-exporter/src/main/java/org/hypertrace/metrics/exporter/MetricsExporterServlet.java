@@ -1,7 +1,7 @@
 package org.hypertrace.metrics.exporter;
 
 import io.opentelemetry.exporter.prometheus.PrometheusCollector;
-import io.prometheus.client.CollectorRegistry;
+import io.opentelemetry.sdk.metrics.export.MetricReader;
 import io.prometheus.client.exporter.MetricsServlet;
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -9,14 +9,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class MetricsExporterServlet extends MetricsServlet {
-  private PrometheusCollector prometheusCollector;
-  private static final CollectorRegistry collectorRegistry = new CollectorRegistry(false);
+  // private PrometheusCollector prometheusCollector;
+  // private static final CollectorRegistry collectorRegistry = new CollectorRegistry(false);
   private InMemoryMetricsProducer inMemoryMetricsProducer;
+  private MetricReader metricReader;
 
   public MetricsExporterServlet(InMemoryMetricsProducer producer) {
-    super(collectorRegistry);
-    prometheusCollector = PrometheusCollector.builder().setMetricProducer(producer).build();
-    collectorRegistry.register(prometheusCollector);
+    metricReader = PrometheusCollector.create().apply(producer);
     inMemoryMetricsProducer = producer;
   }
 

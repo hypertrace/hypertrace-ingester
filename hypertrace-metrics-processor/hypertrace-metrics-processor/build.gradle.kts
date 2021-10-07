@@ -32,12 +32,13 @@ dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
 
   // open telemetry
-  implementation("io.opentelemetry:opentelemetry-api:1.4.1")
-  implementation("io.opentelemetry:opentelemetry-api-metrics:1.4.1-alpha")
-  implementation("io.opentelemetry:opentelemetry-sdk:1.4.1")
-  implementation("io.opentelemetry:opentelemetry-exporter-otlp-common:1.4.1")
-  implementation("io.opentelemetry:opentelemetry-sdk-metrics:1.4.1-alpah")
-  implementation("io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.4.1-alpha")
+  implementation("io.opentelemetry:opentelemetry-api:1.7.0-SNAPSHOT")
+  implementation("io.opentelemetry:opentelemetry-api-metrics:1.7.0-alpha-SNAPSHOT")
+  implementation("io.opentelemetry:opentelemetry-sdk:1.7.0-SNAPSHOT")
+  implementation("io.opentelemetry:opentelemetry-sdk-metrics:1.7.0-alpha-SNAPSHOT")
+
+  // open telemetry proto
+  implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
