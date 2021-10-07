@@ -28,15 +28,14 @@ public class ViewGeneratorStateTest {
   @Test
   public void testTraceState() {
     TraceState traceState = new TraceState(getTestTrace(customerId, traceId1));
-    assertEquals(1, traceState.getEntityMap().size());
-    assertEquals(2, traceState.getEventMap().size());
-    assertEquals(1, traceState.getChildToParentEventIds().size());
-    assertEquals(1, traceState.getParentToChildrenEventIds().size());
+    traceStateAsserts(traceState);
+  }
 
-    assertTrue(traceState.getParentToChildrenEventIds().containsKey(span1));
-    assertEquals(1, traceState.getParentToChildrenEventIds().get(span1).size());
-    assertTrue(traceState.getChildToParentEventIds().containsKey(span2));
-    assertEquals(span1, traceState.getChildToParentEventIds().get(span2));
+  @Test
+  public void testTraceStateWithFollowFrom() {
+    TraceState traceState =
+        new TraceState(getTestTrace(customerId, traceId1, EventRefType.FOLLOWS_FROM));
+    traceStateAsserts(traceState);
   }
 
   @Test
@@ -97,6 +96,11 @@ public class ViewGeneratorStateTest {
   }
 
   private StructuredTrace getTestTrace(String customerId, ByteBuffer traceId) {
+    return getTestTrace(customerId, traceId, EventRefType.CHILD_OF);
+  }
+
+  private StructuredTrace getTestTrace(
+      String customerId, ByteBuffer traceId, EventRefType refType) {
     return StructuredTrace.newBuilder()
         .setCustomerId(customerId)
         .setTraceId(traceId)
@@ -125,7 +129,7 @@ public class ViewGeneratorStateTest {
                         Arrays.asList(
                             EventRef.newBuilder()
                                 .setTraceId(traceId)
-                                .setRefType(EventRefType.CHILD_OF)
+                                .setRefType(refType)
                                 .setEventId(ByteBuffer.wrap(("span-1".getBytes())))
                                 .build()))
                     .build()))
@@ -137,5 +141,17 @@ public class ViewGeneratorStateTest {
         .setEntityEventGraph(null)
         .setMetrics(null)
         .build();
+  }
+
+  private void traceStateAsserts(TraceState traceState) {
+    assertEquals(1, traceState.getEntityMap().size());
+    assertEquals(2, traceState.getEventMap().size());
+    assertEquals(1, traceState.getChildToParentEventIds().size());
+    assertEquals(1, traceState.getParentToChildrenEventIds().size());
+
+    assertTrue(traceState.getParentToChildrenEventIds().containsKey(span1));
+    assertEquals(1, traceState.getParentToChildrenEventIds().get(span1).size());
+    assertTrue(traceState.getChildToParentEventIds().containsKey(span2));
+    assertEquals(span1, traceState.getChildToParentEventIds().get(span2));
   }
 }

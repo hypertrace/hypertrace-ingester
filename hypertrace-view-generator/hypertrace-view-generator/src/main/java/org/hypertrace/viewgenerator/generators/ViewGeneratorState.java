@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.apache.avro.reflect.Nullable;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
@@ -61,8 +60,8 @@ public class ViewGeneratorState {
         ByteBuffer parentEventId = getParentId(event);
         if (parentEventId != null) {
           parentToChildrenEventIds
-                  .computeIfAbsent(parentEventId, v -> new ArrayList<>())
-                  .add(childEventId);
+              .computeIfAbsent(parentEventId, v -> new ArrayList<>())
+              .add(childEventId);
           childToParentEventIds.put(childEventId, parentEventId);
         }
       }
@@ -89,32 +88,30 @@ public class ViewGeneratorState {
     }
 
     /**
-     * Note:
-     * As of now, open tracing specification represents two construct for providing support
-     * for relation between spans: child_of and follow_from.
-     * Ref : https://opentracing.io/specification/
+     * Note: As of now, open tracing specification represents two construct for providing support
+     * for relation between spans: child_of and follow_from. Ref :
+     * https://opentracing.io/specification/
      *
-     * On the other hand, as of now, open telemetry supports only concept of parent
-     * Ref : https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/trace/v1/trace.proto#L85
+     * <p>On the other hand, as of now, open telemetry supports only concept of parent Ref :
+     * https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/trace/v1/trace.proto#L85
      *
-     * However, there are open discussion for similar construct on otel community.
-     * Ref: https://github.com/open-telemetry/opentelemetry-specification/issues/65
+     * <p>However, there are open discussion for similar construct on otel community. Ref:
+     * https://github.com/open-telemetry/opentelemetry-specification/issues/65
      *
-     * As, both the construct `child_of` and `follow_from` represent parent-child relation in common
-     * where in one case parent is interested in child span's result while in other case not.
+     * <p>As, both the construct `child_of` and `follow_from` represent parent-child relation in
+     * common where in one case parent is interested in child span's result while in other case not.
      *
-     * So, to support common behaviour, we will be establish link for `follow_from` as well.
+     * <p>So, to support common behaviour, we will be establish link for `follow_from` as well.
      *
-     * Also expecting only 1 child-parent relation
-     * */
-
+     * <p>Also expecting only 1 child-parent relation
+     */
     @Nullable
     private ByteBuffer getParentId(Event event) {
       Map<Boolean, List<EventRef>> referenceSplits =
-              event.getEventRefList().stream()
-                      .collect(
-                              Collectors.partitioningBy(
-                                      eventRef -> eventRef.getRefType() == EventRefType.CHILD_OF));
+          event.getEventRefList().stream()
+              .collect(
+                  Collectors.partitioningBy(
+                      eventRef -> eventRef.getRefType() == EventRefType.CHILD_OF));
 
       List<EventRef> childEventRef = referenceSplits.get(true);
       if (childEventRef != null && childEventRef.size() > 0) {
