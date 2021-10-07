@@ -36,7 +36,7 @@ dependencies {
   implementation("org.hypertrace.core.datamodel:data-model:0.1.19")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
 
-  implementation("org.hypertrace.entity.service:entity-service-api:0.8.0")
+  implementation("org.hypertrace.entity.service:entity-service-api:0.8.5")
 
   implementation("org.apache.avro:avro:1.10.2")
   implementation("org.apache.commons:commons-lang3:3.12.0")
