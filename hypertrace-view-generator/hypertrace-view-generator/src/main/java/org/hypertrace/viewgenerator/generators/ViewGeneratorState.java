@@ -58,7 +58,7 @@ public class ViewGeneratorState {
 
       for (Event event : trace.getEventList()) {
         ByteBuffer childEventId = event.getEventId();
-        ByteBuffer parentEventId = buildParentChildLinks(event);
+        ByteBuffer parentEventId = getParentId(event);
         if (parentEventId != null) {
           parentToChildrenEventIds
                   .computeIfAbsent(parentEventId, v -> new ArrayList<>())
@@ -109,7 +109,7 @@ public class ViewGeneratorState {
      * */
 
     @Nullable
-    private ByteBuffer buildParentChildLinks(Event event) {
+    private ByteBuffer getParentId(Event event) {
       Map<Boolean, List<EventRef>> referenceSplits =
               event.getEventRefList().stream()
                       .collect(
@@ -121,7 +121,7 @@ public class ViewGeneratorState {
         return childEventRef.get(0).getEventId();
       } else {
         List<EventRef> followFromEventRef = referenceSplits.get(false);
-        if (followFromEventRef != null && followFromEventRef.size() == 1) {
+        if (followFromEventRef != null && followFromEventRef.size() > 0) {
           return followFromEventRef.get(0).getEventId();
         }
       }
