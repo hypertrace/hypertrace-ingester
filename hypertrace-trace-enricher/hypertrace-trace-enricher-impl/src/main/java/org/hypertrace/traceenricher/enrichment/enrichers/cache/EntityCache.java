@@ -92,6 +92,7 @@ public class EntityCache {
     backendIdAttrsToEntityCache =
         CacheBuilder.newBuilder()
             .maximumSize(10000)
+            .refreshAfterWrite(4, TimeUnit.MINUTES)
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build(
                 CacheLoader.asyncReloading(
