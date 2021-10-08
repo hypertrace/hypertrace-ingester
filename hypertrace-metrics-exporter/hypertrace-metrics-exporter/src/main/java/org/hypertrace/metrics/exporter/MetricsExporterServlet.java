@@ -14,12 +14,12 @@ public class MetricsExporterServlet extends MetricsServlet {
   private InMemoryMetricsProducer inMemoryMetricsProducer;
   private MetricReader metricReader;
   private Collector collector;
-  private CollectorRegistry collectorRegistry = new CollectorRegistry(false);
+  private static CollectorRegistry collectorRegistry = new CollectorRegistry(false);
 
   public MetricsExporterServlet(InMemoryMetricsProducer producer) {
-    // metricReader = PrometheusCollector.create().apply(producer);
+    super(collectorRegistry);
     collector = PrometheusCollector.getNewInstance(producer);
-    collectorRegistry.register(PrometheusCollector.getNewInstance(producer));
+    collectorRegistry.register(collector);
     inMemoryMetricsProducer = producer;
   }
 
@@ -28,6 +28,7 @@ public class MetricsExporterServlet extends MetricsServlet {
       throws ServletException, IOException {
     try {
       super.doGet(req, resp);
+      // List<MetricFamilySamples> test =  collector.collect();
       inMemoryMetricsProducer.setCommitOffset();
     } catch (ServletException e) {
       throw e;

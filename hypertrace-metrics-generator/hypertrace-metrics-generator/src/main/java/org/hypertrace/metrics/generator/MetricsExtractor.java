@@ -128,11 +128,7 @@ public class MetricsExtractor
                       io.opentelemetry.proto.common.v1.KeyValue.newBuilder();
                   keyValueBuilder.setKey(k.getKey());
                   String value = k.getValue() != null ? k.getValue() : "";
-                  keyValueBuilder.setValue(
-                      AnyValue.newBuilder()
-                          .setStringValue(value)
-                          .build()
-                  );
+                  keyValueBuilder.setValue(AnyValue.newBuilder().setStringValue(value).build());
                   return keyValueBuilder.build();
                 })
             .collect(Collectors.toList());

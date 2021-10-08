@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 public class MetricsEnricher
     implements Transformer<byte[], ResourceMetrics, KeyValue<byte[], ResourceMetrics>> {
   private static final Logger logger = LoggerFactory.getLogger(MetricsEnricher.class);
+
   @Override
   public void init(ProcessorContext context) {}
 
