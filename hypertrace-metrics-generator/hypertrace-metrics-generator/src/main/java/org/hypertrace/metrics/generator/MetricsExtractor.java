@@ -71,6 +71,9 @@ public class MetricsExtractor
             .map(k -> convertToResourceMetric(k.getKey(), k.getValue()))
             .collect(Collectors.toList());
 
+    // remove the keys from map
+    metricIdentities.stream().forEach(k -> metricIdentityMap.remove(k.getKey()));
+
     if (resourceMetrics.size() > 0) {
       return new KeyValue<>(null, resourceMetrics);
     }
