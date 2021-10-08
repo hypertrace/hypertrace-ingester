@@ -123,11 +123,18 @@ public class MetricsExtractor
     List<io.opentelemetry.proto.common.v1.KeyValue> attributes =
         labels.entrySet().stream()
             .map(
-                k ->
-                    io.opentelemetry.proto.common.v1.KeyValue.newBuilder()
-                        .setKey(k.getKey())
-                        .setValue(AnyValue.newBuilder().setStringValue(k.getValue()).build())
-                        .build())
+                k -> {
+                  io.opentelemetry.proto.common.v1.KeyValue.Builder keyValueBuilder =
+                      io.opentelemetry.proto.common.v1.KeyValue.newBuilder();
+                  keyValueBuilder.setKey(k.getKey());
+                  String value = k.getValue() != null ? k.getValue() : "";
+                  keyValueBuilder.setValue(
+                      AnyValue.newBuilder()
+                          .setStringValue(value)
+                          .build()
+                  );
+                  return keyValueBuilder.build();
+                })
             .collect(Collectors.toList());
     return attributes;
   }

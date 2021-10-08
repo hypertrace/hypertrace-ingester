@@ -6,8 +6,11 @@ import java.util.Map;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OtelMetricsSerde implements Serde<ResourceMetrics> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(OtelMetricsSerde.class);
 
   @Override
   public void configure(Map<String, ?> configs, boolean isKey) {}
@@ -28,7 +31,12 @@ public class OtelMetricsSerde implements Serde<ResourceMetrics> {
   public static class Ser implements Serializer<ResourceMetrics> {
     @Override
     public byte[] serialize(String topic, ResourceMetrics data) {
-      return data.toByteArray();
+      try {
+        return data.toByteArray();
+      } catch (Exception e) {
+        LOGGER.error("serilzation error:", e);
+      }
+      return null;
     }
   }
 
@@ -36,8 +44,10 @@ public class OtelMetricsSerde implements Serde<ResourceMetrics> {
     @Override
     public ResourceMetrics deserialize(String topic, byte[] data) {
       try {
+        LOGGER.info("deserilize:{}", OtelMetricsSerde.class.getName());
         return ResourceMetrics.parseFrom(data);
       } catch (InvalidProtocolBufferException e) {
+        LOGGER.error("error:", e);
         throw new RuntimeException(e);
       }
     }
