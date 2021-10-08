@@ -9,8 +9,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class MetricsExporterServlet extends MetricsServlet {
-  // private PrometheusCollector prometheusCollector;
-  // private static final CollectorRegistry collectorRegistry = new CollectorRegistry(false);
   private InMemoryMetricsProducer inMemoryMetricsProducer;
   private MetricReader metricReader;
 
@@ -23,7 +21,6 @@ public class MetricsExporterServlet extends MetricsServlet {
   protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
       throws ServletException, IOException {
     try {
-      // List<MetricFamilySamples> samples = prometheusCollector.collect();
       super.doGet(req, resp);
       inMemoryMetricsProducer.setCommitOffset();
     } catch (ServletException e) {

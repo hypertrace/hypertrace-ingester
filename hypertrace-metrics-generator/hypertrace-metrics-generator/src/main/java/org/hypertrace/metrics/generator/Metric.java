@@ -19,24 +19,35 @@ public class Metric {
     this.key = generateKey();
   }
 
-  private String generateKey() {
-    String attributesStr = attributes.entrySet()
-        .stream()
-        .map(Object::toString)
-        .collect(joining(DELIMITER));
+  public static String getDELIMITER() {
+    return DELIMITER;
+  }
 
-    String id =  String.join(DELIMITER,
-        name, attributesStr);
+  public String getName() {
+    return name;
+  }
+
+  public Map<String, String> getAttributes() {
+    return attributes;
+  }
+
+  private String generateKey() {
+    String attributesStr =
+        attributes.entrySet().stream().map(Object::toString).collect(joining(DELIMITER));
+
+    String id = String.join(DELIMITER, name, attributesStr);
 
     return UUID.nameUUIDFromBytes(id.getBytes()).toString();
   }
 
+  public String getKey() {
+    return key;
+  }
+
   @Override
   public boolean equals(Object o) {
-    if (o == this)
-      return true;
-    if (!(o instanceof Metric))
-      return false;
+    if (o == this) return true;
+    if (!(o instanceof Metric)) return false;
     Metric other = (Metric) o;
 
     return this.name.equals(other.name) && this.key.equals(other.key);

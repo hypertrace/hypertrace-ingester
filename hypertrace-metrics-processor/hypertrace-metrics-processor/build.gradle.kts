@@ -31,12 +31,6 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.30-SNAPSHOT")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
 
-  // open telemetry
-  implementation("io.opentelemetry:opentelemetry-api:1.7.0-SNAPSHOT")
-  implementation("io.opentelemetry:opentelemetry-api-metrics:1.7.0-alpha-SNAPSHOT")
-  implementation("io.opentelemetry:opentelemetry-sdk:1.7.0-SNAPSHOT")
-  implementation("io.opentelemetry:opentelemetry-sdk-metrics:1.7.0-alpha-SNAPSHOT")
-
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 

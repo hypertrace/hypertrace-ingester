@@ -1,6 +1,7 @@
 package org.hypertrace.metrics.generator;
 
 import com.typesafe.config.Config;
+import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serde;
@@ -9,6 +10,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.ValueMapper;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
 import org.hypertrace.viewgenerator.api.RawServiceView;
@@ -43,6 +45,8 @@ public class MetricsGenerator extends KafkaStreamsApp {
 
     inputStream
         .transform(MetricsExtractor::new)
+        .flatMapValues(
+            (ValueMapper<List<ResourceMetrics>, Iterable<ResourceMetrics>>) value -> value)
         .to(outputTopic, Produced.with(Serdes.ByteArray(), new OtelMetricsSerde()));
 
     return streamsBuilder;
