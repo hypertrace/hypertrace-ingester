@@ -14,7 +14,7 @@ public class MetricsExporterServlet extends MetricsServlet {
   private InMemoryMetricsProducer inMemoryMetricsProducer;
   private MetricReader metricReader;
   private Collector collector;
-  private static CollectorRegistry collectorRegistry = new CollectorRegistry(false);
+  private static final CollectorRegistry collectorRegistry = new CollectorRegistry(false);
 
   public MetricsExporterServlet(InMemoryMetricsProducer producer) {
     super(collectorRegistry);
