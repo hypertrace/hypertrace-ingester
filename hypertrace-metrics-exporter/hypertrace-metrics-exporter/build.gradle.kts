@@ -48,7 +48,7 @@ dependencies {
   implementation("org.eclipse.jetty:jetty-servlet:9.4.42.v20210604")
 
   // prometheus metrics servelet
-  implementation("io.prometheus:simpleclient_servlet:0.11.0")
+  implementation("io.prometheus:simpleclient_servlet:0.12.0")
 
   // kafka
   implementation("org.apache.kafka:kafka-clients:2.6.0")
