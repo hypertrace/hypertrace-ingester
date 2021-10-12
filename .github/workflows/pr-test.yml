@@ -2,11 +2,11 @@ name: test
 on:
   push:
     branches:
-      - rzp_main 
+      - main 
   pull_request_target: 
     branches:
-      - rzp_main  
-
+      - main  
+# disabling while testing ci flow
 jobs:
   test:
     runs-on: ubuntu-20.04
