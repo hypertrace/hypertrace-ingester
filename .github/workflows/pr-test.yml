@@ -2,7 +2,7 @@ name: test
 on:
   push:
     branches:
-      - main
+      - rzp_main 
   pull_request:
 
 jobs:
@@ -31,13 +31,6 @@ jobs:
         uses: hypertrace/github-actions/gradle@main
         with: 
           args: jacocoTestReport
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          name: unit test reports
-          fail_ci_if_error: true
-          flags: unit
 
       - name: copy test reports
         uses: hypertrace/github-actions/gradle@main

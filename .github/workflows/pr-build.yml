@@ -2,10 +2,10 @@ name: build and validate
 on:
   push:
     branches:
-      - main
+      - rzp_main
   pull_request_target:
     branches: 
-      - main
+      - rzp_main
 
 jobs:
   build:
@@ -34,47 +34,10 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKERHUB_READ_USER }}
-          password: ${{ secrets.DOCKERHUB_READ_TOKEN }}
+          username: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
+          password: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
       
       - name: Build with Gradle
         uses: hypertrace/github-actions/gradle@main
         with: 
           args: build dockerBuildImages
-
-  validate-helm-charts:
-    runs-on: ubuntu-20.04
-    container: 
-      image: hypertrace/helm-gcs-packager:0.3.1
-      credentials:
-        username: ${{ secrets.DOCKERHUB_READ_USER }}
-        password: ${{ secrets.DOCKERHUB_READ_TOKEN }}
-     # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2.3.4
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-          fetch-depth: 0
-
-      - name: validate charts
-        run: ./.github/workflows/helm.sh validate
-
-  snyk-scan:
-    runs-on: ubuntu-20.04
-    steps:
-    # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
-      - name: Check out code
-        uses: actions/checkout@v2.3.4
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-          fetch-depth: 0
-      - name: Setup snyk
-        uses: snyk/actions/setup@0.3.0
-      - name: Snyk test
-        run: snyk test --all-sub-projects --org=hypertrace --severity-threshold=low --policy-path=.snyk --configuration-matching='^runtimeClasspath$'
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          GRADLE_OPTS: -Dorg.gradle.workers.max=1
