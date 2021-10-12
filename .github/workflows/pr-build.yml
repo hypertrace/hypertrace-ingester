@@ -1,12 +1,5 @@
 name: build and validate
-on:
-  push:
-    branches:
-      - rzp_main
-  pull_request_target:
-    branches: 
-      - rzp_main
-
+on: push
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -41,3 +34,12 @@ jobs:
         uses: hypertrace/github-actions/gradle@main
         with: 
           args: build dockerBuildImages
+
+      - name: push docker image
+        uses: hypertrace/github-actions/gradle@main
+        with: 
+          args: dockerPushImages
+        env:
+          DOCKER_USERNAME: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
+          tags: ${{ github.sha }}
