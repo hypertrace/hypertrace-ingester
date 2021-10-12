@@ -42,6 +42,6 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
-          DOCKER_REGISTRY: razorpay
+          DOCKER_REGISTRY: razorpay-ingester
           tagLatest: false
           tag: ${{ github.sha }}
