@@ -45,3 +45,4 @@ jobs:
           DOCKER_REGISTRY: razorpay-ingester
           tagLatest: false
           tag: ${{ github.sha }}
+          Name: ${{ github.sha }}
