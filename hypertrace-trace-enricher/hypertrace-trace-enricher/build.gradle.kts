@@ -22,7 +22,7 @@ hypertraceDocker {
       adminPort.set(8099)
     }
     namespace.set("hypertrace-ingester")
-    tag("${project.findProperty("IMAGE_TAG")}")
+    tag("${project.findProperty("GITHUB_SHA")}")
   }
 }
 
