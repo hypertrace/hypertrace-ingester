@@ -47,11 +47,3 @@ jobs:
         uses: hypertrace/github-actions/gradle@main
         with: 
           args: dockerPushImages
-        env:
-          DOCKER_USERNAME: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
-          DOCKER_REGISTRY: razorpay
-          tagLatest: false
-          namespace: hypertrace-ingester
-          tag: ${{ github.sha }}
-          Name: ${{ github.sha }}
