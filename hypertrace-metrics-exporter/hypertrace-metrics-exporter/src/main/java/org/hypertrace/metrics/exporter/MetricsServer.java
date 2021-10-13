@@ -3,7 +3,6 @@ package org.hypertrace.metrics.exporter;
 import com.typesafe.config.Config;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +18,8 @@ public class MetricsServer {
     this.server.setHandler(context);
     this.server.setStopAtShutdown(true);
     this.server.setStopTimeout(2000L);
-    context.addServlet(
-        new ServletHolder(new MetricsExporterServlet(producer)), "/ingestion/metrics");
+    //    context.addServlet(
+    //        new ServletHolder(new MetricsExporterServlet(producer)), "/ingestion/metrics");
   }
 
   public void start() {

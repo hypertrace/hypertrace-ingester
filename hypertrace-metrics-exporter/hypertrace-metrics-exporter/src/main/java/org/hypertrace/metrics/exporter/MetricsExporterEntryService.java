@@ -1,6 +1,8 @@
 package org.hypertrace.metrics.exporter;
 
 import com.typesafe.config.Config;
+import io.opentelemetry.exporter.prometheus.PrometheusCollector;
+import io.opentelemetry.sdk.metrics.export.MetricReader;
 import org.hypertrace.core.serviceframework.PlatformService;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ public class MetricsExporterEntryService extends PlatformService {
   private InMemoryMetricsProducer inMemoryMetricsProducer;
   private Boolean isPullExporter;
   private MetricsServer metricsServer;
+  private MetricReader metricReader;
 
   public MetricsExporterEntryService(ConfigClient configClient, Config config) {
     super(configClient);
@@ -35,6 +38,7 @@ public class MetricsExporterEntryService extends PlatformService {
     } else {
       metricsServer = new MetricsServer(config, inMemoryMetricsProducer);
     }
+    metricReader = PrometheusCollector.create().apply(inMemoryMetricsProducer);
   }
 
   @Override
@@ -45,7 +49,7 @@ public class MetricsExporterEntryService extends PlatformService {
     if (isPullExporter) {
       metricsExporterThread = new Thread(() -> metricsServer.start());
     } else {
-      metricsConsumerThread = new Thread(otlpGrpcExporter);
+      metricsExporterThread = new Thread(otlpGrpcExporter);
     }
 
     metricsExporterThread.start();
