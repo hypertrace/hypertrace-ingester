@@ -40,8 +40,7 @@ jobs:
           DOCKER_REGISTRY: razorpay
           tagLatest: false
           namespace: hypertrace-ingester
-          tag: ${{ github.sha }}
-          Name: ${{ github.sha }}
+          IMAGE_TAG: ${{ github.sha }}
 
       - name: push docker image
         uses: hypertrace/github-actions/gradle@main

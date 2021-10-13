@@ -17,6 +17,8 @@ hypertraceDocker {
       serviceName.set("all-views")
       adminPort.set(8099)
     }
+    namespace.set("hypertrace-ingester")
+    tag("${project.findProperty("IMAGE_TAG")}")
   }
 }
 

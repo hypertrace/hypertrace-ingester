@@ -15,19 +15,21 @@ application {
   mainClass.set("org.hypertrace.core.serviceframework.PlatformServiceLauncher")
 }
 
-// hypertraceDocker {
-//  defaultImage {
-//    javaApplication {
-//      serviceName.set("${project.name}")
-//      adminPort.set(8099)
-//    }
-//  }
-// }
-
 hypertraceDocker {
+  defaultImage {
+    javaApplication {
+      serviceName.set("${project.name}")
+      adminPort.set(8099)
+    }
     namespace.set("hypertrace-ingester")
-    tag("testing_build")
+    tag("${project.findProperty("IMAGE_TAG")}")
+  }
 }
+
+// hypertraceDocker {
+//    namespace.set("hypertrace-ingester")
+//    tag("testing_build")
+// }
 
 dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
