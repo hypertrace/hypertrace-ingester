@@ -15,20 +15,18 @@ application {
   mainClass.set("org.hypertrace.core.serviceframework.PlatformServiceLauncher")
 }
 
-//hypertraceDocker {
+// hypertraceDocker {
 //  defaultImage {
 //    javaApplication {
 //      serviceName.set("${project.name}")
 //      adminPort.set(8099)
 //    }
 //  }
-//}
+// }
 
-hypertraceDocker{
-  defaultImage() {
+hypertraceDocker {
     namespace.set("hypertrace-ingester")
     tag("testing_build")
-  }
 }
 
 dependencies {
