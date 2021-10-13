@@ -22,7 +22,7 @@ hypertraceDocker {
       adminPort.set(8099)
     }
     namespace.set("hypertrace-ingester")
-    tag("${project.findProperty("GITHUB_SHA")}")
+    tag(getCommitHash())
   }
 }
 
@@ -68,4 +68,9 @@ dependencies {
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:6.0.1-ccs")
+}
+
+fun getCommitHash(): String {
+  println("************Commit Hash*********** :" + System.getenv("COMMIT_SHA").toString())
+  return System.getenv("COMMIT_SHA").toString()
 }

@@ -41,7 +41,7 @@ jobs:
           tagLatest: false
           namespace: hypertrace-ingester
           IMAGE_TAG: ${{ github.sha }}
-          tagName: ${{ github.sha }}
+          COMMIT_SHA: ${{ github.sha }}
 
       - name: push docker image
         uses: hypertrace/github-actions/gradle@main

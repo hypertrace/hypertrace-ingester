@@ -22,13 +22,9 @@ hypertraceDocker {
       adminPort.set(8099)
     }
     namespace.set("hypertrace-ingester")
+    tag(getCommitHash())
   }
 }
-
-// hypertraceDocker {
-//    namespace.set("hypertrace-ingester")
-//    tag("testing_build")
-// }
 
 dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
@@ -118,4 +114,9 @@ tasks.register<Copy>("createCopySpecForSubJobTest") {
   with(
           createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator", "test")
   ).into("./build/resources/test/configs/")
+}
+
+fun getCommitHash(): String {
+  println("************Commit Hash*********** :" + System.getenv("COMMIT_SHA").toString())
+  return System.getenv("COMMIT_SHA").toString()
 }
