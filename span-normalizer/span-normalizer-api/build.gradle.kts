@@ -63,5 +63,4 @@ dependencies {
       because("Multiple vulnerabilities in avro-declared version")
     }
   }
-  api("io.opentelemetry:opentelemetry-proto:0.3.0")
 }
