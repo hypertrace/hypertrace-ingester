@@ -33,9 +33,6 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
 
-  // serde (todo)
-  // implementation("io.confluent:kafka-streams-protobuf-serde:6.0.1")
-
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 
