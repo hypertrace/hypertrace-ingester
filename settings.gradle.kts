@@ -34,6 +34,11 @@ include("span-normalizer:span-normalizer")
 include("span-normalizer:raw-span-constants")
 include("span-normalizer:span-normalizer-constants")
 
+// metrics pipeline
+include("hypertrace-metrics-processor:hypertrace-metrics-processor")
+
+// utils
+include("semantic-convention-utils")
+
 // e2e pipeline
 include("hypertrace-ingester")
-include("semantic-convention-utils")
