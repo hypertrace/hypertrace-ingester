@@ -19,8 +19,11 @@ public class MetricsExporterService extends PlatformService {
   private Config config;
   private InMemoryMetricsProducer inMemoryMetricsProducer;
 
-  public MetricsExporterService(ConfigClient configClient, Config config) {
+  public MetricsExporterService(ConfigClient configClient) {
     super(configClient);
+  }
+
+  public void setConfig(Config config) {
     this.config = config;
   }
 

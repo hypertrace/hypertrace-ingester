@@ -26,8 +26,8 @@ hypertraceDocker {
 
 dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.30-SNAPSHOT")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.30-SNAPSHOT")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.19")
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.3.1")
   implementation("com.typesafe:config:1.4.1")
@@ -41,6 +41,7 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
   implementation(project(":hypertrace-metrics-processor:hypertrace-metrics-processor"))
+  implementation(project(":hypertrace-metrics-exporter:hypertrace-metrics-exporter"))
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
@@ -81,7 +82,11 @@ tasks.register<Copy>("copyServiceConfigs") {
       createCopySpec("hypertrace-metrics-processor",
         "hypertrace-metrics-processor",
         "main",
-        "common")
+        "common"),
+      createCopySpec("hypertrace-metrics-exporter",
+      "hypertrace-metrics-exporter",
+      "main",
+      "common")
   ).into("./build/resources/main/configs/")
 }
 
@@ -137,7 +142,11 @@ tasks.register<Copy>("copyServiceConfigsTest") {
       createCopySpec("hypertrace-metrics-processor",
         "hypertrace-metrics-processor",
         "test",
-        "hypertrace-metrics-processor")
+        "hypertrace-metrics-processor"),
+      createCopySpec("hypertrace-metrics-exporter",
+      "hypertrace-metrics-exporter",
+      "test",
+      "hypertrace-metrics-exporter")
   ).into("./build/resources/test/configs/")
 }
 
