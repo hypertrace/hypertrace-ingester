@@ -1,6 +1,6 @@
 package org.hypertrace.metrics.exporter.producer;
 
-import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
+import com.typesafe.config.Config;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.metrics.export.MetricProducer;
 import java.util.ArrayList;
@@ -8,52 +8,40 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import org.hypertrace.metrics.exporter.utils.OtlpToObjectConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class InMemoryMetricsProducer implements MetricProducer {
-  private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryMetricsProducer.class);
-  private BlockingQueue<MetricData> metricDataQueue;
-  private final AtomicBoolean commitOffset = new AtomicBoolean(false);
 
-  public InMemoryMetricsProducer(int maxQueueSize) {
-    this.metricDataQueue = new ArrayBlockingQueue<MetricData>(maxQueueSize);
+  private static final String BUFFER_CONFIG_KEY = "buffer.config";
+  private static final String MAX_QUEUE_SIZE = "max.queue.size";
+  private static final String MAX_BATCH_SIZE = "max.queue.size";
+
+  private BlockingQueue<MetricData> metricDataQueue;
+  private int maxQueueSize;
+  private int maxBatchSize;
+
+  public InMemoryMetricsProducer(Config config) {
+    maxQueueSize = config.getConfig(BUFFER_CONFIG_KEY).getInt(MAX_QUEUE_SIZE);
+    maxBatchSize = config.getConfig(BUFFER_CONFIG_KEY).getInt(MAX_BATCH_SIZE);
+    this.metricDataQueue = new ArrayBlockingQueue<>(maxQueueSize);
   }
 
-  public void addMetricData(List<ResourceMetrics> resourceMetrics) {
-    try {
-      for (ResourceMetrics rm : resourceMetrics) {
-        List<MetricData> metricData = OtlpToObjectConverter.toMetricData(rm);
-        for (MetricData md : metricData) {
-          this.metricDataQueue.put(md);
-        }
-      }
-    } catch (InterruptedException exception) {
-      LOGGER.info("This thread was intruppted, so we might loose copying some metrics ");
+  public boolean addMetricData(List<MetricData> metricData) {
+    if (this.metricDataQueue.size() + metricData.size() >= maxQueueSize) {
+      return false;
     }
+
+    for (MetricData md : metricData) {
+      this.metricDataQueue.offer(md);
+    }
+
+    return true;
   }
 
   public Collection<MetricData> collectAllMetrics() {
-    List<MetricData> metricDataList = new ArrayList<>();
-    int max = 0;
-    while (max < 100 && this.metricDataQueue.peek() != null) {
-      metricDataList.add(this.metricDataQueue.poll());
-      max++;
+    List<MetricData> metricData = new ArrayList<>();
+    while (metricData.size() < maxBatchSize && this.metricDataQueue.peek() != null) {
+      metricData.add(this.metricDataQueue.poll());
     }
-    return metricDataList;
-  }
-
-  public void setCommitOffset() {
-    commitOffset.set(true);
-  }
-
-  public void clearCommitOffset() {
-    commitOffset.set(false);
-  }
-
-  public boolean isCommitOffset() {
-    return commitOffset.get();
+    return metricData;
   }
 }

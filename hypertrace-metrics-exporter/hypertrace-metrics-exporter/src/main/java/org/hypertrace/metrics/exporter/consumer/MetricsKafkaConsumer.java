@@ -3,83 +3,83 @@ package org.hypertrace.metrics.exporter.consumer;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.typesafe.config.Config;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
+import io.opentelemetry.sdk.metrics.data.MetricData;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.hypertrace.metrics.exporter.producer.InMemoryMetricsProducer;
+import org.hypertrace.metrics.exporter.utils.OtlpProtoToMetricDataConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MetricsKafkaConsumer implements Runnable {
   private static final Logger LOGGER = LoggerFactory.getLogger(MetricsKafkaConsumer.class);
+
   private static final int CONSUMER_POLL_TIMEOUT_MS = 100;
+  private static final int QUEUE_WAIT_TIME_MS = 500;
 
   private static final String KAFKA_CONFIG_KEY = "kafka.config";
   private static final String INPUT_TOPIC_KEY = "input.topic";
 
   private final KafkaConsumer<byte[], byte[]> consumer;
   private final InMemoryMetricsProducer inMemoryMetricsProducer;
-  private final AtomicBoolean running = new AtomicBoolean(false);
 
   public MetricsKafkaConsumer(Config config, InMemoryMetricsProducer inMemoryMetricsProducer) {
-    Properties props = new Properties();
-    props.putAll(
-        mergeProperties(getBaseProperties(), getFlatMapConfig(config.getConfig(KAFKA_CONFIG_KEY))));
-    consumer = new KafkaConsumer<byte[], byte[]>(props);
+    consumer = new KafkaConsumer<>(prepareProperties(config.getConfig(KAFKA_CONFIG_KEY)));
     consumer.subscribe(Collections.singletonList(config.getString(INPUT_TOPIC_KEY)));
     this.inMemoryMetricsProducer = inMemoryMetricsProducer;
   }
 
   public void run() {
-    running.set(true);
-    while (running.get()) {
-      // check if any message to commit
-      if (inMemoryMetricsProducer.isCommitOffset()) {
-        // consumer.commitSync();
-        inMemoryMetricsProducer.clearCommitOffset();
-      }
+    while (true) {
+      List<ResourceMetrics> resourceMetrics = new ArrayList<>();
 
-      // read new data
-      List<ResourceMetrics> resourceMetrics = consume();
-      if (!resourceMetrics.isEmpty()) {
-        inMemoryMetricsProducer.addMetricData(resourceMetrics);
-      }
-      waitForSec((long) (1000L * 0.1));
+      ConsumerRecords<byte[], byte[]> records =
+          consumer.poll(Duration.ofMillis(CONSUMER_POLL_TIMEOUT_MS));
+
+      records.forEach(
+          record -> {
+            try {
+              resourceMetrics.add(ResourceMetrics.parseFrom(record.value()));
+            } catch (InvalidProtocolBufferException e) {
+              LOGGER.warn("Skipping record due to error", e);
+            }
+          });
+
+      resourceMetrics.forEach(
+          rm -> {
+            List<MetricData> metricData = OtlpProtoToMetricDataConverter.toMetricData(rm);
+            boolean result = false;
+            while (!result) {
+              result = inMemoryMetricsProducer.addMetricData(metricData);
+              waitForSec(QUEUE_WAIT_TIME_MS);
+            }
+          });
     }
-  }
-
-  public void stop() {
-    running.set(false);
-  }
-
-  public List<ResourceMetrics> consume() {
-    List<ResourceMetrics> resourceMetrics = new ArrayList<>();
-
-    ConsumerRecords<byte[], byte[]> records =
-        consumer.poll(Duration.ofMillis(CONSUMER_POLL_TIMEOUT_MS));
-    records.forEach(
-        record -> {
-          try {
-            resourceMetrics.add(ResourceMetrics.parseFrom(record.value()));
-          } catch (InvalidProtocolBufferException e) {
-            LOGGER.error("Invalid record with exception", e);
-          }
-        });
-
-    return resourceMetrics;
   }
 
   public void close() {
     consumer.close();
+  }
+
+  private Properties prepareProperties(Config config) {
+    Map<String, Object> overrideProperties = new HashMap();
+    config.entrySet().stream()
+        .forEach(e -> overrideProperties.put(e.getKey(), config.getString(e.getKey())));
+
+    Map<String, Object> baseProperties = getBaseProperties();
+    overrideProperties.forEach(baseProperties::put);
+
+    Properties properties = new Properties();
+    properties.putAll(baseProperties);
+    return properties;
   }
 
   private Map<String, Object> getBaseProperties() {
@@ -97,28 +97,11 @@ public class MetricsKafkaConsumer implements Runnable {
     return baseProperties;
   }
 
-  private Map<String, Object> getFlatMapConfig(Config config) {
-    Map<String, Object> propertiesMap = new HashMap();
-    config.entrySet().stream()
-        .forEach(
-            (entry) -> {
-              propertiesMap.put((String) entry.getKey(), config.getString((String) entry.getKey()));
-            });
-    return propertiesMap;
-  }
-
-  private Map<String, Object> mergeProperties(
-      Map<String, Object> baseProps, Map<String, Object> props) {
-    Objects.requireNonNull(baseProps);
-    props.forEach(baseProps::put);
-    return baseProps;
-  }
-
   private void waitForSec(long millis) {
     try {
       Thread.sleep(millis);
     } catch (InterruptedException e) {
-      LOGGER.debug("waiting for pushing next records were intruppted");
+      LOGGER.debug("Interrupted while waiting for Queue to be empty");
     }
   }
 }

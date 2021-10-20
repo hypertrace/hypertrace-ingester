@@ -12,11 +12,8 @@ import org.slf4j.LoggerFactory;
 public class MetricsExporterService extends PlatformService {
   private static final Logger LOGGER = LoggerFactory.getLogger(MetricsExporterService.class);
 
-  private static final String BUFFER_CONFIG_KEY = "buffer.config";
-  private static final String MAX_QUEUE_SIZE = "max.queue.size";
-
-  private MetricsKafkaConsumer metricsKafkaConsumer;
   private Config config;
+  private MetricsKafkaConsumer metricsKafkaConsumer;
   private InMemoryMetricsProducer inMemoryMetricsProducer;
 
   public MetricsExporterService(ConfigClient configClient) {
@@ -30,8 +27,7 @@ public class MetricsExporterService extends PlatformService {
   @Override
   public void doInit() {
     config = (config != null) ? config : getAppConfig();
-    int maxQueueSize = config.getConfig(BUFFER_CONFIG_KEY).getInt(MAX_QUEUE_SIZE);
-    inMemoryMetricsProducer = new InMemoryMetricsProducer(maxQueueSize);
+    inMemoryMetricsProducer = new InMemoryMetricsProducer(config);
     metricsKafkaConsumer = new MetricsKafkaConsumer(config, inMemoryMetricsProducer);
     PrometheusCollector.create().apply(inMemoryMetricsProducer);
   }
