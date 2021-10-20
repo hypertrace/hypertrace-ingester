@@ -29,6 +29,10 @@ public class MetricsExporterService extends PlatformService {
     config = (config != null) ? config : getAppConfig();
     inMemoryMetricsProducer = new InMemoryMetricsProducer(config);
     metricsKafkaConsumer = new MetricsKafkaConsumer(config, inMemoryMetricsProducer);
+    // TODO: Upgrade opentelemetry-exporter-prometheus to 1.8.0 release when available
+    // to include time stamp related changes
+    // https://github.com/open-telemetry/opentelemetry-java/pull/3700
+    // For now, the exported time stamp will be the current time stamp.
     PrometheusCollector.create().apply(inMemoryMetricsProducer);
   }
 
