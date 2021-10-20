@@ -14,6 +14,7 @@ public class MetricsExporterService extends PlatformService {
 
   private Config config;
   private MetricsKafkaConsumer metricsKafkaConsumer;
+  private Thread metricsConsumerThread;
   private InMemoryMetricsProducer inMemoryMetricsProducer;
 
   public MetricsExporterService(ConfigClient configClient) {
@@ -29,6 +30,7 @@ public class MetricsExporterService extends PlatformService {
     config = (config != null) ? config : getAppConfig();
     inMemoryMetricsProducer = new InMemoryMetricsProducer(config);
     metricsKafkaConsumer = new MetricsKafkaConsumer(config, inMemoryMetricsProducer);
+    metricsConsumerThread = new Thread(metricsKafkaConsumer);
     // TODO: Upgrade opentelemetry-exporter-prometheus to 1.8.0 release when available
     // to include time stamp related changes
     // https://github.com/open-telemetry/opentelemetry-java/pull/3700
@@ -38,7 +40,7 @@ public class MetricsExporterService extends PlatformService {
 
   @Override
   public void doStart() {
-    Thread metricsConsumerThread = new Thread(metricsKafkaConsumer);
+    metricsConsumerThread = new Thread(metricsKafkaConsumer);
     metricsConsumerThread.start();
     try {
       metricsConsumerThread.join();
@@ -49,6 +51,7 @@ public class MetricsExporterService extends PlatformService {
 
   @Override
   public void doStop() {
+    metricsConsumerThread.interrupt();
     metricsKafkaConsumer.close();
   }
 
