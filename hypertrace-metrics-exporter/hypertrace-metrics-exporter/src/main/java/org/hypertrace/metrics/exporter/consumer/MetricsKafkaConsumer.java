@@ -24,6 +24,7 @@ public class MetricsKafkaConsumer implements Runnable {
 
   private static final int CONSUMER_POLL_TIMEOUT_MS = 100;
   private static final int QUEUE_WAIT_TIME_MS = 500;
+  private static final int WAIT_TIME_MS = 100;
 
   private static final String KAFKA_CONFIG_KEY = "kafka.config";
   private static final String INPUT_TOPIC_KEY = "input.topic";
@@ -38,7 +39,7 @@ public class MetricsKafkaConsumer implements Runnable {
   }
 
   public void run() {
-    while (true) {
+    while (true && !Thread.currentThread().isInterrupted()) {
       List<ResourceMetrics> resourceMetrics = new ArrayList<>();
 
       ConsumerRecords<byte[], byte[]> records =
@@ -55,13 +56,19 @@ public class MetricsKafkaConsumer implements Runnable {
 
       resourceMetrics.forEach(
           rm -> {
-            List<MetricData> metricData = OtlpProtoToMetricDataConverter.toMetricData(rm);
-            boolean result = false;
-            while (!result) {
-              result = inMemoryMetricsProducer.addMetricData(metricData);
-              waitForSec(QUEUE_WAIT_TIME_MS);
+            try {
+              List<MetricData> metricData = OtlpProtoToMetricDataConverter.toMetricData(rm);
+              boolean result = false;
+              while (!result) {
+                result = inMemoryMetricsProducer.addMetricData(metricData);
+                waitForSec(QUEUE_WAIT_TIME_MS);
+              }
+            } catch (Exception e) {
+              LOGGER.debug("skipping the resource metrics due to error: {}", e);
             }
           });
+
+      waitForSec(WAIT_TIME_MS);
     }
   }
 
@@ -101,7 +108,8 @@ public class MetricsKafkaConsumer implements Runnable {
     try {
       Thread.sleep(millis);
     } catch (InterruptedException e) {
-      LOGGER.debug("Interrupted while waiting for Queue to be empty");
+      Thread.currentThread().interrupt();
+      LOGGER.debug("While waiting, the consumer thread has interrupted");
     }
   }
 }
