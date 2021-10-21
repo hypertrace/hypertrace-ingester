@@ -1,6 +1,5 @@
 package org.hypertrace.metrics.exporter.utils;
 
-import static io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_CUMULATIVE;
 import static io.opentelemetry.proto.metrics.v1.AggregationTemporality.AGGREGATION_TEMPORALITY_DELTA;
 
 import io.opentelemetry.api.common.Attributes;
@@ -52,15 +51,15 @@ public class OtlpProtoToMetricDataConverter {
                     numberDataPoint.getStartTimeUnixNano(),
                     numberDataPoint.getTimeUnixNano(),
                     toAttributes(numberDataPoint.getAttributesList()),
-                    numberDataPoint.getAsInt()))
+                    numberDataPoint.hasAsInt()
+                        ? numberDataPoint.getAsInt()
+                        : numberDataPoint.getAsDouble()))
         .collect(Collectors.toList());
   }
 
   private static AggregationTemporality toAggregationTemporality(
       io.opentelemetry.proto.metrics.v1.AggregationTemporality aggregationTemporality) {
     switch (aggregationTemporality) {
-      case AGGREGATION_TEMPORALITY_CUMULATIVE:
-        return AggregationTemporality.CUMULATIVE;
       case AGGREGATION_TEMPORALITY_DELTA:
         return AggregationTemporality.DELTA;
       default:
@@ -128,7 +127,10 @@ public class OtlpProtoToMetricDataConverter {
                       instrumentationLibraryMetrics.getInstrumentationLibrary());
               instrumentationLibraryMetrics
                   .getMetricsList()
-                  .forEach(metric -> toMetricData(resource, instrumentationLibraryInfo, metric));
+                  .forEach(
+                      metric ->
+                          metricData.add(
+                              toMetricData(resource, instrumentationLibraryInfo, metric)));
             });
     return metricData;
   }
