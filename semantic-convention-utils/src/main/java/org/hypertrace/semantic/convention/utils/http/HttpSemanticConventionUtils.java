@@ -9,6 +9,8 @@ import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSem
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_URL;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
@@ -70,6 +72,10 @@ public class HttpSemanticConventionUtils {
       RawSpanConstants.getValue(Http.HTTP_RESPONSE_STATUS_MESSAGE);
   private static final String OTEL_HTTP_TARGET = OTelHttpSemanticConventions.HTTP_TARGET.getValue();
   private static final String RELATIVE_URL_CONTEXT = "http://hypertrace.org";
+
+  private static final String HTTP_REQUEST_BODY = RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY);
+  private static final String HTTP_RESPONSE_BODY = RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY);
+
 
   private static final String SLASH = "/";
 
@@ -474,13 +480,23 @@ public class HttpSemanticConventionUtils {
   public static Optional<Integer> getHttpRequestSize(Event event) {
     String httpRequestSize =
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, REQUEST_SIZE_ATTRIBUTES);
-    return Optional.ofNullable(httpRequestSize).map(Integer::parseInt);
+
+    Optional<String> requestSize = Optional.ofNullable(httpRequestSize);
+    if(!requestSize.isEmpty()) return requestSize.map(Integer::parseInt);
+
+    String requestBody = SpanAttributeUtils.getStringAttribute(event, HTTP_REQUEST_BODY);
+    return Optional.ofNullable(requestBody).map(String::length);
   }
 
   public static Optional<Integer> getHttpResponseSize(Event event) {
     String httpResponseSize =
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, RESPONSE_SIZE_ATTRIBUTES);
-    return Optional.ofNullable(httpResponseSize).map(Integer::parseInt);
+
+    Optional<String> responseSize = Optional.ofNullable(httpResponseSize);
+    if (!responseSize.isEmpty()) return responseSize.map(Integer::parseInt);
+
+    String responseBody = SpanAttributeUtils.getStringAttribute(event, HTTP_RESPONSE_BODY);
+    return Optional.ofNullable(responseBody).map(String::length);
   }
 
   public static int getHttpResponseStatusCode(Event event) {

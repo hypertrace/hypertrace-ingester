@@ -493,6 +493,9 @@ public class HttpFieldsGeneratorTest {
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap1 = new HashMap<>();
     tagsMap1.put(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE), createKeyValue(50));
     tagsMap1.put(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), createKeyValue(40));
+    tagsMap1.put(OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(), createKeyValue(30));
+    tagsMap1.put(
+        RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY), createKeyValue("Hello, there!"));
 
     Event.Builder eventBuilder1 = Event.newBuilder();
     Http.Builder httpBuilder1 = httpFieldsGenerator.getProtocolBuilder(eventBuilder1);
@@ -505,6 +508,7 @@ public class HttpFieldsGeneratorTest {
 
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap2 = new HashMap<>();
     tagsMap2.put(RawSpanConstants.getValue(HTTP_REQUEST_SIZE), createKeyValue(35));
+    tagsMap2.put(OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(), createKeyValue(30));
 
     Event.Builder eventBuilder2 = Event.newBuilder();
     Http.Builder httpBuilder2 = httpFieldsGenerator.getProtocolBuilder(eventBuilder2);
@@ -514,6 +518,31 @@ public class HttpFieldsGeneratorTest {
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
     assertEquals(35, httpBuilder2.getRequestBuilder().getSize());
+
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap3 = new HashMap<>();
+    tagsMap3.put(OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(), createKeyValue(30));
+
+    Event.Builder eventBuilder3 = Event.newBuilder();
+    Http.Builder httpBuilder3 = httpFieldsGenerator.getProtocolBuilder(eventBuilder3);
+
+    tagsMap3.forEach(
+        (key, keyValue) ->
+            httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder3, tagsMap3));
+
+    assertEquals(30, httpBuilder3.getRequestBuilder().getSize());
+
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap4 = new HashMap<>();
+    tagsMap4.put(
+        RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY), createKeyValue("Hello, there!"));
+
+    Event.Builder eventBuilder4 = Event.newBuilder();
+    Http.Builder httpBuilder4 = httpFieldsGenerator.getProtocolBuilder(eventBuilder4);
+
+    tagsMap4.forEach(
+        (key, keyValue) ->
+            httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder4, tagsMap4));
+
+    assertEquals(13, httpBuilder4.getRequestBuilder().getSize());
   }
 
   @Test
@@ -523,6 +552,9 @@ public class HttpFieldsGeneratorTest {
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap1 = new HashMap<>();
     tagsMap1.put(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE), createKeyValue(100));
     tagsMap1.put(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), createKeyValue(90));
+    tagsMap1.put(OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(), createKeyValue(80));
+    tagsMap1.put(
+        RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY), createKeyValue("Hello World!"));
 
     Event.Builder eventBuilder1 = Event.newBuilder();
     Http.Builder httpBuilder1 = httpFieldsGenerator.getProtocolBuilder(eventBuilder1);
@@ -535,6 +567,7 @@ public class HttpFieldsGeneratorTest {
 
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap2 = new HashMap<>();
     tagsMap2.put(RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), createKeyValue(85));
+    tagsMap2.put(OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(), createKeyValue(80));
 
     Event.Builder eventBuilder2 = Event.newBuilder();
     Http.Builder httpBuilder2 = httpFieldsGenerator.getProtocolBuilder(eventBuilder2);
@@ -544,6 +577,31 @@ public class HttpFieldsGeneratorTest {
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
     assertEquals(85, httpBuilder2.getResponseBuilder().getSize());
+
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap3 = new HashMap<>();
+    tagsMap3.put(OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(), createKeyValue(80));
+
+    Event.Builder eventBuilder3 = Event.newBuilder();
+    Http.Builder httpBuilder3 = httpFieldsGenerator.getProtocolBuilder(eventBuilder3);
+
+    tagsMap3.forEach(
+        (key, keyValue) ->
+            httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder3, tagsMap3));
+
+    assertEquals(80, httpBuilder3.getResponseBuilder().getSize());
+
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap4 = new HashMap<>();
+    tagsMap4.put(
+        RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY), createKeyValue("Hello World!"));
+
+    Event.Builder eventBuilder4 = Event.newBuilder();
+    Http.Builder httpBuilder4 = httpFieldsGenerator.getProtocolBuilder(eventBuilder4);
+
+    tagsMap4.forEach(
+        (key, keyValue) ->
+            httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder4, tagsMap4));
+
+    assertEquals(12, httpBuilder4.getResponseBuilder().getSize());
   }
 
   @Test

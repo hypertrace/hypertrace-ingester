@@ -362,14 +362,18 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     // Request Body
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY),
-        (key, keyValue, builder, tagsMap) ->
-            builder.getRequestBuilder().setBody(keyValue.getVStr()));
+        (key, keyValue, builder, tagsMap) -> {
+          builder.getRequestBuilder().setBody(keyValue.getVStr());
+          setRequestSize(builder, tagsMap);
+        });
 
     // Response Body
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY),
-        (key, keyValue, builder, tagsMap) ->
-            builder.getResponseBuilder().setBody(keyValue.getVStr()));
+        (key, keyValue, builder, tagsMap) -> {
+          builder.getResponseBuilder().setBody(keyValue.getVStr());
+          setResponseSize(builder, tagsMap);
+        });
 
     // Request Size
     fieldGeneratorMap.put(
@@ -498,6 +502,13 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
     FirstMatchingKeyFinder.getIntegerValueByFirstMatchingKey(tagsMap, REQUEST_SIZE_ATTRIBUTES)
         .ifPresent(size -> httpBuilder.getRequestBuilder().setSize(size));
+
+    if (!httpBuilder.getRequestBuilder().hasSize()
+        && tagsMap.containsKey(RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY))) {
+      String requestBody =
+          ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY)));
+      httpBuilder.getRequestBuilder().setSize(requestBody.length());
+    }
   }
 
   private static void setResponseSize(
@@ -508,6 +519,13 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
     FirstMatchingKeyFinder.getIntegerValueByFirstMatchingKey(tagsMap, RESPONSE_SIZE_ATTRIBUTES)
         .ifPresent(size -> httpBuilder.getResponseBuilder().setSize(size));
+
+    if (!httpBuilder.getResponseBuilder().hasSize()
+        && tagsMap.containsKey(RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY))) {
+      String responseBody =
+          ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY)));
+      httpBuilder.getResponseBuilder().setSize(responseBody.length());
+    }
   }
 
   private static void setResponseStatusCode(
