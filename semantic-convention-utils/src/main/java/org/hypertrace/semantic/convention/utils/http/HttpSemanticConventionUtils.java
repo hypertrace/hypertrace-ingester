@@ -12,6 +12,7 @@ import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
@@ -20,6 +21,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRI
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT;
@@ -74,8 +76,8 @@ public class HttpSemanticConventionUtils {
   private static final String RELATIVE_URL_CONTEXT = "http://hypertrace.org";
 
   private static final String HTTP_REQUEST_BODY = RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY);
-  private static final String HTTP_RESPONSE_BODY = RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY);
-
+  private static final String HTTP_RESPONSE_BODY =
+      RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY);
 
   private static final String SLASH = "/";
 
@@ -122,13 +124,15 @@ public class HttpSemanticConventionUtils {
       List.of(
           RawSpanConstants.getValue(ENVOY_REQUEST_SIZE),
           RawSpanConstants.getValue(HTTP_REQUEST_SIZE),
-          OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue());
+          OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(),
+          RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_LENGTH));
 
   private static final List<String> RESPONSE_SIZE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
           RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
-          OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue());
+          OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(),
+          RawSpanConstants.getValue(HTTP_RESPONSE_CONTENT_LENGTH));
 
   private static final List<String> STATUS_CODE_ATTRIBUTES =
       List.of(
@@ -482,7 +486,7 @@ public class HttpSemanticConventionUtils {
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, REQUEST_SIZE_ATTRIBUTES);
 
     Optional<String> requestSize = Optional.ofNullable(httpRequestSize);
-    if(!requestSize.isEmpty()) return requestSize.map(Integer::parseInt);
+    if (!requestSize.isEmpty()) return requestSize.map(Integer::parseInt);
 
     String requestBody = SpanAttributeUtils.getStringAttribute(event, HTTP_REQUEST_BODY);
     return Optional.ofNullable(requestBody).map(String::length);
