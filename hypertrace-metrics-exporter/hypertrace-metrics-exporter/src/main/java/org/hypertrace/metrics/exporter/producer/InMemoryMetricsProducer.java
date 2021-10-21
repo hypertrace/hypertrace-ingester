@@ -13,7 +13,7 @@ public class InMemoryMetricsProducer implements MetricProducer {
 
   private static final String BUFFER_CONFIG_KEY = "buffer.config";
   private static final String MAX_QUEUE_SIZE = "max.queue.size";
-  private static final String MAX_BATCH_SIZE = "max.queue.size";
+  private static final String MAX_BATCH_SIZE = "max.batch.size";
 
   private BlockingQueue<MetricData> metricDataQueue;
   private int maxQueueSize;
@@ -26,7 +26,7 @@ public class InMemoryMetricsProducer implements MetricProducer {
   }
 
   public boolean addMetricData(List<MetricData> metricData) {
-    if (this.metricDataQueue.size() + metricData.size() >= maxQueueSize) {
+    if (this.metricDataQueue.size() + metricData.size() > maxQueueSize) {
       return false;
     }
 
