@@ -343,7 +343,7 @@ public class GrpcFieldsGeneratorTest {
 
     assertEquals(17, grpcBuilder3.getResponseBuilder().getSize());
 
-    // test 4: respect RPC_REQUEST_BODY
+    // test 4: respect RPC_RESPONSE_BODY
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap4 = new HashMap<>();
     Map<String, JaegerSpanInternalModel.KeyValue> rpcTagsMap4 = new HashMap<>();
     rpcTagsMap4.put(
