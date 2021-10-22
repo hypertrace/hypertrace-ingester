@@ -12,10 +12,12 @@ import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPA
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_CONTENT_LENGTH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_X_FORWARDED_FOR;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA_CONTENT_LENGTH;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -275,23 +277,25 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    if ((attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null)
-        || (isRpcSystemGrpc(attributeValueMap)
-            && attributeValueMap.get(RPC_REQUEST_BODY.getValue()) != null)) {
-
-      if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE)) != null) {
-        return Optional.of(
-            Integer.parseInt(
-                attributeValueMap.get(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE)).getValue()));
-      } else if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null) {
-        String requestBody =
-            attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)).getValue();
-        return Optional.of(requestBody.length());
-      } else if (attributeValueMap.get(RPC_REQUEST_BODY.getValue()) != null) {
-        String requestBody = attributeValueMap.get(RPC_REQUEST_BODY.getValue()).getValue();
-        return Optional.of(requestBody.length());
-      }
+    if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE)) != null) {
+      return Optional.of(
+          Integer.parseInt(
+              attributeValueMap.get(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE)).getValue()));
+    } else if (isRpcSystemGrpc(attributeValueMap)
+        && attributeValueMap.get(RPC_REQUEST_METADATA_CONTENT_LENGTH.getValue()) != null) {
+      return Optional.of(
+          Integer.parseInt(
+              attributeValueMap.get(RPC_REQUEST_METADATA_CONTENT_LENGTH.getValue()).getValue()));
+    } else if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null) {
+      String requestBody =
+          attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)).getValue();
+      return Optional.of(requestBody.length());
+    } else if (isRpcSystemGrpc(attributeValueMap)
+        && attributeValueMap.get(RPC_REQUEST_BODY.getValue()) != null) {
+      String requestBody = attributeValueMap.get(RPC_REQUEST_BODY.getValue()).getValue();
+      return Optional.of(requestBody.length());
     }
+
     return Optional.empty();
   }
 
@@ -301,23 +305,25 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    if ((attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null)
-        || (isRpcSystemGrpc(attributeValueMap)
-            && attributeValueMap.get(RPC_RESPONSE_BODY.getValue()) != null)) {
-
-      if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE)) != null) {
-        return Optional.of(
-            Integer.parseInt(
-                attributeValueMap.get(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE)).getValue()));
-      } else if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null) {
-        String requestBody =
-            attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)).getValue();
-        return Optional.of(requestBody.length());
-      } else if (attributeValueMap.get(RPC_RESPONSE_BODY.getValue()) != null) {
-        String requestBody = attributeValueMap.get(RPC_RESPONSE_BODY.getValue()).getValue();
-        return Optional.of(requestBody.length());
-      }
+    if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE)) != null) {
+      return Optional.of(
+          Integer.parseInt(
+              attributeValueMap.get(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE)).getValue()));
+    } else if (isRpcSystemGrpc(attributeValueMap)
+        && attributeValueMap.get(RPC_RESPONSE_METADATA_CONTENT_LENGTH.getValue()) != null) {
+      return Optional.of(
+          Integer.parseInt(
+              attributeValueMap.get(RPC_RESPONSE_METADATA_CONTENT_LENGTH.getValue()).getValue()));
+    } else if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null) {
+      String requestBody =
+          attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)).getValue();
+      return Optional.of(requestBody.length());
+    } else if (isRpcSystemGrpc(attributeValueMap)
+        && attributeValueMap.get(RPC_RESPONSE_BODY.getValue()) != null) {
+      String requestBody = attributeValueMap.get(RPC_RESPONSE_BODY.getValue()).getValue();
+      return Optional.of(requestBody.length());
     }
+
     return Optional.empty();
   }
 
