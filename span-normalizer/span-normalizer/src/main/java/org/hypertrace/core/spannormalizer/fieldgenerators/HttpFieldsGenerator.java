@@ -7,6 +7,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_AUTHORITY_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_COOKIE;
@@ -21,6 +22,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRI
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_COOKIE;
@@ -514,11 +516,19 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         .ifPresent(size -> httpBuilder.getRequestBuilder().setSize(size));
 
     if (!httpBuilder.getRequestBuilder().hasSize()
+        && !isRequestBodyTruncated(tagsMap)
         && tagsMap.containsKey(RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY))) {
       String requestBody =
           ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY)));
       httpBuilder.getRequestBuilder().setSize(requestBody.length());
     }
+  }
+
+  private static boolean isRequestBodyTruncated(
+      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
+    if (!tagsMap.containsKey(RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED))) return false;
+    return ValueConverter.getBoolean(
+        tagsMap.get(RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED)));
   }
 
   private static void setResponseSize(
@@ -531,11 +541,19 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         .ifPresent(size -> httpBuilder.getResponseBuilder().setSize(size));
 
     if (!httpBuilder.getResponseBuilder().hasSize()
+        && !isResponseBodyTruncated(tagsMap)
         && tagsMap.containsKey(RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY))) {
       String responseBody =
           ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY)));
       httpBuilder.getResponseBuilder().setSize(responseBody.length());
     }
+  }
+
+  private static boolean isResponseBodyTruncated(
+      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
+    if (!tagsMap.containsKey(RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED))) return false;
+    return ValueConverter.getBoolean(
+        tagsMap.get(RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED)));
   }
 
   private static void setResponseStatusCode(

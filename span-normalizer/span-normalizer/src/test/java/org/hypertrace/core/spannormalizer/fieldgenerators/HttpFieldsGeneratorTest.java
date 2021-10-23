@@ -7,6 +7,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_AUTHORITY_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_COOKIE;
@@ -21,6 +22,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRI
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_COOKIE;
@@ -560,6 +562,23 @@ public class HttpFieldsGeneratorTest {
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder5, tagsMap5));
 
     assertEquals(13, httpBuilder5.getRequestBuilder().getSize());
+
+    // test for truncated body
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap6 = new HashMap<>();
+    tagsMap6.put(
+        RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY), createKeyValue("Hello, there!"));
+    Map<String, JaegerSpanInternalModel.KeyValue> allTags = new HashMap<>();
+    allTags.putAll(tagsMap6);
+    allTags.put(RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED), createKeyValue("true"));
+
+    Event.Builder eventBuilder6 = Event.newBuilder();
+    Http.Builder httpBuilder6 = httpFieldsGenerator.getProtocolBuilder(eventBuilder6);
+
+    tagsMap6.forEach(
+        (key, keyValue) ->
+            httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder6, allTags));
+
+    assertEquals(0, httpBuilder6.getRequestBuilder().getSize());
   }
 
   @Test
@@ -634,6 +653,23 @@ public class HttpFieldsGeneratorTest {
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder5, tagsMap5));
 
     assertEquals(12, httpBuilder5.getResponseBuilder().getSize());
+
+    // test for truncated reponse body
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap6 = new HashMap<>();
+    tagsMap6.put(
+        RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY), createKeyValue("Hello World!"));
+    Map<String, JaegerSpanInternalModel.KeyValue> allTags = new HashMap<>();
+    allTags.putAll(tagsMap6);
+    allTags.put(RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED), createKeyValue("true"));
+
+    Event.Builder eventBuilder6 = Event.newBuilder();
+    Http.Builder httpBuilder6 = httpFieldsGenerator.getProtocolBuilder(eventBuilder6);
+
+    tagsMap5.forEach(
+        (key, keyValue) ->
+            httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder6, allTags));
+
+    assertEquals(0, httpBuilder6.getResponseBuilder().getSize());
   }
 
   @Test

@@ -12,6 +12,7 @@ import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
@@ -21,6 +22,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRI
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_STATUS_CODE;
@@ -488,6 +490,11 @@ public class HttpSemanticConventionUtils {
     Optional<String> requestSize = Optional.ofNullable(httpRequestSize);
     if (!requestSize.isEmpty()) return requestSize.map(Integer::parseInt);
 
+    if (SpanAttributeUtils.getBooleanAttribute(
+        event, RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED))) {
+      return Optional.empty();
+    }
+
     String requestBody = SpanAttributeUtils.getStringAttribute(event, HTTP_REQUEST_BODY);
     return Optional.ofNullable(requestBody).map(String::length);
   }
@@ -498,6 +505,11 @@ public class HttpSemanticConventionUtils {
 
     Optional<String> responseSize = Optional.ofNullable(httpResponseSize);
     if (!responseSize.isEmpty()) return responseSize.map(Integer::parseInt);
+
+    if (SpanAttributeUtils.getBooleanAttribute(
+        event, RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED))) {
+      return Optional.empty();
+    }
 
     String responseBody = SpanAttributeUtils.getStringAttribute(event, HTTP_RESPONSE_BODY);
     return Optional.ofNullable(responseBody).map(String::length);
