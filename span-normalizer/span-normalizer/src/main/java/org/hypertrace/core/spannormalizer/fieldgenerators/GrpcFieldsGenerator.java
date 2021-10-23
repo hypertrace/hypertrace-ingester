@@ -8,13 +8,16 @@ import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_NAME;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_HOST_PORT;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_CALL_OPTIONS;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_METADATA;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_METADATA;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_NAME;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_CONTENT_LENGTH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_CONTENT_TYPE;
@@ -22,6 +25,7 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUE
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_X_FORWARDED_FOR;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA_CONTENT_LENGTH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA_CONTENT_TYPE;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_STATUS_CODE;
@@ -263,14 +267,33 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
           .setSize(
               ValueConverter.getInteger(
                   tagsMap.get(RPC_REQUEST_METADATA_CONTENT_LENGTH.getValue())));
-    } else if (tagsMap.containsKey(RawSpanConstants.getValue(GRPC_REQUEST_BODY))) {
+    } else if (tagsMap.containsKey(RawSpanConstants.getValue(GRPC_REQUEST_BODY))
+        && !isGrpcRequestBodyTruncated(tagsMap)) {
       String requestBody =
           ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)));
       grpcBuilder.getRequestBuilder().setSize(requestBody.length());
-    } else if (tagsMap.containsKey(RPC_REQUEST_BODY.getValue())) {
+    } else if (tagsMap.containsKey(RPC_REQUEST_BODY.getValue())
+        && !isRpcRequestBodyTruncated(tagsMap)) {
       String requestBody = ValueConverter.getString(tagsMap.get(RPC_REQUEST_BODY.getValue()));
       grpcBuilder.getRequestBuilder().setSize(requestBody.length());
     }
+  }
+
+  private static boolean isGrpcRequestBodyTruncated(
+      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
+    if (tagsMap.containsKey(RawSpanConstants.getValue(GRPC_REQUEST_BODY_TRUNCATED))) {
+      return ValueConverter.getBoolean(
+          tagsMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY_TRUNCATED)));
+    }
+    return false;
+  }
+
+  private static boolean isRpcRequestBodyTruncated(
+      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
+    if (tagsMap.containsKey(RPC_REQUEST_BODY_TRUNCATED.getValue())) {
+      return ValueConverter.getBoolean(tagsMap.get(RPC_REQUEST_BODY_TRUNCATED.getValue()));
+    }
+    return false;
   }
 
   private static void setResponseSize(
@@ -287,14 +310,33 @@ public class GrpcFieldsGenerator extends ProtocolFieldsGenerator<Grpc.Builder> {
           .setSize(
               ValueConverter.getInteger(
                   tagsMap.get(RPC_RESPONSE_METADATA_CONTENT_LENGTH.getValue())));
-    } else if (tagsMap.containsKey(RawSpanConstants.getValue(GRPC_RESPONSE_BODY))) {
+    } else if (tagsMap.containsKey(RawSpanConstants.getValue(GRPC_RESPONSE_BODY))
+        && !isGrpcResponseBodyTruncated(tagsMap)) {
       String responseBody =
           ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)));
       grpcBuilder.getResponseBuilder().setSize(responseBody.length());
-    } else if (tagsMap.containsKey(RPC_RESPONSE_BODY.getValue())) {
+    } else if (tagsMap.containsKey(RPC_RESPONSE_BODY.getValue())
+        && !isRpcResponseBodyTruncated(tagsMap)) {
       String responseBody = ValueConverter.getString(tagsMap.get(RPC_RESPONSE_BODY.getValue()));
       grpcBuilder.getResponseBuilder().setSize(responseBody.length());
     }
+  }
+
+  private static boolean isGrpcResponseBodyTruncated(
+      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
+    if (tagsMap.containsKey(RawSpanConstants.getValue(GRPC_RESPONSE_BODY_TRUNCATED))) {
+      return ValueConverter.getBoolean(
+          tagsMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY_TRUNCATED)));
+    }
+    return false;
+  }
+
+  private static boolean isRpcResponseBodyTruncated(
+      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
+    if (tagsMap.containsKey(RPC_RESPONSE_BODY_TRUNCATED.getValue())) {
+      return ValueConverter.getBoolean(tagsMap.get(RPC_RESPONSE_BODY_TRUNCATED.getValue()));
+    }
+    return false;
   }
 
   private static Map<String, String> parseMetadataString(String metadataString) {

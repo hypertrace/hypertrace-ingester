@@ -11,16 +11,20 @@ import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_NAME;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_HOST_PORT;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_METHOD;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_CALL_OPTIONS;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_METADATA;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_METADATA;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_STATUS_CODE;
 import static org.hypertrace.core.span.normalizer.constants.OTelRpcSystem.OTEL_RPC_SYSTEM_GRPC;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_CONTENT_LENGTH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA_CONTENT_LENGTH;
 import static org.hypertrace.core.spannormalizer.utils.TestUtils.createKeyValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -229,6 +233,25 @@ public class GrpcFieldsGeneratorTest {
 
     assertEquals(21, grpcBuilder3.getRequestBuilder().getSize());
 
+    // test 3.1: respect GRPC_REQUEST_BODY and tructed set to zero
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap31 = new HashMap<>();
+    tagsMap31.put(
+        RawSpanConstants.getValue(GRPC_REQUEST_BODY), createKeyValue("Hey Grpc, you there!!"));
+
+    Map<String, JaegerSpanInternalModel.KeyValue> combinedTags31 = new HashMap<>();
+    combinedTags31.putAll(tagsMap31);
+    combinedTags31.put(
+        RawSpanConstants.getValue(GRPC_REQUEST_BODY_TRUNCATED), createKeyValue("true"));
+
+    Event.Builder eventBuilder31 = Event.newBuilder();
+    Grpc.Builder grpcBuilder31 = grpcFieldsGenerator.getProtocolBuilder(eventBuilder31);
+
+    tagsMap31.forEach(
+        (key, keyValue) ->
+            grpcFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder31, combinedTags31));
+
+    assertEquals(0, grpcBuilder31.getRequestBuilder().getSize());
+
     // test 4: respect RPC_REQUEST_BODY
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap4 = new HashMap<>();
     Map<String, JaegerSpanInternalModel.KeyValue> rpcTagsMap4 = new HashMap<>();
@@ -243,15 +266,40 @@ public class GrpcFieldsGeneratorTest {
     Event.Builder eventBuilder4 = Event.newBuilder();
     Grpc.Builder grpcBuilder4 = grpcFieldsGenerator.getProtocolBuilder(eventBuilder4);
 
-    tagsMap3.forEach(
+    tagsMap4.forEach(
         (key, keyValue) ->
             grpcFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder4, combinedTags4));
 
-    rpcTagsMap3.forEach(
+    rpcTagsMap4.forEach(
         (key, keyValue) ->
             rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder4, combinedTags4));
 
     assertEquals(20, grpcBuilder4.getRequestBuilder().getSize());
+
+    // test 4.1: respect RPC_REQUEST_BODY and truncated body
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap41 = new HashMap<>();
+    Map<String, JaegerSpanInternalModel.KeyValue> rpcTagsMap41 = new HashMap<>();
+    rpcTagsMap41.put(
+        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), createKeyValue(OTEL_RPC_SYSTEM_GRPC.getValue()));
+    rpcTagsMap4.put(RPC_REQUEST_BODY.getValue(), createKeyValue("Hey rpc, you there!!"));
+
+    Map<String, JaegerSpanInternalModel.KeyValue> combinedTags41 = new HashMap<>();
+    combinedTags41.putAll(tagsMap41);
+    combinedTags41.putAll(rpcTagsMap41);
+    combinedTags41.put(RPC_REQUEST_BODY_TRUNCATED.getValue(), createKeyValue("true"));
+
+    Event.Builder eventBuilder41 = Event.newBuilder();
+    Grpc.Builder grpcBuilder41 = grpcFieldsGenerator.getProtocolBuilder(eventBuilder41);
+
+    tagsMap41.forEach(
+        (key, keyValue) ->
+            grpcFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder41, combinedTags41));
+
+    rpcTagsMap41.forEach(
+        (key, keyValue) ->
+            rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder41, combinedTags41));
+
+    assertEquals(0, grpcBuilder41.getRequestBuilder().getSize());
   }
 
   @Test
@@ -343,6 +391,32 @@ public class GrpcFieldsGeneratorTest {
 
     assertEquals(17, grpcBuilder3.getResponseBuilder().getSize());
 
+    // test 31: respect GRPC_RESPONSE_BODY and truncated body
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap31 = new HashMap<>();
+    tagsMap31.put(
+        RawSpanConstants.getValue(GRPC_RESPONSE_BODY), createKeyValue("Hello from grpc!!"));
+
+    Map<String, JaegerSpanInternalModel.KeyValue> rpcTagsMap31 = new HashMap<>();
+
+    Map<String, JaegerSpanInternalModel.KeyValue> combinedTags31 = new HashMap<>();
+    combinedTags31.putAll(tagsMap31);
+    combinedTags31.putAll(rpcTagsMap31);
+    combinedTags31.put(
+        RawSpanConstants.getValue(GRPC_RESPONSE_BODY_TRUNCATED), createKeyValue("true"));
+
+    Event.Builder eventBuilder31 = Event.newBuilder();
+    Grpc.Builder grpcBuilder31 = grpcFieldsGenerator.getProtocolBuilder(eventBuilder31);
+
+    tagsMap31.forEach(
+        (key, keyValue) ->
+            grpcFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder31, combinedTags31));
+
+    rpcTagsMap31.forEach(
+        (key, keyValue) ->
+            rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder31, combinedTags31));
+
+    assertEquals(0, grpcBuilder31.getResponseBuilder().getSize());
+
     // test 4: respect RPC_RESPONSE_BODY
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap4 = new HashMap<>();
     Map<String, JaegerSpanInternalModel.KeyValue> rpcTagsMap4 = new HashMap<>();
@@ -357,15 +431,40 @@ public class GrpcFieldsGeneratorTest {
     Event.Builder eventBuilder4 = Event.newBuilder();
     Grpc.Builder grpcBuilder4 = grpcFieldsGenerator.getProtocolBuilder(eventBuilder4);
 
-    tagsMap3.forEach(
+    tagsMap4.forEach(
         (key, keyValue) ->
             grpcFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder4, combinedTags4));
 
-    rpcTagsMap3.forEach(
+    rpcTagsMap4.forEach(
         (key, keyValue) ->
             rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder4, combinedTags4));
 
     assertEquals(16, grpcBuilder4.getResponseBuilder().getSize());
+
+    // test 41: respect RPC_RESPONSE_BODY and tructed rpc body
+    Map<String, JaegerSpanInternalModel.KeyValue> tagsMap41 = new HashMap<>();
+    Map<String, JaegerSpanInternalModel.KeyValue> rpcTagsMap41 = new HashMap<>();
+    rpcTagsMap41.put(
+        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(), createKeyValue(OTEL_RPC_SYSTEM_GRPC.getValue()));
+    rpcTagsMap41.put(RPC_RESPONSE_BODY.getValue(), createKeyValue("Hello from rpc!!"));
+
+    Map<String, JaegerSpanInternalModel.KeyValue> combinedTags41 = new HashMap<>();
+    combinedTags41.putAll(tagsMap41);
+    combinedTags41.putAll(rpcTagsMap41);
+    combinedTags41.put(RPC_RESPONSE_BODY_TRUNCATED.getValue(), createKeyValue("true"));
+
+    Event.Builder eventBuilder41 = Event.newBuilder();
+    Grpc.Builder grpcBuilder41 = grpcFieldsGenerator.getProtocolBuilder(eventBuilder41);
+
+    tagsMap41.forEach(
+        (key, keyValue) ->
+            grpcFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder41, combinedTags41));
+
+    rpcTagsMap41.forEach(
+        (key, keyValue) ->
+            rpcFieldsGenerator.handleKeyIfNecessary(key, keyValue, eventBuilder41, combinedTags41));
+
+    assertEquals(0, grpcBuilder41.getResponseBuilder().getSize());
   }
 
   @Test

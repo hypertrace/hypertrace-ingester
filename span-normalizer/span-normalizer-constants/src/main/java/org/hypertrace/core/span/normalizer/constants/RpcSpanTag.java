@@ -16,7 +16,9 @@ public enum RpcSpanTag {
   RPC_REQUEST_METADATA_USER_AGENT("rpc.request.metadata.user-agent"),
   RPC_RESPONSE_METADATA_CONTENT_TYPE("rpc.response.metadata.content-type"),
   RPC_RESPONSE_METADATA_CONTENT_LENGTH("rpc.response.metadata.content-length"),
-  RPC_BODY_DECODE_RAW("rpc.body.decode_raw");
+  RPC_BODY_DECODE_RAW("rpc.body.decode_raw"),
+  RPC_REQUEST_BODY_TRUNCATED("rpc.request.body.truncated"),
+  RPC_RESPONSE_BODY_TRUNCATED("rpc.response.body.truncated");
 
   private final String value;
 

@@ -94,6 +94,8 @@ enum Grpc {
     GRPC_ERROR_MESSAGE = 8 [(string_value) = "grpc.error_message"];
     GRPC_HOST_PORT = 9 [(string_value) = "grpc.host_port"];
     GRPC_METHOD = 10 [(string_value) = "grpc.method"];
+    GRPC_REQUEST_BODY_TRUNCATED = 11 [(string_value) = "grpc.request.body.truncated"];
+    GRPC_RESPONSE_BODY_TRUNCATED = 12 [(string_value) = "grpc.response.body.truncated"];
 }
 
 // Error related attributes

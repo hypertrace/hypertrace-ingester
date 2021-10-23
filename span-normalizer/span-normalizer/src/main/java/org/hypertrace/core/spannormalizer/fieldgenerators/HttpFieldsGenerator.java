@@ -526,9 +526,11 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
   private static boolean isRequestBodyTruncated(
       Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
-    if (!tagsMap.containsKey(RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED))) return false;
-    return ValueConverter.getBoolean(
-        tagsMap.get(RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED)));
+    if (tagsMap.containsKey(RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED))) {
+      return ValueConverter.getBoolean(
+          tagsMap.get(RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED)));
+    }
+    return false;
   }
 
   private static void setResponseSize(
@@ -551,9 +553,11 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
   private static boolean isResponseBodyTruncated(
       Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
-    if (!tagsMap.containsKey(RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED))) return false;
-    return ValueConverter.getBoolean(
-        tagsMap.get(RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED)));
+    if (tagsMap.containsKey(RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED))) {
+      return ValueConverter.getBoolean(
+          tagsMap.get(RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED)));
+    }
+    return false;
   }
 
   private static void setResponseStatusCode(
