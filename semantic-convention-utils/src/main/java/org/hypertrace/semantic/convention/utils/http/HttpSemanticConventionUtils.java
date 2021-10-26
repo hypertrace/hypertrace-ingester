@@ -78,8 +78,12 @@ public class HttpSemanticConventionUtils {
   private static final String RELATIVE_URL_CONTEXT = "http://hypertrace.org";
 
   private static final String HTTP_REQUEST_BODY = RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY);
+  private static final String HTTP_REQUEST_BODY_TRUNCATED_ATTR =
+      RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED);
   private static final String HTTP_RESPONSE_BODY =
       RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY);
+  private static final String HTTP_RESPONSE_BODY_TRUNCATED_ATTR =
+      RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED);
 
   private static final String SLASH = "/";
 
@@ -490,8 +494,7 @@ public class HttpSemanticConventionUtils {
     Optional<String> requestSize = Optional.ofNullable(httpRequestSize);
     if (!requestSize.isEmpty()) return requestSize.map(Integer::parseInt);
 
-    if (SpanAttributeUtils.getBooleanAttribute(
-        event, RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED))) {
+    if (SpanAttributeUtils.getBooleanAttribute(event, HTTP_REQUEST_BODY_TRUNCATED_ATTR)) {
       return Optional.empty();
     }
 
@@ -506,8 +509,7 @@ public class HttpSemanticConventionUtils {
     Optional<String> responseSize = Optional.ofNullable(httpResponseSize);
     if (!responseSize.isEmpty()) return responseSize.map(Integer::parseInt);
 
-    if (SpanAttributeUtils.getBooleanAttribute(
-        event, RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED))) {
+    if (SpanAttributeUtils.getBooleanAttribute(event, HTTP_RESPONSE_BODY_TRUNCATED_ATTR)) {
       return Optional.empty();
     }
 
