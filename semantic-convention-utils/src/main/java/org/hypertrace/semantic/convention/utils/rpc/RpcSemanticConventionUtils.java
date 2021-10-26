@@ -317,28 +317,29 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
     Optional<AttributeValue> attributeValue =
         Optional.ofNullable(attributeValueMap.get(ENVOY_REQUEST_SIZE_ATTR));
     if (attributeValue.isPresent()) {
-      return Optional.of(Integer.parseInt(attributeValue.get().getValue()));
+      return attributeValue.map(av -> Integer.parseInt(av.getValue()));
     }
 
     attributeValue =
         Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_CONTENT_LENGTH_ATTR));
-    if (isRpcSystemGrpc(attributeValueMap) && attributeValue.isPresent()) {
-      return Optional.of(Integer.parseInt(attributeValue.get().getValue()));
+    if (attributeValue.isPresent() && isRpcSystemGrpc(attributeValueMap)) {
+      return attributeValue.map(av -> Integer.parseInt(av.getValue()));
     }
 
     attributeValue = Optional.ofNullable(attributeValueMap.get(GRPC_REQUEST_BODY_ATTR));
     if (attributeValue.isPresent() && !isGrpcRequestBodyTruncated(attributeValueMap)) {
-      return Optional.of(attributeValue.get().getValue().length());
+      return attributeValue.map(av -> av.getValue().length());
     }
 
     attributeValue = Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_BODY_ATTR));
-    if (isRpcSystemGrpc(attributeValueMap)
-        && attributeValue.isPresent()
+    if (attributeValue.isPresent()
+        && isRpcSystemGrpc(attributeValueMap)
         && !isRpcRequestBodyTruncated(attributeValueMap)) {
-      return Optional.of(attributeValue.get().getValue().length());
+      return attributeValue.map(av -> av.getValue().length());
     }
 
     return Optional.empty();
@@ -368,25 +369,25 @@ public class RpcSemanticConventionUtils {
     Optional<AttributeValue> attributeValue =
         Optional.ofNullable(attributeValueMap.get(ENVOY_RESPONSE_SIZE_ATTR));
     if (attributeValue.isPresent()) {
-      return Optional.of(Integer.parseInt(attributeValue.get().getValue()));
+      return attributeValue.map(av -> Integer.parseInt(av.getValue()));
     }
 
     attributeValue =
         Optional.ofNullable(attributeValueMap.get(RPC_RESPONSE_METADATA_CONTENT_LENGTH_ATTR));
-    if (isRpcSystemGrpc(attributeValueMap) && attributeValue.isPresent()) {
-      return Optional.of(Integer.parseInt(attributeValue.get().getValue()));
+    if (attributeValue.isPresent() && isRpcSystemGrpc(attributeValueMap)) {
+      return attributeValue.map(av -> Integer.parseInt(av.getValue()));
     }
 
     attributeValue = Optional.ofNullable(attributeValueMap.get(GRPC_RESPONSE_BODY_ATTR));
     if (attributeValue.isPresent() && !isGrpcResponseBodyTruncated(attributeValueMap)) {
-      return Optional.of(attributeValue.get().getValue().length());
+      return attributeValue.map(av -> av.getValue().length());
     }
 
     attributeValue = Optional.ofNullable(attributeValueMap.get(RPC_RESPONSE_BODY_ATTR));
-    if (isRpcSystemGrpc(attributeValueMap)
-        && attributeValue.isPresent()
+    if (attributeValue.isPresent()
+        && isRpcSystemGrpc(attributeValueMap)
         && !isRpcResponseBodyTruncated(attributeValueMap)) {
-      return Optional.of(attributeValue.get().getValue().length());
+      return attributeValue.map(av -> av.getValue().length());
     }
 
     return Optional.empty();
