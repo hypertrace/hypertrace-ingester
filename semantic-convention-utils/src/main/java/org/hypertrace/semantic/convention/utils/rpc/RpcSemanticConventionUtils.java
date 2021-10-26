@@ -6,16 +6,22 @@ import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_CONTENT_LENGTH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_X_FORWARDED_FOR;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_BODY_TRUNCATED;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA_CONTENT_LENGTH;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -78,6 +84,28 @@ public class RpcSemanticConventionUtils {
       List.of(
           RawSpanConstants.getValue(CENSUS_RESPONSE_STATUS_MESSAGE),
           RawSpanConstants.getValue(ENVOY_GRPC_STATUS_MESSAGE));
+
+  private static final String GRPC_REQUEST_BODY_TRUNCATED_ATTR =
+      RawSpanConstants.getValue(GRPC_REQUEST_BODY_TRUNCATED);
+  private static final String RPC_REQUEST_BODY_TRUNCATED_ATTR =
+      RPC_REQUEST_BODY_TRUNCATED.getValue();
+  private static final String ENVOY_REQUEST_SIZE_ATTR =
+      RawSpanConstants.getValue(ENVOY_REQUEST_SIZE);
+  private static final String RPC_REQUEST_METADATA_CONTENT_LENGTH_ATTR =
+      RPC_REQUEST_METADATA_CONTENT_LENGTH.getValue();
+  private static final String GRPC_REQUEST_BODY_ATTR = RawSpanConstants.getValue(GRPC_REQUEST_BODY);
+  private static final String RPC_REQUEST_BODY_ATTR = RPC_REQUEST_BODY.getValue();
+  private static final String GRPC_RESPONSE_BODY_TRUNCATED_ATTR =
+      RawSpanConstants.getValue(GRPC_RESPONSE_BODY_TRUNCATED);
+  private static final String RPC_RESPONSE_BODY_TRUNCATED_ATTR =
+      RPC_RESPONSE_BODY_TRUNCATED.getValue();
+  private static final String ENVOY_RESPONSE_SIZE_ATTR =
+      RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE);
+  private static final String RPC_RESPONSE_METADATA_CONTENT_LENGTH_ATTR =
+      RPC_RESPONSE_METADATA_CONTENT_LENGTH.getValue();
+  private static final String GRPC_RESPONSE_BODY_ATTR =
+      RawSpanConstants.getValue(GRPC_RESPONSE_BODY);
+  private static final String RPC_RESPONSE_BODY_ATTR = RPC_RESPONSE_BODY.getValue();
 
   /**
    * Differs from {@link
@@ -269,30 +297,67 @@ public class RpcSemanticConventionUtils {
     return Optional.empty();
   }
 
+  private static boolean isGrpcRequestBodyTruncated(Map<String, AttributeValue> attributeValueMap) {
+    Optional<AttributeValue> attributeValue =
+        Optional.ofNullable(attributeValueMap.get(GRPC_REQUEST_BODY_TRUNCATED_ATTR));
+
+    return attributeValue.filter(av -> Boolean.parseBoolean(av.getValue())).isPresent();
+  }
+
+  private static boolean isRpcRequestBodyTruncated(Map<String, AttributeValue> attributeValueMap) {
+    Optional<AttributeValue> attributeValue =
+        Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_BODY_TRUNCATED_ATTR));
+
+    return attributeValue.filter(av -> Boolean.parseBoolean(av.getValue())).isPresent();
+  }
+
   public static Optional<Integer> getGrpcRequestSize(Event event) {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return Optional.empty();
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    if ((attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null)
-        || (isRpcSystemGrpc(attributeValueMap)
-            && attributeValueMap.get(RPC_REQUEST_BODY.getValue()) != null)) {
 
-      if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE)) != null) {
-        return Optional.of(
-            Integer.parseInt(
-                attributeValueMap.get(RawSpanConstants.getValue(ENVOY_REQUEST_SIZE)).getValue()));
-      } else if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)) != null) {
-        String requestBody =
-            attributeValueMap.get(RawSpanConstants.getValue(GRPC_REQUEST_BODY)).getValue();
-        return Optional.of(requestBody.length());
-      } else if (attributeValueMap.get(RPC_REQUEST_BODY.getValue()) != null) {
-        String requestBody = attributeValueMap.get(RPC_REQUEST_BODY.getValue()).getValue();
-        return Optional.of(requestBody.length());
-      }
+    Optional<AttributeValue> attributeValue =
+        Optional.ofNullable(attributeValueMap.get(ENVOY_REQUEST_SIZE_ATTR));
+    if (attributeValue.isPresent()) {
+      return attributeValue.map(av -> av.getValue()).map(Integer::parseInt);
     }
+
+    attributeValue =
+        Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_CONTENT_LENGTH_ATTR));
+    if (attributeValue.isPresent() && isRpcSystemGrpc(attributeValueMap)) {
+      return attributeValue.map(av -> av.getValue()).map(Integer::parseInt);
+    }
+
+    attributeValue = Optional.ofNullable(attributeValueMap.get(GRPC_REQUEST_BODY_ATTR));
+    if (attributeValue.isPresent() && !isGrpcRequestBodyTruncated(attributeValueMap)) {
+      return attributeValue.map(av -> av.getValue()).map(String::length);
+    }
+
+    attributeValue = Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_BODY_ATTR));
+    if (attributeValue.isPresent()
+        && isRpcSystemGrpc(attributeValueMap)
+        && !isRpcRequestBodyTruncated(attributeValueMap)) {
+      return attributeValue.map(av -> av.getValue()).map(String::length);
+    }
+
     return Optional.empty();
+  }
+
+  private static boolean isGrpcResponseBodyTruncated(
+      Map<String, AttributeValue> attributeValueMap) {
+    Optional<AttributeValue> attributeValue =
+        Optional.ofNullable(attributeValueMap.get(GRPC_RESPONSE_BODY_TRUNCATED_ATTR));
+
+    return attributeValue.filter(av -> Boolean.parseBoolean(av.getValue())).isPresent();
+  }
+
+  private static boolean isRpcResponseBodyTruncated(Map<String, AttributeValue> attributeValueMap) {
+    Optional<AttributeValue> attributeValue =
+        Optional.ofNullable(attributeValueMap.get(RPC_RESPONSE_BODY_TRUNCATED_ATTR));
+
+    return attributeValue.filter(av -> Boolean.parseBoolean(av.getValue())).isPresent();
   }
 
   public static Optional<Integer> getGrpcResponseSize(Event event) {
@@ -301,23 +366,30 @@ public class RpcSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    if ((attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null)
-        || (isRpcSystemGrpc(attributeValueMap)
-            && attributeValueMap.get(RPC_RESPONSE_BODY.getValue()) != null)) {
-
-      if (attributeValueMap.get(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE)) != null) {
-        return Optional.of(
-            Integer.parseInt(
-                attributeValueMap.get(RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE)).getValue()));
-      } else if (attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)) != null) {
-        String requestBody =
-            attributeValueMap.get(RawSpanConstants.getValue(GRPC_RESPONSE_BODY)).getValue();
-        return Optional.of(requestBody.length());
-      } else if (attributeValueMap.get(RPC_RESPONSE_BODY.getValue()) != null) {
-        String requestBody = attributeValueMap.get(RPC_RESPONSE_BODY.getValue()).getValue();
-        return Optional.of(requestBody.length());
-      }
+    Optional<AttributeValue> attributeValue =
+        Optional.ofNullable(attributeValueMap.get(ENVOY_RESPONSE_SIZE_ATTR));
+    if (attributeValue.isPresent()) {
+      return attributeValue.map(av -> av.getValue()).map(Integer::parseInt);
     }
+
+    attributeValue =
+        Optional.ofNullable(attributeValueMap.get(RPC_RESPONSE_METADATA_CONTENT_LENGTH_ATTR));
+    if (attributeValue.isPresent() && isRpcSystemGrpc(attributeValueMap)) {
+      return attributeValue.map(av -> av.getValue()).map(Integer::parseInt);
+    }
+
+    attributeValue = Optional.ofNullable(attributeValueMap.get(GRPC_RESPONSE_BODY_ATTR));
+    if (attributeValue.isPresent() && !isGrpcResponseBodyTruncated(attributeValueMap)) {
+      return attributeValue.map(av -> av.getValue()).map(String::length);
+    }
+
+    attributeValue = Optional.ofNullable(attributeValueMap.get(RPC_RESPONSE_BODY_ATTR));
+    if (attributeValue.isPresent()
+        && isRpcSystemGrpc(attributeValueMap)
+        && !isRpcResponseBodyTruncated(attributeValueMap)) {
+      return attributeValue.map(av -> av.getValue()).map(String::length);
+    }
+
     return Optional.empty();
   }
 
