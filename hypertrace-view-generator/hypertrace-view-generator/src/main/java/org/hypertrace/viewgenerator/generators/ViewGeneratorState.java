@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.avro.reflect.Nullable;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.EventRef;
@@ -55,20 +57,13 @@ public class ViewGeneratorState {
 
       for (Event event : trace.getEventList()) {
         ByteBuffer childEventId = event.getEventId();
-        List<EventRef> eventRefs = eventMap.get(childEventId).getEventRefList();
-        if (eventRefs != null) {
-          eventRefs.stream()
-              .filter(eventRef -> EventRefType.CHILD_OF == eventRef.getRefType())
-              .forEach(
-                  eventRef -> {
-                    ByteBuffer parentEventId = eventRef.getEventId();
-                    parentToChildrenEventIds
-                        .computeIfAbsent(parentEventId, v -> new ArrayList<>())
-                        .add(childEventId);
-                    childToParentEventIds.put(childEventId, parentEventId);
-                  });
+        ByteBuffer parentEventId = getParentId(event);
+        if (parentEventId != null) {
+          parentToChildrenEventIds
+              .computeIfAbsent(parentEventId, v -> new ArrayList<>())
+              .add(childEventId);
+          childToParentEventIds.put(childEventId, parentEventId);
         }
-        // expected only 1 childOf relationship
       }
     }
 
@@ -90,6 +85,44 @@ public class ViewGeneratorState {
 
     public Map<ByteBuffer, ByteBuffer> getChildToParentEventIds() {
       return childToParentEventIds;
+    }
+
+    /**
+     * Note: As of now, open tracing specification represents two construct for providing support
+     * for relation between spans: child_of and follow_from. Ref :
+     * https://opentracing.io/specification/
+     *
+     * <p>On the other hand, as of now, open telemetry supports only concept of parent Ref :
+     * https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/trace/v1/trace.proto#L85
+     *
+     * <p>However, there are open discussion for similar construct on otel community. Ref:
+     * https://github.com/open-telemetry/opentelemetry-specification/issues/65
+     *
+     * <p>As, both the construct `child_of` and `follow_from` represent parent-child relation in
+     * common where in one case parent is interested in child span's result while in other case not.
+     *
+     * <p>So, to support common behaviour, we will be establish link for `follow_from` as well.
+     *
+     * <p>Also expecting only 1 child-parent relation
+     */
+    @Nullable
+    private ByteBuffer getParentId(Event event) {
+      Map<Boolean, List<EventRef>> referenceSplits =
+          event.getEventRefList().stream()
+              .collect(
+                  Collectors.partitioningBy(
+                      eventRef -> eventRef.getRefType() == EventRefType.CHILD_OF));
+
+      List<EventRef> childEventRef = referenceSplits.get(true);
+      if (childEventRef != null && childEventRef.size() > 0) {
+        return childEventRef.get(0).getEventId();
+      } else {
+        List<EventRef> followFromEventRef = referenceSplits.get(false);
+        if (followFromEventRef != null && followFromEventRef.size() > 0) {
+          return followFromEventRef.get(0).getEventId();
+        }
+      }
+      return null;
     }
   }
 }
