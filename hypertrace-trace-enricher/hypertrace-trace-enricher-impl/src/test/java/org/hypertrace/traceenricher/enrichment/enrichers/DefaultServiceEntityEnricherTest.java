@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
@@ -450,8 +451,9 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
         .setCustomerId(tenantId)
         .setEventId(ByteBuffer.wrap(eventName.getBytes()))
         .setEnrichedAttributes(
-            Attributes.newBuilder().setAttributeMap(enrichedAttributesMap).build())
-        .setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build())
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(enrichedAttributesMap).build())
+        .setAttributes(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(attributeMap).build())
         .setEventName(eventName)
         .setServiceName(serviceName)
         .setEventRefList(eventRefList)

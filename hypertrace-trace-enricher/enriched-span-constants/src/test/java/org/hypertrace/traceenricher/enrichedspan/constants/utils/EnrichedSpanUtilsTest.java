@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 
 import static java.util.Collections.emptyList;
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_METHOD;
@@ -147,7 +148,7 @@ public class EnrichedSpanUtilsTest {
 
     when(e1.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(Map.of("K2", AttributeValue.newBuilder().setValue("v2").build()))
                 .build());
     // Should be case insensitive
@@ -157,7 +158,7 @@ public class EnrichedSpanUtilsTest {
 
     when(e1.getEnrichedAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(Map.of("k3", AttributeValue.newBuilder().setValue("v3").build()))
                 .build());
     // Should be case insensitive
@@ -185,7 +186,8 @@ public class EnrichedSpanUtilsTest {
   public void should_getNullMethod_noHttpFields() {
     Event e = mock(Event.class);
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
 
     Optional<String> method = EnrichedSpanUtils.getHttpMethod(e);
     assertTrue(method.isEmpty());
@@ -204,7 +206,8 @@ public class EnrichedSpanUtilsTest {
   public void should_getNullUrl_noHttpFields() {
     Event e = mock(Event.class);
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
 
     Optional<String> url = EnrichedSpanUtils.getFullHttpUrl(e);
     assertTrue(url.isEmpty());
@@ -214,7 +217,8 @@ public class EnrichedSpanUtilsTest {
   public void getRequestSize_httpProtocol() {
     Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
     addAttribute(e, RawSpanConstants.getValue(HTTP_REQUEST_SIZE), "64");
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
@@ -226,7 +230,8 @@ public class EnrichedSpanUtilsTest {
   public void getRequestSize_grpcProtocol() {
     Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "GRPC");
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
     addAttribute(e, RawSpanConstants.getValue(GRPC_REQUEST_BODY), "some grpc response body");
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
@@ -246,7 +251,8 @@ public class EnrichedSpanUtilsTest {
   public void getRequestSize_httpProtocol_noSize() {
     Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getRequestSize(e);
     assertTrue(requestSize.isEmpty());
@@ -256,7 +262,8 @@ public class EnrichedSpanUtilsTest {
   public void getResponseSize_httpProtocol() {
     Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
     addAttribute(e, RawSpanConstants.getValue(HTTP_RESPONSE_SIZE), "64");
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
@@ -268,7 +275,8 @@ public class EnrichedSpanUtilsTest {
   public void getResponseSize_grpcProtocol() {
     Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "GRPC");
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
     addAttribute(e, RawSpanConstants.getValue(GRPC_RESPONSE_BODY), "some grpc request body");
 
     Optional<Integer> responseSize = EnrichedSpanUtils.getResponseSize(e);
@@ -280,7 +288,8 @@ public class EnrichedSpanUtilsTest {
   public void getResponseSize_httpProtocol_noSize() {
     Event e = createMockEventWithEnrichedAttribute("PROTOCOL", "HTTP");
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
 
     Optional<Integer> requestSize = EnrichedSpanUtils.getResponseSize(e);
     assertTrue(requestSize.isEmpty());
@@ -338,7 +347,7 @@ public class EnrichedSpanUtilsTest {
     Event e = mock(Event.class);
     when(e.getEnrichedAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(Map.of("SPACE_IDS", AttributeValueCreator.create(spaceIds)))
                 .build());
 
@@ -363,7 +372,7 @@ public class EnrichedSpanUtilsTest {
     Event e = mock(Event.class);
     when(e.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
                 .build());
     when(e.getEnrichedAttributes()).thenReturn(null);
@@ -375,7 +384,7 @@ public class EnrichedSpanUtilsTest {
     when(e.getAttributes()).thenReturn(null);
     when(e.getEnrichedAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
                 .build());
     return e;

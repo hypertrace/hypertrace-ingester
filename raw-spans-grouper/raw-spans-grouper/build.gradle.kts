@@ -38,14 +38,14 @@ dependencies {
         because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
     }
     implementation(project(":span-normalizer:span-normalizer-api"))
-    implementation("org.hypertrace.core.datamodel:data-model:0.1.19")
+    implementation("org.hypertrace.core.datamodel:data-model:0.1.20")
     implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
     implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
 
     implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
     implementation("com.typesafe:config:1.4.1")
     implementation("de.javakaffee:kryo-serializers:0.45")
-    implementation("io.confluent:kafka-avro-serializer:5.5.0")
+    implementation("io.confluent:kafka-avro-serializer:6.0.1")
     implementation("com.google.guava:guava:30.1.1-jre")
 
     // Logging

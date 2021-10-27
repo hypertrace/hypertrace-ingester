@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.traceenricher.enrichment.enrichers.SpanTypeAttributeEnricher.CLIENT_KEY;
 import static org.hypertrace.traceenricher.enrichment.enrichers.SpanTypeAttributeEnricher.CLIENT_VALUE;
@@ -253,9 +254,10 @@ public class SpanTypeAttributeEnricherTest extends AbstractAttributeEnricherTest
     return Event.newBuilder()
         .setCustomerId(TENANT_ID)
         .setEventId(ByteBuffer.wrap("event1".getBytes()))
-        .setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build())
+        .setAttributes(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(attributeMap).build())
         .setEnrichedAttributes(
-            Attributes.newBuilder().setAttributeMap(enrichedAttributeMap).build())
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(enrichedAttributeMap).build())
         .build();
   }
 

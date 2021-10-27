@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.util;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.protobuf.ByteString;
@@ -130,7 +131,7 @@ public class EntityAvroConverterTest {
             .setEntityType("entity-type")
             .setCustomerId("entity-tenant-id")
             .setAttributesBuilder(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "attr1", AttributeValue.newBuilder().setValue("v1").build(),
@@ -198,7 +199,8 @@ public class EntityAvroConverterTest {
             .setEntityName("entity-name")
             .setEntityType("entity-type")
             .setCustomerId("entity-tenant-id")
-            .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(Map.of()))
+            .setAttributesBuilder(
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(Map.of()))
             .build(),
         avroEntity1);
   }

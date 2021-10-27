@@ -1,5 +1,6 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -100,7 +101,7 @@ public class SpanEventViewGeneratorTest {
     Event e = mock(Event.class);
     when(e.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         "http.server_name",
@@ -182,9 +183,10 @@ public class SpanEventViewGeneratorTest {
                     .setStartTimeMillis(System.currentTimeMillis())
                     .setEndTimeMillis(System.currentTimeMillis())
                     .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
-                    .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
+                    .setAttributesBuilder(
+                        fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()))
                     .setEnrichedAttributesBuilder(
-                        Attributes.newBuilder().setAttributeMap(Maps.newHashMap()))
+                        fastNewBuilder(Attributes.Builder.class).setAttributeMap(Maps.newHashMap()))
                     .build()))
         .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
         .setEntityEdgeList(new ArrayList<>())
@@ -223,9 +225,10 @@ public class SpanEventViewGeneratorTest {
                     .setStartTimeMillis(System.currentTimeMillis())
                     .setEndTimeMillis(System.currentTimeMillis())
                     .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
-                    .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
+                    .setAttributesBuilder(
+                        fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()))
                     .setEnrichedAttributesBuilder(
-                        Attributes.newBuilder().setAttributeMap(spanAttributes))
+                        fastNewBuilder(Attributes.Builder.class).setAttributeMap(spanAttributes))
                     .build()))
         .build();
 
@@ -260,9 +263,10 @@ public class SpanEventViewGeneratorTest {
                     .setStartTimeMillis(System.currentTimeMillis())
                     .setEndTimeMillis(System.currentTimeMillis())
                     .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
-                    .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
+                    .setAttributesBuilder(
+                        fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()))
                     .setEnrichedAttributesBuilder(
-                        Attributes.newBuilder().setAttributeMap(Maps.newHashMap()))
+                        fastNewBuilder(Attributes.Builder.class).setAttributeMap(Maps.newHashMap()))
                     .build()))
         .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
         .setEntityEdgeList(new ArrayList<>())
@@ -292,9 +296,10 @@ public class SpanEventViewGeneratorTest {
                     .setStartTimeMillis(System.currentTimeMillis())
                     .setEndTimeMillis(System.currentTimeMillis())
                     .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
-                    .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
+                    .setAttributesBuilder(
+                        fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()))
                     .setEnrichedAttributesBuilder(
-                        Attributes.newBuilder().setAttributeMap(spanAttributes))
+                        fastNewBuilder(Attributes.Builder.class).setAttributeMap(spanAttributes))
                     .build()))
         .build();
 
@@ -308,7 +313,7 @@ public class SpanEventViewGeneratorTest {
     Event e = mock(Event.class);
     when(e.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
                 .build());
     when(e.getEnrichedAttributes()).thenReturn(null);

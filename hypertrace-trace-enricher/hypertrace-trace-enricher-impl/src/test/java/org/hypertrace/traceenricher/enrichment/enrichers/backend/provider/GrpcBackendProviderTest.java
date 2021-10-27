@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -86,7 +87,7 @@ public class GrpcBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "SPAN_TYPE",
@@ -96,7 +97,8 @@ public class GrpcBackendProviderTest {
                             "PROTOCOL",
                             AttributeValue.newBuilder().setValue("GRPC").build()))
                     .build())
-            .setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build())
+            .setAttributes(
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(attributeMap).build())
             .setEventName("Sent.hipstershop.ProductCatalogService.ListProducts")
             .setStartTimeMillis(1566869077746L)
             .setEndTimeMillis(1566869077750L)

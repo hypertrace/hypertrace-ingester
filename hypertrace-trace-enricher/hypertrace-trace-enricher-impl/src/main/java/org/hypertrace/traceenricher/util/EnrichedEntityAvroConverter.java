@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.util;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import java.util.HashMap;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
@@ -22,7 +24,10 @@ public class EnrichedEntityAvroConverter {
         .setEntityId(entity.getEntityId())
         .setCustomerId(entity.getTenantId())
         .setEntityName(entity.getEntityName())
-        .setAttributes(Attributes.newBuilder().setAttributeMap(getAvroAttributeMap(entity)).build())
+        .setAttributes(
+            fastNewBuilder(Attributes.Builder.class)
+                .setAttributeMap(getAvroAttributeMap(entity))
+                .build())
         .build();
   }
 

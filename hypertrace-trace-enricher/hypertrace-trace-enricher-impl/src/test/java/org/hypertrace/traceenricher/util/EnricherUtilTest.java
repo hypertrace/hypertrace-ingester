@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.util;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -37,7 +38,7 @@ public class EnricherUtilTest {
   public void testSetAttributeForFirstExistingKey() {
     Event e = mock(Event.class);
     Attributes attributes =
-        Attributes.newBuilder()
+        fastNewBuilder(Attributes.Builder.class)
             .setAttributeMap(
                 Map.of(
                     "a",

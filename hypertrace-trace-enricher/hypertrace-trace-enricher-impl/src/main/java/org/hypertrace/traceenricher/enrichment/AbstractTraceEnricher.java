@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.enrichment;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import java.util.HashSet;
@@ -62,7 +64,7 @@ public abstract class AbstractTraceEnricher implements Enricher {
   protected void addEnrichedAttribute(Event event, String key, AttributeValue value) {
     Attributes enrichedAttributes = event.getEnrichedAttributes();
     if (enrichedAttributes == null) {
-      enrichedAttributes = Attributes.newBuilder().build();
+      enrichedAttributes = fastNewBuilder(Attributes.Builder.class).build();
       event.setEnrichedAttributes(enrichedAttributes);
     }
 

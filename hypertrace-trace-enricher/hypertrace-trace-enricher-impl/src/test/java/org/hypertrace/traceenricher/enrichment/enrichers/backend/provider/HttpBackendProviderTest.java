@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HOST;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRING;
@@ -61,7 +62,7 @@ public class HttpBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "SPAN_TYPE",
@@ -70,7 +71,7 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTP").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "http.status_code",
@@ -186,7 +187,7 @@ public class HttpBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "SPAN_TYPE",
@@ -195,7 +196,7 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTP").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "http.response.header.x-envoy-upstream-service-time",
@@ -306,7 +307,7 @@ public class HttpBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "SPAN_TYPE",
@@ -315,7 +316,7 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTP").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             RawSpanConstants.getValue(HTTP_URL),
@@ -409,7 +410,7 @@ public class HttpBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "SPAN_TYPE",
@@ -418,7 +419,7 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTP").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             RawSpanConstants.getValue(HTTP_URL),
@@ -512,7 +513,7 @@ public class HttpBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c707f".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8865"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "SPAN_TYPE",
@@ -521,7 +522,7 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTPS").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "http.status_code",
@@ -624,7 +625,7 @@ public class HttpBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c707f".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8865"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "SPAN_TYPE",
@@ -633,7 +634,7 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTPS").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "http.status_code",
@@ -736,7 +737,7 @@ public class HttpBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "SPAN_TYPE",
@@ -745,7 +746,7 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTP").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             RawSpanConstants.getValue(HTTP_HOST),
@@ -856,7 +857,7 @@ public class HttpBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "SPAN_TYPE",
@@ -865,7 +866,7 @@ public class HttpBackendProviderTest {
                             AttributeValue.newBuilder().setValue("HTTP").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "http.status_code",

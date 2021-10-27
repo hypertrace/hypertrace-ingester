@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -63,9 +64,11 @@ public class AbstractAttributeEnricherTest {
   Event createMockEvent() {
     Event e = mock(Event.class);
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
     when(e.getEnrichedAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
     lenient()
         .when(e.getMetrics())
         .thenReturn(Metrics.newBuilder().setMetricMap(new HashMap<>()).build());
@@ -120,7 +123,8 @@ public class AbstractAttributeEnricherTest {
   StructuredTrace createMockStructuredTrace() {
     StructuredTrace trace = mock(StructuredTrace.class);
     when(trace.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
     when(trace.getMetrics()).thenReturn(Metrics.newBuilder().setMetricMap(new HashMap<>()).build());
 
     return trace;
@@ -141,7 +145,7 @@ public class AbstractAttributeEnricherTest {
   protected Attributes createNewAvroAttributes(Map<String, String> attributes) {
     Map<String, AttributeValue> map = new HashMap<>();
     attributes.forEach((k, v) -> map.put(k, createAvroAttribute(v)));
-    return Attributes.newBuilder().setAttributeMap(map).build();
+    return fastNewBuilder(Attributes.Builder.class).setAttributeMap(map).build();
   }
 
   protected Map<String, org.hypertrace.entity.data.service.v1.AttributeValue> createEdsAttributes(
@@ -175,7 +179,7 @@ public class AbstractAttributeEnricherTest {
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
         .setEnrichedAttributes(createNewAvroAttributes(enrichedAttr))
         .setServiceName(serviceName)
-        .setAttributes(Attributes.newBuilder().build());
+        .setAttributes(fastNewBuilder(Attributes.Builder.class).build());
   }
 
   protected StructuredTrace getBigTrace() {
@@ -217,11 +221,9 @@ public class AbstractAttributeEnricherTest {
         Event.newBuilder()
             .setCustomerId(TENANT_ID)
             .setAttributes(
-                org.hypertrace.core.datamodel.Attributes.newBuilder()
-                    .setAttributeMap(entrySpanProxyMap)
-                    .build())
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(entrySpanProxyMap).build())
             .setEnrichedAttributes(
-                org.hypertrace.core.datamodel.Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(enrichedEntrySpanProxyMap)
                     .build())
             .setEventId(createByteBuffer("event0"))
@@ -257,9 +259,7 @@ public class AbstractAttributeEnricherTest {
             .setEventId(createByteBuffer("event1"))
             .setEventRefList(Collections.singletonList(eventRef0))
             .setEnrichedAttributes(
-                org.hypertrace.core.datamodel.Attributes.newBuilder()
-                    .setAttributeMap(event1EnrichedMap)
-                    .build())
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(event1EnrichedMap).build())
             .build();
     RawSpan rawSpan1 =
         RawSpan.newBuilder()
@@ -291,9 +291,7 @@ public class AbstractAttributeEnricherTest {
             .setCustomerId(TENANT_ID)
             .setEventId(createByteBuffer("event2"))
             .setEnrichedAttributes(
-                org.hypertrace.core.datamodel.Attributes.newBuilder()
-                    .setAttributeMap(event2EnrichedMap)
-                    .build())
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(event2EnrichedMap).build())
             .setEventRefList(Collections.singletonList(eventRef1))
             .build();
     RawSpan rawSpan2 =
@@ -351,11 +349,9 @@ public class AbstractAttributeEnricherTest {
             .setCustomerId(TENANT_ID)
             .setEventId(createByteBuffer("event4"))
             .setAttributes(
-                org.hypertrace.core.datamodel.Attributes.newBuilder()
-                    .setAttributeMap(exitSpanProxyMap)
-                    .build())
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(exitSpanProxyMap).build())
             .setEnrichedAttributes(
-                org.hypertrace.core.datamodel.Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(exitSpanProxyEnrichedMap)
                     .build())
             .setEventRefList(Collections.singletonList(eventRef2))

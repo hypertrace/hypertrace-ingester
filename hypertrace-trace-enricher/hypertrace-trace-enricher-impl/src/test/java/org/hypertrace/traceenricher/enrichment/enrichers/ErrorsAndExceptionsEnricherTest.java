@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -252,8 +253,9 @@ public class ErrorsAndExceptionsEnricherTest extends AbstractAttributeEnricherTe
             .setCustomerId("customer1")
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f9".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
-            .setEnrichedAttributes(Attributes.newBuilder().setAttributeMap(map).build())
-            .setAttributes(Attributes.newBuilder().setAttributeMap(map).build())
+            .setEnrichedAttributes(
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(map).build())
+            .setAttributes(fastNewBuilder(Attributes.Builder.class).setAttributeMap(map).build())
             .setEventName("test-event")
             .setStartTimeMillis(1566869077746L)
             .setEndTimeMillis(1566869077750L)

@@ -1,5 +1,6 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -68,7 +69,7 @@ class LogEventViewGeneratorTest {
                         .setSpanId(ByteBuffer.wrap("span".getBytes()))
                         .setTraceId(ByteBuffer.wrap("trace".getBytes()))
                         .setAttributes(
-                            Attributes.newBuilder()
+                            fastNewBuilder(Attributes.Builder.class)
                                 .setAttributeMap(
                                     Map.of("some-attribute", AttributeValueCreator.create(10)))
                                 .build())
@@ -95,7 +96,7 @@ class LogEventViewGeneratorTest {
                         .setSpanId(ByteBuffer.wrap("span".getBytes()))
                         .setTraceId(ByteBuffer.wrap("trace".getBytes()))
                         .setAttributes(
-                            Attributes.newBuilder()
+                            fastNewBuilder(Attributes.Builder.class)
                                 .setAttributeMap(
                                     Map.of(
                                         "k1", AttributeValueCreator.create(10),
@@ -141,7 +142,8 @@ class LogEventViewGeneratorTest {
                     .setTimestampNanos(System.nanoTime())
                     .setSpanId(ByteBuffer.wrap("span".getBytes()))
                     .setTraceId(ByteBuffer.wrap("trace".getBytes()))
-                    .setAttributes(Attributes.newBuilder().setAttributeMap(map).build())
+                    .setAttributes(
+                        fastNewBuilder(Attributes.Builder.class).setAttributeMap(map).build())
                     .build()))
         .build();
   }

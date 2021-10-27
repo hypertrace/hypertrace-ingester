@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.trace.util;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -245,7 +247,7 @@ public class ApiTraceGraphDebug {
   void addEnrichedAttribute(Event event, String key, AttributeValue value) {
     Attributes enrichedAttributes = event.getEnrichedAttributes();
     if (enrichedAttributes == null) {
-      enrichedAttributes = Attributes.newBuilder().build();
+      enrichedAttributes = fastNewBuilder(Attributes.Builder.class).build();
       event.setEnrichedAttributes(enrichedAttributes);
     }
 

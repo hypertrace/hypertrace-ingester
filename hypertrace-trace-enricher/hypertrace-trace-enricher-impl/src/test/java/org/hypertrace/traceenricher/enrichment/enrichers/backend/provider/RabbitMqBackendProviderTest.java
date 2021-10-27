@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -107,12 +108,12 @@ public class RabbitMqBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f9".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "rabbitmq.routing_key",
@@ -165,12 +166,12 @@ public class RabbitMqBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f9".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "rabbitmq.routing_key",
@@ -223,12 +224,12 @@ public class RabbitMqBackendProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f9".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "rabbitmq.routing_key",

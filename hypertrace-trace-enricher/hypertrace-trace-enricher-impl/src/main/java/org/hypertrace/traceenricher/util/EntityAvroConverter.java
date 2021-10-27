@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.util;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +42,9 @@ public class EntityAvroConverter {
 
     if (includeAttributes) {
       builder.setAttributes(
-          Attributes.newBuilder().setAttributeMap(getAvroAttributeMap(entity)).build());
+          fastNewBuilder(Attributes.Builder.class)
+              .setAttributeMap(getAvroAttributeMap(entity))
+              .build());
     }
     return builder.build();
   }

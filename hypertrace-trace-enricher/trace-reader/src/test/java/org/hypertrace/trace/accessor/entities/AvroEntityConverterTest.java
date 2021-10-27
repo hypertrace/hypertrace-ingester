@@ -1,5 +1,6 @@
 package org.hypertrace.trace.accessor.entities;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.booleanAttributeValue;
 import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.booleanListAttributeValue;
 import static org.hypertrace.trace.accessor.entities.AttributeValueUtil.doubleAttributeValue;
@@ -51,7 +52,7 @@ class AvroEntityConverterTest {
     Entity expectedAvroEntity =
         Entity.newBuilder(BASIC_AVRO_ENTITY)
             .setAttributesBuilder(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "string",
@@ -80,7 +81,7 @@ class AvroEntityConverterTest {
     Entity expectedAvroEntity =
         Entity.newBuilder(BASIC_AVRO_ENTITY)
             .setAttributesBuilder(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "string-list",
@@ -106,7 +107,7 @@ class AvroEntityConverterTest {
     Entity expectedAvroEntity =
         Entity.newBuilder(BASIC_AVRO_ENTITY)
             .setAttributesBuilder(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of("map", buildAttributeValueMap(Map.of("map-key-1", "map-value-1")))))
             .build();

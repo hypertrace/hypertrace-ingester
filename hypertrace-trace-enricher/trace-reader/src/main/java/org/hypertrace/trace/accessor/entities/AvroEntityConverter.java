@@ -1,6 +1,7 @@
 package org.hypertrace.trace.accessor.entities;
 
 import static java.util.Objects.nonNull;
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -44,7 +45,9 @@ public interface AvroEntityConverter {
                     .onErrorComplete()
                     .map(value -> Map.entry(entry.getKey(), value)))
         .toMap(Entry::getKey, Entry::getValue)
-        .map(convertedMap -> Attributes.newBuilder().setAttributeMap(convertedMap).build());
+        .map(
+            convertedMap ->
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(convertedMap).build());
   }
 
   private static Single<AttributeValue> convertAttributeValue(

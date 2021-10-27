@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.google.common.collect.Lists;
@@ -72,8 +73,10 @@ public class TestUtils {
     return Event.newBuilder()
         .setCustomerId(TEST_CUSTOMER_ID)
         .setEventId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
-        .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
-        .setEnrichedAttributesBuilder(Attributes.newBuilder().setAttributeMap(new HashMap<>()))
+        .setAttributesBuilder(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()))
+        .setEnrichedAttributesBuilder(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()))
         .build();
   }
 
@@ -116,7 +119,8 @@ public class TestUtils {
         .setTraceId(ByteBuffer.wrap(UUID.randomUUID().toString().getBytes()))
         .setStartTimeMillis(endTimeMillis - 10000)
         .setEndTimeMillis(endTimeMillis)
-        .setAttributes(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build())
+        .setAttributes(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build())
         .setEntityList(new ArrayList<>())
         .setEntityEdgeList(new ArrayList<>())
         .setEventEdgeList(new ArrayList<>())

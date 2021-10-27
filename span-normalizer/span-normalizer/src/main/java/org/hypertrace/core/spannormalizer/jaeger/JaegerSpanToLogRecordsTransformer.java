@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -95,7 +96,7 @@ public class JaegerSpanToLogRecordsTransformer
   }
 
   private Attributes buildAttributes(List<JaegerSpanInternalModel.KeyValue> keyValues) {
-    return Attributes.newBuilder()
+    return fastNewBuilder(Attributes.Builder.class)
         .setAttributeMap(
             keyValues.stream()
                 .collect(

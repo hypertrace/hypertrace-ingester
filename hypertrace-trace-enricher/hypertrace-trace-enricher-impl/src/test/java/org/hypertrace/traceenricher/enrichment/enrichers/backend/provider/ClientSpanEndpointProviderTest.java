@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -57,12 +58,12 @@ public class ClientSpanEndpointProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "span.kind",
@@ -102,12 +103,12 @@ public class ClientSpanEndpointProviderTest {
             .setCustomerId("__default")
             .setEventId(ByteBuffer.wrap("random".getBytes()))
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of("span.kind", AttributeValue.newBuilder().setValue("server").build()))
                     .build())
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             SERVICE_NAME_ATTR,
@@ -138,12 +139,12 @@ public class ClientSpanEndpointProviderTest {
             .setEventId(ByteBuffer.wrap("bdf03dfabf5c70f8".getBytes()))
             .setEntityIdList(Arrays.asList("4bfca8f7-4974-36a4-9385-dd76bf5c8824"))
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of("SPAN_TYPE", AttributeValue.newBuilder().setValue("EXIT").build()))
                     .build())
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             "span.kind",
@@ -183,12 +184,12 @@ public class ClientSpanEndpointProviderTest {
             .setCustomerId("__default")
             .setEventId(ByteBuffer.wrap("random".getBytes()))
             .setAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of("span.kind", AttributeValue.newBuilder().setValue("server").build()))
                     .build())
             .setEnrichedAttributes(
-                Attributes.newBuilder()
+                fastNewBuilder(Attributes.Builder.class)
                     .setAttributeMap(
                         Map.of(
                             SERVICE_NAME_ATTR,

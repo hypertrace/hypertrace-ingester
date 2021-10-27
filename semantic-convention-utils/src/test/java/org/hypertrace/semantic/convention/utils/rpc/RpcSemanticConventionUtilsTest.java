@@ -1,5 +1,6 @@
 package org.hypertrace.semantic.convention.utils.rpc;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE;
@@ -53,7 +54,7 @@ class RpcSemanticConventionUtilsTest {
     Event e = mock(Event.class);
     when(e.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
                 .build());
     when(e.getEnrichedAttributes()).thenReturn(null);
@@ -136,7 +137,7 @@ class RpcSemanticConventionUtilsTest {
     Event event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RawSpanConstants.getValue(Grpc.GRPC_STATUS_CODE),
@@ -154,7 +155,7 @@ class RpcSemanticConventionUtilsTest {
     Event event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
@@ -192,7 +193,7 @@ class RpcSemanticConventionUtilsTest {
     Event event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         "rpc.system",
@@ -215,7 +216,7 @@ class RpcSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         "rpc.system",
@@ -232,7 +233,7 @@ class RpcSemanticConventionUtilsTest {
     Event event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
@@ -249,7 +250,7 @@ class RpcSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
@@ -264,7 +265,7 @@ class RpcSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         OTelRpcSemanticConventions.RPC_SYSTEM.getValue(),
@@ -280,7 +281,7 @@ class RpcSemanticConventionUtilsTest {
     Event event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RPC_REQUEST_METADATA_USER_AGENT.getValue(),
@@ -296,7 +297,7 @@ class RpcSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RPC_REQUEST_METADATA_USER_AGENT.getValue(),
@@ -312,7 +313,7 @@ class RpcSemanticConventionUtilsTest {
     Event event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RPC_REQUEST_METADATA_AUTHORITY.getValue(),
@@ -328,7 +329,7 @@ class RpcSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RPC_REQUEST_METADATA_AUTHORITY.getValue(),
@@ -352,7 +353,7 @@ class RpcSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RPC_REQUEST_BODY.getValue(),
@@ -387,7 +388,7 @@ class RpcSemanticConventionUtilsTest {
 
     Event event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.of(1), RpcSemanticConventionUtils.getGrpcRequestSize(event));
 
     tagsMap =
@@ -408,7 +409,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.of(2), RpcSemanticConventionUtils.getGrpcRequestSize(event));
 
     tagsMap =
@@ -426,7 +427,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.of(22), RpcSemanticConventionUtils.getGrpcRequestSize(event));
 
     tagsMap =
@@ -441,7 +442,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.of(21), RpcSemanticConventionUtils.getGrpcRequestSize(event));
 
     tagsMap =
@@ -455,7 +456,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.empty(), RpcSemanticConventionUtils.getGrpcRequestSize(event));
 
     // test truncated grpc request body
@@ -473,7 +474,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.empty(), RpcSemanticConventionUtils.getGrpcRequestSize(event));
 
     // test truncated rpc request body
@@ -492,7 +493,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.empty(), RpcSemanticConventionUtils.getGrpcRequestSize(event));
   }
 
@@ -509,7 +510,7 @@ class RpcSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RPC_RESPONSE_BODY.getValue(),
@@ -544,7 +545,7 @@ class RpcSemanticConventionUtilsTest {
 
     Event event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.of(1), RpcSemanticConventionUtils.getGrpcResponseSize(event));
 
     tagsMap =
@@ -565,7 +566,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.of(2), RpcSemanticConventionUtils.getGrpcResponseSize(event));
 
     tagsMap =
@@ -583,7 +584,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.of(23), RpcSemanticConventionUtils.getGrpcResponseSize(event));
 
     tagsMap =
@@ -598,7 +599,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.of(22), RpcSemanticConventionUtils.getGrpcResponseSize(event));
 
     tagsMap =
@@ -612,7 +613,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.empty(), RpcSemanticConventionUtils.getGrpcResponseSize(event));
 
     // test truncated grpc response body
@@ -630,7 +631,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.empty(), RpcSemanticConventionUtils.getGrpcResponseSize(event));
 
     // test truncated rpc response body
@@ -649,7 +650,7 @@ class RpcSemanticConventionUtilsTest {
 
     event = mock(Event.class);
     when(event.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(tagsMap).build());
+        .thenReturn(fastNewBuilder(Attributes.Builder.class).setAttributeMap(tagsMap).build());
     assertEquals(Optional.empty(), RpcSemanticConventionUtils.getGrpcResponseSize(event));
   }
 
@@ -884,6 +885,6 @@ class RpcSemanticConventionUtilsTest {
             Collectors.collectingAndThen(
                 Collectors.toMap(
                     Entry::getKey, entry -> AttributeValueCreator.create(entry.getValue())),
-                map -> Attributes.newBuilder().setAttributeMap(map).build()));
+                map -> fastNewBuilder(Attributes.Builder.class).setAttributeMap(map).build()));
   }
 }

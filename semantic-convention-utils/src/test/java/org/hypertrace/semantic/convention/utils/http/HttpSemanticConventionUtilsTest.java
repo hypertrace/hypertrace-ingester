@@ -1,5 +1,6 @@
 package org.hypertrace.semantic.convention.utils.http;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_HOST;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_PORT;
@@ -63,7 +64,7 @@ public class HttpSemanticConventionUtilsTest {
     Event e = mock(Event.class);
     when(e.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(Map.of(key, AttributeValue.newBuilder().setValue(value).build()))
                 .build());
     when(e.getEnrichedAttributes()).thenReturn(null);
@@ -189,7 +190,7 @@ public class HttpSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RawSpanConstants.getValue(HTTP_USER_DOT_AGENT),
@@ -247,7 +248,7 @@ public class HttpSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RawSpanConstants.getValue(HTTP_REQUEST_PATH),
@@ -275,7 +276,7 @@ public class HttpSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RawSpanConstants.getValue(HTTP_REQUEST_METHOD),
@@ -315,7 +316,7 @@ public class HttpSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL),
@@ -383,7 +384,7 @@ public class HttpSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RawSpanConstants.getValue(ENVOY_REQUEST_SIZE),
@@ -411,7 +412,7 @@ public class HttpSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY),
@@ -431,7 +432,7 @@ public class HttpSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
@@ -460,7 +461,7 @@ public class HttpSemanticConventionUtilsTest {
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
-            Attributes.newBuilder()
+            fastNewBuilder(Attributes.Builder.class)
                 .setAttributeMap(
                     Map.of(
                         RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY),

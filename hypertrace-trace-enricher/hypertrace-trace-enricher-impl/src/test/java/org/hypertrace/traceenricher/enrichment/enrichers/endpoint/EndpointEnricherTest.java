@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.endpoint;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
@@ -141,9 +142,11 @@ class EndpointEnricherTest extends AbstractAttributeEnricherTest {
   private Event createMockEvent() {
     Event e = mock(Event.class);
     when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
     when(e.getEnrichedAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+        .thenReturn(
+            fastNewBuilder(Attributes.Builder.class).setAttributeMap(new HashMap<>()).build());
     return e;
   }
 
@@ -183,9 +186,12 @@ class EndpointEnricherTest extends AbstractAttributeEnricherTest {
     Event event0 =
         Event.newBuilder()
             .setCustomerId(TENANT_ID)
-            .setAttributes(Attributes.newBuilder().setAttributeMap(entrySpan0Map).build())
+            .setAttributes(
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(entrySpan0Map).build())
             .setEnrichedAttributes(
-                Attributes.newBuilder().setAttributeMap(enrichedEntrySpan0Map).build())
+                fastNewBuilder(Attributes.Builder.class)
+                    .setAttributeMap(enrichedEntrySpan0Map)
+                    .build())
             .setEventId(createByteBuffer("event0"))
             .setEventName(API_PATTERN_VAL)
             .build();
@@ -209,9 +215,12 @@ class EndpointEnricherTest extends AbstractAttributeEnricherTest {
         Event.newBuilder()
             .setCustomerId(TENANT_ID)
             .setEventId(createByteBuffer("event1"))
-            .setAttributes(Attributes.newBuilder().setAttributeMap(exitSpanMap).build())
+            .setAttributes(
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(exitSpanMap).build())
             .setEnrichedAttributes(
-                Attributes.newBuilder().setAttributeMap(enrichedExitSpanMap).build())
+                fastNewBuilder(Attributes.Builder.class)
+                    .setAttributeMap(enrichedExitSpanMap)
+                    .build())
             .setEventRefList(Collections.singletonList(eventRef0))
             .build();
     RawSpan rawSpan1 =
@@ -239,9 +248,12 @@ class EndpointEnricherTest extends AbstractAttributeEnricherTest {
     Event event2 =
         Event.newBuilder()
             .setCustomerId(TENANT_ID)
-            .setAttributes(Attributes.newBuilder().setAttributeMap(entrySpan2Map).build())
+            .setAttributes(
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(entrySpan2Map).build())
             .setEnrichedAttributes(
-                Attributes.newBuilder().setAttributeMap(enrichedEntrySpan2Map).build())
+                fastNewBuilder(Attributes.Builder.class)
+                    .setAttributeMap(enrichedEntrySpan2Map)
+                    .build())
             .setEventId(createByteBuffer("event2"))
             .setEventRefList(Collections.singletonList(eventRef1))
             .build();

@@ -11,7 +11,7 @@ dependencies {
     implementation(project(":span-normalizer:raw-span-constants"))
     implementation(project(":span-normalizer:span-normalizer-constants"))
 
-    implementation("org.hypertrace.core.datamodel:data-model:0.1.19")
+    implementation("org.hypertrace.core.datamodel:data-model:0.1.20")
     implementation("org.apache.commons:commons-lang3:3.12.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")

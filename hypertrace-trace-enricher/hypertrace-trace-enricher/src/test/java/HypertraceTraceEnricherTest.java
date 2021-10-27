@@ -1,3 +1,5 @@
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
@@ -100,7 +102,7 @@ public class HypertraceTraceEnricherTest {
         .setTraceId(ByteBuffer.wrap(traceId.getBytes()))
         .setStartTimeMillis(System.currentTimeMillis() - 10000)
         .setEndTimeMillis(System.currentTimeMillis())
-        .setAttributes(Attributes.newBuilder().build())
+        .setAttributes(fastNewBuilder(Attributes.Builder.class).build())
         .setEntityList(new ArrayList<>())
         .setEntityEdgeList(new ArrayList<>())
         .setEventEdgeList(new ArrayList<>())

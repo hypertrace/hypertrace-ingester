@@ -1,5 +1,7 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.google.protobuf.ProtocolStringList;
 import com.google.protobuf.util.Timestamps;
 import com.typesafe.config.Config;
@@ -164,7 +166,8 @@ public class JaegerSpanNormalizer {
 
     // span attributes to event attributes
     Map<String, AttributeValue> attributeFieldMap = new HashMap<>();
-    eventBuilder.setAttributesBuilder(Attributes.newBuilder().setAttributeMap(attributeFieldMap));
+    eventBuilder.setAttributesBuilder(
+        fastNewBuilder(Attributes.Builder.class).setAttributeMap(attributeFieldMap));
 
     List<KeyValue> tagsList = jaegerSpan.getTagsList();
     // Stop populating first class fields for - grpc, rpc, http, and sql.

@@ -1,5 +1,7 @@
 package org.hypertrace.trace.reader.attributes;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +48,7 @@ public class AvroUtil {
             .map(entry -> Map.entry(entry.getKey(), buildAttributeValue(entry.getValue())))
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-    return Attributes.newBuilder().setAttributeMap(convertedValueMap).build();
+    return fastNewBuilder(Attributes.Builder.class).setAttributeMap(convertedValueMap).build();
   }
 
   public static AttributeValue buildAttributeValue(String value) {
