@@ -1,9 +1,19 @@
 package org.hypertrace.traceenricher.enrichment;
 
+import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry.registerCounter;
+
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
-import java.util.ArrayList;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
@@ -22,15 +32,34 @@ public class EnrichmentProcessor {
   private static final String ENRICHMENT_ARRIVAL_TIME = "enrichment.arrival.time";
   private static final Timer enrichmentArrivalTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
-  private final List<Enricher> enrichers = new ArrayList<>();
+
+  // Must use linked hashmap
+  private final Map<String, Enricher> enrichers = new LinkedHashMap<>();
+
+  private static final String ENRICHED_TRACES_COUNTER = "hypertrace.enriched.traces";
+  private static final ConcurrentMap<String, Counter> traceCounters = new ConcurrentHashMap<>();
+
+  private static final String ENRICHED_TRACES_TIMER = "hypertrace.trace.enrichment.latency";
+  private static final ConcurrentMap<String, Timer> traceTimers = new ConcurrentHashMap<>();
+
+  private static final String TRACE_ENRICHMENT_ERRORS_COUNTER =
+      "hypertrace.trace.enrichment.errors";
+  private static final ConcurrentMap<String, Counter> traceErrorsCounters =
+      new ConcurrentHashMap<>();
 
   public EnrichmentProcessor(List<EnricherInfo> enricherInfoList, ClientRegistry clientRegistry) {
     for (EnricherInfo enricherInfo : enricherInfoList) {
       try {
+        if (enrichers.containsKey(enricherInfo.getName())) {
+          LOG.error("Duplicate enricher found. enricher name: {}", enricherInfo.getName());
+          throw new RuntimeException(
+              "Configuration error. Duplicate enricher found. enricher name: {}"
+                  + enricherInfo.getName());
+        }
         Enricher enricher = enricherInfo.getClazz().getDeclaredConstructor().newInstance();
         enricher.init(enricherInfo.getEnricherConfig(), clientRegistry);
         LOG.info("Initialized the enricher: {}", enricherInfo.getClazz().getCanonicalName());
-        enrichers.add(enricher);
+        enrichers.put(enricherInfo.getName(), enricher);
       } catch (Exception e) {
         LOG.error("Exception initializing enricher:{}", enricherInfo, e);
       }
@@ -42,13 +71,31 @@ public class EnrichmentProcessor {
     DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(
         trace, enrichmentArrivalTimer, ENRICHMENT_ARRIVAL_TIME);
     AvroToJsonLogger.log(LOG, "Structured Trace before all the enrichment is: {}", trace);
-    for (Enricher enricher : enrichers) {
+    for (Entry<String, Enricher> entry : enrichers.entrySet()) {
+      String metricKey = String.format("%s/%s", trace.getCustomerId(), entry.getKey());
+      Map<String, String> metricTags =
+          Map.of("tenantId", trace.getCustomerId(), "enricher", entry.getKey());
       try {
-        applyEnricher(enricher, trace);
+        Instant start = Instant.now();
+        applyEnricher(entry.getValue(), trace);
+        long timeElapsed = Duration.between(start, Instant.now()).toMillis();
+
+        traceCounters
+            .computeIfAbsent(metricKey, k -> registerCounter(ENRICHED_TRACES_COUNTER, metricTags))
+            .increment();
+        traceTimers
+            .computeIfAbsent(
+                metricKey,
+                k -> PlatformMetricsRegistry.registerTimer(ENRICHED_TRACES_TIMER, metricTags))
+            .record(timeElapsed, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
+        traceErrorsCounters
+            .computeIfAbsent(
+                metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags))
+            .increment();
         LOG.error(
             "Could not apply the enricher: {} to the trace with traceId: {}",
-            enricher.getClass().getCanonicalName(),
+            entry.getKey(),
             HexUtils.getHex(trace.getTraceId()),
             e);
       }

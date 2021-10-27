@@ -49,7 +49,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
   @BeforeEach
   public void setup() {
     enricher = new DefaultServiceEntityEnricher();
-    entityCache = new EntityCache(this.edsClient);
+    entityCache = new EntityCache(this.edsClient, Runnable::run);
     when(clientRegistry.getEdsCacheClient()).thenReturn(edsClient);
     when(clientRegistry.getEntityCache()).thenReturn(entityCache);
 

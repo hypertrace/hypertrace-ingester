@@ -11,7 +11,7 @@ public enum OTelHttpSemanticConventions {
   HTTP_URL("http.url"),
   HTTP_NET_HOST_NAME("net.host.name"),
   HTTP_NET_HOST_PORT("net.host.port"),
-  HTTP_SCHEME("http.schema"),
+  HTTP_SCHEME("http.scheme"),
   HTTP_REQUEST_SIZE("http.request_content_length"),
   HTTP_RESPONSE_SIZE("http.response_content_length");
 

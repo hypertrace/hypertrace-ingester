@@ -60,7 +60,7 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
   @BeforeEach
   public void setup() {
     enricher = new BackendEntityEnricher();
-    entityCache = new EntityCache(edsClient);
+    entityCache = new EntityCache(edsClient, Runnable::run);
     when(clientRegistry.getEdsCacheClient()).thenReturn(edsClient);
     when(clientRegistry.getEntityCache()).thenReturn(entityCache);
     enricher.init(getEntityServiceConfig(), clientRegistry);

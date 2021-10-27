@@ -5,13 +5,17 @@ import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.Executor;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
+import org.hypertrace.core.grpcutils.client.RequestContextClientCallCredsProviderFactory;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
+import org.hypertrace.entity.query.service.v1.EntityQueryServiceGrpc;
+import org.hypertrace.entity.query.service.v1.EntityQueryServiceGrpc.EntityQueryServiceBlockingStub;
 import org.hypertrace.entity.service.client.config.EntityServiceClientConfig;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.trace.accessor.entities.TraceEntityAccessor;
@@ -34,13 +38,14 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final ManagedChannel configServiceChannel;
   private final ManagedChannel entityServiceChannel;
   private final EdsCacheClient edsCacheClient;
+  private final EntityDataClient entityDataClient;
   private final CachingAttributeClient cachingAttributeClient;
   private final EntityCache entityCache;
   private final TraceEntityAccessor entityAccessor;
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
   private final GrpcChannelRegistry grpcChannelRegistry = new GrpcChannelRegistry();
 
-  public DefaultClientRegistry(Config config) {
+  public DefaultClientRegistry(Config config, Executor cacheLoaderExecutor) {
     this.attributeServiceChannel =
         this.buildChannel(
             config.getString(ATTRIBUTE_SERVICE_HOST_KEY),
@@ -62,12 +67,14 @@ public class DefaultClientRegistry implements ClientRegistry {
     this.edsCacheClient =
         new EdsCacheClient(
             new EntityDataServiceClient(this.entityServiceChannel),
-            EntityServiceClientConfig.from(config).getCacheConfig());
-    this.entityCache = new EntityCache(this.edsCacheClient);
+            EntityServiceClientConfig.from(config).getCacheConfig(),
+            cacheLoaderExecutor);
+    this.entityDataClient = EntityDataClient.builder(this.entityServiceChannel).build();
+    this.entityCache = new EntityCache(this.edsCacheClient, cacheLoaderExecutor);
     this.entityAccessor =
         new TraceEntityAccessorBuilder(
                 EntityTypeClient.builder(this.entityServiceChannel).build(),
-                EntityDataClient.builder(this.entityServiceChannel).build(),
+                this.entityDataClient,
                 this.cachingAttributeClient)
             .withEntityWriteThrottleDuration(
                 config.hasPath(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
@@ -104,6 +111,18 @@ public class DefaultClientRegistry implements ClientRegistry {
   @Override
   public EdsCacheClient getEdsCacheClient() {
     return this.edsCacheClient;
+  }
+
+  @Override
+  public EntityDataClient getEntityDataClient() {
+    return this.entityDataClient;
+  }
+
+  @Override
+  public EntityQueryServiceBlockingStub getEntityQueryServiceClient() {
+    return EntityQueryServiceGrpc.newBlockingStub(entityServiceChannel)
+        .withCallCredentials(
+            RequestContextClientCallCredsProviderFactory.getClientCallCredsProvider().get());
   }
 
   @Override
