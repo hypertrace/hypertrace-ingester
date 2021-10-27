@@ -28,7 +28,7 @@ dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.18")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.19")
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.3.1")
   implementation("com.typesafe:config:1.4.1")
   implementation("org.apache.commons:commons-lang3:3.12.0")
@@ -40,6 +40,7 @@ dependencies {
   implementation(project(":raw-spans-grouper:raw-spans-grouper"))
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
+  implementation(project(":hypertrace-metrics-processor:hypertrace-metrics-processor"))
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
@@ -61,10 +62,26 @@ tasks.processResources {
 
 tasks.register<Copy>("copyServiceConfigs") {
   with(
-      createCopySpec("span-normalizer", "span-normalizer", "main", "common"),
-      createCopySpec("raw-spans-grouper", "raw-spans-grouper", "main", "common"),
-      createCopySpec("hypertrace-trace-enricher", "hypertrace-trace-enricher", "main", "common"),
-      createCopySpec("hypertrace-view-generator", "hypertrace-view-generator", "main", "common")
+      createCopySpec("span-normalizer",
+        "span-normalizer",
+        "main",
+        "common"),
+      createCopySpec("raw-spans-grouper",
+        "raw-spans-grouper",
+        "main",
+        "common"),
+      createCopySpec("hypertrace-trace-enricher",
+        "hypertrace-trace-enricher",
+        "main",
+        "common"),
+      createCopySpec("hypertrace-view-generator",
+        "hypertrace-view-generator",
+        "main",
+        "common"),
+      createCopySpec("hypertrace-metrics-processor",
+        "hypertrace-metrics-processor",
+        "main",
+        "common")
   ).into("./build/resources/main/configs/")
 }
 
@@ -101,10 +118,26 @@ tasks.test {
 
 tasks.register<Copy>("copyServiceConfigsTest") {
   with(
-          createCopySpec("span-normalizer", "span-normalizer", "test", "span-normalizer"),
-          createCopySpec("raw-spans-grouper", "raw-spans-grouper", "test", "raw-spans-grouper"),
-          createCopySpec("hypertrace-trace-enricher", "hypertrace-trace-enricher", "test", "hypertrace-trace-enricher"),
-          createCopySpec("hypertrace-view-generator", "hypertrace-view-generator", "test", "hypertrace-view-generator")
+      createCopySpec("span-normalizer",
+        "span-normalizer",
+        "test",
+        "span-normalizer"),
+      createCopySpec("raw-spans-grouper",
+        "raw-spans-grouper",
+        "test",
+        "raw-spans-grouper"),
+      createCopySpec("hypertrace-trace-enricher",
+        "hypertrace-trace-enricher",
+        "test",
+        "hypertrace-trace-enricher"),
+      createCopySpec("hypertrace-view-generator",
+        "hypertrace-view-generator",
+        "test",
+        "hypertrace-view-generator"),
+      createCopySpec("hypertrace-metrics-processor",
+        "hypertrace-metrics-processor",
+        "test",
+        "hypertrace-metrics-processor")
   ).into("./build/resources/test/configs/")
 }
 

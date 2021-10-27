@@ -13,7 +13,11 @@ import static org.hypertrace.core.semantic.convention.constants.span.OTelSpanSem
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_CENSUS_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_BODY_TRUNCATED;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
@@ -22,6 +26,8 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRI
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_BODY_TRUNCATED;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH;
@@ -385,9 +391,35 @@ public class HttpSemanticConventionUtilsTest {
                         OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(),
                         AttributeValue.newBuilder().setValue("150").build(),
                         RawSpanConstants.getValue(HTTP_REQUEST_SIZE),
-                        AttributeValue.newBuilder().setValue("200").build()))
+                        AttributeValue.newBuilder().setValue("200").build(),
+                        RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_LENGTH),
+                        AttributeValue.newBuilder().setValue("300").build(),
+                        RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY),
+                        AttributeValue.newBuilder().setValue("Hello, there!").build()))
                 .build());
     assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpRequestSize(event));
+
+    event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_LENGTH), "300");
+    assertEquals(Optional.of(300), HttpSemanticConventionUtils.getHttpRequestSize(event));
+
+    event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY), "Hello, there!");
+    assertEquals(Optional.of(13), HttpSemanticConventionUtils.getHttpRequestSize(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY),
+                        AttributeValue.newBuilder().setValue("Hello, there!").build(),
+                        RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED),
+                        AttributeValue.newBuilder().setValue("true").build()))
+                .build());
+    assertEquals(Optional.empty(), HttpSemanticConventionUtils.getHttpRequestSize(event));
   }
 
   @Test
@@ -407,9 +439,36 @@ public class HttpSemanticConventionUtilsTest {
                         RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
                         AttributeValue.newBuilder().setValue("150").build(),
                         OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(),
-                        AttributeValue.newBuilder().setValue("200").build()))
+                        AttributeValue.newBuilder().setValue("200").build(),
+                        RawSpanConstants.getValue(HTTP_RESPONSE_CONTENT_LENGTH),
+                        AttributeValue.newBuilder().setValue("300").build(),
+                        RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY),
+                        AttributeValue.newBuilder().setValue("Hello World!").build()))
                 .build());
     assertEquals(Optional.of(100), HttpSemanticConventionUtils.getHttpResponseSize(event));
+
+    event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_RESPONSE_CONTENT_LENGTH), "300");
+    assertEquals(Optional.of(300), HttpSemanticConventionUtils.getHttpResponseSize(event));
+
+    event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY), "Hello World!");
+    assertEquals(Optional.of(12), HttpSemanticConventionUtils.getHttpResponseSize(event));
+
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY),
+                        AttributeValue.newBuilder().setValue("Hello World!").build(),
+                        RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED),
+                        AttributeValue.newBuilder().setValue("true").build()))
+                .build());
+    assertEquals(Optional.empty(), HttpSemanticConventionUtils.getHttpResponseSize(event));
   }
 
   @Test

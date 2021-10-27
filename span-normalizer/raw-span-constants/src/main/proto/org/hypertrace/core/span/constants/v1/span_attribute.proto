@@ -67,6 +67,10 @@ enum Http {
     HTTP_REQUEST_HEADER_PATH = 36 [(string_value) = "http.request.header.:path"];
     HTTP_REQUEST_BODY = 37 [(string_value) = "request.body"];
     HTTP_RESPONSE_BODY = 38 [(string_value) = "response.body"];
+    HTTP_REQUEST_CONTENT_LENGTH = 39 [(string_value) = "http.request.header.content-length"];
+    HTTP_RESPONSE_CONTENT_LENGTH = 40 [(string_value) = "http.response.header.content-length"];
+    HTTP_REQUEST_BODY_TRUNCATED = 41 [(string_value) = "http.request.body.truncated"];
+    HTTP_RESPONSE_BODY_TRUNCATED = 42 [(string_value) = "http.response.body.truncated"];
 }
 
 // Model View Controller framework related attributes
@@ -90,6 +94,8 @@ enum Grpc {
     GRPC_ERROR_MESSAGE = 8 [(string_value) = "grpc.error_message"];
     GRPC_HOST_PORT = 9 [(string_value) = "grpc.host_port"];
     GRPC_METHOD = 10 [(string_value) = "grpc.method"];
+    GRPC_REQUEST_BODY_TRUNCATED = 11 [(string_value) = "grpc.request.body.truncated"];
+    GRPC_RESPONSE_BODY_TRUNCATED = 12 [(string_value) = "grpc.response.body.truncated"];
 }
 
 // Error related attributes
