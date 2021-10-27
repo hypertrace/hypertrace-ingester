@@ -1,5 +1,7 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,7 @@ public class RawServiceViewGenerator extends BaseViewGenerator<RawServiceView> {
     for (ApiNode<Event> apiNode : apiNodes) {
       Event event = apiNode.getHeadEvent();
       if (EnrichedSpanUtils.containsServiceId(event)) {
-        RawServiceView.Builder builder = RawServiceView.newBuilder();
+        RawServiceView.Builder builder = fastNewBuilder(RawServiceView.Builder.class);
         builder.setTenantId(structuredTrace.getCustomerId());
         builder.setTraceId(structuredTrace.getTraceId());
         builder.setSpanId(event.getEventId());

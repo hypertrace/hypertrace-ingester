@@ -1,5 +1,6 @@
 package org.hypertrace.semantic.convention.utils.rpc;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_GRPC_STATUS_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
@@ -189,7 +190,8 @@ public class RpcSemanticConventionUtils {
     return OTEL_RPC_SYSTEM_GRPC.equals(
         valueMap
             .getOrDefault(
-                OTEL_RPC_SYSTEM, AttributeValue.newBuilder().setValue(StringUtils.EMPTY).build())
+                OTEL_RPC_SYSTEM,
+                fastNewBuilder(AttributeValue.Builder.class).setValue(StringUtils.EMPTY).build())
             .getValue());
   }
 

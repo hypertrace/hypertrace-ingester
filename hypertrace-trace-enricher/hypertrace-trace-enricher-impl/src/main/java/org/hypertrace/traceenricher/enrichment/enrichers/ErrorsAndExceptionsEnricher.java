@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -54,7 +56,8 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
     if (hasException) {
       if (event.getMetrics() == null) {
-        event.setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build());
+        event.setMetrics(
+            fastNewBuilder(Metrics.Builder.class).setMetricMap(new HashMap<>()).build());
       }
 
       event
@@ -62,7 +65,7 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
           .getMetricMap()
           .put(
               EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_EXCEPTION_COUNT),
-              MetricValue.newBuilder().setValue(1.0d).build());
+              fastNewBuilder(MetricValue.Builder.class).setValue(1.0d).build());
     }
   }
 
@@ -72,7 +75,8 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
 
     if (hasError) {
       if (event.getMetrics() == null) {
-        event.setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build());
+        event.setMetrics(
+            fastNewBuilder(Metrics.Builder.class).setMetricMap(new HashMap<>()).build());
       }
 
       // TODO: Currently we only track the error count but we might want to enrich with additional
@@ -82,7 +86,7 @@ public class ErrorsAndExceptionsEnricher extends AbstractTraceEnricher {
           .getMetricMap()
           .put(
               EnrichedSpanConstants.getValue(ErrorMetrics.ERROR_METRICS_ERROR_COUNT),
-              MetricValue.newBuilder().setValue(1.0d).build());
+              fastNewBuilder(MetricValue.Builder.class).setValue(1.0d).build());
     }
   }
 
