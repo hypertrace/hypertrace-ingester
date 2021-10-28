@@ -25,20 +25,26 @@ tasks.test {
 }
 
 dependencies {
-  // internal projects
-  implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
-
-  // frameworks
+  // common and framework
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.30")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.30")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
+
+  // open telemetry
+  implementation("io.opentelemetry:opentelemetry-sdk-metrics:1.7.0-alpah")
+  // TODO: Upgrade opentelemetry-exporter-prometheus to 1.8.0 release when available
+  // to include time stamp related changes
+  // https://github.com/open-telemetry/opentelemetry-java/pull/3700
+  // For now, the exported time stamp will be the current time stamp.
+  implementation("io.opentelemetry:opentelemetry-exporter-prometheus:1.7.0-alpha")
 
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 
+  // kafka
+  implementation("org.apache.kafka:kafka-clients:2.6.0")
+
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
-  testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
-  testImplementation("org.apache.kafka:kafka-streams-test-utils:6.0.1-ccs")
+  testImplementation("com.google.code.gson:gson:2.8.7")
 }

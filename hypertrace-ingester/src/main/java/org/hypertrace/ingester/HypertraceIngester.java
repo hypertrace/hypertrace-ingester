@@ -17,6 +17,7 @@ import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.serviceframework.config.ConfigUtils;
 import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.hypertrace.core.viewgenerator.service.MultiViewGeneratorLauncher;
+import org.hypertrace.metrics.exporter.MetricsExporterService;
 import org.hypertrace.metrics.processor.MetricsProcessor;
 import org.hypertrace.traceenricher.trace.enricher.TraceEnricher;
 import org.slf4j.Logger;
@@ -30,9 +31,12 @@ public class HypertraceIngester extends KafkaStreamsApp {
   private static final String HYPERTRACE_INGESTER_JOB_CONFIG = "hypertrace-ingester-job-config";
 
   private Map<String, Pair<String, KafkaStreamsApp>> jobNameToSubTopology = new HashMap<>();
+  MetricsExporterService metricsExporterService;
 
   public HypertraceIngester(ConfigClient configClient) {
     super(configClient);
+    metricsExporterService = new MetricsExporterService(configClient);
+    metricsExporterService.setConfig(getSubJobConfig("hypertrace-metrics-exporter"));
   }
 
   private KafkaStreamsApp getSubTopologyInstance(String name) {
@@ -116,6 +120,24 @@ public class HypertraceIngester extends KafkaStreamsApp {
       subTopologyInputTopics.forEach(outputTopics::add);
     }
     return outputTopics.stream().collect(Collectors.toList());
+  }
+
+  @Override
+  protected void doInit() {
+    super.doInit();
+    this.metricsExporterService.doInit();
+  }
+
+  @Override
+  protected void doStart() {
+    super.doStart();
+    this.metricsExporterService.doStart();
+  }
+
+  @Override
+  protected void doStop() {
+    super.doStop();
+    this.metricsExporterService.doStop();
   }
 
   private List<String> getSubTopologiesNames(Map<String, Object> properties) {
