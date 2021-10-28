@@ -7,6 +7,8 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_AUTHORITY_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_BODY_TRUNCATED;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_COOKIE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER;
@@ -20,6 +22,8 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRI
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_BODY_TRUNCATED;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_COOKIE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_HEADER;
@@ -102,13 +106,15 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
       List.of(
           RawSpanConstants.getValue(ENVOY_REQUEST_SIZE),
           RawSpanConstants.getValue(HTTP_REQUEST_SIZE),
-          OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue());
+          OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(),
+          RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_LENGTH));
 
   private static final List<String> RESPONSE_SIZE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
           RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
-          OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue());
+          OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(),
+          RawSpanConstants.getValue(HTTP_RESPONSE_CONTENT_LENGTH));
 
   private static final List<String> STATUS_CODE_ATTRIBUTES =
       List.of(
@@ -362,14 +368,18 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     // Request Body
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY),
-        (key, keyValue, builder, tagsMap) ->
-            builder.getRequestBuilder().setBody(keyValue.getVStr()));
+        (key, keyValue, builder, tagsMap) -> {
+          builder.getRequestBuilder().setBody(keyValue.getVStr());
+          setRequestSize(builder, tagsMap);
+        });
 
     // Response Body
     fieldGeneratorMap.put(
         RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY),
-        (key, keyValue, builder, tagsMap) ->
-            builder.getResponseBuilder().setBody(keyValue.getVStr()));
+        (key, keyValue, builder, tagsMap) -> {
+          builder.getResponseBuilder().setBody(keyValue.getVStr());
+          setResponseSize(builder, tagsMap);
+        });
 
     // Request Size
     fieldGeneratorMap.put(
@@ -381,6 +391,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     fieldGeneratorMap.put(
         OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(),
         (key, keyValue, builder, tagsMap) -> setRequestSize(builder, tagsMap));
+    fieldGeneratorMap.put(
+        RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_LENGTH),
+        (key, keyValue, builder, tagsMap) -> setRequestSize(builder, tagsMap));
 
     // Response Size
     fieldGeneratorMap.put(
@@ -391,6 +404,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
         (key, keyValue, builder, tagsMap) -> setResponseSize(builder, tagsMap));
     fieldGeneratorMap.put(
         OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(),
+        (key, keyValue, builder, tagsMap) -> setResponseSize(builder, tagsMap));
+    fieldGeneratorMap.put(
+        RawSpanConstants.getValue(HTTP_RESPONSE_CONTENT_LENGTH),
         (key, keyValue, builder, tagsMap) -> setResponseSize(builder, tagsMap));
 
     // Response status and status code
@@ -498,6 +514,23 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
     FirstMatchingKeyFinder.getIntegerValueByFirstMatchingKey(tagsMap, REQUEST_SIZE_ATTRIBUTES)
         .ifPresent(size -> httpBuilder.getRequestBuilder().setSize(size));
+
+    if (!httpBuilder.getRequestBuilder().hasSize()
+        && !isRequestBodyTruncated(tagsMap)
+        && tagsMap.containsKey(RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY))) {
+      String requestBody =
+          ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY)));
+      httpBuilder.getRequestBuilder().setSize(requestBody.length());
+    }
+  }
+
+  private static boolean isRequestBodyTruncated(
+      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
+    if (tagsMap.containsKey(RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED))) {
+      return ValueConverter.getBoolean(
+          tagsMap.get(RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED)));
+    }
+    return false;
   }
 
   private static void setResponseSize(
@@ -508,6 +541,23 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
     FirstMatchingKeyFinder.getIntegerValueByFirstMatchingKey(tagsMap, RESPONSE_SIZE_ATTRIBUTES)
         .ifPresent(size -> httpBuilder.getResponseBuilder().setSize(size));
+
+    if (!httpBuilder.getResponseBuilder().hasSize()
+        && !isResponseBodyTruncated(tagsMap)
+        && tagsMap.containsKey(RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY))) {
+      String responseBody =
+          ValueConverter.getString(tagsMap.get(RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY)));
+      httpBuilder.getResponseBuilder().setSize(responseBody.length());
+    }
+  }
+
+  private static boolean isResponseBodyTruncated(
+      Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
+    if (tagsMap.containsKey(RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED))) {
+      return ValueConverter.getBoolean(
+          tagsMap.get(RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED)));
+    }
+    return false;
   }
 
   private static void setResponseStatusCode(
