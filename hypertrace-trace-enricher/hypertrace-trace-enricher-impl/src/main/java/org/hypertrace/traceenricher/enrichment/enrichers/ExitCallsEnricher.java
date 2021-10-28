@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.API_EXIT_CALLS_COUNT;
 
 import com.google.common.collect.Maps;
@@ -39,7 +40,7 @@ public class ExitCallsEnricher extends AbstractTraceEnricher {
               addEnrichedAttribute(
                   event,
                   EnrichedSpanConstants.API_CALLEE_NAME_COUNT_ATTRIBUTE,
-                  AttributeValue.newBuilder()
+                  fastNewBuilder(AttributeValue.Builder.class)
                       .setValueMap(apiExitCallInfo.getCalleeNameToCallCount())
                       .build());
             });

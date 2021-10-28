@@ -1,12 +1,14 @@
 package org.hypertrace.core.spannormalizer.util;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.google.protobuf.ByteString;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import org.hypertrace.core.datamodel.AttributeValue;
 
 public class JaegerHTTagsConverter {
   public static AttributeValue createFromJaegerKeyValue(JaegerSpanInternalModel.KeyValue keyValue) {
-    AttributeValue.Builder valueBuilder = AttributeValue.newBuilder();
+    AttributeValue.Builder valueBuilder = fastNewBuilder(AttributeValue.Builder.class);
     switch (keyValue.getVType()) {
       case STRING:
         valueBuilder.setValue(keyValue.getVStr());

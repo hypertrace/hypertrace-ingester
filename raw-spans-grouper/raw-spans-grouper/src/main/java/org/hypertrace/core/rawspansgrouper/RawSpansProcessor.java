@@ -1,5 +1,6 @@
 package org.hypertrace.core.rawspansgrouper;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
@@ -134,7 +135,7 @@ public class RawSpansProcessor
 
     if (firstEntry) {
       traceState =
-          TraceState.newBuilder()
+          fastNewBuilder(TraceState.Builder.class)
               .setTraceStartTimestamp(currentTimeMs)
               .setTraceEndTimestamp(currentTimeMs)
               .setEmitTs(traceEmitTs)

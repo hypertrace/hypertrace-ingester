@@ -1,5 +1,6 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.datamodel.shared.SpanAttributeUtils.getStringAttribute;
 
 import java.nio.ByteBuffer;
@@ -129,7 +130,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       Map<ByteBuffer, ByteBuffer> childToParentEventIds,
       Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap) {
 
-    SpanEventView.Builder builder = SpanEventView.newBuilder();
+    SpanEventView.Builder builder = fastNewBuilder(SpanEventView.Builder.class);
 
     builder.setTenantId(event.getCustomerId());
     builder.setSpanId(event.getEventId());

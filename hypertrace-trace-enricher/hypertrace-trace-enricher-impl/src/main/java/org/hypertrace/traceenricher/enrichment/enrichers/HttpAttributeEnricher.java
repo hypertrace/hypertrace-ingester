@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 
 import com.google.common.base.Splitter;
 import java.net.URLDecoder;
@@ -55,7 +56,7 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
                 // Getting a single value out of all values(for backward compatibility)
                 String queryParamStringValue = queryParamEntry.getValue().get(0);
                 AttributeValue attributeValue =
-                    AttributeValue.newBuilder()
+                    fastNewBuilder(AttributeValue.Builder.class)
                         .setValue(queryParamStringValue)
                         .setValueList(queryParamEntry.getValue())
                         .build();

@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.HEAD_EVENT_ID;
 import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.UNIQUE_API_NODES_COUNT;
 
@@ -35,7 +36,7 @@ public class TraceStatsEnricher extends AbstractTraceEnricher {
 
   private void addHeadSpanIdTraceAttribute(StructuredTrace trace, Event headSpan) {
     AttributeValue attribute =
-        AttributeValue.newBuilder().setBinaryValue(headSpan.getEventId()).build();
+        fastNewBuilder(AttributeValue.Builder.class).setBinaryValue(headSpan.getEventId()).build();
     trace.getAttributes().getAttributeMap().put(HEAD_EVENT_ID, attribute);
   }
 

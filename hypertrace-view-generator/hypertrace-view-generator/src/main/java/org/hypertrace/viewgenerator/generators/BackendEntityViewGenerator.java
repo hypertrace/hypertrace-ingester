@@ -1,5 +1,7 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +68,7 @@ public class BackendEntityViewGenerator extends BaseViewGenerator<BackendEntityV
       final Map<ByteBuffer, Event> eventMap,
       final Map<ByteBuffer, ByteBuffer> childToParentEventIds) {
 
-    BackendEntityView.Builder builder = BackendEntityView.newBuilder();
+    BackendEntityView.Builder builder = fastNewBuilder(BackendEntityView.Builder.class);
     try {
       builder.setTenantId(trace.getCustomerId());
       builder.setTraceId(trace.getTraceId());

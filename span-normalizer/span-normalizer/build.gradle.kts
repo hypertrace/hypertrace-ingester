@@ -34,7 +34,7 @@ dependencies {
   implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":semantic-convention-utils"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.19")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.20")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.30")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.30")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")

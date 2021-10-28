@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.util;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +34,7 @@ public class EntityAvroConverter {
     }
 
     Entity.Builder builder =
-        Entity.newBuilder()
+        fastNewBuilder(Entity.Builder.class)
             .setEntityType(entity.getEntityType())
             .setEntityId(entity.getEntityId())
             .setCustomerId(entity.getTenantId())
@@ -40,7 +42,9 @@ public class EntityAvroConverter {
 
     if (includeAttributes) {
       builder.setAttributes(
-          Attributes.newBuilder().setAttributeMap(getAvroAttributeMap(entity)).build());
+          fastNewBuilder(Attributes.Builder.class)
+              .setAttributeMap(getAvroAttributeMap(entity))
+              .build());
     }
     return builder.build();
   }
@@ -58,13 +62,13 @@ public class EntityAvroConverter {
           == org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase.VALUE) {
         if (value.getValue().getTypeCase() == TypeCase.BYTES) {
           result =
-              AttributeValue.newBuilder()
+              fastNewBuilder(AttributeValue.Builder.class)
                   .setBinaryValue(value.getValue().getBytes().asReadOnlyByteBuffer())
                   .build();
         } else {
           Optional<String> valueStr = convertValueToString(value.getValue());
           if (valueStr.isPresent()) {
-            result = AttributeValue.newBuilder().setValue(valueStr.get()).build();
+            result = fastNewBuilder(AttributeValue.Builder.class).setValue(valueStr.get()).build();
           }
         }
       } else if (value.getTypeCase()
@@ -86,7 +90,10 @@ public class EntityAvroConverter {
         }
         // Only add the list if it's not empty
         if (!avroValuesStringList.isEmpty()) {
-          result = AttributeValue.newBuilder().setValueList(avroValuesStringList).build();
+          result =
+              fastNewBuilder(AttributeValue.Builder.class)
+                  .setValueList(avroValuesStringList)
+                  .build();
         }
       } else {
         // Currently we don't copy the map types.

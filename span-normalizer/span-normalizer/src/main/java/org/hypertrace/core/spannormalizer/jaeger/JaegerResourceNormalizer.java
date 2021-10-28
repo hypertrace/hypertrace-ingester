@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter.createFromJaegerKeyValue;
 
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
@@ -40,8 +41,9 @@ class JaegerResourceNormalizer {
       return Optional.empty();
     }
     return Optional.of(
-        Resource.newBuilder()
-            .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(resourceValueMap))
+        fastNewBuilder(Resource.Builder.class)
+            .setAttributesBuilder(
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(resourceValueMap))
             .build());
   }
 

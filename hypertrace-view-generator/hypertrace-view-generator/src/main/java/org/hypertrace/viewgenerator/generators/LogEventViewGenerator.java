@@ -1,5 +1,7 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
@@ -44,7 +46,7 @@ public class LogEventViewGenerator implements JavaCodeBasedViewGenerator<LogEven
       for (LogEvent logEventRecord : logEvents.getLogEvents()) {
         String attributes = convertAttributes(logEventRecord.getAttributes());
         LogEventView logEventView =
-            LogEventView.newBuilder()
+            fastNewBuilder(LogEventView.Builder.class)
                 .setSpanId(logEventRecord.getSpanId())
                 .setTraceId(logEventRecord.getTraceId())
                 .setTimestampNanos(logEventRecord.getTimestampNanos())
