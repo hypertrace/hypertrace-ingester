@@ -1,7 +1,5 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import static org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils.getGrpcRequestMetadataHost;
-
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import java.net.URI;
@@ -150,9 +148,15 @@ public class ApiBoundaryTypeAttributeEnricher extends AbstractTraceEnricher {
     Optional<String> grpcAuthority = RpcSemanticConventionUtils.getGrpcAuthority(event);
     if (grpcAuthority.isPresent()) {
       return getSanitizedHostValue(grpcAuthority.get());
-    } else {
-      return getGrpcRequestMetadataHost(event);
     }
+
+    Optional<String> grpcRequestMetadataHost =
+        RpcSemanticConventionUtils.getGrpcRequestMetadataHost(event);
+    if (grpcRequestMetadataHost.isPresent()) {
+      return getSanitizedHostValue(grpcRequestMetadataHost.get());
+    }
+
+    return Optional.empty();
   }
 
   private Optional<String> getSanitizedHostValue(String value) {

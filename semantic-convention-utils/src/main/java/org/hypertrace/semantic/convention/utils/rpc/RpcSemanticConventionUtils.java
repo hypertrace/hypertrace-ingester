@@ -235,12 +235,6 @@ public class RpcSemanticConventionUtils {
     return grpcStatusMsg == null ? "" : grpcStatusMsg;
   }
 
-  public static Optional<String> getGrpcRequestMetadataHost(Event event) {
-    return Optional.ofNullable(
-        SpanAttributeUtils.getFirstAvailableStringAttribute(
-            event, List.of(RPC_REQUEST_METADATA_HOST.getValue())));
-  }
-
   public static String getGrpcErrorMsg(Event event) {
     if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
       return "";
@@ -433,6 +427,24 @@ public class RpcSemanticConventionUtils {
     if (attributeValueMap.get(RPC_REQUEST_METADATA_X_FORWARDED_FOR.getValue()) != null) {
       return Optional.ofNullable(
           attributeValueMap.get(RPC_REQUEST_METADATA_X_FORWARDED_FOR.getValue()).getValue());
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<String> getGrpcRequestMetadataHost(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (!isRpcSystemGrpc(attributeValueMap)) {
+      return Optional.empty();
+    }
+
+    if (attributeValueMap.get(RPC_REQUEST_METADATA_HOST.getValue()) != null) {
+      return Optional.ofNullable(
+          attributeValueMap.get(RPC_REQUEST_METADATA_HOST.getValue()).getValue());
     }
     return Optional.empty();
   }
