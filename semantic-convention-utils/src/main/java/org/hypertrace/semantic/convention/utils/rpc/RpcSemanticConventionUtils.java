@@ -17,6 +17,7 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUE
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_CONTENT_LENGTH;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_HOST;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_X_FORWARDED_FOR;
@@ -232,6 +233,12 @@ public class RpcSemanticConventionUtils {
     String grpcStatusMsg =
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, STATUS_MSG_ATTRIBUTES);
     return grpcStatusMsg == null ? "" : grpcStatusMsg;
+  }
+
+  public static Optional<String> getGrpcRequestMetadataHost(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RPC_REQUEST_METADATA_HOST.getValue())));
   }
 
   public static String getGrpcErrorMsg(Event event) {
