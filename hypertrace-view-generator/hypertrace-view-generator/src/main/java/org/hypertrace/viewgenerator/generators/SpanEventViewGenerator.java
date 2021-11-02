@@ -317,7 +317,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
 
       case PROTOCOL_GRPC:
         /**
-         * For RPC methods, we shows URL/URI as combination of rpc.service and rpc.method. The same
+         * For RPC methods, we show URL/URI as a combination of rpc.service and rpc.method. The same
          * information is also available as Span Name -
          * https://github.com/open-telemetry/opentelemetry-specification/blob/3e380e249f60c3a5f68746f5e84d10195ba41a79/specification/trace/semantic_conventions/rpc.md#span-name
          * So, as part of this method, we will form Url using rpc.service and rpc.method, and
