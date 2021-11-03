@@ -2,6 +2,7 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_HOST;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -298,6 +299,34 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
 
     target.enrichEvent(trace, innerEntrySpan);
     Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost");
+  }
+
+  @Test
+  public void testEnrichEventWithGrpcNoAuthorityButRequestMetadataHost() {
+    mockProtocol(innerEntrySpan, Protocol.PROTOCOL_GRPC);
+    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc =
+        mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
+    when(innerEntrySpan.getGrpc()).thenReturn(grpc);
+    Request request = mock(Request.class);
+    when(grpc.getRequest()).thenReturn(request);
+    RequestMetadata metadata = mock(RequestMetadata.class);
+    when(request.getRequestMetadata()).thenReturn(metadata);
+    when(metadata.getAuthority()).thenReturn("localhost:443");
+
+    addEnrichedAttributeToEvent(
+        innerEntrySpan, X_FORWARDED_HOST_METADATA, AttributeValueCreator.create("testHost"));
+
+    addAttributeToEvent(
+        innerEntrySpan,
+        RPC_REQUEST_METADATA_HOST.getValue(),
+        AttributeValue.newBuilder().setValue("testHost2").build());
+    addAttributeToEvent(
+        innerEntrySpan,
+        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
+        AttributeValue.newBuilder().setValue("grpc").build());
+
+    target.enrichEvent(trace, innerEntrySpan);
+    Assertions.assertEquals(EnrichedSpanUtils.getHostHeader(innerEntrySpan), "testHost2");
   }
 
   private void mockStructuredGraph() {
