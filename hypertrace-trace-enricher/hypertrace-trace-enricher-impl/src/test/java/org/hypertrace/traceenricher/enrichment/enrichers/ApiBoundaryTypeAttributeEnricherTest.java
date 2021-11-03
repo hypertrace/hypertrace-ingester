@@ -276,6 +276,10 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
         AttributeValue.newBuilder().setValue("testHost").build());
     addAttributeToEvent(
         innerEntrySpan,
+        RPC_REQUEST_METADATA_HOST.getValue(),
+        AttributeValue.newBuilder().setValue("testHost2").build());
+    addAttributeToEvent(
+        innerEntrySpan,
         OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
         AttributeValue.newBuilder().setValue("grpc").build());
     target.enrichEvent(trace, innerEntrySpan);
