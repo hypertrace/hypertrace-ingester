@@ -5,6 +5,7 @@ public enum RpcSpanTag {
   RPC_ERROR_NAME("rpc.error_name"),
   RPC_ERROR_MESSAGE("rpc.error_message"),
   RPC_REQUEST_METADATA("rpc.request.metadata"),
+  RPC_REQUEST_METADATA_HOST("rpc.request.metadata.host"),
   RPC_RESPONSE_METADATA("rpc.response.metadata"),
   RPC_REQUEST_BODY("rpc.request.body"),
   RPC_RESPONSE_BODY("rpc.response.body"),

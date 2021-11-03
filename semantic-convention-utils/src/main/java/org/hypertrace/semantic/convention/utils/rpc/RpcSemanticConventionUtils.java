@@ -17,6 +17,7 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUE
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_CONTENT_LENGTH;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_HOST;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_X_FORWARDED_FOR;
@@ -68,6 +69,7 @@ public class RpcSemanticConventionUtils {
   private static final String OTEL_RPC_SYSTEM_GRPC =
       OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue();
   private static final String OTEL_SPAN_TAG_RPC_SYSTEM_ATTR = OTEL_SPAN_TAG_RPC_SYSTEM.getValue();
+  private static final String RPC_REQUEST_METADATA_HOST_ATTR = RPC_REQUEST_METADATA_HOST.getValue();
 
   private static final String OTHER_GRPC_HOST_PORT = RawSpanConstants.getValue(Grpc.GRPC_HOST_PORT);
   private static final String OTHER_GRPC_METHOD = RawSpanConstants.getValue(Grpc.GRPC_METHOD);
@@ -428,6 +430,20 @@ public class RpcSemanticConventionUtils {
           attributeValueMap.get(RPC_REQUEST_METADATA_X_FORWARDED_FOR.getValue()).getValue());
     }
     return Optional.empty();
+  }
+
+  public static Optional<String> getGrpcRequestMetadataHost(Event event) {
+    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
+      return Optional.empty();
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (!isRpcSystemGrpc(attributeValueMap)) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_HOST_ATTR))
+        .map(AttributeValue::getValue);
   }
 
   public static Optional<String> getRpcPath(Event event) {
