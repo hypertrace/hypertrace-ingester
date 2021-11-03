@@ -17,6 +17,7 @@ import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUE
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_AUTHORITY;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_CONTENT_LENGTH;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_HOST;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_PATH;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_USER_AGENT;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA_X_FORWARDED_FOR;
@@ -163,6 +164,37 @@ class RpcSemanticConventionUtilsTest {
                         AttributeValue.newBuilder().setValue("198.12.34.1").build()))
                 .build());
     assertEquals("198.12.34.1", RpcSemanticConventionUtils.getGrpcXForwardedFor(event).get());
+  }
+
+  @Test
+  public void testGetGrpcRequestMetadataHostForGrpcSystem() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        OTEL_SPAN_TAG_RPC_SYSTEM.getValue(),
+                        AttributeValue.newBuilder().setValue("grpc").build(),
+                        RPC_REQUEST_METADATA_HOST.getValue(),
+                        AttributeValue.newBuilder().setValue("webhost:9011").build()))
+                .build());
+    assertEquals(
+        "webhost:9011", RpcSemanticConventionUtils.getGrpcRequestMetadataHost(event).get());
+  }
+
+  @Test
+  public void testGetGrpcRequestMetadataHostForNotGrpcSystem() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RPC_REQUEST_METADATA_HOST.getValue(),
+                        AttributeValue.newBuilder().setValue("webhost:9011").build()))
+                .build());
+    assertEquals(Optional.empty(), RpcSemanticConventionUtils.getGrpcRequestMetadataHost(event));
   }
 
   @Test
