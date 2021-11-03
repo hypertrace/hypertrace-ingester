@@ -69,6 +69,7 @@ public class RpcSemanticConventionUtils {
   private static final String OTEL_RPC_SYSTEM_GRPC =
       OTelRpcSemanticConventions.RPC_SYSTEM_VALUE_GRPC.getValue();
   private static final String OTEL_SPAN_TAG_RPC_SYSTEM_ATTR = OTEL_SPAN_TAG_RPC_SYSTEM.getValue();
+  private static final String RPC_REQUEST_METADATA_HOST_ATTR = RPC_REQUEST_METADATA_HOST.getValue();
 
   private static final String OTHER_GRPC_HOST_PORT = RawSpanConstants.getValue(Grpc.GRPC_HOST_PORT);
   private static final String OTHER_GRPC_METHOD = RawSpanConstants.getValue(Grpc.GRPC_METHOD);
@@ -441,12 +442,8 @@ public class RpcSemanticConventionUtils {
     if (!isRpcSystemGrpc(attributeValueMap)) {
       return Optional.empty();
     }
-
-    if (attributeValueMap.get(RPC_REQUEST_METADATA_HOST.getValue()) != null) {
-      return Optional.ofNullable(
-          attributeValueMap.get(RPC_REQUEST_METADATA_HOST.getValue()).getValue());
-    }
-    return Optional.empty();
+    return Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_HOST_ATTR))
+        .map(AttributeValue::getValue);
   }
 
   public static Optional<String> getRpcPath(Event event) {

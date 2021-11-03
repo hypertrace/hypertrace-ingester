@@ -167,7 +167,7 @@ class RpcSemanticConventionUtilsTest {
   }
 
   @Test
-  public void testGetGrpcRequestMetadataHost() {
+  public void testGetGrpcRequestMetadataHostForGrpcSystem() {
     Event event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
@@ -181,6 +181,20 @@ class RpcSemanticConventionUtilsTest {
                 .build());
     assertEquals(
         "webhost:9011", RpcSemanticConventionUtils.getGrpcRequestMetadataHost(event).get());
+  }
+
+  @Test
+  public void testGetGrpcRequestMetadataHostForNotGrpcSystem() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RPC_REQUEST_METADATA_HOST.getValue(),
+                        AttributeValue.newBuilder().setValue("webhost:9011").build()))
+                .build());
+    assertEquals(Optional.empty(), RpcSemanticConventionUtils.getGrpcRequestMetadataHost(event));
   }
 
   @Test
