@@ -304,15 +304,6 @@ public class ApiBoundaryTypeAttributeEnricherTest extends AbstractAttributeEnric
   @Test
   public void testEnrichEventWithGrpcNoAuthorityButRequestMetadataHost() {
     mockProtocol(innerEntrySpan, Protocol.PROTOCOL_GRPC);
-    org.hypertrace.core.datamodel.eventfields.grpc.Grpc grpc =
-        mock(org.hypertrace.core.datamodel.eventfields.grpc.Grpc.class);
-    when(innerEntrySpan.getGrpc()).thenReturn(grpc);
-    Request request = mock(Request.class);
-    when(grpc.getRequest()).thenReturn(request);
-    RequestMetadata metadata = mock(RequestMetadata.class);
-    when(request.getRequestMetadata()).thenReturn(metadata);
-    when(metadata.getAuthority()).thenReturn("localhost:443");
-
     addEnrichedAttributeToEvent(
         innerEntrySpan, X_FORWARDED_HOST_METADATA, AttributeValueCreator.create("testHost"));
 
