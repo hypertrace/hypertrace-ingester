@@ -197,6 +197,8 @@ public class HttpSemanticConventionUtils {
               attributeValueMap.get(HTTP_HOST.getValue()).getValue(),
               attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
       return Optional.of(url);
+    } else if (attributeValueMap.containsKey(HTTP_URL.getValue())) {
+      return Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
     } else if (SpanSemanticConventionUtils.isClientSpanForOtelFormat(attributeValueMap)
         || SpanSemanticConventionUtils.isClientSpanForOCFormat(attributeValueMap)) {
       return getHttpUrlForOtelFormatClientSpan(attributeValueMap);
