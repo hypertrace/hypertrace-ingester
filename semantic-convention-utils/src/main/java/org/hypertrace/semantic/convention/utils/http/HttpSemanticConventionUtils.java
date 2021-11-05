@@ -184,7 +184,8 @@ public class HttpSemanticConventionUtils {
    */
   public static Optional<String> getHttpUrlForOTelFormat(
       Map<String, AttributeValue> attributeValueMap) {
-    if (attributeValueMap.containsKey(HTTP_URL.getValue())) {
+    if (attributeValueMap.containsKey(HTTP_URL.getValue())
+        && isAbsoluteUrl(attributeValueMap.get(HTTP_URL.getValue()).getValue())) {
       return Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
     } else if (attributeValueMap.containsKey(HTTP_SCHEME.getValue())
         && attributeValueMap.containsKey(HTTP_HOST.getValue())
