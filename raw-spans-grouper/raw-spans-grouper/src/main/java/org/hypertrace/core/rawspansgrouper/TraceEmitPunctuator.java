@@ -48,7 +48,7 @@ class TraceEmitPunctuator implements Punctuator {
 
   private static final Logger logger = LoggerFactory.getLogger(TraceEmitPunctuator.class);
   private static final Object mutex = new Object();
-]
+
   private static final Timer spansGrouperArrivalLagTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
   private static final String TRACES_EMITTER_COUNTER = "hypertrace.emitted.traces";
