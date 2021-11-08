@@ -49,7 +49,7 @@ class TraceEmitPunctuator implements Punctuator {
   private static final Logger logger = LoggerFactory.getLogger(TraceEmitPunctuator.class);
   private static final Object mutex = new Object();
 
-  private static final Timer spansGrouperArrivalLagTimer =
+  private static final Timer grouperLagTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
   private static final String TRACES_EMITTER_COUNTER = "hypertrace.emitted.traces";
   private static final ConcurrentMap<String, Counter> tenantToTraceEmittedCounter =
@@ -239,9 +239,11 @@ class TraceEmitPunctuator implements Punctuator {
       long currentTimestamp, long firstSpanTimestamp) {
     Timestamps timestamps = null;
     if (!(Math.random() * 100 <= dataflowSamplingPercent)) {
-      spansGrouperArrivalLagTimer.record(
+      //Reports the time it took from span arrival to till trace is created and just before it is emitted.
+      grouperLagTimer.record(
           currentTimestamp - firstSpanTimestamp, TimeUnit.MILLISECONDS);
       Map<String, TimestampRecord> records = new HashMap<>();
+      //Saves the span arrival time in trace, so that it can be used by services downstream to calculate similar lag.
       records.put(
           DataflowMetricUtils.SPAN_ARRIVAL_TIME,
           new TimestampRecord(DataflowMetricUtils.SPAN_ARRIVAL_TIME, firstSpanTimestamp));
