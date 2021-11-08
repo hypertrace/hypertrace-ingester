@@ -184,9 +184,10 @@ public class HttpSemanticConventionUtils {
    */
   public static Optional<String> getHttpUrlForOTelFormat(
       Map<String, AttributeValue> attributeValueMap) {
+    Optional<String> httpUrlForOTelFormat = Optional.empty();
     if (attributeValueMap.containsKey(HTTP_URL.getValue())
         && isAbsoluteUrl(attributeValueMap.get(HTTP_URL.getValue()).getValue())) {
-      return Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
+      httpUrlForOTelFormat = Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
     } else if (attributeValueMap.containsKey(HTTP_SCHEME.getValue())
         && attributeValueMap.containsKey(HTTP_HOST.getValue())
         && attributeValueMap.containsKey(HTTP_TARGET.getValue())) {
@@ -196,17 +197,19 @@ public class HttpSemanticConventionUtils {
               attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
               attributeValueMap.get(HTTP_HOST.getValue()).getValue(),
               attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
-      return Optional.of(url);
+      httpUrlForOTelFormat = Optional.of(url);
     } else if (SpanSemanticConventionUtils.isClientSpanForOtelFormat(attributeValueMap)
         || SpanSemanticConventionUtils.isClientSpanForOCFormat(attributeValueMap)) {
-      return getHttpUrlForOtelFormatClientSpan(attributeValueMap);
+      httpUrlForOTelFormat = getHttpUrlForOtelFormatClientSpan(attributeValueMap);
     } else if (SpanSemanticConventionUtils.isServerSpanForOtelFormat(attributeValueMap)
         || SpanSemanticConventionUtils.isServerSpanForOCFormat(attributeValueMap)) {
-      return getHttpUrlForOtelFormatServerSpan(attributeValueMap);
-    } else if (attributeValueMap.containsKey(HTTP_URL.getValue())) {
+      httpUrlForOTelFormat = getHttpUrlForOtelFormatServerSpan(attributeValueMap);
+    }
+
+    if (httpUrlForOTelFormat.isEmpty() && attributeValueMap.containsKey(HTTP_URL.getValue())) {
       return Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
     }
-    return Optional.empty();
+    return httpUrlForOTelFormat;
   }
 
   private static Optional<String> getHttpUrlForOtelFormatClientSpan(
