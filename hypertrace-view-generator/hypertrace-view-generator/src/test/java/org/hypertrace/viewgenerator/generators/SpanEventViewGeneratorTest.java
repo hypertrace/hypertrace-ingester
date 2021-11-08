@@ -80,6 +80,57 @@ public class SpanEventViewGeneratorTest {
   }
 
   @Test
+  public void test_getRequestUrl_grpcProctol_shouldReturnRpcServiceAndMethod() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "rpc.service",
+                        AttributeValue.newBuilder().setValue("hipstershop.AdService").build(),
+                        "rpc.method",
+                        AttributeValue.newBuilder().setValue("GetEcho").build()))
+                .build());
+    when(event.getEventName()).thenReturn("Sent.hipstershop.AdService.GetAds");
+    assertEquals(
+        "hipstershop.AdService.GetEcho",
+        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_GRPC));
+  }
+
+  @Test
+  public void test_getRequestUrl_grpcProctol_shouldReturnEventNameIfOnlyRpcService() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "rpc.service",
+                        AttributeValue.newBuilder().setValue("hipstershop.AdService").build()))
+                .build());
+    when(event.getEventName()).thenReturn("Sent.hipstershop.AdService.GetAds");
+    assertEquals(
+        "Sent.hipstershop.AdService.GetAds",
+        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_GRPC));
+  }
+
+  @Test
+  public void test_getRequestUrl_grpcProctol_shouldReturnEventNameIfOnlyRpcMethod() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of("rpc.method", AttributeValue.newBuilder().setValue("GetEcho").build()))
+                .build());
+    when(event.getEventName()).thenReturn("Sent.hipstershop.AdService.GetAds");
+    assertEquals(
+        "Sent.hipstershop.AdService.GetAds",
+        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_GRPC));
+  }
+
+  @Test
   public void testGetRequestUrl_fullUrlIsAbsent() {
     Event event =
         createMockEventWithAttribute(
