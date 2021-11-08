@@ -225,6 +225,9 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       builder.setErrorCount((int) errorMetric.getValue().doubleValue());
     }
 
+    // span count
+    builder.setSpanCount(1);
+
     MetricValue exceptionMetric = event.getMetrics().getMetricMap().get(EXCEPTION_COUNT_CONSTANT);
     if (exceptionMetric != null && exceptionMetric.getValue() > 0.0d) {
       builder.setExceptionCount((int) exceptionMetric.getValue().doubleValue());

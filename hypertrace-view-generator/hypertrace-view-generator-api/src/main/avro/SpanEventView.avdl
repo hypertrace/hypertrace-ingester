@@ -70,6 +70,9 @@ protocol SpanEventViewProtocol {
     // count of api_trace
     int api_trace_count = 0;
 
+    // count of span
+    int span_count = 0;
+
     // display name for the entity name on api execution details page
     // for an entry span it will be the same as the span's service_name
     // for an exit span:
