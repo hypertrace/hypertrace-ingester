@@ -6,10 +6,12 @@ import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_GRPC_STATUS_MESS
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_PATH;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY_TRUNCATED;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
@@ -31,6 +33,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,9 +58,13 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
  */
 public class RpcSemanticConventionUtils {
 
+  private static final Splitter SLASH_SPLITTER = Splitter.on("/").omitEmptyStrings().trimResults();
   private static final Joiner DOT_JOINER = Joiner.on(".");
   private static final String LOCALHOST = "localhost";
   private static final String COLON = ":";
+
+  private static final String GRPC_RECV_DOT = "Recv.";
+  private static final String GRPC_SENT_DOT = "Sent.";
 
   // otel specific attributes
   private static final String OTEL_RPC_SYSTEM = OTelRpcSemanticConventions.RPC_SYSTEM.getValue();
@@ -109,6 +116,9 @@ public class RpcSemanticConventionUtils {
   private static final String GRPC_RESPONSE_BODY_ATTR =
       RawSpanConstants.getValue(GRPC_RESPONSE_BODY);
   private static final String RPC_RESPONSE_BODY_ATTR = RPC_RESPONSE_BODY.getValue();
+  private static final String RPC_REQUEST_METADATA_PATH_ATTR = RPC_REQUEST_METADATA_PATH.getValue();
+  private static final String HTTP_REQUEST_HEADER_PATH_ATTR =
+      RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH);
 
   /**
    * Differs from {@link
@@ -444,6 +454,60 @@ public class RpcSemanticConventionUtils {
     }
     return Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_HOST_ATTR))
         .map(AttributeValue::getValue);
+  }
+
+  /**
+   * For RPC span, the span name is equivalent to URL
+   * https://github.com/open-telemetry/opentelemetry-specification/blob/3e380e249f60c3a5f68746f5e84d10195ba41a79/specification/trace/semantic_conventions/rpc.md#span-name
+   * In cases if the convention is not followed, it will use a few fallback attributes. This method
+   * returns the Url in dotted format.
+   */
+  public static Optional<String> getGrpcRequestUrl(Event event) {
+    if (isEventNamePrefixedWithRecvOrSent(event.getEventName())
+        || event.getAttributes() == null
+        || event.getAttributes().getAttributeMap() == null) {
+      return Optional.ofNullable(event.getEventName());
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    if (isRpcSystemGrpc(attributeValueMap)) {
+      Optional<AttributeValue> attributeValue =
+          Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_PATH_ATTR));
+
+      if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
+        return convertToGrpcDottedURLFormat(attributeValue.get().getValue());
+      }
+
+      Optional<String> requestUrl = getRpcPath(event);
+      if (requestUrl.isPresent()) {
+        return requestUrl;
+      }
+
+      attributeValue = Optional.ofNullable(attributeValueMap.get(HTTP_REQUEST_HEADER_PATH_ATTR));
+      if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
+        return convertToGrpcDottedURLFormat(attributeValue.get().getValue());
+      }
+
+      attributeValue =
+          Optional.ofNullable(attributeValueMap.get(RawSpanConstants.getValue(GRPC_PATH)));
+      if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
+        return convertToGrpcDottedURLFormat(attributeValue.get().getValue());
+      }
+    }
+
+    return Optional.ofNullable(event.getEventName());
+  }
+
+  private static boolean isEventNamePrefixedWithRecvOrSent(String eventName) {
+    return StringUtils.startsWith(eventName, GRPC_RECV_DOT)
+        || StringUtils.startsWith(eventName, GRPC_SENT_DOT);
+  }
+
+  private static Optional<String> convertToGrpcDottedURLFormat(String path) {
+    List<String> grpcPathToJoin = new ArrayList<>();
+    SLASH_SPLITTER.split(path).forEach(grpcPathToJoin::add);
+    return Optional.of(DOT_JOINER.join(grpcPathToJoin));
   }
 
   public static Optional<String> getRpcPath(Event event) {

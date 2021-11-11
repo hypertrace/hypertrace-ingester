@@ -910,6 +910,124 @@ class RpcSemanticConventionUtilsTest {
     assertTrue(authority.isEmpty());
   }
 
+  @Test
+  public void testGetGrpcRequestUrl() {
+    Event e = mock(Event.class);
+
+    // case 1: event name starts with Sent. prefix
+    Attributes attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system", "grpc",
+                "rpc.request.metadata.:path", "/TestGrpcService/getRpcMetadataPathEcho"));
+    when(e.getAttributes()).thenReturn(attributes);
+    when(e.getEventName()).thenReturn("Sent.TestService.getEventEchos");
+
+    assertEquals(
+        "Sent.TestService.getEventEchos",
+        RpcSemanticConventionUtils.getGrpcRequestUrl(e).get());
+
+    // case 2: event name starts with Sent. prefix
+    attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system", "grpc",
+                "rpc.request.metadata.:path", "/TestGrpcService/getRpcMetadataPathEcho"));
+    when(e.getAttributes()).thenReturn(attributes);
+    when(e.getEventName()).thenReturn("Recv.TestService.getEventEchos");
+
+    assertEquals(
+        "Recv.TestService.getEventEchos",
+        RpcSemanticConventionUtils.getGrpcRequestUrl(e).get());
+
+    // case 3: attributes map is empty, fallback to event name
+    attributes = buildAttributes(Map.of());
+    when(e.getAttributes()).thenReturn(attributes);
+    when(e.getEventName()).thenReturn("TestService.getEventEchos");
+
+    assertEquals(
+        "TestService.getEventEchos",
+        RpcSemanticConventionUtils.getGrpcRequestUrl(e).get());
+
+    // case 4: event name doesn't start with req prefix, and rpc.system = grpc,
+    // uses rpc.request.metadata.:path
+    attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system", "grpc",
+                "rpc.request.metadata.:path", "/TestGrpcService/getRpcRequestMetadataPathEcho",
+                "rpc.service", "TestRpcService",
+                "rpc.method", "getRpcMethodEcho",
+                "http.request.header.:path", "/TestHttpGrpcService/getHttpRequestHeaderPathEcho",
+                "grpc.path", "/TestGrpcService/getGrpcPathEcho"));
+    when(e.getAttributes()).thenReturn(attributes);
+    when(e.getEventName()).thenReturn("TestService.getEventEchos");
+
+    assertEquals(
+        "TestGrpcService.getRpcRequestMetadataPathEcho",
+        RpcSemanticConventionUtils.getGrpcRequestUrl(e).get());
+
+    // case 5: event name doesn't start with req prefix, and rpc.system = grpc,
+    // uses rpc.service and rpc.method
+    attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system", "grpc",
+                "rpc.service", "TestRpcService",
+                "rpc.method", "getRpcMethodEcho",
+                "http.request.header.:path", "/TestHttpGrpcService/getHttpRequestHeaderPathEcho",
+                "grpc.path", "/TestGrpcService/getGrpcPathEcho"));
+    when(e.getAttributes()).thenReturn(attributes);
+    when(e.getEventName()).thenReturn("TestService.getEventEchos");
+
+    assertEquals(
+        "TestRpcService.getRpcMethodEcho",
+        RpcSemanticConventionUtils.getGrpcRequestUrl(e).get());
+
+    // case 6: event name doesn't start with req prefix, and rpc.system = grpc,
+    // uses http.request.header.:path
+    attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system", "grpc",
+                "http.request.header.:path", "/TestHttpGrpcService/getHttpRequestHeaderPathEcho",
+                "grpc.path", "/TestGrpcService/getGrpcPathEcho"));
+    when(e.getAttributes()).thenReturn(attributes);
+    when(e.getEventName()).thenReturn("TestService.getEventEchos");
+
+    assertEquals(
+        "TestHttpGrpcService.getHttpRequestHeaderPathEcho",
+        RpcSemanticConventionUtils.getGrpcRequestUrl(e).get());
+
+    // case 7: event name doesn't start with req prefix, and rpc.system = grpc,
+    // uses grpc.path
+    attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system", "grpc",
+                "grpc.path", "/TestGrpcService/getGrpcPathEcho"));
+    when(e.getAttributes()).thenReturn(attributes);
+    when(e.getEventName()).thenReturn("TestService.getEventEchos");
+
+    assertEquals(
+        "TestGrpcService.getGrpcPathEcho",
+        RpcSemanticConventionUtils.getGrpcRequestUrl(e).get());
+
+    // case 7: event name doesn't start with req prefix, and rpc.system = grpc,
+    // but all fallback attributes are missing, uses eventName
+    attributes =
+        buildAttributes(
+            Map.of(
+                "rpc.system", "grpc"));
+    when(e.getAttributes()).thenReturn(attributes);
+    when(e.getEventName()).thenReturn("TestService.getEventEchos");
+
+    assertEquals(
+        "TestService.getEventEchos",
+        RpcSemanticConventionUtils.getGrpcRequestUrl(e).get());
+
+  }
+
   private static Attributes buildAttributes(Map<String, String> attributes) {
     return attributes.entrySet().stream()
         .collect(
