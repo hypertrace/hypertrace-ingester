@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.hypertrace.core.datamodel.Entity;
@@ -15,7 +16,6 @@ import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
-import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
@@ -316,15 +316,10 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
             .orElse(HttpSemanticConventionUtils.getHttpPath(event).orElse(null));
 
       case PROTOCOL_GRPC:
-        /**
-         * For RPC methods, we show URL/URI as a combination of rpc.service and rpc.method. The same
-         * information is also available as Span Name -
-         * https://github.com/open-telemetry/opentelemetry-specification/blob/3e380e249f60c3a5f68746f5e84d10195ba41a79/specification/trace/semantic_conventions/rpc.md#span-name
-         * So, as part of this method, we will form Url using rpc.service and rpc.method, and
-         * fallback to spanName. While setting GRPC protocol from rpc attributes, it already checks
-         * for rpc.system.
-         */
-        return RpcSemanticConventionUtils.getRpcPath(event).orElse(event.getEventName());
+        return Optional.ofNullable(
+                SpanAttributeUtils.getStringAttribute(
+                    event, EnrichedSpanConstants.GRPC_REQUEST_URL_FORMAT_DOTTED))
+            .orElse(event.getEventName());
     }
     return null;
   }

@@ -33,7 +33,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -457,57 +456,68 @@ public class RpcSemanticConventionUtils {
   }
 
   /**
-   * For RPC span, the span name is equivalent to URL
+   * For RPC span, the span name is equivalent to Endpoint
    * https://github.com/open-telemetry/opentelemetry-specification/blob/3e380e249f60c3a5f68746f5e84d10195ba41a79/specification/trace/semantic_conventions/rpc.md#span-name
-   * In cases if the convention is not followed, it will use a few fallback attributes. This method
-   * returns the Url in dotted format.
+   * In cases if the convention is not followed, it will use a few fallback attributes.
+   *
+   * <p>This method assumed that it called if the protocol is GRPC, and returns endpoint in dotted
+   * format. Pl. check GrpcAttributeEnricher for reference.
    */
-  public static Optional<String> getGrpcRequestUrl(Event event) {
+  public static Optional<String> getGrpcRequestEndpoint(Event event) {
     if (isEventNamePrefixedWithRecvOrSent(event.getEventName())
         || event.getAttributes() == null
         || event.getAttributes().getAttributeMap() == null) {
-      return Optional.ofNullable(event.getEventName());
+      return stripRecvOrSent(event.getEventName());
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
 
-    if (isRpcSystemGrpc(attributeValueMap)) {
-      Optional<AttributeValue> attributeValue =
-          Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_PATH_ATTR));
+    Optional<AttributeValue> attributeValue =
+        Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_PATH_ATTR));
+    if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
+      return sanitizePath(attributeValue.get().getValue());
+    }
 
-      if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
-        return convertToGrpcDottedURLFormat(attributeValue.get().getValue());
-      }
+    Optional<String> requestUrl = getRpcPath(event);
+    if (requestUrl.isPresent()) {
+      return requestUrl;
+    }
 
-      Optional<String> requestUrl = getRpcPath(event);
-      if (requestUrl.isPresent()) {
-        return requestUrl;
-      }
+    attributeValue = Optional.ofNullable(attributeValueMap.get(HTTP_REQUEST_HEADER_PATH_ATTR));
+    if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
+      return sanitizePath(attributeValue.get().getValue());
+    }
 
-      attributeValue = Optional.ofNullable(attributeValueMap.get(HTTP_REQUEST_HEADER_PATH_ATTR));
-      if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
-        return convertToGrpcDottedURLFormat(attributeValue.get().getValue());
-      }
-
-      attributeValue =
-          Optional.ofNullable(attributeValueMap.get(RawSpanConstants.getValue(GRPC_PATH)));
-      if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
-        return convertToGrpcDottedURLFormat(attributeValue.get().getValue());
-      }
+    attributeValue =
+        Optional.ofNullable(attributeValueMap.get(RawSpanConstants.getValue(GRPC_PATH)));
+    if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
+      return sanitizePath(attributeValue.get().getValue());
     }
 
     return Optional.ofNullable(event.getEventName());
   }
 
-  private static boolean isEventNamePrefixedWithRecvOrSent(String eventName) {
-    return StringUtils.startsWith(eventName, GRPC_RECV_DOT)
-        || StringUtils.startsWith(eventName, GRPC_SENT_DOT);
+  private static Optional<String> stripRecvOrSent(String eventName) {
+    if (eventName.startsWith(GRPC_RECV_DOT)) {
+      return Optional.ofNullable(
+          StringUtils.trimToNull(eventName.substring(GRPC_RECV_DOT.length())));
+    } else if (eventName.startsWith(GRPC_SENT_DOT)) {
+      return Optional.ofNullable(
+          StringUtils.trimToNull(eventName.substring(GRPC_SENT_DOT.length())));
+    }
+    return Optional.of(eventName);
   }
 
-  private static Optional<String> convertToGrpcDottedURLFormat(String path) {
-    List<String> grpcPathToJoin = new ArrayList<>();
-    SLASH_SPLITTER.split(path).forEach(grpcPathToJoin::add);
-    return Optional.of(DOT_JOINER.join(grpcPathToJoin));
+  private static boolean isEventNamePrefixedWithRecvOrSent(String eventName) {
+    return eventName != null
+        && (StringUtils.startsWith(eventName, GRPC_RECV_DOT)
+            || StringUtils.startsWith(eventName, GRPC_SENT_DOT));
+  }
+
+  static Optional<String> sanitizePath(String path) {
+    return path.isBlank()
+        ? Optional.empty()
+        : Optional.ofNullable(DOT_JOINER.join(SLASH_SPLITTER.split(path)));
   }
 
   public static Optional<String> getRpcPath(Event event) {
