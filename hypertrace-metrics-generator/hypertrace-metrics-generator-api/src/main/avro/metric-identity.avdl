@@ -1,0 +1,7 @@
+@namespace("org.hypertrace.metrics.generator.api")
+protocol MetricIdentityProtocol {
+	record MetricIdentity {
+		long timestamp_millis = 0;
+		union {null, string} metric_key = null;
+	}
+}

@@ -1,0 +1,9 @@
+@namespace("org.hypertrace.metrics.generator.api")
+protocol MetricProtocol {
+	record Metric {
+		union {null, string} name = null;
+		map<string> attributes = {};
+		union {null, string} description = null;
+		union {null, string} unit = null;
+	}
+}
