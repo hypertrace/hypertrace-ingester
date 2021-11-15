@@ -104,6 +104,6 @@ protocol SpanEventViewProtocol {
 
     int api_trace_error_span_count = 0;
 
-    int spans = 0;
+    int spans = 1;
   }
 }
