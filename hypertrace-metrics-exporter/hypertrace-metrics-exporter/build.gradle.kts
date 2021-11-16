@@ -41,7 +41,7 @@ dependencies {
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 
   // kafka
-  implementation("org.apache.kafka:kafka-clients:2.6.0")
+  implementation("org.apache.kafka:kafka-clients:2.7.2")
 
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
