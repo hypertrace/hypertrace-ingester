@@ -26,9 +26,9 @@ import org.slf4j.LoggerFactory;
 
 public class MetricsGenerator extends KafkaStreamsApp {
   private static final Logger LOGGER = LoggerFactory.getLogger(MetricsGenerator.class);
-  private static final String INPUT_TOPIC_CONFIG_KEY = "input.topic";
-  private static final String OUTPUT_TOPIC_CONFIG_KEY = "output.topic";
-  private static final String METRICS_GENERATOR_JOB_CONFIG = "metrics-generator-job-config";
+  public static final String INPUT_TOPIC_CONFIG_KEY = "input.topic";
+  public static final String OUTPUT_TOPIC_CONFIG_KEY = "output.topic";
+  public static final String METRICS_GENERATOR_JOB_CONFIG = "metrics-generator-job-config";
   public static final String METRICS_IDENTITY_STORE = "metric-identity-store";
   public static final String METRICS_IDENTITY_VALUE_STORE = "metric-identity-value-Store";
   public static final String OUTPUT_TOPIC_PRODUCER = "output-topic-producer";
