@@ -46,5 +46,5 @@ dependencies {
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
-  testImplementation("com.google.code.gson:gson:2.8.7")
+  testImplementation("com.google.code.gson:gson:2.8.9")
 }
