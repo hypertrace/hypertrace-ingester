@@ -318,7 +318,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       case PROTOCOL_GRPC:
         return Optional.ofNullable(
                 SpanAttributeUtils.getStringAttribute(
-                    event, EnrichedSpanConstants.GRPC_REQUEST_URL_FORMAT_DOTTED))
+                    event, EnrichedSpanConstants.GRPC_REQUEST_URL))
             .orElse(event.getEventName());
     }
     return null;

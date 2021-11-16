@@ -87,7 +87,7 @@ public class SpanEventViewGeneratorTest {
             Attributes.newBuilder()
                 .setAttributeMap(
                     Map.of(
-                        "grpc.request.url.format.dotted",
+                        "grpc.request.url",
                         AttributeValue.newBuilder().setValue("Recv.hipstershop.AdService").build()))
                 .build());
     when(event.getEventName()).thenReturn("Sent.hipstershop.AdService.GetAds");

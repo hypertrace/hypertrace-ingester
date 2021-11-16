@@ -1,7 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT_FORMAT_DOTTED;
-import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.GRPC_REQUEST_URL_FORMAT_DOTTED;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.GRPC_REQUEST_URL;
 
 import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
@@ -26,14 +26,12 @@ public class GrpcAttributeEnricher extends AbstractTraceEnricher {
           RpcSemanticConventionUtils.getGrpcRequestEndpoint(event);
       if (grpcRequestEndpoint.isPresent()) {
         addEnrichedAttribute(
-            event,
-            GRPC_REQUEST_ENDPOINT_FORMAT_DOTTED,
-            AttributeValueCreator.create(grpcRequestEndpoint.get()));
+            event, GRPC_REQUEST_ENDPOINT, AttributeValueCreator.create(grpcRequestEndpoint.get()));
 
         String prefix = getPrefix(event);
         addEnrichedAttribute(
             event,
-            GRPC_REQUEST_URL_FORMAT_DOTTED,
+            GRPC_REQUEST_URL,
             AttributeValueCreator.create(prefix.concat(grpcRequestEndpoint.get())));
       }
     }

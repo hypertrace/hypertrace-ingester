@@ -36,13 +36,11 @@ public class GrpcAttributeEnricherTest extends AbstractAttributeEnricherTest {
     enricher.enrichEvent(mockTrace, e);
 
     String grpcRequestUrl =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_URL_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_URL);
     assertEquals("Recv.TestService.GetEventEchos", grpcRequestUrl);
 
     String grpcRequestEndPoint =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT);
     assertEquals("TestService.GetEventEchos", grpcRequestEndPoint);
 
     // case 2: using grpc.path
@@ -57,13 +55,11 @@ public class GrpcAttributeEnricherTest extends AbstractAttributeEnricherTest {
     enricher.enrichEvent(mockTrace, e);
 
     grpcRequestUrl =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_URL_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_URL);
     assertEquals("Recv.TestGrpcService.GetGrpcPathEchos", grpcRequestUrl);
 
     grpcRequestEndPoint =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT);
     assertEquals("TestGrpcService.GetGrpcPathEchos", grpcRequestEndPoint);
 
     // case 3: no grpc protocol
@@ -76,13 +72,11 @@ public class GrpcAttributeEnricherTest extends AbstractAttributeEnricherTest {
     enricher.enrichEvent(mockTrace, e);
 
     grpcRequestUrl =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_URL_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_URL);
     assertNull(grpcRequestUrl);
 
     grpcRequestEndPoint =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT);
     assertNull(grpcRequestEndPoint);
 
     // case 4: client call - EXIT
@@ -97,13 +91,11 @@ public class GrpcAttributeEnricherTest extends AbstractAttributeEnricherTest {
     enricher.enrichEvent(mockTrace, e);
 
     grpcRequestUrl =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_URL_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_URL);
     assertEquals("Sent.TestGrpcService.GetGrpcPathEchos", grpcRequestUrl);
 
     grpcRequestEndPoint =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT);
     assertEquals("TestGrpcService.GetGrpcPathEchos", grpcRequestEndPoint);
 
     // case 5: no entry or exsit span (internal span) - not prefix sent / recv
@@ -116,13 +108,11 @@ public class GrpcAttributeEnricherTest extends AbstractAttributeEnricherTest {
     enricher.enrichEvent(mockTrace, e);
 
     grpcRequestUrl =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_URL_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_URL);
     assertEquals("TestGrpcService.GetGrpcPathEchos", grpcRequestUrl);
 
     grpcRequestEndPoint =
-        SpanAttributeUtils.getStringAttribute(
-            e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT_FORMAT_DOTTED);
+        SpanAttributeUtils.getStringAttribute(e, EnrichedSpanConstants.GRPC_REQUEST_ENDPOINT);
     assertEquals("TestGrpcService.GetGrpcPathEchos", grpcRequestEndPoint);
   }
 

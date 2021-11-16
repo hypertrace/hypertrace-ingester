@@ -15,9 +15,8 @@ public class EnrichedSpanConstants {
   public static final String HEAD_EVENT_ID = "head.event.id";
   public static final String API_EXIT_CALLS_COUNT = "api.exit.calls.count";
   public static final String UNIQUE_API_NODES_COUNT = "unique.apis.count";
-  public static final String GRPC_REQUEST_URL_FORMAT_DOTTED = "grpc.request.url.format.dotted";
-  public static final String GRPC_REQUEST_ENDPOINT_FORMAT_DOTTED =
-      "grpc.request.endpoint.format.dotted";
+  public static final String GRPC_REQUEST_URL = "grpc.request.url";
+  public static final String GRPC_REQUEST_ENDPOINT = "grpc.request.endpoint";
 
   /**
    * Returns the constant value for the given Enum.
