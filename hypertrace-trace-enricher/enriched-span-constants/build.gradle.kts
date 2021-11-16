@@ -17,7 +17,7 @@ val generateLocalGoGrpcFiles = false
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.19.1"
+    artifact = "com.google.protobuf:protoc:3.17.3"
   }
   plugins {
     id("grpc_java") {
@@ -63,7 +63,7 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.19.1")
+  api("com.google.protobuf:protobuf-java-util:3.17.3")
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.20")
   implementation(project(":span-normalizer:raw-span-constants"))
