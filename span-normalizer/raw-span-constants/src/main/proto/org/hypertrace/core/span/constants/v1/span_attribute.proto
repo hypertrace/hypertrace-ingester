@@ -96,6 +96,7 @@ enum Grpc {
     GRPC_METHOD = 10 [(string_value) = "grpc.method"];
     GRPC_REQUEST_BODY_TRUNCATED = 11 [(string_value) = "grpc.request.body.truncated"];
     GRPC_RESPONSE_BODY_TRUNCATED = 12 [(string_value) = "grpc.response.body.truncated"];
+    GRPC_PATH = 13 [(string_value) = "grpc.path"];
 }
 
 // Error related attributes

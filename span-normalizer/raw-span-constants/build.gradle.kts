@@ -15,11 +15,11 @@ val generateLocalGoGrpcFiles = false
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.15.7"
+    artifact = "com.google.protobuf:protoc:3.17.3"
   }
   plugins {
     id("grpc_java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.41.0"
+      artifact = "io.grpc:protoc-gen-grpc-java:1.42.0"
     }
 
     if (generateLocalGoGrpcFiles) {
@@ -57,6 +57,11 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.15.7")
+  api("com.google.protobuf:protobuf-java-util:3.17.3")
   implementation("org.slf4j:slf4j-api:1.7.30")
+  constraints {
+    implementation("com.google.code.gson:gson:2.8.9") {
+      because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLECODEGSON-1730327")
+    }
+  }
 }
