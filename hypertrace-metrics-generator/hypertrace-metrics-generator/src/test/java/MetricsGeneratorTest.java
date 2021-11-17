@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
@@ -34,7 +35,9 @@ public class MetricsGeneratorTest {
     MetricsGenerator underTest = new MetricsGenerator(ConfigClientFactory.getClient());
     Config config =
         ConfigFactory.parseURL(
-            getClass().getClassLoader().getResource("configs/hypertrace-metrics-generator/application.conf"));
+            getClass()
+                .getClassLoader()
+                .getResource("configs/hypertrace-metrics-generator/application.conf"));
 
     Map<String, Object> baseProps = underTest.getBaseStreamsConfig();
     Map<String, Object> streamsProps = underTest.getStreamsConfig(config);
@@ -70,32 +73,47 @@ public class MetricsGeneratorTest {
     String tenantId = "tenant1";
 
     // create 3 rows within 30 secs interval
-    RawServiceView row1 = RawServiceView.newBuilder()
-        .setTenantId(tenantId)
-        .setApiId("api-1234")
-        .setApiName("GET /api/v1/name")
-        .setServiceId("svc-1234")
-        .setServiceName("Cart Service")
-        .setStartTimeMillis(1636982920000L)
-        .build();
+    RawServiceView row1 =
+        RawServiceView.newBuilder()
+            .setTenantId(tenantId)
+            .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
+            .setSpanId(ByteBuffer.wrap("span-1".getBytes()))
+            .setApiId("api-1234")
+            .setApiName("GET /api/v1/name")
+            .setServiceId("svc-1234")
+            .setServiceName("Cart Service")
+            .setStartTimeMillis(1636982920000L)
+            .setEndTimeMillis(1636982920015L)
+            .setDurationMillis(15L)
+            .build();
 
-    RawServiceView row2 = RawServiceView.newBuilder()
-        .setTenantId(tenantId)
-        .setApiId("api-1234")
-        .setApiName("GET /api/v1/name")
-        .setServiceId("svc-1234")
-        .setServiceName("Cart Service")
-        .setStartTimeMillis(1636982920200L)
-        .build();
+    RawServiceView row2 =
+        RawServiceView.newBuilder()
+            .setTenantId(tenantId)
+            .setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
+            .setSpanId(ByteBuffer.wrap("span-2".getBytes()))
+            .setApiId("api-1234")
+            .setApiName("GET /api/v1/name")
+            .setServiceId("svc-1234")
+            .setServiceName("Cart Service")
+            .setStartTimeMillis(1636982920200L)
+            .setEndTimeMillis(1636982920215L)
+            .setDurationMillis(15L)
+            .build();
 
-    RawServiceView row3 = RawServiceView.newBuilder()
-        .setTenantId(tenantId)
-        .setApiId("api-1234")
-        .setApiName("GET /api/v1/name")
-        .setServiceId("svc-1234")
-        .setServiceName("Cart Service")
-        .setStartTimeMillis(1636982920400L)
-        .build();
+    RawServiceView row3 =
+        RawServiceView.newBuilder()
+            .setTenantId(tenantId)
+            .setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+            .setSpanId(ByteBuffer.wrap("span-3".getBytes()))
+            .setApiId("api-1234")
+            .setApiName("GET /api/v1/name")
+            .setServiceId("svc-1234")
+            .setServiceName("Cart Service")
+            .setStartTimeMillis(1636982920400L)
+            .setEndTimeMillis(1636982920415L)
+            .setDurationMillis(15L)
+            .build();
 
     // pipe the data
     inputTopic.pipeInput(null, row1);
@@ -113,5 +131,4 @@ public class MetricsGeneratorTest {
 
     // expect the num_call count is 3
   }
-
 }
