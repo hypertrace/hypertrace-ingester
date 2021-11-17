@@ -6,10 +6,12 @@ import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_GRPC_STATUS_MESS
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_ERROR_MESSAGE;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_PATH;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_BODY_TRUNCATED;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_METHOD;
 import static org.hypertrace.core.span.normalizer.constants.OTelSpanTag.OTEL_SPAN_TAG_RPC_SYSTEM;
 import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_ERROR_MESSAGE;
@@ -55,9 +57,13 @@ import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils
  */
 public class RpcSemanticConventionUtils {
 
+  private static final Splitter SLASH_SPLITTER = Splitter.on("/").omitEmptyStrings().trimResults();
   private static final Joiner DOT_JOINER = Joiner.on(".");
   private static final String LOCALHOST = "localhost";
   private static final String COLON = ":";
+
+  private static final String GRPC_RECV_DOT = "Recv.";
+  private static final String GRPC_SENT_DOT = "Sent.";
 
   // otel specific attributes
   private static final String OTEL_RPC_SYSTEM = OTelRpcSemanticConventions.RPC_SYSTEM.getValue();
@@ -109,6 +115,9 @@ public class RpcSemanticConventionUtils {
   private static final String GRPC_RESPONSE_BODY_ATTR =
       RawSpanConstants.getValue(GRPC_RESPONSE_BODY);
   private static final String RPC_RESPONSE_BODY_ATTR = RPC_RESPONSE_BODY.getValue();
+  private static final String RPC_REQUEST_METADATA_PATH_ATTR = RPC_REQUEST_METADATA_PATH.getValue();
+  private static final String HTTP_REQUEST_HEADER_PATH_ATTR =
+      RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH);
 
   /**
    * Differs from {@link
@@ -444,6 +453,71 @@ public class RpcSemanticConventionUtils {
     }
     return Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_HOST_ATTR))
         .map(AttributeValue::getValue);
+  }
+
+  /**
+   * For RPC span, the span name is equivalent to Endpoint
+   * https://github.com/open-telemetry/opentelemetry-specification/blob/3e380e249f60c3a5f68746f5e84d10195ba41a79/specification/trace/semantic_conventions/rpc.md#span-name
+   * In cases if the convention is not followed, it will use a few fallback attributes.
+   *
+   * <p>This method assumed that it called if the protocol is GRPC, and returns endpoint in dotted
+   * format. Pl. check GrpcAttributeEnricher for reference.
+   */
+  public static Optional<String> getGrpcRequestEndpoint(Event event) {
+    if (isEventNamePrefixedWithRecvOrSent(event.getEventName())
+        || event.getAttributes() == null
+        || event.getAttributes().getAttributeMap() == null) {
+      return stripRecvOrSent(event.getEventName());
+    }
+
+    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+
+    Optional<AttributeValue> attributeValue =
+        Optional.ofNullable(attributeValueMap.get(RPC_REQUEST_METADATA_PATH_ATTR));
+    if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
+      return sanitizePath(attributeValue.get().getValue());
+    }
+
+    Optional<String> requestUrl = getRpcPath(event);
+    if (requestUrl.isPresent()) {
+      return requestUrl;
+    }
+
+    attributeValue = Optional.ofNullable(attributeValueMap.get(HTTP_REQUEST_HEADER_PATH_ATTR));
+    if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
+      return sanitizePath(attributeValue.get().getValue());
+    }
+
+    attributeValue =
+        Optional.ofNullable(attributeValueMap.get(RawSpanConstants.getValue(GRPC_PATH)));
+    if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
+      return sanitizePath(attributeValue.get().getValue());
+    }
+
+    return Optional.ofNullable(event.getEventName());
+  }
+
+  private static Optional<String> stripRecvOrSent(String eventName) {
+    if (eventName.startsWith(GRPC_RECV_DOT)) {
+      return Optional.ofNullable(
+          StringUtils.trimToNull(eventName.substring(GRPC_RECV_DOT.length())));
+    } else if (eventName.startsWith(GRPC_SENT_DOT)) {
+      return Optional.ofNullable(
+          StringUtils.trimToNull(eventName.substring(GRPC_SENT_DOT.length())));
+    }
+    return Optional.of(eventName);
+  }
+
+  private static boolean isEventNamePrefixedWithRecvOrSent(String eventName) {
+    return eventName != null
+        && (StringUtils.startsWith(eventName, GRPC_RECV_DOT)
+            || StringUtils.startsWith(eventName, GRPC_SENT_DOT));
+  }
+
+  static Optional<String> sanitizePath(String path) {
+    return path.isBlank()
+        ? Optional.empty()
+        : Optional.ofNullable(DOT_JOINER.join(SLASH_SPLITTER.split(path)));
   }
 
   public static Optional<String> getRpcPath(Event event) {

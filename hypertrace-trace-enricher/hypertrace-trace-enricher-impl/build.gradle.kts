@@ -19,9 +19,9 @@ dependencies {
   implementation("org.hypertrace.core.datamodel:data-model:0.1.20")
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.28")
-  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.6.1")
+  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.6.2")
   implementation("org.hypertrace.config.service:spaces-config-service-api:0.1.0")
-  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.6.1")
+  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.6.2")
 
   implementation("com.typesafe:config:1.4.1")
   implementation("org.apache.httpcomponents:httpclient:4.5.13")
@@ -33,5 +33,5 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("org.mockito:mockito-junit-jupiter:3.8.0")
-  testImplementation("io.grpc:grpc-core:1.41.0")
+  testImplementation("io.grpc:grpc-core:1.42.0")
 }

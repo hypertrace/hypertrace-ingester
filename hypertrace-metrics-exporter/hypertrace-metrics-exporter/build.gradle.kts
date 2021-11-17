@@ -41,10 +41,10 @@ dependencies {
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 
   // kafka
-  implementation("org.apache.kafka:kafka-clients:2.6.0")
+  implementation("org.apache.kafka:kafka-clients:2.7.2")
 
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
-  testImplementation("com.google.code.gson:gson:2.8.7")
+  testImplementation("com.google.code.gson:gson:2.8.9")
 }
