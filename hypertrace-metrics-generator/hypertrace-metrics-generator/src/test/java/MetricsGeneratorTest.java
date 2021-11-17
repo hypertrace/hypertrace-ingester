@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
+import io.opentelemetry.proto.metrics.v1.Gauge;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -12,6 +13,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -23,6 +25,7 @@ import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.metrics.generator.MetricsGenerator;
 import org.hypertrace.metrics.generator.OtlpMetricsSerde;
 import org.hypertrace.viewgenerator.api.RawServiceView;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -127,8 +130,29 @@ public class MetricsGeneratorTest {
     // advance to > 30s
     td.advanceWallClockTime(Duration.ofSeconds(32));
     ResourceMetrics resourceMetrics = (ResourceMetrics) outputTopic.readValue();
-    assertNotNull(resourceMetrics);
 
-    // expect the num_call count is 3
+    // assert for basics
+    assertNotNull(resourceMetrics);
+    Assertions.assertNotNull(resourceMetrics.getResource());
+
+    Assertions.assertEquals(1, resourceMetrics.getInstrumentationLibraryMetricsCount());
+    Assertions.assertEquals(
+        1, resourceMetrics.getInstrumentationLibraryMetrics(0).getMetricsCount());
+
+    Assertions.assertEquals(
+        "num_calls",
+        resourceMetrics.getInstrumentationLibraryMetrics(0).getMetrics(0).getName());
+
+
+    // assert that num_calls is 3
+    Gauge outGauge =
+        resourceMetrics.getInstrumentationLibraryMetrics(0).getMetrics(0).getGauge();
+    Assertions.assertNotNull(outGauge);
+    Assertions.assertEquals(1, outGauge.getDataPointsCount());
+    Assertions.assertEquals(
+        1636982921000L,
+        TimeUnit.MILLISECONDS.convert(
+            outGauge.getDataPoints(0).getTimeUnixNano(), TimeUnit.NANOSECONDS));
+    Assertions.assertEquals(3L, outGauge.getDataPoints(0).getAsInt());
   }
 }
