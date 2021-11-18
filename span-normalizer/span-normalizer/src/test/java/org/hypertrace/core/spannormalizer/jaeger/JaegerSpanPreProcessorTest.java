@@ -153,20 +153,49 @@ class JaegerSpanPreProcessorTest {
                 "tenantIdTagKey",
                 "tenant-key",
                 "spanDropCriterion",
-                List.of("foo:bar,k1:v1", "k2:v2"))));
+                List.of("foo:bar,k1:v1", "k2:v2", "http.url:https://foo.bar"))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs));
     Process process = Process.newBuilder().setServiceName("testService").build();
-    Span span =
-        Span.newBuilder()
-            .setProcess(process)
-            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
-            .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
-            .addTags(KeyValue.newBuilder().setKey("k2").setVStr("v2").build())
-            .build();
-    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
-    Assertions.assertNull(preProcessedSpan);
+    {
+      Span span =
+          Span.newBuilder()
+              .setProcess(process)
+              .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+              .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
+              .addTags(KeyValue.newBuilder().setKey("k2").setVStr("v2").build())
+              .build();
+      PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+      // Span dropped due to matching condition: k2:v2
+      Assertions.assertNull(preProcessedSpan);
+    }
+
+    {
+      Span span =
+          Span.newBuilder()
+              .setProcess(process)
+              .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+              .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
+              .addTags(KeyValue.newBuilder().setKey("http.url").setVStr("https://foo.bar").build())
+              .build();
+      PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+      // Span dropped due to matching condition: http.url:https://foo.bar
+      Assertions.assertNull(preProcessedSpan);
+    }
+
+    {
+      Span span =
+          Span.newBuilder()
+              .setProcess(process)
+              .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+              .addTags(KeyValue.newBuilder().setKey("foo").setVStr("bar").build())
+              .addTags(KeyValue.newBuilder().setKey("http.url").setVStr("https://valid").build())
+              .build();
+      PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+      // Span not dropped since there is no matching condition
+      Assertions.assertNotNull(preProcessedSpan);
+    }
   }
 
   @Test
