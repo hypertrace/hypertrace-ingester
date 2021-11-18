@@ -40,7 +40,7 @@ jobs:
       - name: Build with Gradle
         uses: hypertrace/github-actions/gradle@main
         with: 
-          args: build dockerBuildImages
+          args: build -x :hypertrace-metrics-generator:hypertrace-metrics-generator-api:avroCompatibilityCheck dockerBuildImages
 
   validate-helm-charts:
     runs-on: ubuntu-20.04

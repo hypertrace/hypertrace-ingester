@@ -1,8 +1,10 @@
 package org.hypertrace.metrics.generator;
 
 import static java.util.stream.Collectors.joining;
+import static org.hypertrace.metrics.generator.MetricsGenerator.METRICS_GENERATOR_JOB_CONFIG;
 import static org.hypertrace.metrics.generator.MetricsGenerator.OUTPUT_TOPIC_PRODUCER;
 
+import com.typesafe.config.Config;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import java.time.Duration;
 import java.time.Instant;
@@ -39,11 +41,14 @@ public class MetricsProcessor
   private static final String METRIC_NUM_CALLS_DESCRIPTION = "num of calls";
   private static final String METRIC_NUM_CALLS_UNIT = "1";
   private static final String DELIMITER = ":";
+  private static final String METRIC_AGGREGATION_TIME_MS = "metric.aggregation.timeMs";
+  private static final String METRIC_EMIT_WAIT_TIME_MS = "metric.emit.waitTimeMs";
 
   private ProcessorContext context;
   private KeyValueStore<MetricIdentity, Long> metricsIdentityStore;
   private KeyValueStore<MetricIdentity, Metric> metricsStore;
-  private long groupingWindowTimeoutMs = 30000L;
+  private long metricAggregationTimeMs;
+  private long metricEmitWaitTimeMs;
   private To outputTopicProducer;
 
   @Override
@@ -57,16 +62,19 @@ public class MetricsProcessor
         (KeyValueStore<MetricIdentity, Metric>)
             context.getStateStore(MetricsGenerator.METRICS_IDENTITY_VALUE_STORE);
     this.outputTopicProducer = To.child(OUTPUT_TOPIC_PRODUCER);
+
+    Config jobConfig = (Config) (context.appConfigs().get(METRICS_GENERATOR_JOB_CONFIG));
+    this.metricAggregationTimeMs = jobConfig.getLong(METRIC_AGGREGATION_TIME_MS);
+    this.metricEmitWaitTimeMs = jobConfig.getLong(METRIC_EMIT_WAIT_TIME_MS);
+
     restorePunctuators();
   }
 
   @Override
   public KeyValue<byte[], ResourceMetrics> transform(String key, RawServiceView value) {
-
-    // create a metricX
+    // construct metric attributes & metric
     Map<String, String> attributes = new HashMap<>();
     attributes.put(TENANT_ID_ATTR, value.getTenantId());
-    attributes.put(CONSUMER_ID_ATTR, "1");
     attributes.put(SERVICE_ID_ATTR, value.getServiceId());
     attributes.put(SERVICE_NAME_ATTR, value.getServiceName());
     attributes.put(API_ID, value.getApiId());
@@ -80,10 +88,10 @@ public class MetricsProcessor
             .setAttributes(attributes)
             .build();
 
-    // create metricX identity (timestamp, metric_key)
+    // create metrics identity (timestamp, metric_key)
     Instant instant =
         Instant.ofEpochMilli(value.getStartTimeMillis())
-            .plusSeconds(1)
+            .plusMillis(metricAggregationTimeMs)
             .truncatedTo(ChronoUnit.SECONDS);
 
     MetricIdentity metricsIdentity =
@@ -142,17 +150,18 @@ public class MetricsProcessor
             context,
             metricsIdentityStore,
             metricsStore,
-            groupingWindowTimeoutMs,
+            metricEmitWaitTimeMs,
             outputTopicProducer);
+
     Cancellable cancellable =
         context.schedule(
-            Duration.ofMillis(groupingWindowTimeoutMs),
-            PunctuationType.WALL_CLOCK_TIME,
-            punctuator);
+            Duration.ofMillis(metricEmitWaitTimeMs), PunctuationType.WALL_CLOCK_TIME, punctuator);
+
     punctuator.setCancellable(cancellable);
+
     logger.debug(
         "Scheduled a punctuator to emit trace for key=[{}] to run after [{}] ms",
         key,
-        groupingWindowTimeoutMs);
+        metricEmitWaitTimeMs);
   }
 }

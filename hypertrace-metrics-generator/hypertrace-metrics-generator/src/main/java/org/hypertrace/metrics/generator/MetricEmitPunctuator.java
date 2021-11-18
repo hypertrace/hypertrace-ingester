@@ -8,22 +8,23 @@ import io.opentelemetry.proto.metrics.v1.InstrumentationLibraryMetrics;
 import io.opentelemetry.proto.metrics.v1.NumberDataPoint;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import io.opentelemetry.proto.resource.v1.Resource;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.metrics.generator.api.Metric;
 import org.hypertrace.metrics.generator.api.MetricIdentity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MetricEmitPunctuator implements Punctuator {
+  private static final Logger LOGGER = LoggerFactory.getLogger(MetricEmitPunctuator.class);
+
   private static final String RESOURCE_KEY_SERVICE = "service";
   private static final String RESOURCE_KEY_SERVICE_VALUE = "metrics-generator";
   private static final String INSTRUMENTATION_LIB_NAME = "Generated-From-View";
@@ -57,7 +58,6 @@ public class MetricEmitPunctuator implements Punctuator {
 
   @Override
   public void punctuate(long timestamp) {
-    Instant startTime = Instant.now();
     // always cancel the punctuator else it will get re-scheduled automatically
     cancellable.cancel();
 
@@ -65,18 +65,16 @@ public class MetricEmitPunctuator implements Punctuator {
     Long value = metricIdentityStore.get(this.key);
     if (value != null) {
       long diff = timestamp - this.key.getTimestampMillis();
-      if (diff > groupingWindowTimeoutMs) {
-        Metric metric = metricStore.get(this.key);
-        metricIdentityStore.delete(this.key);
-        metricStore.delete(this.key);
-        // convert to Resource Metrics
-        ResourceMetrics resourceMetrics = convertToResourceMetric(this.key, value, metric);
-        context.forward(null, resourceMetrics, outputTopicProducer);
-      } else {
-        long duration = Math.max(1000, diff);
-        cancellable =
-            context.schedule(Duration.ofMillis(duration), PunctuationType.WALL_CLOCK_TIME, this);
-      }
+      LOGGER.debug("Metrics with key:{} is emitted after duration {}", this.key, diff);
+
+      Metric metric = metricStore.get(this.key);
+      metricIdentityStore.delete(this.key);
+      metricStore.delete(this.key);
+      // convert to Resource Metrics
+      ResourceMetrics resourceMetrics = convertToResourceMetric(this.key, value, metric);
+      context.forward(null, resourceMetrics, outputTopicProducer);
+    } else {
+      LOGGER.debug("The value for metrics with key:{} is null", this.key);
     }
   }
 

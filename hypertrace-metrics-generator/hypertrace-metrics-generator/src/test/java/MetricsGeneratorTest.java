@@ -127,8 +127,8 @@ public class MetricsGeneratorTest {
     td.advanceWallClockTime(Duration.ofMillis(200));
     assertTrue(outputTopic.isEmpty());
 
-    // advance to > 30s
-    td.advanceWallClockTime(Duration.ofSeconds(32));
+    // advance to > 15s
+    td.advanceWallClockTime(Duration.ofSeconds(17));
     ResourceMetrics resourceMetrics = (ResourceMetrics) outputTopic.readValue();
 
     // assert for basics
@@ -140,17 +140,14 @@ public class MetricsGeneratorTest {
         1, resourceMetrics.getInstrumentationLibraryMetrics(0).getMetricsCount());
 
     Assertions.assertEquals(
-        "num_calls",
-        resourceMetrics.getInstrumentationLibraryMetrics(0).getMetrics(0).getName());
-
+        "num_calls", resourceMetrics.getInstrumentationLibraryMetrics(0).getMetrics(0).getName());
 
     // assert that num_calls is 3
-    Gauge outGauge =
-        resourceMetrics.getInstrumentationLibraryMetrics(0).getMetrics(0).getGauge();
+    Gauge outGauge = resourceMetrics.getInstrumentationLibraryMetrics(0).getMetrics(0).getGauge();
     Assertions.assertNotNull(outGauge);
     Assertions.assertEquals(1, outGauge.getDataPointsCount());
     Assertions.assertEquals(
-        1636982921000L,
+        1636982925000L,
         TimeUnit.MILLISECONDS.convert(
             outGauge.getDataPoints(0).getTimeUnixNano(), TimeUnit.NANOSECONDS));
     Assertions.assertEquals(3L, outGauge.getDataPoints(0).getAsInt());
