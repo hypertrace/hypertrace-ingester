@@ -146,12 +146,7 @@ public class MetricsProcessor
   private void schedulePunctuator(MetricIdentity key) {
     MetricEmitPunctuator punctuator =
         new MetricEmitPunctuator(
-            key,
-            context,
-            metricsIdentityStore,
-            metricsStore,
-            metricEmitWaitTimeMs,
-            outputTopicProducer);
+            key, context, metricsIdentityStore, metricsStore, outputTopicProducer);
 
     Cancellable cancellable =
         context.schedule(

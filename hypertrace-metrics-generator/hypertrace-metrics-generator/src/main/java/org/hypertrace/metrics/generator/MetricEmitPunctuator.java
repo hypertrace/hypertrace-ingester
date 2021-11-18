@@ -33,7 +33,6 @@ public class MetricEmitPunctuator implements Punctuator {
   private ProcessorContext context;
   private KeyValueStore<MetricIdentity, Long> metricIdentityStore;
   private KeyValueStore<MetricIdentity, Metric> metricStore;
-  private long groupingWindowTimeoutMs;
   private Cancellable cancellable;
   private To outputTopicProducer;
 
@@ -42,13 +41,11 @@ public class MetricEmitPunctuator implements Punctuator {
       ProcessorContext context,
       KeyValueStore<MetricIdentity, Long> metricIdentityStore,
       KeyValueStore<MetricIdentity, Metric> metricStore,
-      long groupingWindowTimeoutMs,
       To outputTopicProducer) {
     this.key = key;
     this.context = context;
     this.metricIdentityStore = metricIdentityStore;
     this.metricStore = metricStore;
-    this.groupingWindowTimeoutMs = groupingWindowTimeoutMs;
     this.outputTopicProducer = outputTopicProducer;
   }
 
