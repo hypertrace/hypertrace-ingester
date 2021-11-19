@@ -115,10 +115,8 @@ public class SpanFilter {
   @Nullable
   private Pair<String, String> convertToPair(String s) {
     if (s != null && s.contains(COLON)) {
-      String[] parts = s.split(COLON);
-      if (parts.length == 2) {
-        return Pair.of(parts[0], parts[1]);
-      }
+      int colonIndex = s.indexOf(COLON);
+      return Pair.of(s.substring(0, colonIndex), s.substring(colonIndex + 1));
     }
     return null;
   }
