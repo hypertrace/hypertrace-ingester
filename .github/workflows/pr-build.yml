@@ -4,7 +4,7 @@ on:
     branches:
       - main
   pull_request_target:
-    branches: 
+    branches:
       - main
 
 jobs:
@@ -90,8 +90,19 @@ jobs:
           repository: ${{github.event.pull_request.head.repo.full_name}}
           fetch-depth: 0
 
-      - name: validate avros
-          uses: hypertrace/github-actions/gradle@main
-          with:
-            args: avroCompatibilityCheck
+      - name: create checksum file
+        uses: hypertrace/github-actions/checksum@main
 
+      - name: Cache packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle
+          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
+          restore-keys: |
+            gradle-packages-${{ runner.os }}-${{ github.job }}
+            gradle-packages-${{ runner.os }}
+
+      - name: validate avros
+        uses: hypertrace/github-actions/gradle@main
+        with:
+          args: avroCompatibilityCheck
