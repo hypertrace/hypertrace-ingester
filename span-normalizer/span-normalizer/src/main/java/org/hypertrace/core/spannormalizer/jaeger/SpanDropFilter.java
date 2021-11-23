@@ -44,4 +44,18 @@ public class SpanDropFilter {
   public String getTagValue() {
     return tagValue;
   }
+
+  @Override
+  public String toString() {
+    return "SpanDropFilter{"
+        + "tagKey='"
+        + tagKey
+        + '\''
+        + ", operator="
+        + operator
+        + ", tagValue='"
+        + tagValue
+        + '\''
+        + '}';
+  }
 }
