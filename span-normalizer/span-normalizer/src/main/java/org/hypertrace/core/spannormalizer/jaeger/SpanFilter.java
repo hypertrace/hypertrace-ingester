@@ -117,7 +117,9 @@ public class SpanFilter {
    * the span should be dropped, false otherwise.
    */
   public boolean shouldDropSpan(
-      JaegerSpanInternalModel.Span span, Map<String, JaegerSpanInternalModel.KeyValue> tags) {
+      JaegerSpanInternalModel.Span span,
+      Map<String, JaegerSpanInternalModel.KeyValue> tags,
+      Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
     if (anyCriteriaMatch(tags, spanDropCriterion)) {
       if (DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
         LOG.info("Dropping span: [{}] with drop criterion: [{}]", span, spanDropCriterion);
@@ -125,7 +127,7 @@ public class SpanFilter {
       return true;
     }
 
-    if (anySpanDropFiltersMatch(spanDropFilters, tags)) {
+    if (anySpanDropFiltersMatch(spanDropFilters, tags, processTags)) {
       if (DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
         LOG.info("Dropping span: [{}] with drop filters: [{}]", span, spanDropFilters);
       }
@@ -186,11 +188,16 @@ public class SpanFilter {
 
   private boolean anySpanDropFiltersMatch(
       List<List<SpanDropFilter>> spanDropFilters,
-      Map<String, JaegerSpanInternalModel.KeyValue> tags) {
+      Map<String, JaegerSpanInternalModel.KeyValue> tags,
+      Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
     return spanDropFilters.stream()
         .anyMatch(
             andFilters ->
-                andFilters.stream().allMatch(filter -> matchSpanDropFilter(filter, tags)));
+                andFilters.stream()
+                    .allMatch(
+                        filter ->
+                            matchSpanDropFilter(filter, tags)
+                                || matchSpanDropFilter(filter, processTags)));
   }
 
   private boolean matchSpanDropFilter(
