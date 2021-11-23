@@ -6,6 +6,7 @@ import static org.hypertrace.core.spannormalizer.jaeger.SpanDropFilter.TAG_VALUE
 
 import com.google.common.util.concurrent.RateLimiter;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigList;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,8 +66,10 @@ public class SpanFilter {
     }
 
     if (config.hasPath(SPAN_DROP_FILTERS)) {
+      ConfigList spanDropFiltersConfig = config.getList(SPAN_DROP_FILTERS);
+      LOG.info("Span drop filters: {}", spanDropFiltersConfig);
       this.spanDropFilters =
-          config.getList(SPAN_DROP_FILTERS).stream()
+          spanDropFiltersConfig.stream()
               .map(
                   orFilters -> {
                     List<HashMap<String, String>> andFilters =
@@ -81,7 +84,6 @@ public class SpanFilter {
                         .collect(Collectors.toList());
                   })
               .collect(Collectors.toList());
-      LOG.info("Json String for Span drop criterion: {}", this.spanDropFilters);
     }
 
     if (config.hasPath(ROOT_SPAN_DROP_CRITERION_CONFIG)) {
@@ -129,7 +131,7 @@ public class SpanFilter {
 
     if (anySpanDropFiltersMatch(spanDropFilters, tags, processTags)) {
       if (DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
-        LOG.info("Dropping span: [{}] with drop filters: [{}]", span, spanDropFilters);
+        LOG.debug("Dropping span: [{}] with drop filters: [{}]", span, spanDropFilters);
       }
       return true;
     }
