@@ -130,7 +130,7 @@ public class SpanFilter {
     }
 
     if (anySpanDropFiltersMatch(spanDropFilters, tags, processTags)) {
-      if (DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
+      if (LOG.isDebugEnabled() && DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
         LOG.debug("Dropping span: [{}] with drop filters: [{}]", span, spanDropFilters.toString());
       }
       return true;
