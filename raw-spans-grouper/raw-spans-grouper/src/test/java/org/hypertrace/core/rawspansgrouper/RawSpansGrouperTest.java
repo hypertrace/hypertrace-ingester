@@ -10,7 +10,6 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -257,7 +256,8 @@ public class RawSpansGrouperTest {
     trace = (StructuredTrace) outputTopic.readValue();
     assertEquals(5, trace.getEventList().size());
 
-    // input 8 spans of trace-4 for tenant2, as there is global upper limit apply, it will emit only 6
+    // input 8 spans of trace-4 for tenant2, as there is global upper limit apply, it will emit only
+    // 6
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span12);
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span13);
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span14);
