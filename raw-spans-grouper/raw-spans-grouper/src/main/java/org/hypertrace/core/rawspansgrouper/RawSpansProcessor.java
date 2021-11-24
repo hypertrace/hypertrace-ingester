@@ -10,6 +10,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_G
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.UPPER_INFLIGHT_TRACE_MAX_SPAN_COUNT;
 
 import com.typesafe.config.Config;
 import io.micrometer.core.instrument.Counter;
@@ -64,6 +65,7 @@ public class RawSpansProcessor
   private To outputTopic;
   private double dataflowSamplingPercent = -1;
   private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
+  private long maxSpanCountUpperLimit = Long.MAX_VALUE;
 
   // counter for number of spans dropped per tenant
   private static final ConcurrentMap<String, Counter> droppedSpansCounter =
@@ -97,6 +99,10 @@ public class RawSpansProcessor
               (entry) -> {
                 maxSpanCountMap.put(entry.getKey(), subConfig.getLong(entry.getKey()));
               });
+    }
+
+    if (jobConfig.hasPath(UPPER_INFLIGHT_TRACE_MAX_SPAN_COUNT)) {
+      maxSpanCountUpperLimit = jobConfig.getLong(UPPER_INFLIGHT_TRACE_MAX_SPAN_COUNT);
     }
 
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
@@ -164,9 +170,16 @@ public class RawSpansProcessor
   }
 
   private boolean shouldDropSpan(TraceIdentity key, TraceState traceState) {
-    if (traceState != null
-        && maxSpanCountMap.containsKey(key.getTenantId())
-        && traceState.getSpanIds().size() >= maxSpanCountMap.get(key.getTenantId())) {
+    int inFlightSpansPerTrace =
+        traceState != null ? traceState.getSpanIds().size() : Integer.MIN_VALUE;
+    long maxSpanCountTenantLimit =
+        maxSpanCountMap.containsKey(key.getTenantId())
+            ? maxSpanCountMap.get(key.getTenantId())
+            : Long.MAX_VALUE;
+
+    if (inFlightSpansPerTrace >= maxSpanCountUpperLimit
+        || inFlightSpansPerTrace >= maxSpanCountTenantLimit) {
+
       if (logger.isDebugEnabled()) {
         logger.debug(
             "Dropping span [{}] from tenant_id={}, trace_id={} after grouping {} spans",
@@ -175,6 +188,7 @@ public class RawSpansProcessor
             HexUtils.getHex(key.getTraceId()),
             traceState.getSpanIds().size());
       }
+
       // increment the counter for dropped spans
       droppedSpansCounter
           .computeIfAbsent(
@@ -183,19 +197,20 @@ public class RawSpansProcessor
                   PlatformMetricsRegistry.registerCounter(
                       DROPPED_SPANS_COUNTER, Map.of("tenantId", k)))
           .increment();
+
+      // increment the counter when the number of spans reaches the max.span.count limit.
+      if (inFlightSpansPerTrace == maxSpanCountUpperLimit
+          || inFlightSpansPerTrace == maxSpanCountTenantLimit) {
+        truncatedTracesCounter
+            .computeIfAbsent(
+                key.getTenantId(),
+                k ->
+                    PlatformMetricsRegistry.registerCounter(
+                        TRUNCATED_TRACES_COUNTER, Map.of("tenantId", k)))
+            .increment();
+      }
+      // drop the span as limit is reached
       return true;
-    }
-    // increment the counter when the number of spans reaches the max.span.count limit.
-    if (traceState != null
-        && maxSpanCountMap.containsKey(key.getTenantId())
-        && traceState.getSpanIds().size() == maxSpanCountMap.get(key.getTenantId())) {
-      truncatedTracesCounter
-          .computeIfAbsent(
-              key.getTenantId(),
-              k ->
-                  PlatformMetricsRegistry.registerCounter(
-                      TRUNCATED_TRACES_COUNTER, Map.of("tenantId", k)))
-          .increment();
     }
     return false;
   }
