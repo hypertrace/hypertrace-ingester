@@ -14,7 +14,7 @@ public class RawSpanGrouperConstants {
   public static final String DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY =
       "dataflow.metriccollection.sampling.percent";
   public static final String INFLIGHT_TRACE_MAX_SPAN_COUNT = "max.span.count";
-  public static final String UPPER_INFLIGHT_TRACE_MAX_SPAN_COUNT = "upper.max.span.count";
+  public static final String DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT = "default.max.span.count";
   public static final String DROPPED_SPANS_COUNTER = "hypertrace.dropped.spans";
   public static final String TRUNCATED_TRACES_COUNTER = "hypertrace.truncated.traces";
 }

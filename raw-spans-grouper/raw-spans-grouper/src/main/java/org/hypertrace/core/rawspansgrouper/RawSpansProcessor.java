@@ -2,6 +2,7 @@ package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
@@ -10,7 +11,6 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_G
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.UPPER_INFLIGHT_TRACE_MAX_SPAN_COUNT;
 
 import com.typesafe.config.Config;
 import io.micrometer.core.instrument.Counter;
@@ -65,7 +65,7 @@ public class RawSpansProcessor
   private To outputTopic;
   private double dataflowSamplingPercent = -1;
   private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
-  private long maxSpanCountUpperLimit = Long.MAX_VALUE;
+  private long defaultMaxSpanCountLimit = Long.MAX_VALUE;
 
   // counter for number of spans dropped per tenant
   private static final ConcurrentMap<String, Counter> droppedSpansCounter =
@@ -101,8 +101,8 @@ public class RawSpansProcessor
               });
     }
 
-    if (jobConfig.hasPath(UPPER_INFLIGHT_TRACE_MAX_SPAN_COUNT)) {
-      maxSpanCountUpperLimit = jobConfig.getLong(UPPER_INFLIGHT_TRACE_MAX_SPAN_COUNT);
+    if (jobConfig.hasPath(DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT)) {
+      defaultMaxSpanCountLimit = jobConfig.getLong(DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT);
     }
 
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
@@ -177,7 +177,7 @@ public class RawSpansProcessor
             ? maxSpanCountMap.get(key.getTenantId())
             : Long.MAX_VALUE;
 
-    if (inFlightSpansPerTrace >= maxSpanCountUpperLimit
+    if (inFlightSpansPerTrace >= defaultMaxSpanCountLimit
         || inFlightSpansPerTrace >= maxSpanCountTenantLimit) {
 
       if (logger.isDebugEnabled()) {
@@ -199,7 +199,7 @@ public class RawSpansProcessor
           .increment();
 
       // increment the counter when the number of spans reaches the max.span.count limit.
-      if (inFlightSpansPerTrace == maxSpanCountUpperLimit
+      if (inFlightSpansPerTrace == defaultMaxSpanCountLimit
           || inFlightSpansPerTrace == maxSpanCountTenantLimit) {
         truncatedTracesCounter
             .computeIfAbsent(
