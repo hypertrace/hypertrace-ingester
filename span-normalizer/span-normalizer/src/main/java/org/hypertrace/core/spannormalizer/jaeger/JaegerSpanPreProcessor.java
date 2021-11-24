@@ -100,7 +100,7 @@ public class JaegerSpanPreProcessor
 
     String tenantId = maybeTenantId.get();
 
-    if (spanFilter.shouldDropSpan(span, spanTags)) {
+    if (spanFilter.shouldDropSpan(span, spanTags, processTags)) {
       // increment dropped counter at tenant level
       tenantToSpansDroppedCount
           .computeIfAbsent(
