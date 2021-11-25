@@ -128,8 +128,6 @@ rawSpansGrouperConfig:
     groupby:
       internal: 30
 
-  defaultMaxSpanCount: 1000
-
 logConfig:
   name: raw-spans-grouper-log-config
   monitorInterval: 30
