@@ -56,6 +56,10 @@ data:
 
     span.groupby.session.window.interval = {{ .Values.rawSpansGrouperConfig.span.groupby.internal }}
 
+    {{- if hasKey .Values.rawSpansGrouperConfig "defaultMaxSpanCount" }}
+    default.max.span.count = {{ .Values.rawSpansGrouperConfig.defaultMaxSpanCount }}
+    {{- end }}
+
     {{- if hasKey .Values.rawSpansGrouperConfig "maxSpanCount" }}
     max.span.count = {
     {{- range $k, $v := .Values.rawSpansGrouperConfig.maxSpanCount }}

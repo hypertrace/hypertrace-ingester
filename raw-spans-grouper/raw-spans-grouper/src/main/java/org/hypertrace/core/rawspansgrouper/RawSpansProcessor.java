@@ -175,10 +175,9 @@ public class RawSpansProcessor
     long maxSpanCountTenantLimit =
         maxSpanCountMap.containsKey(key.getTenantId())
             ? maxSpanCountMap.get(key.getTenantId())
-            : Long.MAX_VALUE;
+            : defaultMaxSpanCountLimit;
 
-    if (inFlightSpansPerTrace >= defaultMaxSpanCountLimit
-        || inFlightSpansPerTrace >= maxSpanCountTenantLimit) {
+    if (inFlightSpansPerTrace >= maxSpanCountTenantLimit) {
 
       if (logger.isDebugEnabled()) {
         logger.debug(
@@ -199,8 +198,7 @@ public class RawSpansProcessor
           .increment();
 
       // increment the counter when the number of spans reaches the max.span.count limit.
-      if (inFlightSpansPerTrace == defaultMaxSpanCountLimit
-          || inFlightSpansPerTrace == maxSpanCountTenantLimit) {
+      if (inFlightSpansPerTrace == maxSpanCountTenantLimit) {
         truncatedTracesCounter
             .computeIfAbsent(
                 key.getTenantId(),
