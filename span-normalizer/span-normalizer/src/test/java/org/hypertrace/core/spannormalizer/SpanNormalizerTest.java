@@ -1,6 +1,8 @@
 package org.hypertrace.core.spannormalizer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
@@ -130,5 +132,75 @@ class SpanNormalizerTest {
     KeyValue<String, LogEvents> keyValue = rawLogOutputTopic.readKeyValue();
     LogEvents logEvents = keyValue.value;
     Assertions.assertEquals(2, logEvents.getLogEvents().size());
+
+    // pipe in one more span which doesn't match spanDropFilters
+    Span span2 =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("2".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-2".getBytes()))
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("http.method")
+                    .setVStr("GET")
+                    .build())
+            .build();
+
+    inputTopic.pipeInput(span2);
+    KeyValue<TraceIdentity, RawSpan> kv1 = outputTopic.readKeyValue();
+    assertNotNull(kv1);
+    assertEquals("__default", kv1.key.getTenantId());
+    assertEquals(
+        HexUtils.getHex(ByteString.copyFrom("trace-2".getBytes()).toByteArray()),
+        HexUtils.getHex(kv1.key.getTraceId().array()));
+
+    // pipe in one more span which match one of spanDropFilters (http.method & http.url)
+    Span span3 =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("3".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-3".getBytes()))
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("http.method")
+                    .setVStr("GET")
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("http.url")
+                    .setVStr("http://xyz.com/health/check")
+                    .build())
+            .build();
+
+    inputTopic.pipeInput(span3);
+    assertTrue(outputTopic.isEmpty());
+
+    // pipe in one more span which match one of spanDropFilters (grpc.url)
+    Span span4 =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("3".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-3".getBytes()))
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("grpc.url")
+                    .setVStr("doesn't match with input filter set")
+                    .build())
+            .build();
+
+    inputTopic.pipeInput(span4);
+    assertTrue(outputTopic.isEmpty());
   }
 }
