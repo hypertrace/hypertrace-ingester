@@ -88,6 +88,9 @@ public class MetricsGeneratorTest {
             .setStartTimeMillis(1636982920000L)
             .setEndTimeMillis(1636982920015L)
             .setDurationMillis(15L)
+            .setNumCalls(1)
+            .setProtocolName("HTTP")
+            .setStatusCode("200")
             .build();
 
     RawServiceView row2 =
@@ -102,6 +105,9 @@ public class MetricsGeneratorTest {
             .setStartTimeMillis(1636982920200L)
             .setEndTimeMillis(1636982920215L)
             .setDurationMillis(15L)
+            .setNumCalls(1)
+            .setProtocolName("HTTP")
+            .setStatusCode("200")
             .build();
 
     RawServiceView row3 =
@@ -116,6 +122,9 @@ public class MetricsGeneratorTest {
             .setStartTimeMillis(1636982920400L)
             .setEndTimeMillis(1636982920415L)
             .setDurationMillis(15L)
+            .setNumCalls(1)
+            .setProtocolName("HTTP")
+            .setStatusCode("200")
             .build();
 
     // pipe the data

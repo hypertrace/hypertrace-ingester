@@ -1,6 +1,16 @@
 package org.hypertrace.metrics.generator;
 
 import static java.util.stream.Collectors.joining;
+import static org.hypertrace.metrics.generator.MetricsConstants.API_ID;
+import static org.hypertrace.metrics.generator.MetricsConstants.API_NAME;
+import static org.hypertrace.metrics.generator.MetricsConstants.METRIC_NUM_CALLS;
+import static org.hypertrace.metrics.generator.MetricsConstants.METRIC_NUM_CALLS_DESCRIPTION;
+import static org.hypertrace.metrics.generator.MetricsConstants.METRIC_NUM_CALLS_UNIT;
+import static org.hypertrace.metrics.generator.MetricsConstants.PROTOCOL_NAME;
+import static org.hypertrace.metrics.generator.MetricsConstants.SERVICE_ID_ATTR;
+import static org.hypertrace.metrics.generator.MetricsConstants.SERVICE_NAME_ATTR;
+import static org.hypertrace.metrics.generator.MetricsConstants.STATUS_CODE;
+import static org.hypertrace.metrics.generator.MetricsConstants.TENANT_ID_ATTR;
 import static org.hypertrace.metrics.generator.MetricsGenerator.METRICS_GENERATOR_JOB_CONFIG;
 import static org.hypertrace.metrics.generator.MetricsGenerator.OUTPUT_TOPIC_PRODUCER;
 
@@ -31,15 +41,6 @@ public class MetricsProcessor
 
   private static final Logger logger = LoggerFactory.getLogger(MetricsProcessor.class);
 
-  private static final String TENANT_ID_ATTR = "tenant_id";
-  private static final String SERVICE_ID_ATTR = "service_id";
-  private static final String SERVICE_NAME_ATTR = "service_name";
-  private static final String API_ID = "api_id";
-  private static final String API_NAME = "api_name";
-  private static final String CONSUMER_ID_ATTR = "consumer_id";
-  private static final String METRIC_NUM_CALLS = "num_calls";
-  private static final String METRIC_NUM_CALLS_DESCRIPTION = "num of calls";
-  private static final String METRIC_NUM_CALLS_UNIT = "1";
   private static final String DELIMITER = ":";
   private static final String METRIC_AGGREGATION_TIME_MS = "metric.aggregation.timeMs";
   private static final String METRIC_EMIT_WAIT_TIME_MS = "metric.emit.waitTimeMs";
@@ -79,6 +80,12 @@ public class MetricsProcessor
     attributes.put(SERVICE_NAME_ATTR, value.getServiceName());
     attributes.put(API_ID, value.getApiId());
     attributes.put(API_NAME, value.getApiName());
+    if (value.getProtocolName() != null) {
+      attributes.put(PROTOCOL_NAME, value.getProtocolName());
+    }
+    if (value.getStatusCode() != null) {
+      attributes.put(STATUS_CODE, value.getStatusCode());
+    }
 
     Metric metric =
         Metric.newBuilder()
@@ -104,13 +111,13 @@ public class MetricsProcessor
     Long preValue = metricsIdentityStore.get(metricsIdentity);
     if (preValue == null) {
       // first entry
-      metricsIdentityStore.put(metricsIdentity, 1L);
+      metricsIdentityStore.put(metricsIdentity, (long) value.getNumCalls());
       metricsStore.put(metricsIdentity, metric);
 
       // schedule a punctuator
       schedulePunctuator(metricsIdentity);
     } else {
-      metricsIdentityStore.put(metricsIdentity, preValue + 1);
+      metricsIdentityStore.put(metricsIdentity, preValue + (long) value.getNumCalls());
     }
 
     return null;
