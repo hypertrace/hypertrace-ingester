@@ -1,22 +1,27 @@
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
+
 plugins {
   `java-library`
-  id("org.hypertrace.publish-plugin")
-  id("org.hypertrace.avro-plugin")
+  id("com.google.protobuf") version "0.8.15"
 }
 
-dependencies {
-  api("org.apache.avro:avro:1.11.0")
+protobuf {
+  protoc {
+    artifact = "com.google.protobuf:protoc:3.17.3"
+  }
+}
 
-  constraints {
-    implementation("org.apache.commons:commons-compress:1.21") {
-      because("https://snyk.io/vuln/SNYK-JAVA-ORGAPACHECOMMONS-1316638, " +
-          "https://snyk.io/vuln/SNYK-JAVA-ORGAPACHECOMMONS-1316639, " +
-          "https://snyk.io/vuln/SNYK-JAVA-ORGAPACHECOMMONS-1316640, " +
-          "https://snyk.io/vuln/SNYK-JAVA-ORGAPACHECOMMONS-1316641")
+sourceSets {
+  main {
+    java {
+      srcDirs("src/main/java", "build/generated/source/proto/main/java")
     }
   }
 }
 
-tasks.named<org.hypertrace.gradle.avro.CheckAvroCompatibility>("avroCompatibilityCheck") {
-  enabled = false
+dependencies {
+  implementation("com.google.protobuf:protobuf-java:3.17.3")
+  implementation("org.apache.kafka:kafka-clients:6.0.1-ccs")
+  implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 }

@@ -18,8 +18,11 @@ import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
-import org.hypertrace.metrics.generator.api.Metric;
-import org.hypertrace.metrics.generator.api.MetricIdentity;
+import org.hypertrace.metrics.generator.api.v1.Metric;
+import org.hypertrace.metrics.generator.api.v1.MetricIdentity;
+import org.hypertrace.metrics.generator.api.v1.serde.MetricIdentitySerde;
+import org.hypertrace.metrics.generator.api.v1.serde.MetricSerde;
+import org.hypertrace.metrics.generator.api.v1.serde.OtlpMetricsSerde;
 import org.hypertrace.viewgenerator.api.RawServiceView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,18 +57,18 @@ public class MetricsGenerator extends KafkaStreamsApp {
       inputStreams.put(inputTopic, inputStream);
     }
 
-    // Retrieve the default value serde defined in config and use it
-    Serde valueSerde = defaultValueSerde(streamsProperties);
-    Serde keySerde = defaultKeySerde(streamsProperties);
-
     StoreBuilder<KeyValueStore<MetricIdentity, Long>> metricIdentityStoreBuilder =
         Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(METRICS_IDENTITY_STORE), keySerde, new LongSerde())
+                Stores.persistentKeyValueStore(METRICS_IDENTITY_STORE),
+                new MetricIdentitySerde(),
+                new LongSerde())
             .withCachingEnabled();
 
     StoreBuilder<KeyValueStore<MetricIdentity, Metric>> metricIdentityToValueStoreBuilder =
         Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(METRICS_IDENTITY_VALUE_STORE), keySerde, valueSerde)
+                Stores.persistentKeyValueStore(METRICS_IDENTITY_VALUE_STORE),
+                new MetricIdentitySerde(),
+                new MetricSerde())
             .withCachingEnabled();
 
     streamsBuilder.addStateStore(metricIdentityStoreBuilder);

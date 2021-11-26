@@ -30,8 +30,8 @@ import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.hypertrace.metrics.generator.api.Metric;
-import org.hypertrace.metrics.generator.api.MetricIdentity;
+import org.hypertrace.metrics.generator.api.v1.Metric;
+import org.hypertrace.metrics.generator.api.v1.MetricIdentity;
 import org.hypertrace.viewgenerator.api.RawServiceView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +92,7 @@ public class MetricsProcessor
             .setName(METRIC_NUM_CALLS)
             .setDescription(METRIC_NUM_CALLS_DESCRIPTION)
             .setUnit(METRIC_NUM_CALLS_UNIT)
-            .setAttributes(attributes)
+            .putAllAttributes(attributes)
             .build();
 
     // create metrics identity (timestamp, metric_key)

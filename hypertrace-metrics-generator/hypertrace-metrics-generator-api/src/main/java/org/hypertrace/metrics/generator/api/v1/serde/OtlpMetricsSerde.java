@@ -1,4 +1,4 @@
-package org.hypertrace.metrics.generator;
+package org.hypertrace.metrics.generator.api.v1.serde;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
@@ -20,15 +20,15 @@ public class OtlpMetricsSerde implements Serde<ResourceMetrics> {
 
   @Override
   public Serializer<ResourceMetrics> serializer() {
-    return new OtlpMetricsSerde.Ser();
+    return new OtlpMetricsSerde.OtlpMetricsSerializer();
   }
 
   @Override
   public Deserializer<ResourceMetrics> deserializer() {
-    return new OtlpMetricsSerde.De();
+    return new OtlpMetricsSerde.OtlpMetricsDeserializer();
   }
 
-  public static class Ser implements Serializer<ResourceMetrics> {
+  private static class OtlpMetricsSerializer implements Serializer<ResourceMetrics> {
     @Override
     public byte[] serialize(String topic, ResourceMetrics data) {
       try {
@@ -40,7 +40,7 @@ public class OtlpMetricsSerde implements Serde<ResourceMetrics> {
     }
   }
 
-  public static class De implements Deserializer<ResourceMetrics> {
+  private static class OtlpMetricsDeserializer implements Deserializer<ResourceMetrics> {
     @Override
     public ResourceMetrics deserialize(String topic, byte[] data) {
       try {

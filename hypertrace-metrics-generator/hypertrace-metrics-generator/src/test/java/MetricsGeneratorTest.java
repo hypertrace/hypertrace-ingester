@@ -23,7 +23,7 @@ import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.metrics.generator.MetricsGenerator;
-import org.hypertrace.metrics.generator.OtlpMetricsSerde;
+import org.hypertrace.metrics.generator.api.v1.serde.OtlpMetricsSerde;
 import org.hypertrace.viewgenerator.api.RawServiceView;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

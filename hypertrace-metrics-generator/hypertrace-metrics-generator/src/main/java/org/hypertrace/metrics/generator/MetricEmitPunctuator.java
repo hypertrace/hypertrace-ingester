@@ -17,8 +17,8 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.hypertrace.metrics.generator.api.Metric;
-import org.hypertrace.metrics.generator.api.MetricIdentity;
+import org.hypertrace.metrics.generator.api.v1.Metric;
+import org.hypertrace.metrics.generator.api.v1.MetricIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
