@@ -35,6 +35,13 @@ dependencies {
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 
+  // all constraints
+  constraints {
+    implementation("org.glassfish.jersey.core:jersey-common:2.34") {
+      because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
+    }
+  }
+
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
