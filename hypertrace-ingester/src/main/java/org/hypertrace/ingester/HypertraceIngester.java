@@ -86,7 +86,7 @@ public class HypertraceIngester extends KafkaStreamsApp {
     List<String> subTopologiesNames = getSubTopologiesNames(properties);
     for (String subTopologyName : subTopologiesNames) {
       LOGGER.info("Building sub topology :{}", subTopologyName);
-      buildSubTopology(subTopologyName, properties, streamsBuilder, inputStreams);
+      streamsBuilder = buildSubTopology(subTopologyName, properties, streamsBuilder, inputStreams);
     }
 
     // build for metrics pipeline
@@ -94,14 +94,15 @@ public class HypertraceIngester extends KafkaStreamsApp {
       List<String> metricsSubTopologiesNames = getMetricsPipelineSubTopologiesNames(properties);
       for (String subTopologyName : metricsSubTopologiesNames) {
         LOGGER.info("Building metrics pipeline sub topology :{}", subTopologyName);
-        buildSubTopology(subTopologyName, properties, streamsBuilder, inputStreams);
+        streamsBuilder =
+            buildSubTopology(subTopologyName, properties, streamsBuilder, inputStreams);
       }
     }
 
     return streamsBuilder;
   }
 
-  private void buildSubTopology(
+  private StreamsBuilder buildSubTopology(
       String subTopologyName,
       Map<String, Object> properties,
       StreamsBuilder streamsBuilder,
@@ -122,6 +123,7 @@ public class HypertraceIngester extends KafkaStreamsApp {
 
     // retain per job key and its topology
     jobNameToSubTopology.put(subTopologyName, Pair.of(subTopology.getJobConfigKey(), subTopology));
+    return streamsBuilder;
   }
 
   @Override
