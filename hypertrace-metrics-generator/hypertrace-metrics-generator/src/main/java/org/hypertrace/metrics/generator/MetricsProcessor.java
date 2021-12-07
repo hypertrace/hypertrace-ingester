@@ -12,7 +12,7 @@ import static org.hypertrace.metrics.generator.MetricsConstants.SERVICE_NAME_ATT
 import static org.hypertrace.metrics.generator.MetricsConstants.STATUS_CODE;
 import static org.hypertrace.metrics.generator.MetricsConstants.TENANT_ID_ATTR;
 import static org.hypertrace.metrics.generator.MetricsGenerator.METRICS_GENERATOR_JOB_CONFIG;
-import static org.hypertrace.metrics.generator.MetricsGenerator.OUTPUT_TOPIC_PRODUCER;
+import static org.hypertrace.metrics.generator.MetricsGenerator.OUTPUT_TOPIC_METRICS_PRODUCER;
 
 import com.typesafe.config.Config;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
@@ -62,7 +62,7 @@ public class MetricsProcessor
     this.metricsStore =
         (KeyValueStore<MetricIdentity, Metric>)
             context.getStateStore(MetricsGenerator.METRICS_IDENTITY_VALUE_STORE);
-    this.outputTopicProducer = To.child(OUTPUT_TOPIC_PRODUCER);
+    this.outputTopicProducer = To.child(OUTPUT_TOPIC_METRICS_PRODUCER);
 
     Config jobConfig = (Config) (context.appConfigs().get(METRICS_GENERATOR_JOB_CONFIG));
     this.metricAggregationTimeMs = jobConfig.getLong(METRIC_AGGREGATION_TIME_MS);

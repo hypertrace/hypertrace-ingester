@@ -34,7 +34,7 @@ public class MetricsGenerator extends KafkaStreamsApp {
   public static final String METRICS_GENERATOR_JOB_CONFIG = "metrics-generator-job-config";
   public static final String METRICS_IDENTITY_STORE = "metric-identity-store";
   public static final String METRICS_IDENTITY_VALUE_STORE = "metric-identity-value-Store";
-  public static final String OUTPUT_TOPIC_PRODUCER = "output-topic-producer";
+  public static final String OUTPUT_TOPIC_METRICS_PRODUCER = "output-topic-metrics-producer";
 
   public MetricsGenerator(ConfigClient configClient) {
     super(configClient);
@@ -76,7 +76,7 @@ public class MetricsGenerator extends KafkaStreamsApp {
 
     Produced<byte[], ResourceMetrics> outputTopicProducer =
         Produced.with(Serdes.ByteArray(), new OtlpMetricsSerde());
-    outputTopicProducer = outputTopicProducer.withName(OUTPUT_TOPIC_PRODUCER);
+    outputTopicProducer = outputTopicProducer.withName(OUTPUT_TOPIC_METRICS_PRODUCER);
 
     inputStream
         .transform(
