@@ -42,6 +42,7 @@ dependencies {
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
   implementation(project(":hypertrace-metrics-processor:hypertrace-metrics-processor"))
   implementation(project(":hypertrace-metrics-exporter:hypertrace-metrics-exporter"))
+  implementation(project(":hypertrace-metrics-generator:hypertrace-metrics-generator"))
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
@@ -85,6 +86,10 @@ tasks.register<Copy>("copyServiceConfigs") {
         "common"),
       createCopySpec("hypertrace-metrics-exporter",
       "hypertrace-metrics-exporter",
+      "main",
+      "common"),
+      createCopySpec("hypertrace-metrics-generator",
+      "hypertrace-metrics-generator",
       "main",
       "common")
   ).into("./build/resources/main/configs/")
@@ -146,7 +151,11 @@ tasks.register<Copy>("copyServiceConfigsTest") {
       createCopySpec("hypertrace-metrics-exporter",
       "hypertrace-metrics-exporter",
       "test",
-      "hypertrace-metrics-exporter")
+      "hypertrace-metrics-exporter"),
+      createCopySpec("hypertrace-metrics-generator",
+      "hypertrace-metrics-generator",
+      "test",
+      "hypertrace-metrics-generator")
   ).into("./build/resources/test/configs/")
 }
 
