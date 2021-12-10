@@ -59,7 +59,7 @@ dependencies {
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
-  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
+  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.15.0")
 
   testImplementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")

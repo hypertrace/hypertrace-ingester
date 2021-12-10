@@ -50,7 +50,7 @@ dependencies {
 
     // Logging
     implementation("org.slf4j:slf4j-api:1.7.30")
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.15.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
     testImplementation("org.mockito:mockito-core:3.8.0")
