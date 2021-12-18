@@ -42,12 +42,8 @@ dependencies {
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.42.0")
   constraints {
-    runtimeOnly("io.netty:netty-codec-http2:4.1.68.Final") {
-      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
-    }
-    runtimeOnly("io.netty:netty-handler-proxy:4.1.68.Final") {
-      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
-    }
+    runtimeOnly("io.netty:netty-codec-http2:4.1.71.Final")
+    runtimeOnly("io.netty:netty-handler-proxy:4.1.71.Final")
     implementation("org.glassfish.jersey.core:jersey-common:2.34") {
       because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
     }
@@ -61,7 +57,7 @@ dependencies {
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
-  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.15.0")
+  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.16.0")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
