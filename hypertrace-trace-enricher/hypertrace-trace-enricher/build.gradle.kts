@@ -6,11 +6,6 @@ plugins {
   id("org.hypertrace.jacoco-report-plugin")
 }
 
-repositories {
-  // Needed for io.confluent:kafka-avro-serializer
-  maven("http://packages.confluent.io/maven")
-}
-
 application {
   mainClass.set("org.hypertrace.core.serviceframework.PlatformServiceLauncher")
 }
