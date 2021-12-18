@@ -38,12 +38,8 @@ dependencies {
   implementation("com.typesafe:config:1.4.1")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
   constraints {
-    runtimeOnly("io.netty:netty-codec-http2:4.1.68.Final") {
-      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
-    }
-    runtimeOnly("io.netty:netty-handler-proxy:4.1.68.Final") {
-      because("https://snyk.io/vuln/SNYK-JAVA-IONETTY-1083991")
-    }
+    runtimeOnly("io.netty:netty-codec-http2:4.1.71.Final")
+    runtimeOnly("io.netty:netty-handler-proxy:4.1.71.Final")
     implementation("org.glassfish.jersey.core:jersey-common:2.34") {
       because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
     }
