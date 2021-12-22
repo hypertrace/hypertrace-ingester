@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -19,6 +20,21 @@ class TraceStatsEnricherTest {
   private static final String HEAD_EVENT_ID = "head.event.id";
   private static final String UNIQUE_API_NODES_COUNT = "unique.apis.count";
   private static final String API_ID = "API_ID";
+
+  @Test
+  void headSpanIdIsAddedToTraceAttributeForTraceWithSingleEntrySpan() {
+    Event aEntryHeadSpanEvent = createEntryEventWithName("aEvent"); // 0
+
+    StructuredTrace trace =
+        createTraceWithEventsAndEdges(new Event[] {aEntryHeadSpanEvent}, Collections.emptyMap());
+
+    TraceStatsEnricher traceStatsEnricher = new TraceStatsEnricher();
+    traceStatsEnricher.enrichTrace(trace);
+    ByteBuffer actualHeadSpanId = aEntryHeadSpanEvent.getEventId();
+    assertEquals(
+        actualHeadSpanId,
+        trace.getAttributes().getAttributeMap().get(HEAD_EVENT_ID).getBinaryValue());
+  }
 
   @Test
   void headSpanIdIsAddedToTraceAttribute() {
