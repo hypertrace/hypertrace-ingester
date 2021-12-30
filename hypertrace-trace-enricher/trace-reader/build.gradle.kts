@@ -13,7 +13,7 @@ dependencies {
   api("org.hypertrace.core.datamodel:data-model:0.1.20")
   implementation("org.hypertrace.core.attribute.service:attribute-projection-registry:0.12.3")
   implementation("org.hypertrace.core.grpcutils:grpc-client-rx-utils:0.6.2")
-  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.6.2")
+  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.7.0")
   implementation("io.reactivex.rxjava3:rxjava:3.0.11")
 
   annotationProcessor("org.projectlombok:lombok:1.18.20")
