@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,6 +71,7 @@ public class AbstractAttributeEnricherTest {
         .when(e.getMetrics())
         .thenReturn(Metrics.newBuilder().setMetricMap(new HashMap<>()).build());
     when(e.getServiceName()).thenReturn("service");
+    when(e.getEventId()).thenReturn(ByteBuffer.wrap("event_id".getBytes(StandardCharsets.UTF_8)));
     return e;
   }
 

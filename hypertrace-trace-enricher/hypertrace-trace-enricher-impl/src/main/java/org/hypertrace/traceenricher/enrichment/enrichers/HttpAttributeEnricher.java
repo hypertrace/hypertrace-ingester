@@ -47,8 +47,10 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
     EnrichedSpanUtils.getQueryString(event)
         .ifPresent(
             queryString -> {
+              String spanId =
+                  event.getEventId() == null ? null : HexUtils.getHex(event.getEventId());
               Map<String, List<String>> paramNameToValues =
-                  getQueryParamsFromQueryString(queryString, HexUtils.getHex(event.getEventId()));
+                  getQueryParamsFromQueryString(queryString, spanId);
               for (Map.Entry<String, List<String>> queryParamEntry : paramNameToValues.entrySet()) {
                 if (queryParamEntry.getValue().isEmpty()) {
                   continue;
