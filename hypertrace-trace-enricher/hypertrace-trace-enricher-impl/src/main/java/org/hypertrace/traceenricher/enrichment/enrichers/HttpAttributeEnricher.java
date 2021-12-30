@@ -10,6 +10,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.AttributeValue;
@@ -48,7 +49,7 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
         .ifPresent(
             queryString -> {
               String spanId =
-                  event.getEventId() == null ? null : HexUtils.getHex(event.getEventId());
+                  Optional.ofNullable(event.getEventId()).map(HexUtils::getHex).orElse(null);
               Map<String, List<String>> paramNameToValues =
                   getQueryParamsFromQueryString(queryString, spanId);
               for (Map.Entry<String, List<String>> queryParamEntry : paramNameToValues.entrySet()) {
