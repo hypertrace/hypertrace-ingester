@@ -66,7 +66,8 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
             });
   }
 
-  private Map<String, List<String>> getQueryParamsFromQueryString(String queryString, String spanId) {
+  private Map<String, List<String>> getQueryParamsFromQueryString(
+      String queryString, String spanId) {
     return Splitter.on(QUERY_PARAM_DELIMITER).splitToList(queryString).stream()
         // split only on first occurrence of delimiter. eg: cat=1dog=2 should be split to cat ->
         // 1dog=2
@@ -76,7 +77,9 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
             kv ->
                 Pair.of(
                     String.format(
-                        PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, decodeParamKey(kv[0], spanId)),
+                        PARAM_ATTR_FORMAT,
+                        HTTP_REQUEST_QUERY_PARAM_ATTR,
+                        decodeParamKey(kv[0], spanId)),
                     decode(kv[1], spanId)))
         .collect(groupingBy(Pair::getKey, mapping(Pair::getValue, toList())));
   }
