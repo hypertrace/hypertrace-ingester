@@ -40,7 +40,7 @@ dependencies {
 
   implementation("org.apache.avro:avro:1.10.2")
   implementation("org.apache.commons:commons-lang3:3.12.0")
-  implementation("com.fasterxml.jackson.core:jackson-databind:2.12.2")
+  implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
