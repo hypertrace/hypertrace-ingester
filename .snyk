@@ -5,5 +5,5 @@ ignore:
   SNYK-JAVA-IONETTY-1042268:
     - '*':
         reason: no available replacement
-        expires: 2021-12-31T00:00:00.000Z
+        expires: 2021-01-31T00:00:00.000Z
 patch: {}
