@@ -10,11 +10,13 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
@@ -46,8 +48,10 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
     EnrichedSpanUtils.getQueryString(event)
         .ifPresent(
             queryString -> {
+              String spanId =
+                  Optional.ofNullable(event.getEventId()).map(HexUtils::getHex).orElse(null);
               Map<String, List<String>> paramNameToValues =
-                  getQueryParamsFromQueryString(queryString);
+                  getQueryParamsFromQueryString(queryString, spanId);
               for (Map.Entry<String, List<String>> queryParamEntry : paramNameToValues.entrySet()) {
                 if (queryParamEntry.getValue().isEmpty()) {
                   continue;
@@ -65,7 +69,8 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
             });
   }
 
-  private Map<String, List<String>> getQueryParamsFromQueryString(String queryString) {
+  private Map<String, List<String>> getQueryParamsFromQueryString(
+      String queryString, String spanId) {
     return Splitter.on(QUERY_PARAM_DELIMITER).splitToList(queryString).stream()
         // split only on first occurrence of delimiter. eg: cat=1dog=2 should be split to cat ->
         // 1dog=2
@@ -75,13 +80,15 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
             kv ->
                 Pair.of(
                     String.format(
-                        PARAM_ATTR_FORMAT, HTTP_REQUEST_QUERY_PARAM_ATTR, decodeParamKey(kv[0])),
-                    decode(kv[1])))
+                        PARAM_ATTR_FORMAT,
+                        HTTP_REQUEST_QUERY_PARAM_ATTR,
+                        decodeParamKey(kv[0], spanId)),
+                    decode(kv[1], spanId)))
         .collect(groupingBy(Pair::getKey, mapping(Pair::getValue, toList())));
   }
 
-  private static String decodeParamKey(String input) {
-    String urlDecodedKey = decode(input);
+  private static String decodeParamKey(String input, String spanId) {
+    String urlDecodedKey = decode(input, spanId);
     /* '[]' can occur at the end of param name which denotes param can have multiple values,
     we strip '[]' to get original param name */
     if (urlDecodedKey.endsWith("[]") && urlDecodedKey.length() > 2) {
@@ -90,11 +97,11 @@ public class HttpAttributeEnricher extends AbstractTraceEnricher {
     return input;
   }
 
-  private static String decode(String input) {
+  private static String decode(String input, String spanId) {
     try {
       return URLDecoder.decode(input, StandardCharsets.UTF_8);
     } catch (IllegalArgumentException e) {
-      LOGGER.error("Cannot decode the input {}", input, e);
+      LOGGER.error("Cannot decode the input {}, span id {}", input, spanId, e);
       // Falling back to original input if it can't be decoded
       return input;
     }
