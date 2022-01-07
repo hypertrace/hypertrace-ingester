@@ -42,6 +42,13 @@ dependencies {
   implementation("org.apache.commons:commons-lang3:3.12.0")
   implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
 
+  constraints {
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl@2.17.1") {
+      because("Arbitrary Code Execution [Medium Severity][https://snyk.io/vuln/SNYK-JAVA-ORGAPACHELOGGINGLOG4J-2327339] " +
+          "in org.apache.logging.log4j:log4j-core@2.17.0")
+    }
+  }
+
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("com.google.code.gson:gson:2.8.9")
