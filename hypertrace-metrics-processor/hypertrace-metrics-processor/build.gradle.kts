@@ -43,6 +43,11 @@ dependencies {
           "io.confluent:kafka-schema-registry-client@6.0.1 > " +
           "org.glassfish.jersey.core:jersey-common@2.30")
     }
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+      because("Denial of Service (DoS) " +
+          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
+          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
+    }
   }
 
   // test

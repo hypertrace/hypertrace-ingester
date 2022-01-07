@@ -23,6 +23,11 @@ dependencies {
     implementation("org.apache.calcite:calcite-babel:1.26.0") {
       because("https://snyk.io/vuln/SNYK-JAVA-ORGAPACHECALCITE-1038296")
     }
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+      because("Denial of Service (DoS) " +
+          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
+          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
+    }
   }
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")

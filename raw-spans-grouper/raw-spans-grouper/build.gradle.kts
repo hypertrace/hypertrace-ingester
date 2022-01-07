@@ -47,6 +47,14 @@ dependencies {
     implementation("org.slf4j:slf4j-api:1.7.30")
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 
+    constraints {
+        implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+            because("Denial of Service (DoS) " +
+                "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
+                "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
+        }
+    }
+
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
     testImplementation("org.mockito:mockito-core:3.8.0")
     testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
