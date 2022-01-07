@@ -28,7 +28,7 @@ dependencies {
           "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
           "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
     }
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl@2.17.1") {
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1") {
       because("Arbitrary Code Execution [Medium Severity][https://snyk.io/vuln/SNYK-JAVA-ORGAPACHELOGGINGLOG4J-2327339] " +
           "in org.apache.logging.log4j:log4j-core@2.17.0")
     }

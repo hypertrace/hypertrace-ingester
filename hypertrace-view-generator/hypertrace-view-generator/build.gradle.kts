@@ -43,7 +43,7 @@ dependencies {
   implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
 
   constraints {
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl@2.17.1") {
+    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1") {
       because("Arbitrary Code Execution [Medium Severity][https://snyk.io/vuln/SNYK-JAVA-ORGAPACHELOGGINGLOG4J-2327339] " +
           "in org.apache.logging.log4j:log4j-core@2.17.0")
     }
