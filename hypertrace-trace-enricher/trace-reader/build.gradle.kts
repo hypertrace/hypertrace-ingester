@@ -19,10 +19,18 @@ dependencies {
   annotationProcessor("org.projectlombok:lombok:1.18.20")
   compileOnly("org.projectlombok:lombok:1.18.20")
 
+  constraints {
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+      because("Denial of Service (DoS) " +
+          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
+          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
+    }
+  }
+
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-inline:3.8.0")
   testImplementation("org.mockito:mockito-junit-jupiter:3.8.0")
-  testRuntimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
+  testRuntimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 
   tasks.test {
     useJUnitPlatform()

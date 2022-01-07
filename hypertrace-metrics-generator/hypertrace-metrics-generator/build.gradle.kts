@@ -28,9 +28,9 @@ dependencies {
   // common and framework
   implementation(project(":hypertrace-metrics-generator:hypertrace-metrics-generator-api"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.31")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.31")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.33")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.33")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.23")
 
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
@@ -39,6 +39,11 @@ dependencies {
   constraints {
     implementation("org.glassfish.jersey.core:jersey-common:2.34") {
       because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
+    }
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+      because("Denial of Service (DoS) " +
+          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
+          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
     }
   }
 

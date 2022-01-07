@@ -57,6 +57,10 @@ data:
       spanDropCriterion = {{ .Values.spanNormalizerConfig.processor.spanDropCriterion | toJson }}
       {{- end }}
 
+      {{- if hasKey .Values.spanNormalizerConfig.processor "spanDropFilters" }}
+      spanDropFilters = {{ .Values.spanNormalizerConfig.processor.spanDropFilters | toJson }}
+      {{- end }}
+
       {{- if hasKey .Values.spanNormalizerConfig.processor "rootExitSpanDropCriterion" }}
       rootExitSpanDropCriterion = {{ .Values.spanNormalizerConfig.processor.rootExitSpanDropCriterion | toJson }}
       {{- end }}

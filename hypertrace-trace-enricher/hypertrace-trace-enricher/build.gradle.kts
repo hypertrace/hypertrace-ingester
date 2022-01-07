@@ -31,17 +31,22 @@ tasks.test {
 dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-impl"))
   implementation("org.hypertrace.core.datamodel:data-model:0.1.20")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.30")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.30")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.33")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.33")
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
 
   implementation("com.typesafe:config:1.4.1")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.23")
   constraints {
     runtimeOnly("io.netty:netty-codec-http2:4.1.71.Final")
     runtimeOnly("io.netty:netty-handler-proxy:4.1.71.Final")
     implementation("org.glassfish.jersey.core:jersey-common:2.34") {
       because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
+    }
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+      because("Denial of Service (DoS) " +
+          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
+          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
     }
   }
 
@@ -50,7 +55,7 @@ dependencies {
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
-  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
+  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 
   testImplementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
