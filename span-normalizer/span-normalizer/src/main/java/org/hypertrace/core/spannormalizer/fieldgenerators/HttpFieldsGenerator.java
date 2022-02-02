@@ -461,7 +461,8 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     // more info than just the protocol
     if (optionalScheme.isPresent()) {
       optionalScheme = getProtocolFromForwarded(optionalScheme.get());
-    } else {
+    }
+    if (optionalScheme.isEmpty()) {
       optionalScheme =
           FirstMatchingKeyFinder.getStringValueByFirstMatchingKey(
               tagsMap,
