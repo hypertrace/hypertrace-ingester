@@ -23,6 +23,7 @@ import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.hypertrace.core.datamodel.LogEvents;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
@@ -202,5 +203,111 @@ class SpanNormalizerTest {
 
     inputTopic.pipeInput(span4);
     assertTrue(outputTopic.isEmpty());
+  }
+
+
+  @Test
+  @SetEnvironmentVariable(key = "SERVICE_NAME", value = "span-normalizer")
+  public void whenByPassedExpectStructredTraceToBeOutput() {
+    Config config =
+        ConfigFactory.parseURL(
+            getClass().getClassLoader().getResource("configs/span-normalizer/application.conf"));
+
+    Map<String, Object> mergedProps = new HashMap<>();
+    underTest.getBaseStreamsConfig().forEach(mergedProps::put);
+    underTest.getStreamsConfig(config).forEach(mergedProps::put);
+    mergedProps.put(SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG, config);
+
+    StreamsBuilder streamsBuilder =
+        underTest.buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
+
+    Properties props = new Properties();
+    mergedProps.forEach(props::put);
+
+    TopologyTestDriver td = new TopologyTestDriver(streamsBuilder.build(), props);
+    TestInputTopic<byte[], Span> inputTopic =
+        td.createInputTopic(
+            config.getString(SpanNormalizerConstants.INPUT_TOPIC_CONFIG_KEY),
+            Serdes.ByteArray().serializer(),
+            new JaegerSpanSerde().serializer());
+
+    Serde<RawSpan> rawSpanSerde = new AvroSerde<>();
+    rawSpanSerde.configure(Map.of(), false);
+
+    Serde<StructuredTrace>  structuredTraceSerde = new AvroSerde<>();
+    structuredTraceSerde.configure(Map.of(), false);
+
+    Serde<TraceIdentity> spanIdentitySerde = new AvroSerde<>();
+    spanIdentitySerde.configure(Map.of(), true);
+
+    TestOutputTopic outputTopic =
+        td.createOutputTopic(
+            config.getString(SpanNormalizerConstants.OUTPUT_TOPIC_CONFIG_KEY),
+            spanIdentitySerde.deserializer(),
+            rawSpanSerde.deserializer());
+
+    TestOutputTopic bypassedOutputTopic =
+        td.createOutputTopic(
+            config.getString(SpanNormalizerConstants.BYPASSED_OUTPUT_TOPIC_CONFIG_KEY),
+            Serdes.String().deserializer(),
+            structuredTraceSerde.deserializer());
+
+
+    TestOutputTopic rawLogOutputTopic =
+        td.createOutputTopic(
+            config.getString(SpanNormalizerConstants.OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY),
+            spanIdentitySerde.deserializer(),
+            new AvroSerde<>().deserializer());
+
+    Span span1 =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("1".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-1".getBytes()))
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("traceableai.mirror")
+                    .setVStr("true")
+                    .build())
+            .build();
+    inputTopic.pipeInput(span1);
+
+    KeyValue<String, StructuredTrace> kv = bypassedOutputTopic.readKeyValue();
+    assertEquals("__default", kv.value.getCustomerId());
+    assertEquals(
+        HexUtils.getHex(ByteString.copyFrom("trace-1".getBytes()).toByteArray()),
+        HexUtils.getHex(kv.value.getTraceId().array()));
+
+    assertTrue(outputTopic.isEmpty());
+
+    // pipe in one more span which doesn't match spanDropFilters
+    Span span2 =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("2".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-2".getBytes()))
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("http.method")
+                    .setVStr("GET")
+                    .build())
+            .build();
+
+    inputTopic.pipeInput(span2);
+    KeyValue<TraceIdentity, RawSpan> kv1 = outputTopic.readKeyValue();
+    assertNotNull(kv1);
+    assertEquals("__default", kv1.key.getTenantId());
+    assertEquals(
+        HexUtils.getHex(ByteString.copyFrom("trace-2".getBytes()).toByteArray()),
+        HexUtils.getHex(kv1.key.getTraceId().array()));
+    assertTrue(bypassedOutputTopic.isEmpty());
   }
 }
