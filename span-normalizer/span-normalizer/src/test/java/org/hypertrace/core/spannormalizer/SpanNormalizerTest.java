@@ -1,6 +1,7 @@
 package org.hypertrace.core.spannormalizer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -208,7 +209,7 @@ class SpanNormalizerTest {
 
   @Test
   @SetEnvironmentVariable(key = "SERVICE_NAME", value = "span-normalizer")
-  public void whenByPassedExpectStructredTraceToBeOutput() {
+  public void whenByPassedExpectStructuredTraceToBeOutput() {
     Config config =
         ConfigFactory.parseURL(
             getClass().getClassLoader().getResource("configs/span-normalizer/application.conf"));
@@ -246,9 +247,9 @@ class SpanNormalizerTest {
             spanIdentitySerde.deserializer(),
             rawSpanSerde.deserializer());
 
-    TestOutputTopic bypassedOutputTopic =
+    TestOutputTopic bypassOutputTopic =
         td.createOutputTopic(
-            config.getString(SpanNormalizerConstants.BYPASSED_OUTPUT_TOPIC_CONFIG_KEY),
+            config.getString(SpanNormalizerConstants.BYPASS_OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             structuredTraceSerde.deserializer());
 
@@ -259,6 +260,10 @@ class SpanNormalizerTest {
             spanIdentitySerde.deserializer(),
             new AvroSerde<>().deserializer());
 
+    // with logs event, with bypass key
+    // expects no output to raw-span-grouper
+    // expects output to trace-enricher
+    // expects log output
     Span span1 =
         Span.newBuilder()
             .setSpanId(ByteString.copyFrom("1".getBytes()))
@@ -270,21 +275,40 @@ class SpanNormalizerTest {
                     .build())
             .addTags(
                 JaegerSpanInternalModel.KeyValue.newBuilder()
-                    .setKey("traceableai.mirror")
+                    .setKey("test.bypass")
                     .setVStr("true")
                     .build())
+            .addLogs(
+                Log.newBuilder()
+                    .setTimestamp(Timestamp.newBuilder().setSeconds(10).build())
+                    .addFields(
+                        JaegerSpanInternalModel.KeyValue.newBuilder()
+                            .setKey("z2")
+                            .setVStr("some event detail")
+                            .build()))
             .build();
     inputTopic.pipeInput(span1);
 
-    KeyValue<String, StructuredTrace> kv = bypassedOutputTopic.readKeyValue();
-    assertEquals("__default", kv.value.getCustomerId());
+    // validate output for trace-enricher
+    assertFalse(bypassOutputTopic.isEmpty());
+    KeyValue<String, StructuredTrace> kv1 = bypassOutputTopic.readKeyValue();
+    assertEquals("__default", kv1.value.getCustomerId());
     assertEquals(
         HexUtils.getHex(ByteString.copyFrom("trace-1".getBytes()).toByteArray()),
-        HexUtils.getHex(kv.value.getTraceId().array()));
+        HexUtils.getHex(kv1.value.getTraceId().array()));
 
+    // validate no output for raw-spans-grouper
     assertTrue(outputTopic.isEmpty());
 
-    // pipe in one more span which doesn't match spanDropFilters
+    // validate that no change in log traffic
+    assertFalse(rawLogOutputTopic.isEmpty());
+    LogEvents logEvents = (LogEvents) rawLogOutputTopic.readKeyValue().value;
+    Assertions.assertEquals(1, logEvents.getLogEvents().size());
+
+    // with logs event, without bypass key
+    // expects output to raw-span-grouper
+    // expects no output to trace-enricher
+    // expects log output
     Span span2 =
         Span.newBuilder()
             .setSpanId(ByteString.copyFrom("2".getBytes()))
@@ -299,15 +323,84 @@ class SpanNormalizerTest {
                     .setKey("http.method")
                     .setVStr("GET")
                     .build())
+            .addLogs(
+                Log.newBuilder()
+                    .setTimestamp(Timestamp.newBuilder().setSeconds(10).build())
+                    .addFields(
+                        JaegerSpanInternalModel.KeyValue.newBuilder()
+                            .setKey("z2")
+                            .setVStr("some event detail")
+                            .build()))
             .build();
 
     inputTopic.pipeInput(span2);
-    KeyValue<TraceIdentity, RawSpan> kv1 = outputTopic.readKeyValue();
-    assertNotNull(kv1);
-    assertEquals("__default", kv1.key.getTenantId());
+
+    // validate that no output to trace-enricher
+    assertTrue(bypassOutputTopic.isEmpty());
+
+    // validate that output to raw-spans-grouper
+    assertFalse(outputTopic.isEmpty());
+    KeyValue<TraceIdentity, RawSpan> kv2 = outputTopic.readKeyValue();
+    assertEquals("__default", kv2.key.getTenantId());
     assertEquals(
         HexUtils.getHex(ByteString.copyFrom("trace-2".getBytes()).toByteArray()),
-        HexUtils.getHex(kv1.key.getTraceId().array()));
-    assertTrue(bypassedOutputTopic.isEmpty());
+        HexUtils.getHex(kv2.key.getTraceId().array()));
+
+    // validate that no change in log traffic
+    assertFalse(rawLogOutputTopic.isEmpty());
+    logEvents = (LogEvents) rawLogOutputTopic.readKeyValue().value;
+    Assertions.assertEquals(1, logEvents.getLogEvents().size());
+
+    // with logs event, with bypass key but false value
+    // expects output to raw-span-grouper
+    // expects no output to trace-enricher
+    // expects log output
+    Span span3 =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("3".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-3".getBytes()))
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("http.method")
+                    .setVStr("GET")
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("test.bypass")
+                    .setVStr("false")
+                    .build())
+            .addLogs(
+                Log.newBuilder()
+                    .setTimestamp(Timestamp.newBuilder().setSeconds(10).build())
+                    .addFields(
+                        JaegerSpanInternalModel.KeyValue.newBuilder()
+                            .setKey("z2")
+                            .setVStr("some event detail")
+                            .build()))
+            .build();
+
+    inputTopic.pipeInput(span3);
+
+    // validate that no output to trace-enricher
+    assertTrue(bypassOutputTopic.isEmpty());
+
+    // validate that output to raw-spans-grouper
+    assertFalse(outputTopic.isEmpty());
+    KeyValue<TraceIdentity, RawSpan> kv3 = outputTopic.readKeyValue();
+    assertEquals("__default", kv3.key.getTenantId());
+    assertEquals(
+        HexUtils.getHex(ByteString.copyFrom("trace-3".getBytes()).toByteArray()),
+        HexUtils.getHex(kv3.key.getTraceId().array()));
+
+    // validate that no change in log traffic
+    assertFalse(rawLogOutputTopic.isEmpty());
+    logEvents = (LogEvents) rawLogOutputTopic.readKeyValue().value;
+    Assertions.assertEquals(1, logEvents.getLogEvents().size());
+
   }
 }

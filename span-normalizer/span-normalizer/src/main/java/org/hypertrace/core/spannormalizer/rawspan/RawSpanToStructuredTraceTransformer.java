@@ -1,4 +1,4 @@
-package org.hypertrace.core.spannormalizer.jaeger;
+package org.hypertrace.core.spannormalizer.rawspan;
 
 import java.util.List;
 import org.apache.kafka.streams.KeyValue;

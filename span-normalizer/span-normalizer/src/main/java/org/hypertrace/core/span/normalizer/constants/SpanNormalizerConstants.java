@@ -5,5 +5,5 @@ public class SpanNormalizerConstants {
   public static final String OUTPUT_TOPIC_CONFIG_KEY = "output.topic";
   public static final String OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY = "raw.logs.output.topic";
   public static final String SPAN_NORMALIZER_JOB_CONFIG = "span-normalizer-job-config";
-  public static final String BYPASSED_OUTPUT_TOPIC_CONFIG_KEY = "bypassed.output.topic";
+  public static final String BYPASS_OUTPUT_TOPIC_CONFIG_KEY = "bypass.output.topic";
 }
