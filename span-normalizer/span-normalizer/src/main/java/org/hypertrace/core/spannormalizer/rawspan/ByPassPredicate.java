@@ -1,7 +1,6 @@
 package org.hypertrace.core.spannormalizer.rawspan;
 
 import com.typesafe.config.Config;
-
 import org.apache.kafka.streams.kstream.Predicate;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.RawSpan;
@@ -12,15 +11,21 @@ public class ByPassPredicate implements Predicate<TraceIdentity, RawSpan> {
   private String bypassKey;
 
   public ByPassPredicate(Config jobConfig) {
-    bypassKey = jobConfig.hasPath(SPAN_BYPASSED_CONFIG) ?
-        jobConfig.getString(SPAN_BYPASSED_CONFIG) : null;
+    bypassKey =
+        jobConfig.hasPath(SPAN_BYPASSED_CONFIG) ? jobConfig.getString(SPAN_BYPASSED_CONFIG) : null;
   }
 
   @Override
   public boolean test(TraceIdentity traceIdentity, RawSpan rawSpan) {
     AttributeValue defaultAttributeValue = AttributeValue.newBuilder().setValue("false").build();
-    AttributeValue attributeValue = bypassKey != null ? rawSpan.getEvent().getAttributes()
-        .getAttributeMap().getOrDefault(bypassKey, defaultAttributeValue) : defaultAttributeValue;
+    AttributeValue attributeValue =
+        bypassKey != null
+            ? rawSpan
+                .getEvent()
+                .getAttributes()
+                .getAttributeMap()
+                .getOrDefault(bypassKey, defaultAttributeValue)
+            : defaultAttributeValue;
     return Boolean.parseBoolean(attributeValue.getValue());
   }
 }

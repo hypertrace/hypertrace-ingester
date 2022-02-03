@@ -206,7 +206,6 @@ class SpanNormalizerTest {
     assertTrue(outputTopic.isEmpty());
   }
 
-
   @Test
   @SetEnvironmentVariable(key = "SERVICE_NAME", value = "span-normalizer")
   public void whenByPassedExpectStructuredTraceToBeOutput() {
@@ -235,7 +234,7 @@ class SpanNormalizerTest {
     Serde<RawSpan> rawSpanSerde = new AvroSerde<>();
     rawSpanSerde.configure(Map.of(), false);
 
-    Serde<StructuredTrace>  structuredTraceSerde = new AvroSerde<>();
+    Serde<StructuredTrace> structuredTraceSerde = new AvroSerde<>();
     structuredTraceSerde.configure(Map.of(), false);
 
     Serde<TraceIdentity> spanIdentitySerde = new AvroSerde<>();
@@ -252,7 +251,6 @@ class SpanNormalizerTest {
             config.getString(SpanNormalizerConstants.BYPASS_OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             structuredTraceSerde.deserializer());
-
 
     TestOutputTopic rawLogOutputTopic =
         td.createOutputTopic(
@@ -401,6 +399,5 @@ class SpanNormalizerTest {
     assertFalse(rawLogOutputTopic.isEmpty());
     logEvents = (LogEvents) rawLogOutputTopic.readKeyValue().value;
     Assertions.assertEquals(1, logEvents.getLogEvents().size());
-
   }
 }
