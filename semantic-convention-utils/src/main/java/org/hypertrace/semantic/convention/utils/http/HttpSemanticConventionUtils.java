@@ -86,6 +86,9 @@ public class HttpSemanticConventionUtils {
       RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED);
 
   private static final String SLASH = "/";
+  private static final String HTTP_REQUEST_X_FORWARDED_PROTO =
+      "http.request.header.x-forwarded-proto";
+  private static final String HTTP_REQUEST_FORWARDED = "http.request.header.forwarded";
 
   private static final List<String> USER_AGENT_ATTRIBUTES =
       List.of(
@@ -114,7 +117,7 @@ public class HttpSemanticConventionUtils {
           OTelHttpSemanticConventions.HTTP_METHOD.getValue());
 
   private static final List<String> SCHEME_ATTRIBUTES =
-      List.of(OTelHttpSemanticConventions.HTTP_SCHEME.getValue());
+      List.of(HTTP_REQUEST_X_FORWARDED_PROTO, OTelHttpSemanticConventions.HTTP_SCHEME.getValue());
 
   private static final List<String> FULL_URL_ATTRIBUTES =
       List.of(
@@ -194,7 +197,7 @@ public class HttpSemanticConventionUtils {
       String url =
           String.format(
               "%s://%s%s",
-              attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+              getHttpSchemeFromRawAttributes(attributeValueMap).get(),
               attributeValueMap.get(HTTP_HOST.getValue()).getValue(),
               attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
       httpUrlForOTelFormat = Optional.of(url);
@@ -221,7 +224,7 @@ public class HttpSemanticConventionUtils {
       String url =
           String.format(
               "%s://%s:%s%s",
-              attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+              getHttpSchemeFromRawAttributes(attributeValueMap).get(),
               attributeValueMap
                   .get(OTelSpanSemanticConventions.NET_PEER_NAME.getValue())
                   .getValue(),
@@ -237,7 +240,7 @@ public class HttpSemanticConventionUtils {
       String url =
           String.format(
               "%s://%s:%s%s",
-              attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+              getHttpSchemeFromRawAttributes(attributeValueMap).get(),
               attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_IP.getValue()).getValue(),
               attributeValueMap
                   .get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue())
@@ -257,7 +260,7 @@ public class HttpSemanticConventionUtils {
       String url =
           String.format(
               "%s://%s:%s%s",
-              attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+              getHttpSchemeFromRawAttributes(attributeValueMap).get(),
               attributeValueMap.get(HTTP_SERVER_NAME.getValue()).getValue(),
               attributeValueMap.get(HTTP_NET_HOST_PORT.getValue()).getValue(),
               attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
@@ -269,7 +272,7 @@ public class HttpSemanticConventionUtils {
       String url =
           String.format(
               "%s://%s:%s%s",
-              attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
+              getHttpSchemeFromRawAttributes(attributeValueMap).get(),
               attributeValueMap.get(HTTP_NET_HOST_NAME.getValue()).getValue(),
               attributeValueMap.get(HTTP_NET_HOST_PORT.getValue()).getValue(),
               attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
@@ -423,7 +426,21 @@ public class HttpSemanticConventionUtils {
       return Optional.empty();
     }
 
-    Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
+    return getHttpSchemeFromRawAttributes(event.getAttributes().getAttributeMap());
+  }
+
+  private static Optional<String> getHttpSchemeFromRawAttributes(
+      Map<String, AttributeValue> attributeValueMap) {
+    // dealing with the Forwarded header separately as it may have
+    // more info than just the protocol
+    if (attributeValueMap.get(HTTP_REQUEST_FORWARDED) != null
+        && !StringUtils.isEmpty(attributeValueMap.get(HTTP_REQUEST_FORWARDED).getValue())) {
+      String schemeValue = attributeValueMap.get(HTTP_REQUEST_FORWARDED).getValue();
+      String extractedProtoValue = getProtocolFromForwarded(schemeValue);
+      if (!StringUtils.isEmpty(extractedProtoValue)) {
+        return Optional.of(extractedProtoValue);
+      }
+    }
     for (String scheme : SCHEME_ATTRIBUTES) {
       if (attributeValueMap.get(scheme) != null
           && !StringUtils.isEmpty(attributeValueMap.get(scheme).getValue())) {
@@ -431,6 +448,17 @@ public class HttpSemanticConventionUtils {
       }
     }
     return Optional.empty();
+  }
+
+  private static String getProtocolFromForwarded(String value) {
+    String[] values = value.split(";");
+    for (String subValue : values) {
+      String subValueWithoutSpaces = subValue.replaceAll("\\s", "");
+      if (subValueWithoutSpaces.startsWith("proto")) {
+        return subValueWithoutSpaces.substring(6);
+      }
+    }
+    return "";
   }
 
   public static Optional<String> getHttpUrl(Event event) {

@@ -79,9 +79,6 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
   private static final String RESPONSE_COOKIE_PREFIX =
       RawSpanConstants.getValue(HTTP_RESPONSE_COOKIE) + DOT;
   private static final String SLASH = "/";
-  private static final String HTTP_REQUEST_X_FORWARDED_PROTO =
-      "http.request.header.x-forwarded-proto";
-  private static final String HTTP_REQUEST_FORWARDED = "http.request.header.forwarded";
 
   private static final List<String> FULL_URL_ATTRIBUTES =
       List.of(
@@ -305,7 +302,8 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     // set scheme if specified
     fieldGeneratorMap.put(
         OTelHttpSemanticConventions.HTTP_SCHEME.getValue(),
-        (key, keyValue, builder, tagsMap) -> setScheme(builder, tagsMap));
+        (key, keyValue, builder, tagsMap) ->
+            builder.getRequestBuilder().setScheme(keyValue.getVStr()));
 
     // User Agent handlers
     fieldGeneratorMap.put(
@@ -450,39 +448,6 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
             // populateUrlParts method
             s -> !StringUtils.isBlank(s) && isValidUrl(s))
         .ifPresent(url -> httpBuilder.getRequestBuilder().setUrl(url));
-  }
-
-  private static void setScheme(
-      Http.Builder httpBuilder, Map<String, JaegerSpanInternalModel.KeyValue> tagsMap) {
-    Optional<String> optionalScheme =
-        FirstMatchingKeyFinder.getStringValueByFirstMatchingKey(
-            tagsMap, List.of(HTTP_REQUEST_FORWARDED), s -> !StringUtils.isBlank(s));
-    // dealing with the Forwarded header separately as it may have
-    // more info than just the protocol
-    if (optionalScheme.isPresent()) {
-      optionalScheme = getProtocolFromForwarded(optionalScheme.get());
-    }
-    if (optionalScheme.isEmpty()) {
-      optionalScheme =
-          FirstMatchingKeyFinder.getStringValueByFirstMatchingKey(
-              tagsMap,
-              List.of(
-                  HTTP_REQUEST_X_FORWARDED_PROTO,
-                  OTelHttpSemanticConventions.HTTP_SCHEME.getValue()),
-              s -> !StringUtils.isBlank(s));
-    }
-    optionalScheme.ifPresent(s -> httpBuilder.getRequestBuilder().setScheme(s));
-  }
-
-  private static Optional<String> getProtocolFromForwarded(String body) {
-    String forwardedInfo[] = body.split(";");
-    for (String info : forwardedInfo) {
-      String subInfo[] = info.split("=");
-      if (subInfo[0] == "proto") {
-        return Optional.of(subInfo[1]);
-      }
-    }
-    return Optional.empty();
   }
 
   private static void setMethod(

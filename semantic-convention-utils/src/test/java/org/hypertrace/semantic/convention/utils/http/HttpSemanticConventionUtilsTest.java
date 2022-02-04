@@ -58,6 +58,9 @@ import org.junit.jupiter.api.Test;
 
 /** Unit test for {@link HttpSemanticConventionUtils} */
 public class HttpSemanticConventionUtilsTest {
+  private static final String HTTP_REQUEST_X_FORWARDED_PROTO =
+      "http.request.header.x-forwarded-proto";
+  private static final String HTTP_REQUEST_FORWARDED = "http.request.header.forwarded";
 
   private Event createMockEventWithAttribute(String key, String value) {
     Event e = mock(Event.class);
@@ -82,10 +85,11 @@ public class HttpSemanticConventionUtilsTest {
     // host & target present
     map.clear();
     map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
+    map.put(HTTP_REQUEST_X_FORWARDED_PROTO, buildAttributeValue("http"));
     map.put(HTTP_HOST.getValue(), buildAttributeValue("example.com:1211"));
     map.put(HTTP_TARGET.getValue(), buildAttributeValue("/webshop/articles/4?s=1"));
     url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
-    assertEquals("https://example.com:1211/webshop/articles/4?s=1", url);
+    assertEquals("http://example.com:1211/webshop/articles/4?s=1", url);
 
     // client span, span_kind present
     map.clear();
@@ -100,12 +104,13 @@ public class HttpSemanticConventionUtilsTest {
 
     map.clear();
     map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
+    map.put(HTTP_REQUEST_FORWARDED, buildAttributeValue("by=random;proto=http"));
     map.put(OTelSpanSemanticConventions.NET_PEER_IP.getValue(), buildAttributeValue("172.0.8.11"));
     map.put(OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("1211"));
     map.put(HTTP_TARGET.getValue(), buildAttributeValue("/webshop/articles/4?s=1"));
     map.put(SPAN_KIND.getValue(), buildAttributeValue(SPAN_KIND_CLIENT_VALUE.getValue()));
     url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
-    assertEquals("https://172.0.8.11:1211/webshop/articles/4?s=1", url);
+    assertEquals("http://172.0.8.11:1211/webshop/articles/4?s=1", url);
 
     // client span, span.kind present
     map.clear();
@@ -294,6 +299,27 @@ public class HttpSemanticConventionUtilsTest {
 
     event = createMockEventWithAttribute(OTelHttpSemanticConventions.HTTP_SCHEME.getValue(), "");
     assertTrue(HttpSemanticConventionUtils.getHttpScheme(event).isEmpty());
+
+    event = createMockEventWithAttribute(HTTP_REQUEST_X_FORWARDED_PROTO, "http");
+    assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    event =
+        createMockEventWithAttribute(HTTP_REQUEST_FORWARDED, "by=random;proto=https;for=modnar");
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        HTTP_SCHEME.getValue(),
+                        AttributeValue.newBuilder().setValue("http").build(),
+                        HTTP_REQUEST_X_FORWARDED_PROTO,
+                        AttributeValue.newBuilder().setValue("https").build()))
+                .build());
+    when(e.getEnrichedAttributes()).thenReturn(null);
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(e));
   }
 
   @Test
