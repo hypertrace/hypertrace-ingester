@@ -1,5 +1,6 @@
 package org.hypertrace.semantic.convention.utils.http;
 
+import static org.hypertrace.core.semantic.convention.constants.http.HttpSemanticConventions.HTTP_REQUEST_FORWARDED;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_HOST;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_PORT;
@@ -46,6 +47,7 @@ import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
+import org.hypertrace.core.semantic.convention.constants.http.HttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -86,9 +88,6 @@ public class HttpSemanticConventionUtils {
       RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED);
 
   private static final String SLASH = "/";
-  private static final String HTTP_REQUEST_X_FORWARDED_PROTO =
-      "http.request.header.x-forwarded-proto";
-  private static final String HTTP_REQUEST_FORWARDED = "http.request.header.forwarded";
 
   private static final List<String> USER_AGENT_ATTRIBUTES =
       List.of(
@@ -117,7 +116,9 @@ public class HttpSemanticConventionUtils {
           OTelHttpSemanticConventions.HTTP_METHOD.getValue());
 
   private static final List<String> SCHEME_ATTRIBUTES =
-      List.of(HTTP_REQUEST_X_FORWARDED_PROTO, OTelHttpSemanticConventions.HTTP_SCHEME.getValue());
+      List.of(
+          HttpSemanticConventions.HTTP_REQUEST_X_FORWARDED_PROTO.getValue(),
+          OTelHttpSemanticConventions.HTTP_SCHEME.getValue());
 
   private static final List<String> FULL_URL_ATTRIBUTES =
       List.of(
@@ -433,12 +434,13 @@ public class HttpSemanticConventionUtils {
       Map<String, AttributeValue> attributeValueMap) {
     // dealing with the Forwarded header separately as it may have
     // more info than just the protocol
-    if (attributeValueMap.get(HTTP_REQUEST_FORWARDED) != null
-        && !StringUtils.isEmpty(attributeValueMap.get(HTTP_REQUEST_FORWARDED).getValue())) {
-      String schemeValue = attributeValueMap.get(HTTP_REQUEST_FORWARDED).getValue();
-      String extractedProtoValue = getProtocolFromForwarded(schemeValue);
-      if (!StringUtils.isEmpty(extractedProtoValue)) {
-        return Optional.of(extractedProtoValue);
+    if (attributeValueMap.get(HTTP_REQUEST_FORWARDED.getValue()) != null
+        && !StringUtils.isEmpty(
+            attributeValueMap.get(HTTP_REQUEST_FORWARDED.getValue()).getValue())) {
+      String schemeValue = attributeValueMap.get(HTTP_REQUEST_FORWARDED.getValue()).getValue();
+      Optional<String> optionalExtractedProtoValue = getProtocolFromForwarded(schemeValue);
+      if (optionalExtractedProtoValue.isPresent()) {
+        return optionalExtractedProtoValue;
       }
     }
     for (String scheme : SCHEME_ATTRIBUTES) {
@@ -450,15 +452,15 @@ public class HttpSemanticConventionUtils {
     return Optional.empty();
   }
 
-  private static String getProtocolFromForwarded(String value) {
+  private static Optional<String> getProtocolFromForwarded(String value) {
     String[] values = value.split(";");
     for (String subValue : values) {
-      String subValueWithoutSpaces = subValue.replaceAll("\\s", "");
-      if (subValueWithoutSpaces.startsWith("proto")) {
-        return subValueWithoutSpaces.substring(6);
+      String[] protoSplits = subValue.trim().split("=");
+      if (protoSplits.length == 2 && protoSplits[0].trim().equals("proto")) {
+        return Optional.of(protoSplits[1].trim());
       }
     }
-    return "";
+    return Optional.empty();
   }
 
   public static Optional<String> getHttpUrl(Event event) {

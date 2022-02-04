@@ -47,6 +47,7 @@ import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.semantic.convention.constants.http.HttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -58,10 +59,6 @@ import org.junit.jupiter.api.Test;
 
 /** Unit test for {@link HttpSemanticConventionUtils} */
 public class HttpSemanticConventionUtilsTest {
-  private static final String HTTP_REQUEST_X_FORWARDED_PROTO =
-      "http.request.header.x-forwarded-proto";
-  private static final String HTTP_REQUEST_FORWARDED = "http.request.header.forwarded";
-
   private Event createMockEventWithAttribute(String key, String value) {
     Event e = mock(Event.class);
     when(e.getAttributes())
@@ -85,7 +82,9 @@ public class HttpSemanticConventionUtilsTest {
     // host & target present
     map.clear();
     map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
-    map.put(HTTP_REQUEST_X_FORWARDED_PROTO, buildAttributeValue("http"));
+    map.put(
+        HttpSemanticConventions.HTTP_REQUEST_X_FORWARDED_PROTO.getValue(),
+        buildAttributeValue("http"));
     map.put(HTTP_HOST.getValue(), buildAttributeValue("example.com:1211"));
     map.put(HTTP_TARGET.getValue(), buildAttributeValue("/webshop/articles/4?s=1"));
     url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
@@ -104,7 +103,9 @@ public class HttpSemanticConventionUtilsTest {
 
     map.clear();
     map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
-    map.put(HTTP_REQUEST_FORWARDED, buildAttributeValue("by=random;proto=http"));
+    map.put(
+        HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(),
+        buildAttributeValue("by=random;proto=http"));
     map.put(OTelSpanSemanticConventions.NET_PEER_IP.getValue(), buildAttributeValue("172.0.8.11"));
     map.put(OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("1211"));
     map.put(HTTP_TARGET.getValue(), buildAttributeValue("/webshop/articles/4?s=1"));
@@ -300,12 +301,27 @@ public class HttpSemanticConventionUtilsTest {
     event = createMockEventWithAttribute(OTelHttpSemanticConventions.HTTP_SCHEME.getValue(), "");
     assertTrue(HttpSemanticConventionUtils.getHttpScheme(event).isEmpty());
 
-    event = createMockEventWithAttribute(HTTP_REQUEST_X_FORWARDED_PROTO, "http");
+    event =
+        createMockEventWithAttribute(
+            HttpSemanticConventions.HTTP_REQUEST_X_FORWARDED_PROTO.getValue(), "http");
     assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
 
     event =
-        createMockEventWithAttribute(HTTP_REQUEST_FORWARDED, "by=random;proto=https;for=modnar");
+        createMockEventWithAttribute(
+            HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(),
+            "by=random;proto=https;for=modnar");
     assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    event =
+        createMockEventWithAttribute(
+            HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(),
+            "by= random ; proto = https; for=modnar");
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    event =
+        createMockEventWithAttribute(
+            HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(), "by= random ; for=modnar");
+    assertEquals(Optional.empty(), HttpSemanticConventionUtils.getHttpScheme(event));
 
     Event e = mock(Event.class);
     when(e.getAttributes())
@@ -315,8 +331,12 @@ public class HttpSemanticConventionUtilsTest {
                     Map.of(
                         HTTP_SCHEME.getValue(),
                         AttributeValue.newBuilder().setValue("http").build(),
-                        HTTP_REQUEST_X_FORWARDED_PROTO,
-                        AttributeValue.newBuilder().setValue("https").build()))
+                        HttpSemanticConventions.HTTP_REQUEST_X_FORWARDED_PROTO.getValue(),
+                        AttributeValue.newBuilder().setValue("https").build(),
+                        HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(),
+                        AttributeValue.newBuilder()
+                            .setValue("by= random ;proto = ; for=modnar")
+                            .build()))
                 .build());
     when(e.getEnrichedAttributes()).thenReturn(null);
     assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(e));
