@@ -57,7 +57,7 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.17.3")
+  api("com.google.protobuf:protobuf-java-util:3.18.2")
   implementation("org.slf4j:slf4j-api:1.7.30")
   constraints {
     implementation("com.google.code.gson:gson:2.8.9") {

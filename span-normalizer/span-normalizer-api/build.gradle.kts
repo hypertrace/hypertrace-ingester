@@ -56,7 +56,7 @@ sourceSets {
   }
 }
 dependencies {
-  api("com.google.api.grpc:proto-google-common-protos:2.1.0")
+  api("com.google.api.grpc:proto-google-common-protos:2.7.1")
   api("org.apache.avro:avro:1.10.2")
   constraints {
     api("org.apache.commons:commons-compress:1.21") {
