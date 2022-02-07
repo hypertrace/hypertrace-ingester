@@ -89,6 +89,8 @@ public class HttpSemanticConventionUtils {
 
   private static final String SLASH = "/";
 
+  private static final String HTTP_REQUEST_FORWARDED_ATTRIBUTE = HTTP_REQUEST_FORWARDED.getValue();
+
   private static final List<String> USER_AGENT_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(HTTP_USER_DOT_AGENT),
@@ -435,7 +437,7 @@ public class HttpSemanticConventionUtils {
     // dealing with the Forwarded header separately as it may have
     // more info than just the protocol
     AttributeValue httpRequestForwardedAttributeValue =
-        attributeValueMap.get(HTTP_REQUEST_FORWARDED.getValue());
+        attributeValueMap.get(HTTP_REQUEST_FORWARDED_ATTRIBUTE);
     if (httpRequestForwardedAttributeValue != null
         && !StringUtils.isEmpty(httpRequestForwardedAttributeValue.getValue())) {
       String schemeValue = httpRequestForwardedAttributeValue.getValue();
