@@ -434,10 +434,11 @@ public class HttpSemanticConventionUtils {
       Map<String, AttributeValue> attributeValueMap) {
     // dealing with the Forwarded header separately as it may have
     // more info than just the protocol
-    if (attributeValueMap.get(HTTP_REQUEST_FORWARDED.getValue()) != null
-        && !StringUtils.isEmpty(
-            attributeValueMap.get(HTTP_REQUEST_FORWARDED.getValue()).getValue())) {
-      String schemeValue = attributeValueMap.get(HTTP_REQUEST_FORWARDED.getValue()).getValue();
+    AttributeValue httpRequestForwardedAttributeValue =
+        attributeValueMap.get(HTTP_REQUEST_FORWARDED.getValue());
+    if (httpRequestForwardedAttributeValue != null
+        && !StringUtils.isEmpty(httpRequestForwardedAttributeValue.getValue())) {
+      String schemeValue = httpRequestForwardedAttributeValue.getValue();
       Optional<String> optionalExtractedProtoValue = getProtocolFromForwarded(schemeValue);
       if (optionalExtractedProtoValue.isPresent()) {
         return optionalExtractedProtoValue;
