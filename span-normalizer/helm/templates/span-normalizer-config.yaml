@@ -61,6 +61,10 @@ data:
       spanDropFilters = {{ .Values.spanNormalizerConfig.processor.spanDropFilters | toJson }}
       {{- end }}
 
+      {{- if hasKey .Values.spanNormalizerConfig.processor "bypassKey" }}
+      bypass.key = "{{ .Values.spanNormalizerConfig.processor.bypassKey }}"
+      {{- end }}
+
       {{- if hasKey .Values.spanNormalizerConfig.processor "rootExitSpanDropCriterion" }}
       rootExitSpanDropCriterion = {{ .Values.spanNormalizerConfig.processor.rootExitSpanDropCriterion | toJson }}
       {{- end }}
