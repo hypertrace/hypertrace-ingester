@@ -40,6 +40,7 @@ public class JaegerSpanPreProcessor
   JaegerSpanPreProcessor(Config jobConfig) {
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanFilter = new SpanFilter(jobConfig);
+    // can add the client and stuff initialization here
   }
 
   @Override
