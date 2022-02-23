@@ -52,24 +52,14 @@ public class ExcludeSpanRuleEvaluator {
     Map<String, AttributeValue> attributeFieldMap = new HashMap<>();
 
     List<JaegerSpanInternalModel.KeyValue> tagsList = jaegerSpan.getTagsList();
-    // Stop populating first class fields for - grpc, rpc, http, and sql.
-    // see more details:
-    // https://github.com/hypertrace/hypertrace/issues/244
-    // https://github.com/hypertrace/hypertrace/issues/245
     for (JaegerSpanInternalModel.KeyValue keyValue : tagsList) {
-      // Convert all attributes to lower case so that we don't have to
-      // deal with the case sensitivity across different layers in the
-      // platform.
       String key = keyValue.getKey().toLowerCase();
-      // Do not add the tenant id to the tags.
       if ((tenantIdKey.isPresent() && key.equals(tenantIdKey.get()))) {
         continue;
       }
       attributeFieldMap.put(key, JaegerHTTagsConverter.createFromJaegerKeyValue(keyValue));
     }
-    // Jaeger service name can come from either first class field in Span or the tag
-    // `jaeger.servicename`
-    // span attributes to event attributes
+
     String serviceName =
         !StringUtils.isEmpty(jaegerSpan.getProcess().getServiceName())
             ? jaegerSpan.getProcess().getServiceName()
@@ -132,7 +122,7 @@ public class ExcludeSpanRuleEvaluator {
 
     if (relationalSpanFilterExpression.hasSpanAttributeKey()) {
       String spanAttributeKey = relationalSpanFilterExpression.getSpanAttributeKey();
-      return applyMatchSpanFilter(
+      return matchSpanFilter(
           tags,
           processTags,
           relationalSpanFilterExpression.getOperator(),
@@ -147,7 +137,7 @@ public class ExcludeSpanRuleEvaluator {
               serviceName,
               relationalSpanFilterExpression.getRightOperand().getStringValue());
         case FIELD_ENVIRONMENT_NAME:
-          return applyMatchSpanFilter(
+          return matchSpanFilter(
               tags,
               processTags,
               relationalSpanFilterExpression.getOperator(),
@@ -158,13 +148,12 @@ public class ExcludeSpanRuleEvaluator {
           for (String urlAttribute : FULL_URL_ATTRIBUTES) {
             result =
                 result
-                    || applyMatchSpanFilter(
+                    || matchSpanFilter(
                         tags,
                         processTags,
                         relationalSpanFilterExpression.getOperator(),
                         urlAttribute,
                         relationalSpanFilterExpression.getRightOperand().getStringValue());
-            ;
           }
           return result;
         default:
@@ -173,7 +162,7 @@ public class ExcludeSpanRuleEvaluator {
     }
   }
 
-  private boolean applyMatchSpanFilter(
+  private boolean matchSpanFilter(
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
       RelationalOperator operator,
@@ -184,8 +173,6 @@ public class ExcludeSpanRuleEvaluator {
             && matchSpanFilter(operator, tags.get(lhs).getVStr(), rhs));
   }
 
-  // TODO: need to create spandropfilters and use them maybe?
-  // TODO: need to make it generic, like support string integer and all.
   private boolean matchSpanFilter(RelationalOperator operator, String lhs, String rhs) {
     switch (operator) {
       case RELATIONAL_OPERATOR_EQUALS:

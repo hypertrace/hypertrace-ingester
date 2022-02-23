@@ -9,11 +9,8 @@ public class SpanDropFilter {
   public enum Operator {
     EQ("EQ"),
     NEQ("NEQ"),
-    EXISTS("EXISTS"), // need to get rid of this
-    CONTAINS("CONTAINS"),
-    STARTS_WITH("STARTS_WITH"),
-    ENDS_WITH("ENDS_WITH"),
-    REGEX_MATCH("REGEX_MATCH");
+    EXISTS("EXISTS"),
+    CONTAINS("CONTAINS");
 
     private final String value;
 

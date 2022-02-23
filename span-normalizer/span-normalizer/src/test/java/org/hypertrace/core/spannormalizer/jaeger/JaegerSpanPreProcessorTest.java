@@ -829,8 +829,7 @@ class JaegerSpanPreProcessorTest {
     Assertions.assertNotNull(preProcessedSpan);
 
     // case 3: {spanTags: [http.url & tenant_id],  processTags:tenant_id, rule - service name is
-    // testService }
-    // match with spanTag's tenantId -> Drop span
+    // testService } drop span
     when(configServiceClient.getAllExcludeSpanRules(any()))
         .thenReturn(
             GetAllExcludeSpanRulesResponse.newBuilder()
@@ -866,10 +865,9 @@ class JaegerSpanPreProcessorTest {
             .build();
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNull(preProcessedSpan);
-    //
-    //    // case 4: {spanTags: [http.method & http.request.url],  processTags:tenant_id, url:
-    // service name is testService and url contains health }
-    //    // not match with spanTag or processTag tenantId
+
+    // case 4: {spanTags: [http.method & http.request.url],  processTags:tenant_id, url:
+    //   service name is testService and url contains health } drop span
     when(configServiceClient.getAllExcludeSpanRules(any()))
         .thenReturn(
             GetAllExcludeSpanRulesResponse.newBuilder()
@@ -925,7 +923,7 @@ class JaegerSpanPreProcessorTest {
                                                 Field.FIELD_SERVICE_NAME,
                                                 null,
                                                 RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
-                                                "testService1"),
+                                                "testServiceAttribute"),
                                             buildRelationalFilter(
                                                 Field.FIELD_URL,
                                                 null,
@@ -938,95 +936,29 @@ class JaegerSpanPreProcessorTest {
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNotNull(preProcessedSpan);
 
-    //    // case 5: {spanTags: [!grpc.url],  processTags:service_name }
-    //    // contains test for processTags -> matches
-    //    // grpc.url exists in spanTags -> matches
-    //    process =
-    //            Process.newBuilder()
-    //                    .setServiceName("testService")
-    //                    .addTags(
-    //                            KeyValue.newBuilder()
-    //                                    .setKey("service_name")
-    //                                    .setVStr("drop-service-payment")
-    //                                    .build())
-    //                    .build();
-    //
-    //    span =
-    //            Span.newBuilder()
-    //                    .setProcess(process)
-    //                    .addTags(
-    //                            KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId +
-    // "not-match-span"))
-    //
-    // .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
-    //                    .addTags(
-    //                            KeyValue.newBuilder()
-    //                                    .setKey("grpc.url")
-    //                                    .setVStr("http://xyz.com/api/v1/health/check")
-    //                                    .build())
-    //
-    // .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
-    //                    .build();
-    //    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
-    //    Assertions.assertNull(preProcessedSpan);
-    //
-    //    // case 6: {spanTags: [!grpc.url],  processTags:service_name }
-    //    // contains test for processTags -> doesn't matches
-    //    // grpc.url exists in spanTags -> match
-    //    process =
-    //            Process.newBuilder()
-    //                    .setServiceName("testService")
-    //
-    // .addTags(KeyValue.newBuilder().setKey("service_name").setVStr("payment").build())
-    //                    .build();
-    //
-    //    span =
-    //            Span.newBuilder()
-    //                    .setProcess(process)
-    //                    .addTags(
-    //                            KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId +
-    // "not-match-span"))
-    //
-    //   .addTags(KeyValue.newBuilder().setKey("http.url").setVStr("GET").build())
-    //                    .addTags(
-    //                            KeyValue.newBuilder()
-    //                                    .setKey("grpc.url")
-    //                                    .setVStr("http://xyz.com/api/v1/health/check")
-    //                                    .build())
-    //
-    // .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
-    //                    .build();
-    //    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
-    //    Assertions.assertNotNull(preProcessedSpan);
-    //
-    //    // case 6: {spanTags: [!grpc.url],  processTags:service_name }
-    //    // contains test for processTags -> doesn't matches
-    //    // grpc.url doesn't exists in spanTags
-    //    process =
-    //            Process.newBuilder()
-    //                    .setServiceName("testService")
-    //
-    // .addTags(KeyValue.newBuilder().setKey("service_name").setVStr("payment").build())
-    //                    .build();
-    //
-    //    span =
-    //            Span.newBuilder()
-    //                    .setProcess(process)
-    //                    .addTags(
-    //                            KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId +
-    // "not-match-span"))
-    //
-    //   .addTags(KeyValue.newBuilder().setKey("http.url").setVStr("GET").build())
-    //                    .addTags(
-    //                            KeyValue.newBuilder()
-    //                                    .setKey("http.url")
-    //                                    .setVStr("http://xyz.com/api/v1/health/check")
-    //                                    .build())
-    //
-    // .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
-    //                    .build();
-    //    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
-    //    Assertions.assertNotNull(preProcessedSpan);
+    // case5 : {[http.url, jaeger.servicename], rule -> same as above} drop span
+    process =
+        Process.newBuilder()
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .build();
+
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId))
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey("http.url")
+                    .setVStr("http://xyz.com/api/v1/health/check")
+                    .build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr("testServiceAttribute")
+                    .build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
   }
 
   private Map<String, Object> getCommonConfig() {
