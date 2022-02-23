@@ -144,7 +144,7 @@ public class JaegerSpanNormalizer {
               tenantId,
               tenant ->
                   PlatformMetricsRegistry.registerTimer(
-                      SPAN_PROCESSING_DELAY_TIME_METRIC, Map.of("tenantId", tenant), true))
+                      SPAN_PROCESSING_DELAY_TIME_METRIC, Map.of("tenantId", tenant)))
           .record(Math.abs(spanProcessedTime - spanStartTime), TimeUnit.MILLISECONDS);
       return rawSpan;
     };
