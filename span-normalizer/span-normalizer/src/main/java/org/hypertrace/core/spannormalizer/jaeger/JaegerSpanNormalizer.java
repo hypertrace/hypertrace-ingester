@@ -3,6 +3,7 @@ package org.hypertrace.core.spannormalizer.jaeger;
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 
 import com.google.protobuf.ProtocolStringList;
+import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
@@ -21,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -63,6 +65,11 @@ public class JaegerSpanNormalizer {
   private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
   private final TenantIdHandler tenantIdHandler;
 
+  // measure the span's start time and its processing time
+  private static final String DELAY_IN_SPAN_PROCESSED_TIME_METRIC = "span.processed.delay.time";
+  private final ConcurrentMap<String, Timer> tenantToDelayInSpanProcessedTimer =
+      new ConcurrentHashMap<>();
+
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
       synchronized (JaegerSpanNormalizer.class) {
@@ -102,9 +109,22 @@ public class JaegerSpanNormalizer {
   private Callable<RawSpan> getRawSpanNormalizerCallable(
       Span jaegerSpan, Map<String, KeyValue> spanTags, String tenantId) {
     return () -> {
+      long spanProcessedTime = System.currentTimeMillis();
+      long spanStartTime = Timestamps.toMillis(jaegerSpan.getStartTime());
+
       Builder rawSpanBuilder = fastNewBuilder(RawSpan.Builder.class);
       rawSpanBuilder.setCustomerId(tenantId);
       rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
+
+      // register timer per tenant
+      tenantToSpanNormalizationTimer
+          .computeIfAbsent(
+              tenantId,
+              tenant ->
+                  PlatformMetricsRegistry.registerTimer(
+                      DELAY_IN_SPAN_PROCESSED_TIME_METRIC, Map.of("tenantId", tenant)))
+          .record(spanProcessedTime - spanStartTime, TimeUnit.MILLISECONDS);
+
       // Build Event
       Event event =
           buildEvent(
@@ -113,7 +133,7 @@ public class JaegerSpanNormalizer {
               spanTags,
               tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
       rawSpanBuilder.setEvent(event);
-      rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
+      rawSpanBuilder.setReceivedTimeMillis(spanProcessedTime);
       resourceNormalizer
           .normalize(jaegerSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey())
           .ifPresent(rawSpanBuilder::setResource);
@@ -123,6 +143,16 @@ public class JaegerSpanNormalizer {
       if (LOG.isDebugEnabled()) {
         logSpanConversion(jaegerSpan, rawSpan);
       }
+
+      // register and update timer per tenant
+      tenantToSpanNormalizationTimer
+          .computeIfAbsent(
+              tenantId,
+              tenant ->
+                  PlatformMetricsRegistry.registerTimer(
+                      DELAY_IN_SPAN_PROCESSED_TIME_METRIC, Map.of("tenantId", tenant)))
+          .record(spanProcessedTime - spanStartTime, TimeUnit.MILLISECONDS);
+
       return rawSpan;
     };
   }
