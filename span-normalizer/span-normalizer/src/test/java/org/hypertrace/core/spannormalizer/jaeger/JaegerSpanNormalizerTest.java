@@ -220,7 +220,7 @@ public class JaegerSpanNormalizerTest {
     // Assert that metrics are collected.
     Assertions.assertEquals(1, timer.count());
 
-    Timer timer1 = normalizer.getSpanDelayInSpanProcessedTimer(tenantId);
+    Timer timer1 = normalizer.getDelayInSpanProcessedTimer(tenantId);
     Assertions.assertNotNull(timer1);
 
     // Assert that metrics are collected.

@@ -88,7 +88,7 @@ public class JaegerSpanNormalizer {
     return tenantToSpanNormalizationTimer.get(tenantId);
   }
 
-  public Timer getSpanDelayInSpanProcessedTimer(String tenantId) {
+  public Timer getDelayInSpanProcessedTimer(String tenantId) {
     return tenantToDelayInSpanProcessedTimer.get(tenantId);
   }
 
