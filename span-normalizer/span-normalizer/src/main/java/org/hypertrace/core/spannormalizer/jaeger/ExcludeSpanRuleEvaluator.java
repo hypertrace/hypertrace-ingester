@@ -76,7 +76,7 @@ public class ExcludeSpanRuleEvaluator {
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
       String serviceName) {
     return excludeSpanRules.stream()
-        .allMatch(
+        .anyMatch(
             excludeSpanRule ->
                 applyFilter(
                     excludeSpanRule.getRuleInfo().getFilter(), tags, processTags, serviceName));
