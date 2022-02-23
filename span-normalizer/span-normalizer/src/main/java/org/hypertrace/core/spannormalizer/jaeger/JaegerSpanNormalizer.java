@@ -3,7 +3,6 @@ package org.hypertrace.core.spannormalizer.jaeger;
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 
 import com.google.protobuf.ProtocolStringList;
-import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
@@ -89,6 +88,10 @@ public class JaegerSpanNormalizer {
     return tenantToSpanNormalizationTimer.get(tenantId);
   }
 
+  public Timer getSpanDelayInSpanProcessedTimer(String tenantId) {
+    return tenantToDelayInSpanProcessedTimer.get(tenantId);
+  }
+
   @Nullable
   public RawSpan convert(String tenantId, Span jaegerSpan) throws Exception {
     Map<String, KeyValue> tags =
@@ -115,16 +118,6 @@ public class JaegerSpanNormalizer {
       Builder rawSpanBuilder = fastNewBuilder(RawSpan.Builder.class);
       rawSpanBuilder.setCustomerId(tenantId);
       rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
-
-      // register timer per tenant
-      tenantToSpanNormalizationTimer
-          .computeIfAbsent(
-              tenantId,
-              tenant ->
-                  PlatformMetricsRegistry.registerTimer(
-                      DELAY_IN_SPAN_PROCESSED_TIME_METRIC, Map.of("tenantId", tenant)))
-          .record(spanProcessedTime - spanStartTime, TimeUnit.MILLISECONDS);
-
       // Build Event
       Event event =
           buildEvent(
@@ -145,12 +138,12 @@ public class JaegerSpanNormalizer {
       }
 
       // register and update timer per tenant
-      tenantToSpanNormalizationTimer
+      tenantToDelayInSpanProcessedTimer
           .computeIfAbsent(
               tenantId,
               tenant ->
                   PlatformMetricsRegistry.registerTimer(
-                      DELAY_IN_SPAN_PROCESSED_TIME_METRIC, Map.of("tenantId", tenant)))
+                      DELAY_IN_SPAN_PROCESSED_TIME_METRIC, Map.of("tenantId", tenant), true))
           .record(spanProcessedTime - spanStartTime, TimeUnit.MILLISECONDS);
 
       return rawSpan;
