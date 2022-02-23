@@ -75,14 +75,11 @@ public class ExcludeSpanRuleEvaluator {
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
       String serviceName) {
-    boolean result = true;
-    for (ExcludeSpanRule excludeSpanRule : excludeSpanRules) {
-      result =
-          result
-              && applyFilter(
-                  excludeSpanRule.getRuleInfo().getFilter(), tags, processTags, serviceName);
-    }
-    return result;
+    return excludeSpanRules.stream()
+        .allMatch(
+            excludeSpanRule ->
+                applyFilter(
+                    excludeSpanRule.getRuleInfo().getFilter(), tags, processTags, serviceName));
   }
 
   boolean applyFilter(
@@ -99,17 +96,11 @@ public class ExcludeSpanRuleEvaluator {
           .getLogicalSpanFilter()
           .getOperator()
           .equals(LogicalOperator.LOGICAL_OPERATOR_AND)) {
-        boolean result = true;
-        for (SpanFilter spanFilter : logicalSpanFilterExpression.getOperandsList()) {
-          result = result && applyFilter(spanFilter, tags, processTags, serviceName);
-        }
-        return result;
+        return logicalSpanFilterExpression.getOperandsList().stream()
+            .allMatch(spanFilter -> applyFilter(spanFilter, tags, processTags, serviceName));
       } else {
-        boolean result = false;
-        for (SpanFilter spanFilter : logicalSpanFilterExpression.getOperandsList()) {
-          result = result || applyFilter(spanFilter, tags, processTags, serviceName);
-        }
-        return result;
+        return logicalSpanFilterExpression.getOperandsList().stream()
+            .anyMatch(spanFilter -> applyFilter(spanFilter, tags, processTags, serviceName));
       }
     }
   }
@@ -144,18 +135,15 @@ public class ExcludeSpanRuleEvaluator {
               ENVIRONMENT_ATTRIBUTE,
               relationalSpanFilterExpression.getRightOperand().getStringValue());
         case FIELD_URL:
-          boolean result = false;
-          for (String urlAttribute : FULL_URL_ATTRIBUTES) {
-            result =
-                result
-                    || matches(
-                        tags,
-                        processTags,
-                        relationalSpanFilterExpression.getOperator(),
-                        urlAttribute,
-                        relationalSpanFilterExpression.getRightOperand().getStringValue());
-          }
-          return result;
+          return FULL_URL_ATTRIBUTES.stream()
+              .anyMatch(
+                  urlAttribute ->
+                      matches(
+                          tags,
+                          processTags,
+                          relationalSpanFilterExpression.getOperator(),
+                          urlAttribute,
+                          relationalSpanFilterExpression.getRightOperand().getStringValue()));
         default:
           return false;
       }
