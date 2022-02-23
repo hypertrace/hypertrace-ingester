@@ -157,7 +157,7 @@ public class ExcludeSpanRuleEvaluator {
       String lhs,
       String rhs) {
     return (tags.containsKey(lhs) && matches(operator, tags.get(lhs).getVStr(), rhs))
-        || (processTags.containsKey(lhs) && matches(operator, tags.get(lhs).getVStr(), rhs));
+        || (processTags.containsKey(lhs) && matches(operator, processTags.get(lhs).getVStr(), rhs));
   }
 
   private boolean matches(RelationalOperator operator, String lhs, String rhs) {
