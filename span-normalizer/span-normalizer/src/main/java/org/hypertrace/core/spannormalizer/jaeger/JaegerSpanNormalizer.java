@@ -64,7 +64,7 @@ public class JaegerSpanNormalizer {
   private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
   private final TenantIdHandler tenantIdHandler;
 
-  // measure the difference between span's start time and its processing tim
+  // measure the difference between span's start time and its processing time
   private static final String SPAN_PROCESSING_DELAY_TIME_METRIC = "span.processing.delay.time";
   private final ConcurrentMap<String, Timer> tenantToDelayInSpanProcessedTimer =
       new ConcurrentHashMap<>();
