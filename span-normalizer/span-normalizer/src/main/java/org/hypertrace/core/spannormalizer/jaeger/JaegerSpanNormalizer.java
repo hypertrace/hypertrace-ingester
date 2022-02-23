@@ -65,8 +65,8 @@ public class JaegerSpanNormalizer {
   private final TenantIdHandler tenantIdHandler;
 
   // measure the difference between span's start time and its processing time
-  private static final String SPAN_PROCESSING_DELAY_TIME_METRIC = "span.processing.delay.time";
-  private final ConcurrentMap<String, Timer> tenantToDelayInSpanProcessedTimer =
+  private static final String SPAN_ARRIVAL_DELAY = "span.arrival.delay";
+  private final ConcurrentMap<String, Timer> tenantToSpanArrivalDelayTimer =
       new ConcurrentHashMap<>();
 
   public static JaegerSpanNormalizer get(Config config) {
@@ -88,8 +88,8 @@ public class JaegerSpanNormalizer {
     return tenantToSpanNormalizationTimer.get(tenantId);
   }
 
-  public Timer getDelayInSpanProcessedTimer(String tenantId) {
-    return tenantToDelayInSpanProcessedTimer.get(tenantId);
+  public Timer getSpanArrivalDelayTimer(String tenantId) {
+    return tenantToSpanArrivalDelayTimer.get(tenantId);
   }
 
   @Nullable
@@ -139,12 +139,12 @@ public class JaegerSpanNormalizer {
 
       // register and update timer per tenant
       // it uses absolute value to take care of any clock skewness too.
-      tenantToDelayInSpanProcessedTimer
+      tenantToSpanArrivalDelayTimer
           .computeIfAbsent(
               tenantId,
               tenant ->
                   PlatformMetricsRegistry.registerTimer(
-                      SPAN_PROCESSING_DELAY_TIME_METRIC, Map.of("tenantId", tenant)))
+                      SPAN_ARRIVAL_DELAY, Map.of("tenantId", tenant)))
           .record(Math.abs(spanProcessedTime - spanStartTime), TimeUnit.MILLISECONDS);
       return rawSpan;
     };

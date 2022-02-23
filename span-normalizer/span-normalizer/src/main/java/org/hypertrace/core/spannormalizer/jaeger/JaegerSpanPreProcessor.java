@@ -112,6 +112,8 @@ public class JaegerSpanPreProcessor
       return null;
     }
 
+    // should drop late span
+
     return new PreProcessedSpan(tenantId, span);
   }
 
