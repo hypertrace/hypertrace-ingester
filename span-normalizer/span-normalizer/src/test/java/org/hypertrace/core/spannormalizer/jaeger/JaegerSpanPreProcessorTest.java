@@ -764,7 +764,7 @@ class JaegerSpanPreProcessorTest {
   }
 
   @Test
-  public void testSpanExclusionRulesWithCombinationOfProcessAndSpanTags() {
+  public void testExcludeSpanRules() {
     String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
     configs.putAll(

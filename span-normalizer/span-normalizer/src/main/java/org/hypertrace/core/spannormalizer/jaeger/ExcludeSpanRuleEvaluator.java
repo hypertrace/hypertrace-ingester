@@ -91,7 +91,7 @@ public class ExcludeSpanRuleEvaluator {
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
       String serviceName) {
     if (filter.hasRelationalSpanFilter()) {
-      return evaluateRelationalSpanFilter(
+      return matchesRelationalSpanFilter(
           filter.getRelationalSpanFilter(), tags, processTags, serviceName);
     } else {
       LogicalSpanFilterExpression logicalSpanFilterExpression = filter.getLogicalSpanFilter();
@@ -114,7 +114,7 @@ public class ExcludeSpanRuleEvaluator {
     }
   }
 
-  boolean evaluateRelationalSpanFilter(
+  boolean matchesRelationalSpanFilter(
       RelationalSpanFilterExpression relationalSpanFilterExpression,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
@@ -122,7 +122,7 @@ public class ExcludeSpanRuleEvaluator {
 
     if (relationalSpanFilterExpression.hasSpanAttributeKey()) {
       String spanAttributeKey = relationalSpanFilterExpression.getSpanAttributeKey();
-      return matchSpanFilter(
+      return matches(
           tags,
           processTags,
           relationalSpanFilterExpression.getOperator(),
@@ -132,12 +132,12 @@ public class ExcludeSpanRuleEvaluator {
       Field field = relationalSpanFilterExpression.getField();
       switch (field) {
         case FIELD_SERVICE_NAME:
-          return matchSpanFilter(
+          return matches(
               relationalSpanFilterExpression.getOperator(),
               serviceName,
               relationalSpanFilterExpression.getRightOperand().getStringValue());
         case FIELD_ENVIRONMENT_NAME:
-          return matchSpanFilter(
+          return matches(
               tags,
               processTags,
               relationalSpanFilterExpression.getOperator(),
@@ -148,7 +148,7 @@ public class ExcludeSpanRuleEvaluator {
           for (String urlAttribute : FULL_URL_ATTRIBUTES) {
             result =
                 result
-                    || matchSpanFilter(
+                    || matches(
                         tags,
                         processTags,
                         relationalSpanFilterExpression.getOperator(),
@@ -162,18 +162,17 @@ public class ExcludeSpanRuleEvaluator {
     }
   }
 
-  private boolean matchSpanFilter(
+  private boolean matches(
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
       RelationalOperator operator,
       String lhs,
       String rhs) {
-    return (tags.containsKey(lhs) && matchSpanFilter(operator, tags.get(lhs).getVStr(), rhs))
-        || (processTags.containsKey(lhs)
-            && matchSpanFilter(operator, tags.get(lhs).getVStr(), rhs));
+    return (tags.containsKey(lhs) && matches(operator, tags.get(lhs).getVStr(), rhs))
+        || (processTags.containsKey(lhs) && matches(operator, tags.get(lhs).getVStr(), rhs));
   }
 
-  private boolean matchSpanFilter(RelationalOperator operator, String lhs, String rhs) {
+  private boolean matches(RelationalOperator operator, String lhs, String rhs) {
     switch (operator) {
       case RELATIONAL_OPERATOR_EQUALS:
         return StringUtils.equals(lhs, rhs);
