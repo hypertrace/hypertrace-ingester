@@ -84,7 +84,7 @@ data:
     {{- end }}
     clients {
       config.service.config = {
-        host = {{ .Values.traceEnricherConfig.configServiceHost }}
-        port = {{ .Values.traceEnricherConfig.configServicePort }}
+        host = {{ .Values.spanNormalizerConfig.configServiceHost }}
+        port = {{ .Values.spanNormalizerConfig.configServicePort }}
       }
     }
