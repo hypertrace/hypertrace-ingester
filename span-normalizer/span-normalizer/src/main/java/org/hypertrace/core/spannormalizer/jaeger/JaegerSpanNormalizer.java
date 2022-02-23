@@ -64,8 +64,8 @@ public class JaegerSpanNormalizer {
   private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
   private final TenantIdHandler tenantIdHandler;
 
-  // measure the span's start time and its processing time
-  private static final String DELAY_IN_SPAN_PROCESSED_TIME_METRIC = "span.processed.delay.time";
+  // measure the difference between span's start time and its processing tim
+  private static final String SPAN_PROCESSING_DELAY_TIME_METRIC = "span.processing.delay.time";
   private final ConcurrentMap<String, Timer> tenantToDelayInSpanProcessedTimer =
       new ConcurrentHashMap<>();
 
@@ -138,13 +138,13 @@ public class JaegerSpanNormalizer {
       }
 
       // register and update timer per tenant
-      // its uses absolute value to take care if any clock skewness too.
+      // it uses absolute value to take care of any clock skewness too.
       tenantToDelayInSpanProcessedTimer
           .computeIfAbsent(
               tenantId,
               tenant ->
                   PlatformMetricsRegistry.registerTimer(
-                      DELAY_IN_SPAN_PROCESSED_TIME_METRIC, Map.of("tenantId", tenant), true))
+                      SPAN_PROCESSING_DELAY_TIME_METRIC, Map.of("tenantId", tenant), true))
           .record(Math.abs(spanProcessedTime - spanStartTime), TimeUnit.MILLISECONDS);
       return rawSpan;
     };
