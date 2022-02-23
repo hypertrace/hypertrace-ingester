@@ -35,6 +35,7 @@ public class JaegerSpanPreProcessor
       new ConcurrentHashMap<>();
   private static final ConcurrentMap<String, Counter> tenantToSpansDroppedCount =
       new ConcurrentHashMap<>();
+  private static final Duration minArrivalThreshold = Duration.of(30, ChronoUnit.SECONDS);
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
   private Duration lateArrivalThresholdDuration;
@@ -60,8 +61,7 @@ public class JaegerSpanPreProcessor
 
   private Duration configureLateArrivalThreshold(Config jobConfig) {
     Duration configuredThreshold = jobConfig.getDuration(LATE_ARRIVAL_THRESHOLD_CONFIG_KEY);
-    Duration minThreshold = Duration.of(30, ChronoUnit.SECONDS);
-    if (minThreshold.compareTo(configuredThreshold) > 0) {
+    if (minArrivalThreshold.compareTo(configuredThreshold) > 0) {
       throw new IllegalArgumentException(
           "the value of " + "processor.late.arrival.threshold.duration should be higher than 30s");
     }
