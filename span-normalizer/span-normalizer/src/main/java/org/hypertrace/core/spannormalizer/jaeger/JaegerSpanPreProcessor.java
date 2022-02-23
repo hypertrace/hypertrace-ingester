@@ -7,6 +7,8 @@ import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Counter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +17,12 @@ import java.util.stream.Collectors;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
+import org.hypertrace.core.grpcutils.context.RequestContext;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
+import org.hypertrace.core.spannormalizer.client.ConfigServiceClient;
+import org.hypertrace.core.spannormalizer.config.ConfigServiceConfig;
+import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,16 +38,19 @@ public class JaegerSpanPreProcessor
       new ConcurrentHashMap<>();
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
+  private ExcludeSpanRuleEvaluator excludeSpanRuleEvaluator;
+  private ConfigServiceClient configServiceClient;
 
   public JaegerSpanPreProcessor() {
     // empty constructor
   }
 
   // constructor for testing
-  JaegerSpanPreProcessor(Config jobConfig) {
+  JaegerSpanPreProcessor(Config jobConfig, ConfigServiceClient client) {
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanFilter = new SpanFilter(jobConfig);
-    // can add the client and stuff initialization here
+    excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator();
+    configServiceClient = client;
   }
 
   @Override
@@ -48,6 +58,9 @@ public class JaegerSpanPreProcessor
     Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanFilter = new SpanFilter(jobConfig);
+    excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator();
+    configServiceClient =
+        new ConfigServiceClient(new ConfigServiceConfig(jobConfig), new GrpcChannelRegistry());
   }
 
   @Override
@@ -100,8 +113,23 @@ public class JaegerSpanPreProcessor
     }
 
     String tenantId = maybeTenantId.get();
+    List<ExcludeSpanRule> excludeSpanRules;
+    try {
+      excludeSpanRules =
+          configServiceClient
+              .getAllExcludeSpanRules(RequestContext.forTenantId(tenantId))
+              .getRulesList();
+    } catch (Exception e) {
+      excludeSpanRules = Collections.emptyList();
+    }
 
-    if (spanFilter.shouldDropSpan(span, spanTags, processTags)) {
+    if (spanFilter.shouldDropSpan(span, spanTags, processTags)
+        || excludeSpanRuleEvaluator.shouldDropSpan(
+            tenantIdHandler.getTenantIdProvider().getTenantIdTagKey(),
+            span,
+            excludeSpanRules,
+            spanTags,
+            processTags)) {
       // increment dropped counter at tenant level
       tenantToSpansDroppedCount
           .computeIfAbsent(
