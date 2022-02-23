@@ -138,14 +138,14 @@ public class JaegerSpanNormalizer {
       }
 
       // register and update timer per tenant
+      // its uses absolute value to take care if any clock skewness too.
       tenantToDelayInSpanProcessedTimer
           .computeIfAbsent(
               tenantId,
               tenant ->
                   PlatformMetricsRegistry.registerTimer(
                       DELAY_IN_SPAN_PROCESSED_TIME_METRIC, Map.of("tenantId", tenant), true))
-          .record(spanProcessedTime - spanStartTime, TimeUnit.MILLISECONDS);
-
+          .record(Math.abs(spanProcessedTime - spanStartTime), TimeUnit.MILLISECONDS);
       return rawSpan;
     };
   }
