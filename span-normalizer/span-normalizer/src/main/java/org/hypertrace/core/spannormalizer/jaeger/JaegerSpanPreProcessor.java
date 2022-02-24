@@ -3,10 +3,13 @@ package org.hypertrace.core.spannormalizer.jaeger;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.protobuf.util.Timestamps;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Counter;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,13 +27,18 @@ public class JaegerSpanPreProcessor
 
   static final String SPANS_COUNTER = "hypertrace.reported.spans";
   private static final String DROPPED_SPANS_COUNTER = "hypertrace.reported.spans.dropped";
+  private static final String IS_LATE_ARRIVAL_SPANS_TAGS = "is_late_arrival_spans";
+  private static final String LATE_ARRIVAL_THRESHOLD_CONFIG_KEY =
+      "processor.late.arrival.threshold.duration";
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
   private static final ConcurrentMap<String, Counter> tenantToSpansDroppedCount =
       new ConcurrentHashMap<>();
+  private static final Duration minArrivalThreshold = Duration.of(30, ChronoUnit.SECONDS);
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
+  private Duration lateArrivalThresholdDuration;
 
   public JaegerSpanPreProcessor() {
     // empty constructor
@@ -40,6 +48,7 @@ public class JaegerSpanPreProcessor
   JaegerSpanPreProcessor(Config jobConfig) {
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanFilter = new SpanFilter(jobConfig);
+    lateArrivalThresholdDuration = configureLateArrivalThreshold(jobConfig);
   }
 
   @Override
@@ -47,6 +56,16 @@ public class JaegerSpanPreProcessor
     Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanFilter = new SpanFilter(jobConfig);
+    lateArrivalThresholdDuration = configureLateArrivalThreshold(jobConfig);
+  }
+
+  private Duration configureLateArrivalThreshold(Config jobConfig) {
+    Duration configuredThreshold = jobConfig.getDuration(LATE_ARRIVAL_THRESHOLD_CONFIG_KEY);
+    if (minArrivalThreshold.compareTo(configuredThreshold) > 0) {
+      throw new IllegalArgumentException(
+          "the value of " + "processor.late.arrival.threshold.duration should be higher than 30s");
+    }
+    return configuredThreshold;
   }
 
   @Override
@@ -108,6 +127,24 @@ public class JaegerSpanPreProcessor
               tenant ->
                   PlatformMetricsRegistry.registerCounter(
                       DROPPED_SPANS_COUNTER, Map.of("tenantId", tenantId)))
+          .increment();
+      return null;
+    }
+
+    // drop the span if the arrival time of it too old than configured threshold
+    long spanProcessedTime = System.currentTimeMillis();
+    long spanStartTime = Timestamps.toMillis(span.getStartTime());
+    Duration spanArrivalDelay =
+        Duration.of(Math.abs(spanProcessedTime - spanStartTime), ChronoUnit.MILLIS);
+
+    if (spanStartTime > 0 && spanArrivalDelay.compareTo(lateArrivalThresholdDuration) > 0) {
+      tenantToSpansDroppedCount
+          .computeIfAbsent(
+              tenantId,
+              tenant ->
+                  PlatformMetricsRegistry.registerCounter(
+                      DROPPED_SPANS_COUNTER,
+                      Map.of("tenantId", tenantId, IS_LATE_ARRIVAL_SPANS_TAGS, "true")))
           .increment();
       return null;
     }

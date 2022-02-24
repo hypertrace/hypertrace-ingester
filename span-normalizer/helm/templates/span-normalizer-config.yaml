@@ -65,6 +65,10 @@ data:
       bypass.key = "{{ .Values.spanNormalizerConfig.processor.bypassKey }}"
       {{- end }}
 
+      {{- if hasKey .Values.spanNormalizerConfig.processor "lateArrivalThresholdDuration" }}
+      late.arrival.threshold.duration = "{{ .Values.spanNormalizerConfig.processor.lateArrivalThresholdDuration }}"
+      {{- end }}
+
       {{- if hasKey .Values.spanNormalizerConfig.processor "rootExitSpanDropCriterion" }}
       rootExitSpanDropCriterion = {{ .Values.spanNormalizerConfig.processor.rootExitSpanDropCriterion | toJson }}
       {{- end }}
