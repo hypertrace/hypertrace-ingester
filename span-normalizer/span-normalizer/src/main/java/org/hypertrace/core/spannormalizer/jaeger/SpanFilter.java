@@ -123,8 +123,8 @@ public class SpanFilter {
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
     if (anyCriteriaMatch(tags, spanDropCriterion)) {
-      if (DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
-        LOG.info("Dropping span: [{}] with drop criterion: [{}]", span, spanDropCriterion);
+      if (LOG.isDebugEnabled() && DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
+        LOG.debug("Dropping span: [{}] with drop criterion: [{}]", span, spanDropCriterion);
       }
       return true;
     }
