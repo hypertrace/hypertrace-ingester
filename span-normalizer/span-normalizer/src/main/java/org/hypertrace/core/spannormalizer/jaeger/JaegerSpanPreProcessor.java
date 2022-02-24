@@ -35,6 +35,8 @@ public class JaegerSpanPreProcessor
       new ConcurrentHashMap<>();
   private static final ConcurrentMap<String, Counter> tenantToSpansDroppedCount =
       new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Counter> tenantToLateArrivalSpansDroppedCount =
+      new ConcurrentHashMap<>();
   private static final Duration minArrivalThreshold = Duration.of(30, ChronoUnit.SECONDS);
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
@@ -138,7 +140,7 @@ public class JaegerSpanPreProcessor
         Duration.of(Math.abs(spanProcessedTime - spanStartTime), ChronoUnit.MILLIS);
 
     if (spanStartTime > 0 && spanArrivalDelay.compareTo(lateArrivalThresholdDuration) > 0) {
-      tenantToSpansDroppedCount
+      tenantToLateArrivalSpansDroppedCount
           .computeIfAbsent(
               tenantId,
               tenant ->
