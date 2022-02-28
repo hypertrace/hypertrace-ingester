@@ -1,19 +1,16 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
-import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY;
+import static org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils.FULL_URL_ATTRIBUTES;
 
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
-import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
-import org.hypertrace.core.span.constants.RawSpanConstants;
-import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
 import org.hypertrace.span.processing.config.service.v1.Field;
@@ -26,25 +23,22 @@ import org.hypertrace.span.processing.config.service.v1.SpanFilter;
 public class ExcludeSpanRuleEvaluator {
   // rename and replace SpanFilter later.
 
-  public ExcludeSpanRuleEvaluator() {
-    // empty constructor
-  }
+  private final ExcludeSpanRuleCache excludeSpanRuleCache;
 
-  private static final List<String> FULL_URL_ATTRIBUTES =
-      List.of(
-          RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL),
-          RawSpanConstants.getValue(HTTP_REQUEST_URL),
-          RawSpanConstants.getValue(Http.HTTP_URL),
-          OTelHttpSemanticConventions.HTTP_URL.getValue());
+  public ExcludeSpanRuleEvaluator(ExcludeSpanRuleCache excludeSpanRuleCache) {
+    this.excludeSpanRuleCache = excludeSpanRuleCache;
+  }
 
   private static final String ENVIRONMENT_ATTRIBUTE = "deployment.environment";
 
+  @SneakyThrows
   public boolean shouldDropSpan(
       Optional<String> tenantIdKey,
+      String tenantId,
       JaegerSpanInternalModel.Span jaegerSpan,
-      List<ExcludeSpanRule> excludeSpanRules,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
+    List<ExcludeSpanRule> excludeSpanRules = excludeSpanRuleCache.get(tenantId);
     if (excludeSpanRules.isEmpty()) {
       return false;
     }

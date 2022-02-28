@@ -9,11 +9,15 @@ public class ConfigServiceConfig {
     this.config = config.getConfig("clients.config.service.config");
   }
 
-  public String getConfigServiceHost() {
+  public String getHost() {
     return this.config.getString("host");
   }
 
-  public Integer getConfigServicePort() {
+  public Integer getPort() {
     return this.config.getInt("port");
+  }
+
+  public long getCallTimeout() {
+    return this.config.getLong("timeout");
   }
 }

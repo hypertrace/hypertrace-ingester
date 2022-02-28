@@ -15,8 +15,7 @@ public class ConfigServiceClient {
   public ConfigServiceClient(ConfigServiceConfig config, GrpcChannelRegistry channelRegistry) {
     this.configServiceStub =
         SpanProcessingConfigServiceGrpc.newBlockingStub(
-                channelRegistry.forPlaintextAddress(
-                    config.getConfigServiceHost(), config.getConfigServicePort()))
+                channelRegistry.forPlaintextAddress(config.getHost(), config.getPort()))
             .withCallCredentials(
                 RequestContextClientCallCredsProviderFactory.getClientCallCredsProvider().get());
   }

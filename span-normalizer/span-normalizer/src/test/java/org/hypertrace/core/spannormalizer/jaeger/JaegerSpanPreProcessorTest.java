@@ -14,13 +14,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.SpanAttribute;
-import org.hypertrace.core.spannormalizer.client.ConfigServiceClient;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRuleInfo;
 import org.hypertrace.span.processing.config.service.v1.Field;
-import org.hypertrace.span.processing.config.service.v1.GetAllExcludeSpanRulesResponse;
 import org.hypertrace.span.processing.config.service.v1.LogicalOperator;
 import org.hypertrace.span.processing.config.service.v1.LogicalSpanFilterExpression;
 import org.hypertrace.span.processing.config.service.v1.RelationalOperator;
@@ -34,16 +33,12 @@ import org.junit.jupiter.api.Test;
 class JaegerSpanPreProcessorTest {
 
   private final Random random = new Random();
-  private ConfigServiceClient configServiceClient;
+  private ExcludeSpanRuleCache excludeSpanRuleCache;
 
   @BeforeEach
-  void init() {
-    configServiceClient = mock(ConfigServiceClient.class);
-    when(configServiceClient.getAllExcludeSpanRules(any()))
-        .thenReturn(
-            GetAllExcludeSpanRulesResponse.newBuilder()
-                .addAllRules(Collections.emptyList())
-                .build());
+  void init() throws ExecutionException {
+    excludeSpanRuleCache = mock(ExcludeSpanRuleCache.class);
+    when(excludeSpanRuleCache.get(any())).thenReturn(Collections.emptyList());
   }
 
   @Test
@@ -56,7 +51,7 @@ class JaegerSpanPreProcessorTest {
           Map<String, Object> configs = new HashMap<>(getCommonConfig());
           configs.putAll(Map.of("processor", Map.of()));
           JaegerSpanPreProcessor jaegerSpanPreProcessor =
-              new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+              new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
           Process process = Process.newBuilder().setServiceName("testService").build();
           Span span1 =
@@ -75,7 +70,7 @@ class JaegerSpanPreProcessorTest {
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
     configs.putAll(Map.of("processor", Map.of("defaultTenantId", "default-tenant")));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span1 =
@@ -90,7 +85,7 @@ class JaegerSpanPreProcessorTest {
     configs = new HashMap<>(getCommonConfig());
     configs.putAll(Map.of("processor", Map.of("tenantIdTagKey", "tenant-key")));
     jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
     Span span2 =
         Span.newBuilder()
@@ -121,7 +116,7 @@ class JaegerSpanPreProcessorTest {
             "processor",
             Map.of("tenantIdTagKey", "tenant-key", "excludeTenantIds", List.of(tenantId))));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span1 =
@@ -150,7 +145,7 @@ class JaegerSpanPreProcessorTest {
             "processor",
             Map.of("tenantIdTagKey", "tenant-key", "spanDropCriterion", List.of("foo:bar,k1:v1"))));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span1 =
         Span.newBuilder()
@@ -186,7 +181,7 @@ class JaegerSpanPreProcessorTest {
                 List.of("foo:bar,k1:v1", "k2:v2", "http.url:https://foo.bar"))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
     Process process = Process.newBuilder().setServiceName("testService").build();
     {
       Span span =
@@ -237,7 +232,7 @@ class JaegerSpanPreProcessorTest {
             "processor", Map.of("tenantIdTagKey", "tenant-key", "spanDropCriterion", List.of())));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span =
         Span.newBuilder()
@@ -262,7 +257,7 @@ class JaegerSpanPreProcessorTest {
                 "rootExitSpanDropCriterion.alwaysDrop", "true")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // root exit span
@@ -312,7 +307,7 @@ class JaegerSpanPreProcessorTest {
                     List.of("foo:bar,k1:v1", "k2:v2"))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // root exit span
@@ -375,7 +370,7 @@ class JaegerSpanPreProcessorTest {
                     List.of("foo:bar,k1:v1", "k2:v2"))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // root exit span
@@ -450,7 +445,7 @@ class JaegerSpanPreProcessorTest {
                             "operator", "NEQ",
                             "tagValue", "200"))))));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // case 1: match first case (http.method & http.url)
@@ -552,7 +547,7 @@ class JaegerSpanPreProcessorTest {
                             "tagKey", "grpc.url", "operator", "EXISTS", "tagValue", "health"))))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
     // case 1: {spanTags: [http.method & http.url],  processTags:tenant_id } matches -> drop span
 
@@ -759,39 +754,37 @@ class JaegerSpanPreProcessorTest {
                                   "tagValue",
                                   "GET"))))));
           JaegerSpanPreProcessor jaegerSpanPreProcessor =
-              new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+              new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
         });
   }
 
   @Test
-  public void testExcludeSpanRules() {
+  public void testExcludeSpanRules() throws ExecutionException {
     String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
     configs.putAll(
         Map.of("processor", Map.of("tenantIdTagKey", "tenant-key", "spanDropFilters", List.of())));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), configServiceClient);
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
     // case 1: {spanTags: [http.method & http.url],  processTags:tenant_id, rule: url contains
     // health } matches -> drop span
 
-    when(configServiceClient.getAllExcludeSpanRules(any()))
+    when(excludeSpanRuleCache.get(any()))
         .thenReturn(
-            GetAllExcludeSpanRulesResponse.newBuilder()
-                .addRules(
-                    ExcludeSpanRule.newBuilder()
-                        .setRuleInfo(
-                            ExcludeSpanRuleInfo.newBuilder()
-                                .setFilter(
-                                    buildRelationalFilter(
-                                        Field.FIELD_URL,
-                                        null,
-                                        RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
-                                        "health"))
-                                .build())
-                        .build())
-                .build());
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildRelationalFilter(
+                                    Field.FIELD_URL,
+                                    null,
+                                    RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                    "health"))
+                            .build())
+                    .build()));
 
     Process process =
         Process.newBuilder()
@@ -830,22 +823,20 @@ class JaegerSpanPreProcessorTest {
 
     // case 3: {spanTags: [http.url & tenant_id],  processTags:tenant_id, rule - service name is
     // testService } drop span
-    when(configServiceClient.getAllExcludeSpanRules(any()))
+    when(excludeSpanRuleCache.get(any()))
         .thenReturn(
-            GetAllExcludeSpanRulesResponse.newBuilder()
-                .addRules(
-                    ExcludeSpanRule.newBuilder()
-                        .setRuleInfo(
-                            ExcludeSpanRuleInfo.newBuilder()
-                                .setFilter(
-                                    buildRelationalFilter(
-                                        Field.FIELD_SERVICE_NAME,
-                                        null,
-                                        RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
-                                        "testService"))
-                                .build())
-                        .build())
-                .build());
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildRelationalFilter(
+                                    Field.FIELD_SERVICE_NAME,
+                                    null,
+                                    RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
+                                    "testService"))
+                            .build())
+                    .build()));
     process =
         Process.newBuilder()
             .setServiceName("testService")
@@ -868,30 +859,28 @@ class JaegerSpanPreProcessorTest {
 
     // case 4: {spanTags: [http.method & http.request.url],  processTags:tenant_id, url:
     //   service name is testService and url contains health } drop span
-    when(configServiceClient.getAllExcludeSpanRules(any()))
+    when(excludeSpanRuleCache.get(any()))
         .thenReturn(
-            GetAllExcludeSpanRulesResponse.newBuilder()
-                .addRules(
-                    ExcludeSpanRule.newBuilder()
-                        .setRuleInfo(
-                            ExcludeSpanRuleInfo.newBuilder()
-                                .setFilter(
-                                    buildLogicalFilterSpanProcessing(
-                                        LogicalOperator.LOGICAL_OPERATOR_AND,
-                                        List.of(
-                                            buildRelationalFilter(
-                                                Field.FIELD_SERVICE_NAME,
-                                                null,
-                                                RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
-                                                "testService"),
-                                            buildRelationalFilter(
-                                                Field.FIELD_URL,
-                                                null,
-                                                RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
-                                                "health"))))
-                                .build())
-                        .build())
-                .build());
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            Field.FIELD_SERVICE_NAME,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
+                                            "testService"),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
     span =
         Span.newBuilder()
             .setProcess(process)
@@ -908,30 +897,28 @@ class JaegerSpanPreProcessorTest {
     Assertions.assertNull(preProcessedSpan);
 
     // same as above but filter fails - should not drop span
-    when(configServiceClient.getAllExcludeSpanRules(any()))
+    when(excludeSpanRuleCache.get(any()))
         .thenReturn(
-            GetAllExcludeSpanRulesResponse.newBuilder()
-                .addRules(
-                    ExcludeSpanRule.newBuilder()
-                        .setRuleInfo(
-                            ExcludeSpanRuleInfo.newBuilder()
-                                .setFilter(
-                                    buildLogicalFilterSpanProcessing(
-                                        LogicalOperator.LOGICAL_OPERATOR_AND,
-                                        List.of(
-                                            buildRelationalFilter(
-                                                Field.FIELD_SERVICE_NAME,
-                                                null,
-                                                RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
-                                                "testServiceAttribute"),
-                                            buildRelationalFilter(
-                                                Field.FIELD_URL,
-                                                null,
-                                                RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
-                                                "health"))))
-                                .build())
-                        .build())
-                .build());
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            Field.FIELD_SERVICE_NAME,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
+                                            "testServiceAttribute"),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
 
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNotNull(preProcessedSpan);
@@ -978,7 +965,9 @@ class JaegerSpanPreProcessorTest {
         "schema.registry.config",
         Map.of("schema.registry.url", "http://localhost:8081"),
         "clients",
-        Map.of("config.service.config", Map.of("host", "localhost", "port", 50101)));
+        Map.of("config.service.config", Map.of("host", "localhost", "port", 50101)),
+        "cache",
+        Map.of("refreshAfterWriteMillis", 180000, "expireAfterWriteMillis", 300000));
   }
 
   private static SpanFilter buildRelationalFilter(

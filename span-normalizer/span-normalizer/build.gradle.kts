@@ -56,6 +56,8 @@ dependencies {
           "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
     }
   }
+  annotationProcessor("org.projectlombok:lombok:1.18.18")
+  compileOnly("org.projectlombok:lombok:1.18.18")
 
   implementation("com.typesafe:config:1.4.1")
   implementation("de.javakaffee:kryo-serializers:0.45")
