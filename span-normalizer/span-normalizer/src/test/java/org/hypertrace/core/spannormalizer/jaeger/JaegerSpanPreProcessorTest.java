@@ -817,7 +817,6 @@ class JaegerSpanPreProcessorTest {
 
     // case 1: {spanTags: [http.method & http.url],  processTags:tenant_id, rule: url contains
     // health } matches -> drop span
-
     when(excludeSpanRuleCache.get(any()))
         .thenReturn(
             List.of(
