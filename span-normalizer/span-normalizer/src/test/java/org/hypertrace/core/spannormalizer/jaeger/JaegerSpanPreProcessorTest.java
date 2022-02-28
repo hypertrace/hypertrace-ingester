@@ -5,10 +5,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.protobuf.Timestamp;
 import com.typesafe.config.ConfigFactory;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Process;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +52,7 @@ class JaegerSpanPreProcessorTest {
           // span dropped since tenant detail not present
           String tenantId = "tenant-" + random.nextLong();
           Map<String, Object> configs = new HashMap<>(getCommonConfig());
-          configs.putAll(Map.of("processor", Map.of()));
+          configs.putAll(Map.of("processor", Map.of("late.arrival.threshold.duration", "1d")));
           JaegerSpanPreProcessor jaegerSpanPreProcessor =
               new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
@@ -68,7 +71,10 @@ class JaegerSpanPreProcessorTest {
     // default tenant id
     String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("defaultTenantId", "default-tenant")));
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of("defaultTenantId", "default-tenant", "late.arrival.threshold.duration", "1d")));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
@@ -83,7 +89,10 @@ class JaegerSpanPreProcessorTest {
 
     // provided tenant id in span tags
     configs = new HashMap<>(getCommonConfig());
-    configs.putAll(Map.of("processor", Map.of("tenantIdTagKey", "tenant-key")));
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of("tenantIdTagKey", "tenant-key", "late.arrival.threshold.duration", "1d")));
     jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
@@ -114,7 +123,13 @@ class JaegerSpanPreProcessorTest {
     configs.putAll(
         Map.of(
             "processor",
-            Map.of("tenantIdTagKey", "tenant-key", "excludeTenantIds", List.of(tenantId))));
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "excludeTenantIds",
+                List.of(tenantId),
+                "late.arrival.threshold.duration",
+                "1d")));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
 
@@ -143,7 +158,13 @@ class JaegerSpanPreProcessorTest {
     configs.putAll(
         Map.of(
             "processor",
-            Map.of("tenantIdTagKey", "tenant-key", "spanDropCriterion", List.of("foo:bar,k1:v1"))));
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "spanDropCriterion",
+                List.of("foo:bar,k1:v1"),
+                "late.arrival.threshold.duration",
+                "1d")));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
     Process process = Process.newBuilder().setServiceName("testService").build();
@@ -178,7 +199,9 @@ class JaegerSpanPreProcessorTest {
                 "tenantIdTagKey",
                 "tenant-key",
                 "spanDropCriterion",
-                List.of("foo:bar,k1:v1", "k2:v2", "http.url:https://foo.bar"))));
+                List.of("foo:bar,k1:v1", "k2:v2", "http.url:https://foo.bar"),
+                "late.arrival.threshold.duration",
+                "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
@@ -229,7 +252,14 @@ class JaegerSpanPreProcessorTest {
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
     configs.putAll(
         Map.of(
-            "processor", Map.of("tenantIdTagKey", "tenant-key", "spanDropCriterion", List.of())));
+            "processor",
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "spanDropCriterion",
+                List.of(),
+                "late.arrival.threshold.duration",
+                "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
@@ -254,7 +284,8 @@ class JaegerSpanPreProcessorTest {
             "processor",
             Map.of(
                 "tenantIdTagKey", "tenant-key",
-                "rootExitSpanDropCriterion.alwaysDrop", "true")));
+                "rootExitSpanDropCriterion.alwaysDrop", "true",
+                "late.arrival.threshold.duration", "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
@@ -304,7 +335,8 @@ class JaegerSpanPreProcessorTest {
                 "tenantIdTagKey", "tenant-key",
                 "rootExitSpanDropCriterion.alwaysDrop", "true",
                 "rootExitSpanDropCriterion.exclusionsMatchCriterion",
-                    List.of("foo:bar,k1:v1", "k2:v2"))));
+                    List.of("foo:bar,k1:v1", "k2:v2"),
+                "late.arrival.threshold.duration", "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
@@ -367,7 +399,8 @@ class JaegerSpanPreProcessorTest {
                 "tenantIdTagKey", "tenant-key",
                 "rootExitSpanDropCriterion.alwaysDrop", "false",
                 "rootExitSpanDropCriterion.exclusionsMatchCriterion",
-                    List.of("foo:bar,k1:v1", "k2:v2"))));
+                    List.of("foo:bar,k1:v1", "k2:v2"),
+                "late.arrival.threshold.duration", "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
@@ -428,6 +461,8 @@ class JaegerSpanPreProcessorTest {
             Map.of(
                 "tenantIdTagKey",
                 "tenant-key",
+                "late.arrival.threshold.duration",
+                "1d",
                 "spanDropFilters",
                 List.of(
                     List.of(
@@ -529,6 +564,8 @@ class JaegerSpanPreProcessorTest {
             Map.of(
                 "tenantIdTagKey",
                 "tenant-key",
+                "late.arrival.threshold.duration",
+                "1d",
                 "spanDropFilters",
                 List.of(
                     List.of(
@@ -743,6 +780,8 @@ class JaegerSpanPreProcessorTest {
                   Map.of(
                       "tenantIdTagKey",
                       "tenant-key",
+                      "late.arrival.threshold.duration",
+                      "1d",
                       "spanDropFilters",
                       List.of(
                           List.of(
@@ -763,7 +802,15 @@ class JaegerSpanPreProcessorTest {
     String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
     configs.putAll(
-        Map.of("processor", Map.of("tenantIdTagKey", "tenant-key", "spanDropFilters", List.of())));
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "spanDropFilters",
+                Collections.emptyList(),
+                "late.arrival.threshold.duration",
+                "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
@@ -946,6 +993,59 @@ class JaegerSpanPreProcessorTest {
             .build();
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNull(preProcessedSpan);
+  }
+
+  @Test
+  public void testLateArrivalSpanWithConfiguredConfig() {
+    // case 1: 24 hrs config, span within range, should not drop
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of("defaultTenantId", tenantId, "late.arrival.threshold.duration", "24h")));
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
+
+    Instant instant = Instant.now();
+    Process process = Process.newBuilder().setServiceName("testService").build();
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .setStartTime(Timestamp.newBuilder().setSeconds(instant.getEpochSecond()).build())
+            .addTags(KeyValue.newBuilder().setKey("key").setVStr("Val").build())
+            .build();
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+    Assertions.assertEquals(tenantId, preProcessedSpan.getTenantId());
+
+    // case 2: 24 hrs config, span too old, more than 25hrs, should drop
+    instant = Instant.now().minus(25, ChronoUnit.HOURS);
+    process = Process.newBuilder().setServiceName("testService").build();
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .setStartTime(Timestamp.newBuilder().setSeconds(instant.getEpochSecond()).build())
+            .addTags(KeyValue.newBuilder().setKey("key").setVStr("Val").build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+  }
+
+  @Test
+  public void testBadLateArrivalSpanConfig() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          Map<String, Object> configs = new HashMap<>(getCommonConfig());
+          configs.putAll(
+              Map.of(
+                  "processor",
+                  Map.of(
+                      "tenantIdTagKey", "tenant-key", "late.arrival.threshold.duration", "20s")));
+          JaegerSpanPreProcessor jaegerSpanPreProcessor =
+              new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRuleCache);
+        });
   }
 
   private Map<String, Object> getCommonConfig() {
