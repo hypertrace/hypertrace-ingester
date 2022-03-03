@@ -24,13 +24,14 @@ import org.slf4j.LoggerFactory;
 
 public class JaegerSpanPreProcessor
     implements Transformer<byte[], Span, KeyValue<byte[], PreProcessedSpan>> {
+  private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
 
   static final String SPANS_COUNTER = "hypertrace.reported.spans";
   private static final String DROPPED_SPANS_COUNTER = "hypertrace.reported.spans.dropped";
   private static final String IS_LATE_ARRIVAL_SPANS_TAGS = "is_late_arrival_spans";
   private static final String LATE_ARRIVAL_THRESHOLD_CONFIG_KEY =
       "processor.late.arrival.threshold.duration";
-  private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
+
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
   private static final ConcurrentMap<String, Counter> tenantToSpansDroppedCount =
@@ -38,9 +39,11 @@ public class JaegerSpanPreProcessor
   private static final ConcurrentMap<String, Counter> tenantToLateArrivalSpansDroppedCount =
       new ConcurrentHashMap<>();
   private static final Duration minArrivalThreshold = Duration.of(30, ChronoUnit.SECONDS);
+
   private TenantIdHandler tenantIdHandler;
   private SpanFilter spanFilter;
   private Duration lateArrivalThresholdDuration;
+  private TagsFilter tagsFilter;
 
   public JaegerSpanPreProcessor() {
     // empty constructor
@@ -51,6 +54,7 @@ public class JaegerSpanPreProcessor
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanFilter = new SpanFilter(jobConfig);
     lateArrivalThresholdDuration = configureLateArrivalThreshold(jobConfig);
+    tagsFilter = new TagsFilter(jobConfig);
   }
 
   @Override
@@ -59,6 +63,7 @@ public class JaegerSpanPreProcessor
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanFilter = new SpanFilter(jobConfig);
     lateArrivalThresholdDuration = configureLateArrivalThreshold(jobConfig);
+    tagsFilter = new TagsFilter(jobConfig);
   }
 
   private Duration configureLateArrivalThreshold(Config jobConfig) {
@@ -151,7 +156,9 @@ public class JaegerSpanPreProcessor
       return null;
     }
 
-    return new PreProcessedSpan(tenantId, span);
+    // filter tags
+    Span processedSpan = tagsFilter.apply(span);
+    return new PreProcessedSpan(tenantId, processedSpan);
   }
 
   @Override
