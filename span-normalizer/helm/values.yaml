@@ -102,6 +102,10 @@ spanNormalizerConfig:
   extraKafkaStreamsConfig: {}
   configServiceHost: config-service
   configServicePort: 50101
+  excludeSpanRulesConfig:
+    cache:
+      refreshAfterWriteDuration: 3m
+      expireAfterWriteDuration: 5m
 
 logConfig:
   name: span-normalizer-log-appender-config

@@ -16,8 +16,4 @@ public class ConfigServiceConfig {
   public Integer getPort() {
     return this.config.getInt("port");
   }
-
-  public long getCallTimeout() {
-    return this.config.getLong("timeout");
-  }
 }

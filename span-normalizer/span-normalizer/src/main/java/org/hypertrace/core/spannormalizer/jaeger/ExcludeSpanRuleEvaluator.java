@@ -3,12 +3,15 @@ package org.hypertrace.core.spannormalizer.jaeger;
 import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY;
 import static org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils.FULL_URL_ATTRIBUTES;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
@@ -20,13 +23,19 @@ import org.hypertrace.span.processing.config.service.v1.RelationalOperator;
 import org.hypertrace.span.processing.config.service.v1.RelationalSpanFilterExpression;
 import org.hypertrace.span.processing.config.service.v1.SpanFilter;
 
+@Slf4j
 public class ExcludeSpanRuleEvaluator {
   // rename and replace SpanFilter later.
 
-  private final ExcludeSpanRuleCache excludeSpanRuleCache;
+  private final ExcludeSpanRulesCache excludeSpanRulesCache;
 
-  public ExcludeSpanRuleEvaluator(ExcludeSpanRuleCache excludeSpanRuleCache) {
-    this.excludeSpanRuleCache = excludeSpanRuleCache;
+  public ExcludeSpanRuleEvaluator(Config config) {
+    this.excludeSpanRulesCache = ExcludeSpanRulesCache.getInstance(config);
+  }
+
+  @VisibleForTesting
+  public ExcludeSpanRuleEvaluator(ExcludeSpanRulesCache excludeSpanRulesCache) {
+    this.excludeSpanRulesCache = excludeSpanRulesCache;
   }
 
   private static final String ENVIRONMENT_ATTRIBUTE = "deployment.environment";
@@ -38,7 +47,7 @@ public class ExcludeSpanRuleEvaluator {
       JaegerSpanInternalModel.Span jaegerSpan,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
-    List<ExcludeSpanRule> excludeSpanRules = excludeSpanRuleCache.get(tenantId);
+    List<ExcludeSpanRule> excludeSpanRules = excludeSpanRulesCache.get(tenantId);
     if (excludeSpanRules.isEmpty()) {
       return false;
     }
@@ -64,7 +73,7 @@ public class ExcludeSpanRuleEvaluator {
     return applyExcludeSpanRules(excludeSpanRules, tags, processTags, serviceName);
   }
 
-  boolean applyExcludeSpanRules(
+  private boolean applyExcludeSpanRules(
       List<ExcludeSpanRule> excludeSpanRules,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
@@ -76,7 +85,7 @@ public class ExcludeSpanRuleEvaluator {
                     excludeSpanRule.getRuleInfo().getFilter(), tags, processTags, serviceName));
   }
 
-  boolean applyFilter(
+  private boolean applyFilter(
       SpanFilter filter,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
@@ -99,7 +108,7 @@ public class ExcludeSpanRuleEvaluator {
     }
   }
 
-  boolean matchesRelationalSpanFilter(
+  private boolean matchesRelationalSpanFilter(
       RelationalSpanFilterExpression relationalSpanFilterExpression,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
@@ -139,6 +148,7 @@ public class ExcludeSpanRuleEvaluator {
                           urlAttribute,
                           relationalSpanFilterExpression.getRightOperand().getStringValue()));
         default:
+          log.error("Unknown filter field: {}", field);
           return false;
       }
     }
@@ -169,6 +179,7 @@ public class ExcludeSpanRuleEvaluator {
       case RELATIONAL_OPERATOR_CONTAINS:
         return StringUtils.contains(lhs, rhs);
       default:
+        log.error("Unknown relational operator: {}", operator);
         return false;
     }
   }

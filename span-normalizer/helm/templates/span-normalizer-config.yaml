@@ -92,3 +92,9 @@ data:
         port = {{ .Values.spanNormalizerConfig.configServicePort }}
       }
     }
+    span.rules.exclude {
+      cache = {
+        refreshAfterWriteDuration = {{ .Values.spanNormalizerConfig.excludeSpanRulesConfig.cache.refreshAfterWriteDuration }}
+        expireAfterWriteDuration = {{ .Values.spanNormalizerConfig.excludeSpanRulesConfig.cache.expireAfterWriteDuration }}
+      }
+    }

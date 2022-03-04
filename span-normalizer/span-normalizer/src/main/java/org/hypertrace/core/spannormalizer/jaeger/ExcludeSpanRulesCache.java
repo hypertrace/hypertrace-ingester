@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.typesafe.config.Config;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -19,32 +20,34 @@ import org.hypertrace.core.spannormalizer.config.ConfigServiceConfig;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
 
 @Slf4j
-public class ExcludeSpanRuleCache {
-  private static final String MODEL_CACHE_REFRESH_MILLIS = "cache.refreshAfterWriteMillis";
-  private static final String MODEL_CACHE_EXPIRY_MILLIS = "cache.expireAfterWriteMillis";
+public class ExcludeSpanRulesCache {
+  private static final String CACHE_REFRESH_DURATION =
+      "span.rules.exclude.cache.refreshAfterWriteDuration";
+  private static final String CACHE_EXPIRY_DURATION =
+      "span.rules.exclude.cache.expireAfterWriteDuration";
   private static final String CACHE_NAME = "excludeSpanRuleCache";
-  private static final int MODEL_CACHE_REFRESH_MILLIS_DEFAULT = 180000;
-  private static final int MODEL_CACHE_EXPIRY_MILLIS_DEFAULT = 300000;
-  private static ExcludeSpanRuleCache INSTANCE;
-  private final LoadingCache<String, List<ExcludeSpanRule>> excludeSpanRuleCache;
+  private static final Duration CACHE_REFRESH_DURATION_DEFAULT = Duration.ofMillis(180000);
+  private static final Duration CACHE_EXPIRY_DURATION_DEFAULT = Duration.ofMillis(300000);
+  private static ExcludeSpanRulesCache INSTANCE;
+  private final LoadingCache<String, List<ExcludeSpanRule>> excludeSpanRulesCache;
 
-  private ExcludeSpanRuleCache(Config config) {
-    int modelCacheRefreshMillis =
-        config.hasPath(MODEL_CACHE_REFRESH_MILLIS)
-            ? config.getInt(MODEL_CACHE_REFRESH_MILLIS)
-            : MODEL_CACHE_REFRESH_MILLIS_DEFAULT;
-    int modelCacheExpiryMillis =
-        config.hasPath(MODEL_CACHE_EXPIRY_MILLIS)
-            ? config.getInt(MODEL_CACHE_EXPIRY_MILLIS)
-            : MODEL_CACHE_EXPIRY_MILLIS_DEFAULT;
+  private ExcludeSpanRulesCache(Config config) {
+    Duration cacheRefreshDuration =
+        config.hasPath(CACHE_REFRESH_DURATION)
+            ? config.getDuration(CACHE_REFRESH_DURATION)
+            : CACHE_REFRESH_DURATION_DEFAULT;
+    Duration cacheExpiryDuration =
+        config.hasPath(CACHE_EXPIRY_DURATION)
+            ? config.getDuration(CACHE_EXPIRY_DURATION)
+            : CACHE_EXPIRY_DURATION_DEFAULT;
 
     ConfigServiceConfig configServiceConfig = new ConfigServiceConfig(config);
     ConfigServiceClient configServiceClient =
         new ConfigServiceClient(configServiceConfig, new GrpcChannelRegistry());
-    this.excludeSpanRuleCache =
+    this.excludeSpanRulesCache =
         CacheBuilder.newBuilder()
-            .refreshAfterWrite(modelCacheRefreshMillis, TimeUnit.MILLISECONDS)
-            .expireAfterWrite(modelCacheExpiryMillis, TimeUnit.MILLISECONDS)
+            .refreshAfterWrite(cacheRefreshDuration.toMillis(), TimeUnit.MILLISECONDS)
+            .expireAfterWrite(cacheExpiryDuration.toMillis(), TimeUnit.MILLISECONDS)
             .recordStats()
             .build(
                 CacheLoader.asyncReloading(
@@ -65,17 +68,18 @@ public class ExcludeSpanRuleCache {
                       }
                     },
                     Executors.newSingleThreadExecutor()));
-    PlatformMetricsRegistry.registerCache(CACHE_NAME, excludeSpanRuleCache, Collections.emptyMap());
+    PlatformMetricsRegistry.registerCache(
+        CACHE_NAME, excludeSpanRulesCache, Collections.emptyMap());
   }
 
-  public static synchronized ExcludeSpanRuleCache getInstance(Config config) {
+  public static synchronized ExcludeSpanRulesCache getInstance(Config config) {
     if (INSTANCE == null) {
-      INSTANCE = new ExcludeSpanRuleCache(config);
+      INSTANCE = new ExcludeSpanRulesCache(config);
     }
     return INSTANCE;
   }
 
   public List<ExcludeSpanRule> get(String tenantId) throws ExecutionException {
-    return excludeSpanRuleCache.get(tenantId);
+    return excludeSpanRulesCache.get(tenantId);
   }
 }

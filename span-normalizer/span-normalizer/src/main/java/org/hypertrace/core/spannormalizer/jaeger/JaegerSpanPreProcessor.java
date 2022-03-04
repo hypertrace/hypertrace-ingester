@@ -8,7 +8,6 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Counter;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -33,10 +32,10 @@ public class JaegerSpanPreProcessor
     // empty constructor
   }
 
-  // constructor for testing
-  JaegerSpanPreProcessor(Config jobConfig, ExcludeSpanRuleCache excludeSpanRuleCache) {
+  @VisibleForTesting
+  JaegerSpanPreProcessor(Config jobConfig, ExcludeSpanRulesCache excludeSpanRulesCache) {
     tenantIdHandler = new TenantIdHandler(jobConfig);
-    spanDropManager = new SpanDropManager(jobConfig, excludeSpanRuleCache);
+    spanDropManager = new SpanDropManager(jobConfig, excludeSpanRulesCache);
   }
 
   @Override
@@ -89,19 +88,12 @@ public class JaegerSpanPreProcessor
         span.getProcess().getTagsList().stream()
             .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
 
-    Optional<String> maybeTenantId =
-        tenantIdHandler.getAllowedTenantId(span, spanTags, processTags);
-    if (maybeTenantId.isEmpty()) {
-      return null;
-    }
-
-    String tenantId = maybeTenantId.get();
-
     if (spanDropManager.shouldDropSpan(span, spanTags, processTags)) {
       return null;
     }
 
-    return new PreProcessedSpan(tenantId, span);
+    return new PreProcessedSpan(
+        tenantIdHandler.getAllowedTenantId(span, spanTags, processTags).get(), span);
   }
 
   @Override

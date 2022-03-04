@@ -1,21 +1,26 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.util.Timestamps;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.micrometer.core.instrument.Counter;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 
+@Slf4j
 public class SpanDropManager {
-  private TenantIdHandler tenantIdHandler;
-  private SpanFilter spanFilter;
-  private ExcludeSpanRuleEvaluator excludeSpanRuleEvaluator;
+  private final TenantIdHandler tenantIdHandler;
+  private final SpanFilter spanFilter;
+  private final ExcludeSpanRuleEvaluator excludeSpanRuleEvaluator;
   private static final String LATE_ARRIVAL_THRESHOLD_CONFIG_KEY =
       "processor.late.arrival.threshold.duration";
   private static final ConcurrentMap<String, Counter> tenantToSpansDroppedCount =
@@ -24,23 +29,37 @@ public class SpanDropManager {
       new ConcurrentHashMap<>();
   private static final String DROPPED_SPANS_COUNTER = "hypertrace.reported.spans.dropped";
   private static final String IS_LATE_ARRIVAL_SPANS_TAGS = "is_late_arrival_spans";
+  // list of tenant ids to exclude
+  private static final String TENANT_IDS_TO_EXCLUDE_CONFIG = "processor.excludeTenantIds";
+
+  private List<String> tenantIdsToExclude;
   private static final Duration minArrivalThreshold = Duration.of(30, ChronoUnit.SECONDS);
-  private Duration lateArrivalThresholdDuration;
+  private final Duration lateArrivalThresholdDuration;
 
   public SpanDropManager(Config config) {
     tenantIdHandler = new TenantIdHandler(config);
     spanFilter = new SpanFilter(config);
-    excludeSpanRuleEvaluator =
-        new ExcludeSpanRuleEvaluator(ExcludeSpanRuleCache.getInstance(config));
+    excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator(config);
     lateArrivalThresholdDuration = configureLateArrivalThreshold(config);
+    tenantIdsToExclude =
+        config.hasPath(TENANT_IDS_TO_EXCLUDE_CONFIG)
+            ? config.getStringList(TENANT_IDS_TO_EXCLUDE_CONFIG)
+            : Collections.emptyList();
+    if (!this.tenantIdsToExclude.isEmpty()) {
+      log.info("list of tenant ids to exclude : {}", this.tenantIdsToExclude);
+    }
   }
 
-  // for testing
-  SpanDropManager(Config config, ExcludeSpanRuleCache excludeSpanRuleCache) {
+  @VisibleForTesting
+  SpanDropManager(Config config, ExcludeSpanRulesCache excludeSpanRulesCache) {
     tenantIdHandler = new TenantIdHandler(config);
     spanFilter = new SpanFilter(config);
-    excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator(excludeSpanRuleCache);
+    excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator(excludeSpanRulesCache);
     lateArrivalThresholdDuration = configureLateArrivalThreshold(config);
+    tenantIdsToExclude =
+        config.hasPath(TENANT_IDS_TO_EXCLUDE_CONFIG)
+            ? config.getStringList(TENANT_IDS_TO_EXCLUDE_CONFIG)
+            : Collections.emptyList();
   }
 
   private Duration configureLateArrivalThreshold(Config jobConfig) {
@@ -57,7 +76,6 @@ public class SpanDropManager {
       Map<String, JaegerSpanInternalModel.KeyValue> spanTags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
 
-    // TODO: eventually get rid of this tenantId based filter
     Optional<String> maybeTenantId =
         tenantIdHandler.getAllowedTenantId(span, spanTags, processTags);
     if (maybeTenantId.isEmpty()) {
@@ -65,8 +83,9 @@ public class SpanDropManager {
     }
 
     String tenantId = maybeTenantId.get();
-    // TODO: Eventually get rid of span filter
-    return shouldDropSpansBasedOnSpanFilter(tenantId, span, spanTags, processTags)
+    // TODO: Eventually get rid of span filter and tenantID based filter
+    return shouldDropSpansBasedOnTenantIdFilter(tenantId)
+        || shouldDropSpansBasedOnSpanFilter(tenantId, span, spanTags, processTags)
         || shouldDropSpansBasedOnExcludeRules(tenantId, span, spanTags, processTags)
         || shouldDropSpansBasedOnLateArrival(tenantId, span);
   }
@@ -112,6 +131,10 @@ public class SpanDropManager {
       return true;
     }
     return false;
+  }
+
+  private boolean shouldDropSpansBasedOnTenantIdFilter(String tenantId) {
+    return this.tenantIdsToExclude.contains(tenantId);
   }
 
   private boolean shouldDropSpansBasedOnLateArrival(
