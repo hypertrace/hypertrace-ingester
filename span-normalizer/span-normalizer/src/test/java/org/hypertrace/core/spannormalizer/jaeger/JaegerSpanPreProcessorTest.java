@@ -5,11 +5,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import com.typesafe.config.ConfigFactory;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Process;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
+import io.jaegertracing.api_v2.JaegerSpanInternalModel.ValueType;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -1110,6 +1112,467 @@ class JaegerSpanPreProcessorTest {
           JaegerSpanPreProcessor jaegerSpanPreProcessor =
               new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
         });
+  }
+
+  @Test
+  public void testTagsFiltersForHttpXAttributes() {
+    // Config note:
+    // Configured to drop non-allowed keys from the subset of http extension attributes
+    // allowed.attributes.prefixes : ["http.request.header.x-", "http.response.header.x-"]
+    // So, all the keys which doesn't start with above prefix will be retains, and
+    // the keys that start with above prefix will be checked against allowed list.
+
+    // In this test case, we expects 2 attributes to be dropped as it matches configured criteria.
+    // prefixed.matched.allowed.attributes: ["http.request.header.x-allowed-1",
+    // "http.response.header.x-allowed-2"]
+    // So, http.request.header.x-not-allowed-1 and http.response.header.x-not-allowed-2 will be
+    // dropped.
+
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "late.arrival.threshold.duration",
+                "1d",
+                "allowed.attributes.prefixes",
+                List.of("http.request.header.x-", "http.response.header.x-"),
+                "prefixed.matched.allowed.attributes",
+                List.of("http.request.header.x-allowed-1", "http.response.header.x-allowed-2"))));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+    Process process = Process.newBuilder().setServiceName("testService").build();
+
+    KeyValue allowed1 =
+        KeyValue.newBuilder()
+            .setKey("http.request.header.x-allowed-1")
+            .setVStr("allowed-1-value")
+            .build();
+    KeyValue allowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-allowed-2")
+            .setVStr("allowed-2-value")
+            .build();
+    KeyValue notAllowed1 =
+        KeyValue.newBuilder()
+            .setKey("http.request.header.x-not-allowed-1")
+            .setVStr("not-allowed-1-value")
+            .build();
+    KeyValue notAllowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-not-allowed-2")
+            .setVStr("not-allowed-2-value")
+            .build();
+
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .addTags(allowed1)
+            .addTags(allowed2)
+            .addTags(notAllowed1)
+            .addTags(notAllowed2)
+            .build();
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+
+    Assertions.assertNotNull(preProcessedSpan);
+
+    Assertions.assertEquals(5, preProcessedSpan.getSpan().getTagsCount());
+    Assertions.assertEquals(7, span.getTagsCount());
+
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed1));
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed2));
+
+    Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(notAllowed1));
+    Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(notAllowed2));
+  }
+
+  @Test
+  public void testTagsFiltersForNoneHttpXAttributes() {
+    // Config note:
+    // Configured to drop non-allowed keys from the subset of http extension attributes
+    // allowed.attributes.prefixes : ["http.request.header.x-", "http.response.header.x-"]
+    // So, all the keys which doesn't start with above prefix will be retains, and
+    // the keys that start with above prefix will be checked against allowed list.
+
+    // In this test case, we expects nothing to be dropped as none of the attributes start with
+    // configured prefixes.
+    // prefixed.matched.allowed.attributes: ["http.request.header.x-allowed-1",
+    // "http.response.header.x-allowed-2"]
+
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "late.arrival.threshold.duration",
+                "1d",
+                "allowed.attributes.prefixes",
+                List.of("http.request.header.x-", "http.response.header.x-"),
+                "prefixed.matched.allowed.attributes",
+                List.of("http.request.header.x-allowed-1", "http.response.header.x-allowed-2"))));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+    Process process = Process.newBuilder().setServiceName("testService").build();
+
+    KeyValue allowed1 =
+        KeyValue.newBuilder().setKey("x-allowed-1").setVStr("allowed-1-value").build();
+    KeyValue allowed2 =
+        KeyValue.newBuilder().setKey("x-allowed-2").setVStr("allowed-2-value").build();
+    KeyValue notAllowed1 =
+        KeyValue.newBuilder().setKey("x-not-allowed-1").setVStr("not-allowed-1-value").build();
+    KeyValue notAllowed2 =
+        KeyValue.newBuilder().setKey("x-not-allowed-2").setVStr("not-allowed-2-value").build();
+
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .addTags(allowed1)
+            .addTags(allowed2)
+            .addTags(notAllowed1)
+            .addTags(notAllowed2)
+            .build();
+
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+
+    Assertions.assertNotNull(preProcessedSpan);
+
+    Assertions.assertEquals(7, preProcessedSpan.getSpan().getTagsCount());
+    Assertions.assertEquals(7, span.getTagsCount());
+
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed1));
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed2));
+
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(notAllowed1));
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(notAllowed2));
+  }
+
+  @Test
+  public void testTagsFiltersConfiguredWithNoneHttpXAttributes() {
+    // Config note:
+    // Configured to drop non-allowed keys from the subset of http extension attributes
+    // allowed.attributes.prefixes : ["http.request.header.x-", "http.response.header.x-"]
+    // So, all the keys which doesn't start with above prefix will be retains, and
+    // the keys that start with above prefix will be checked against allowed list.
+
+    // In this test case, we have miss configured prefix key, and allowed list.
+    // So, it will drop all the keys matching prefix subset.
+    // prefixed.matched.allowed.attributes: ["x-allowed-1", "x-allowed-2"]
+
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "late.arrival.threshold.duration",
+                "1d",
+                "allowed.attributes.prefixes",
+                List.of("http.request.header.x-", "http.response.header.x-"),
+                "prefixed.matched.allowed.attributes",
+                List.of("x-allowed-1", "x-allowed-2"))));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+    Process process = Process.newBuilder().setServiceName("testService").build();
+
+    KeyValue allowed1 =
+        KeyValue.newBuilder()
+            .setKey("http.request.header.x-allowed-1")
+            .setVStr("allowed-1-value")
+            .build();
+    KeyValue allowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-allowed-2")
+            .setVStr("allowed-2-value")
+            .build();
+    KeyValue notAllowed1 =
+        KeyValue.newBuilder()
+            .setKey("http.request.header.x-not-allowed-1")
+            .setVStr("not-allowed-1-value")
+            .build();
+    KeyValue notAllowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-not-allowed-2")
+            .setVStr("not-allowed-2-value")
+            .build();
+
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .addTags(allowed1)
+            .addTags(allowed2)
+            .addTags(notAllowed1)
+            .addTags(notAllowed2)
+            .build();
+
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+
+    Assertions.assertNotNull(preProcessedSpan);
+
+    Assertions.assertEquals(3, preProcessedSpan.getSpan().getTagsCount());
+    Assertions.assertEquals(7, span.getTagsCount());
+
+    Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(allowed1));
+    Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(allowed2));
+
+    Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(notAllowed1));
+    Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(notAllowed2));
+  }
+
+  @Test
+  public void testTagsFiltersConfiguredEmptyAllowedAttributes() {
+    // Config note:
+    // Configured to drop non-allowed keys from the subset of http extension attributes
+    // allowed.attributes.prefixes : ["http.request.header.x-", "http.response.header.x-"]
+    // So, all the keys which doesn't start with above prefix will be retains, and
+    // the keys that start with above prefix will be checked against allowed list.
+
+    // In this test case, we have empty configuration for prefixed.matched.allowed.attributes
+    // So, this will behave as no-op.
+    // So, it will drop all the keys matching prefix subset.
+    // prefixed.matched.allowed.attributes: []
+
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "late.arrival.threshold.duration",
+                "1d",
+                "allowed.attributes.prefixes",
+                List.of("http.request.header.x-", "http.response.header.x-"),
+                "prefixed.matched.allowed.attributes",
+                List.of())));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+    Process process = Process.newBuilder().setServiceName("testService").build();
+
+    // expects nothing to drop as allowed.extension.attributes configured to empty
+    KeyValue allowed1 =
+        KeyValue.newBuilder()
+            .setKey("http.request.header.x-allowed-1")
+            .setVStr("allowed-1-value")
+            .build();
+    KeyValue allowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-allowed-2")
+            .setVStr("allowed-2-value")
+            .build();
+    KeyValue notAllowed1 =
+        KeyValue.newBuilder()
+            .setKey("http.request.header.x-not-allowed-1")
+            .setVStr("not-allowed-1-value")
+            .build();
+    KeyValue notAllowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-not-allowed-2")
+            .setVStr("not-allowed-2-value")
+            .build();
+
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .addTags(allowed1)
+            .addTags(allowed2)
+            .addTags(notAllowed1)
+            .addTags(notAllowed2)
+            .build();
+
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+
+    Assertions.assertNotNull(preProcessedSpan);
+
+    Assertions.assertEquals(7, preProcessedSpan.getSpan().getTagsCount());
+    Assertions.assertEquals(7, span.getTagsCount());
+
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed1));
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed2));
+
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(notAllowed1));
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(notAllowed2));
+  }
+
+  @Test
+  public void testTagsFiltersConfiguredEmptyPrefixForSubset() {
+    // Config note:
+    // There is no subset configuration.
+    // allowed.attributes.prefixes : []
+    // So, nothing will be dropped
+
+    // In this test case, expects all the keys.
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "late.arrival.threshold.duration",
+                "1d",
+                "allowed.attributes.prefixes",
+                List.of("http.request.header.x-", "http.response.header.x-"),
+                "prefixed.matched.allowed.attributes",
+                List.of())));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+    Process process = Process.newBuilder().setServiceName("testService").build();
+
+    // expects nothing to drop as allowed.extension.attributes configured to empty
+    KeyValue allowed1 =
+        KeyValue.newBuilder()
+            .setKey("http.request.header.x-allowed-1")
+            .setVStr("allowed-1-value")
+            .build();
+    KeyValue allowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-allowed-2")
+            .setVStr("allowed-2-value")
+            .build();
+    KeyValue notAllowed1 =
+        KeyValue.newBuilder()
+            .setKey("http.request.header.x-not-allowed-1")
+            .setVStr("not-allowed-1-value")
+            .build();
+    KeyValue notAllowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-not-allowed-2")
+            .setVStr("not-allowed-2-value")
+            .build();
+
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .addTags(allowed1)
+            .addTags(allowed2)
+            .addTags(notAllowed1)
+            .addTags(notAllowed2)
+            .build();
+
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+
+    Assertions.assertNotNull(preProcessedSpan);
+
+    Assertions.assertEquals(7, preProcessedSpan.getSpan().getTagsCount());
+    Assertions.assertEquals(7, span.getTagsCount());
+
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed1));
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed2));
+
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(notAllowed1));
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(notAllowed2));
+  }
+
+  @Test
+  public void testTagsFiltersExpectsNoExceptionForNotSetValue() {
+    // Config note:
+    // Configured to drop non-allowed keys from the subset of http extension attributes
+    // allowed.attributes.prefixes : ["http.request.header.x-", "http.response.header.x-"]
+    // So, all the keys which doesn't start with above prefix will be retains, and
+    // the keys that start with above prefix will be checked against allowed list.
+
+    // In this test case, one of the tag is not set with Value
+    // As we are doing size calculation, this should not throw any exception
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "late.arrival.threshold.duration",
+                "1d",
+                "allowed.attributes.prefixes",
+                List.of("http.request.header.x-", "http.response.header.x-"),
+                "prefixed.matched.allowed.attributes",
+                List.of("http.request.header.x-allowed-1", "http.response.header.x-allowed-2"))));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+    Process process = Process.newBuilder().setServiceName("testService").build();
+
+    // expects nothing to drop as allowed.extension.attributes configured to empty
+    KeyValue allowed1 =
+        KeyValue.newBuilder()
+            .setKey("http.request.header.x-allowed-1")
+            .setVStr("allowed-1-value")
+            .build();
+    KeyValue allowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-allowed-2")
+            .setVStr("allowed-2-value")
+            .build();
+    KeyValue notAllowed1 =
+        KeyValue.newBuilder().setKey("http.request.header.x-not-allowed-1").build();
+    KeyValue notAllowed2 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-not-allowed-2")
+            .setVStr("not-allowed-2-value")
+            .build();
+    KeyValue notAllowed3 =
+        KeyValue.newBuilder()
+            .setKey("http.response.header.x-not-allowed-3")
+            .setVType(ValueType.BINARY)
+            .setVBinary(ByteString.EMPTY)
+            .build();
+
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .addTags(allowed1)
+            .addTags(allowed2)
+            .addTags(notAllowed1)
+            .addTags(notAllowed2)
+            .addTags(notAllowed3)
+            .build();
+
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+
+    Assertions.assertNotNull(preProcessedSpan);
+
+    Assertions.assertEquals(5, preProcessedSpan.getSpan().getTagsCount());
+    Assertions.assertEquals(8, span.getTagsCount());
+
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed1));
+    Assertions.assertTrue(preProcessedSpan.getSpan().getTagsList().contains(allowed2));
+
+    Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(notAllowed1));
+    Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(notAllowed2));
+    Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(notAllowed3));
   }
 
   private Map<String, Object> getCommonConfig() {

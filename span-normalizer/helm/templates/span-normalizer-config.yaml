@@ -69,6 +69,14 @@ data:
       late.arrival.threshold.duration = "{{ .Values.spanNormalizerConfig.processor.lateArrivalThresholdDuration }}"
       {{- end }}
 
+      {{- if hasKey .Values.spanNormalizerConfig.processor "allowedAttributesPrefixes" }}
+      allowed.attributes.prefixes = {{ .Values.spanNormalizerConfig.processor.allowedAttributesPrefixes | toJson }}
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "prefixedMatchedAllowedAttributes" }}
+      prefixed.matched.allowed.attributes = {{ .Values.spanNormalizerConfig.processor.prefixedMatchedAllowedAttributes | toJson }}
+      {{- end }}
+
       {{- if hasKey .Values.spanNormalizerConfig.processor "rootExitSpanDropCriterion" }}
       rootExitSpanDropCriterion = {{ .Values.spanNormalizerConfig.processor.rootExitSpanDropCriterion | toJson }}
       {{- end }}

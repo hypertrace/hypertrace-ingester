@@ -20,13 +20,14 @@ import org.slf4j.LoggerFactory;
 
 public class JaegerSpanPreProcessor
     implements Transformer<byte[], Span, KeyValue<byte[], PreProcessedSpan>> {
+  private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
 
   static final String SPANS_COUNTER = "hypertrace.reported.spans";
-  private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanPreProcessor.class);
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
   private TenantIdHandler tenantIdHandler;
   private SpanDropManager spanDropManager;
+  private TagsFilter tagsFilter;
 
   public JaegerSpanPreProcessor() {
     // empty constructor
@@ -36,6 +37,7 @@ public class JaegerSpanPreProcessor
   JaegerSpanPreProcessor(Config jobConfig, ExcludeSpanRulesCache excludeSpanRulesCache) {
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanDropManager = new SpanDropManager(jobConfig, excludeSpanRulesCache);
+    tagsFilter = new TagsFilter(jobConfig);
   }
 
   @Override
@@ -43,6 +45,7 @@ public class JaegerSpanPreProcessor
     Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanDropManager = new SpanDropManager(jobConfig);
+    tagsFilter = new TagsFilter(jobConfig);
   }
 
   @Override
@@ -92,8 +95,10 @@ public class JaegerSpanPreProcessor
       return null;
     }
 
-    return new PreProcessedSpan(
-        tenantIdHandler.getAllowedTenantId(span, spanTags, processTags).get(), span);
+    // filter tags
+    String tenantId = tenantIdHandler.getAllowedTenantId(span, spanTags, processTags).get();
+    Span processedSpan = tagsFilter.apply(tenantId, span);
+    return new PreProcessedSpan(tenantId, processedSpan);
   }
 
   @Override

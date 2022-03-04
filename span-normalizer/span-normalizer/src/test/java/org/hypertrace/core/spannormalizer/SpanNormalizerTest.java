@@ -492,4 +492,124 @@ class SpanNormalizerTest {
     inputTopic.pipeInput(span2);
     Assertions.assertTrue(outputTopic.isEmpty());
   }
+
+  @Test
+  @SetEnvironmentVariable(key = "SERVICE_NAME", value = "span-normalizer")
+  public void testTagsFilteringForJaegerSpans() {
+    Config config =
+        ConfigFactory.parseURL(
+            getClass().getClassLoader().getResource("configs/span-normalizer/application.conf"));
+
+    Map<String, Object> mergedProps = new HashMap<>();
+    underTest.getBaseStreamsConfig().forEach(mergedProps::put);
+    underTest.getStreamsConfig(config).forEach(mergedProps::put);
+    mergedProps.put(SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG, config);
+
+    StreamsBuilder streamsBuilder =
+        underTest.buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
+
+    Properties props = new Properties();
+    mergedProps.forEach(props::put);
+
+    TopologyTestDriver td = new TopologyTestDriver(streamsBuilder.build(), props);
+    TestInputTopic<byte[], Span> inputTopic =
+        td.createInputTopic(
+            config.getString(SpanNormalizerConstants.INPUT_TOPIC_CONFIG_KEY),
+            Serdes.ByteArray().serializer(),
+            new JaegerSpanSerde().serializer());
+
+    Serde<RawSpan> rawSpanSerde = new AvroSerde<>();
+    rawSpanSerde.configure(Map.of(), false);
+
+    Serde<TraceIdentity> spanIdentitySerde = new AvroSerde<>();
+    spanIdentitySerde.configure(Map.of(), true);
+
+    TestOutputTopic outputTopic =
+        td.createOutputTopic(
+            config.getString(SpanNormalizerConstants.OUTPUT_TOPIC_CONFIG_KEY),
+            spanIdentitySerde.deserializer(),
+            rawSpanSerde.deserializer());
+
+    TestOutputTopic rawLogOutputTopic =
+        td.createOutputTopic(
+            config.getString(SpanNormalizerConstants.OUTPUT_TOPIC_RAW_LOGS_CONFIG_KEY),
+            spanIdentitySerde.deserializer(),
+            new AvroSerde<>().deserializer());
+
+    // makes sure that e2e works, so it tests basic scenario, rest of the
+    // scenarios are covered in unit test of tagFilter
+    // so configure for http extension attributes
+    Instant instant = Instant.now();
+    Span span =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("1".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-1".getBytes()))
+            .setStartTime(Timestamp.newBuilder().setSeconds(instant.getEpochSecond()).build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("http.request.header.x-allowed-1")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("http.response.header.x-allowed-2")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("http.request.header.x-not-allowed-1")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("http.response.header.x-not-allowed-2")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .build();
+
+    inputTopic.pipeInput(span);
+
+    KeyValue<TraceIdentity, RawSpan> kv = outputTopic.readKeyValue();
+    assertEquals("__default", kv.key.getTenantId());
+    assertEquals(
+        HexUtils.getHex(ByteString.copyFrom("trace-1".getBytes()).toByteArray()),
+        HexUtils.getHex(kv.key.getTraceId().array()));
+    RawSpan value = kv.value;
+    assertEquals(HexUtils.getHex("1".getBytes()), HexUtils.getHex((value).getEvent().getEventId()));
+    assertEquals(SERVICE_NAME, value.getEvent().getServiceName());
+
+    // test of attributes
+    Assertions.assertEquals(3, value.getEvent().getAttributes().getAttributeMap().size());
+
+    Assertions.assertTrue(
+        value
+            .getEvent()
+            .getAttributes()
+            .getAttributeMap()
+            .containsKey("http.request.header.x-allowed-1"));
+    Assertions.assertTrue(
+        value
+            .getEvent()
+            .getAttributes()
+            .getAttributeMap()
+            .containsKey("http.response.header.x-allowed-2"));
+
+    Assertions.assertFalse(
+        value
+            .getEvent()
+            .getAttributes()
+            .getAttributeMap()
+            .containsKey("http.request.header.x-not-allowed-1"));
+    Assertions.assertFalse(
+        value
+            .getEvent()
+            .getAttributes()
+            .getAttributeMap()
+            .containsKey("http.response.header.x-not-allowed-2"));
+  }
 }
