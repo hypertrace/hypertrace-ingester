@@ -992,6 +992,71 @@ class JaegerSpanPreProcessorTest {
             .build();
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNull(preProcessedSpan);
+
+    // case6 : {[http.url, deployment.environment], rule -> env equals env1 and url contains health}
+    // drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            Field.FIELD_ENVIRONMENT_NAME,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
+                                            "env1"),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("deployment.environment").setVStr("env1").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey("http.request.url")
+                    .setVStr("http://xyz.com/api/v1/health/check")
+                    .build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    // case7 : {[http.url, deployment.environment], rule -> env equals env1 and url contains health}
+    // drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            null,
+                                            "deployment.environment",
+                                            RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
+                                            "env1"),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
   }
 
   @Test
