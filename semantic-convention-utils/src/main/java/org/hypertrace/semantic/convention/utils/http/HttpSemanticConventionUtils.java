@@ -122,7 +122,7 @@ public class HttpSemanticConventionUtils {
           HttpSemanticConventions.HTTP_REQUEST_X_FORWARDED_PROTO.getValue(),
           OTelHttpSemanticConventions.HTTP_SCHEME.getValue());
 
-  private static final List<String> FULL_URL_ATTRIBUTES =
+  public static final List<String> FULL_URL_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_URL),
           RawSpanConstants.getValue(HTTP_REQUEST_URL),

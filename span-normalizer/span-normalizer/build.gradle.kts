@@ -38,6 +38,9 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.33")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.33")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.23")
+  implementation("org.hypertrace.config.service:span-processing-config-service-api:0.1.23")
+  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.6.2")
+  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.6.2")
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.42.0")
@@ -53,6 +56,8 @@ dependencies {
           "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
     }
   }
+  annotationProcessor("org.projectlombok:lombok:1.18.18")
+  compileOnly("org.projectlombok:lombok:1.18.18")
 
   implementation("com.typesafe:config:1.4.1")
   implementation("de.javakaffee:kryo-serializers:0.45")

@@ -3,8 +3,6 @@ package org.hypertrace.core.spannormalizer.jaeger;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.core.spannormalizer.jaeger.tenant.DefaultTenantIdProvider;
@@ -26,23 +24,10 @@ public class TenantIdHandler {
    */
   private static final String DEFAULT_TENANT_ID_CONFIG = "processor.defaultTenantId";
 
-  // list of tenant ids to exclude
-  private static final String TENANT_IDS_TO_EXCLUDE_CONFIG = "processor.excludeTenantIds";
-
   private final TenantIdProvider tenantIdProvider;
-  private final List<String> tenantIdsToExclude;
 
   public TenantIdHandler(Config config) {
     this.tenantIdProvider = getTenantIdProvider(config);
-
-    this.tenantIdsToExclude =
-        config.hasPath(TENANT_IDS_TO_EXCLUDE_CONFIG)
-            ? config.getStringList(TENANT_IDS_TO_EXCLUDE_CONFIG)
-            : Collections.emptyList();
-
-    if (!this.tenantIdsToExclude.isEmpty()) {
-      LOG.info("list of tenant ids to exclude : {}", this.tenantIdsToExclude);
-    }
   }
 
   private TenantIdProvider getTenantIdProvider(Config config) {
@@ -90,17 +75,9 @@ public class TenantIdHandler {
 
     if (maybeTenantId.isEmpty()) {
       tenantIdProvider.logWarning(LOG, jaegerSpan);
-      return Optional.empty();
     }
 
-    String tenantId = maybeTenantId.get();
-
-    if (this.tenantIdsToExclude.contains(tenantId)) {
-      LOG.debug("Dropping span for tenant id : {}", tenantId);
-      return Optional.empty();
-    }
-
-    return Optional.of(tenantId);
+    return maybeTenantId;
   }
 
   TenantIdProvider getTenantIdProvider() {
