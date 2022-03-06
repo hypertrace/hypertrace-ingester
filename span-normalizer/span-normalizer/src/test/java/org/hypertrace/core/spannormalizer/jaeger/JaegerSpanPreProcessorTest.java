@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.SpanAttribute;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
@@ -1033,7 +1034,8 @@ class JaegerSpanPreProcessorTest {
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNull(preProcessedSpan);
 
-    // case7 : {[http.url, deployment.environment], rule -> env equals env1 and url contains health}
+    // case7 : {[http.url, deployment.environment], rule -> env in [env,env1] and url contains
+    // health}
     // drop span
     when(excludeSpanRulesCache.get(any()))
         .thenReturn(
@@ -1048,8 +1050,8 @@ class JaegerSpanPreProcessorTest {
                                         buildRelationalFilter(
                                             null,
                                             "deployment.environment",
-                                            RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
-                                            "env1"),
+                                            RelationalOperator.RELATIONAL_OPERATOR_IN,
+                                            List.of("env", "env1")),
                                         buildRelationalFilter(
                                             Field.FIELD_URL,
                                             null,
@@ -1059,6 +1061,34 @@ class JaegerSpanPreProcessorTest {
                     .build()));
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNull(preProcessedSpan);
+
+    // case7 : {[http.url, deployment.environment], rule -> env in [env,env2] and url contains
+    // health}
+    // should not drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            null,
+                                            "deployment.environment",
+                                            RelationalOperator.RELATIONAL_OPERATOR_IN,
+                                            List.of("env", "env2")),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
   }
 
   @Test
@@ -1611,6 +1641,37 @@ class JaegerSpanPreProcessorTest {
             relationalSpanFilterExpressionBuilder
                 .setOperator(operator)
                 .setRightOperand(SpanFilterValue.newBuilder().setStringValue(rhs).build())
+                .build())
+        .build();
+  }
+
+  private static SpanFilter buildRelationalFilter(
+      Field field, String spanAttributeKey, RelationalOperator operator, List<String> rhs) {
+    RelationalSpanFilterExpression.Builder relationalSpanFilterExpressionBuilder =
+        RelationalSpanFilterExpression.newBuilder();
+    if (spanAttributeKey == null) {
+      relationalSpanFilterExpressionBuilder.setField(field);
+    } else {
+      relationalSpanFilterExpressionBuilder.setSpanAttributeKey(spanAttributeKey);
+    }
+    return SpanFilter.newBuilder()
+        .setRelationalSpanFilter(
+            relationalSpanFilterExpressionBuilder
+                .setOperator(operator)
+                .setRightOperand(
+                    SpanFilterValue.newBuilder()
+                        .setListValue(
+                            org.hypertrace.span.processing.config.service.v1.ListValue.newBuilder()
+                                .addAllValues(
+                                    rhs.stream()
+                                        .map(
+                                            val ->
+                                                SpanFilterValue.newBuilder()
+                                                    .setStringValue(val)
+                                                    .build())
+                                        .collect(Collectors.toUnmodifiableList()))
+                                .build())
+                        .build())
                 .build())
         .build();
   }

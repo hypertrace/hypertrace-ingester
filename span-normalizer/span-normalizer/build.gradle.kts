@@ -38,7 +38,7 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.33")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.33")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.23")
-  implementation("org.hypertrace.config.service:span-processing-config-service-api:0.1.23")
+  implementation("org.hypertrace.config.service:span-processing-config-service-api:0.1.27")
   implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.6.2")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.6.2")
 
