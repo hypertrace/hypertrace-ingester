@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
@@ -18,6 +19,7 @@ import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.client.ConfigServiceClient;
 import org.hypertrace.core.spannormalizer.config.ConfigServiceConfig;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
+import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRuleDetails;
 
 @Slf4j
 public class ExcludeSpanRulesCache {
@@ -57,7 +59,10 @@ public class ExcludeSpanRulesCache {
                         try {
                           return configServiceClient
                               .getAllExcludeSpanRules(RequestContext.forTenantId(tenantId))
-                              .getRulesList();
+                              .getRuleDetailsList()
+                              .stream()
+                              .map(ExcludeSpanRuleDetails::getRule)
+                              .collect(Collectors.toUnmodifiableList());
                         } catch (Exception e) {
                           log.error(
                               "Could not get all exclude span rules for tenant id {}:{}",

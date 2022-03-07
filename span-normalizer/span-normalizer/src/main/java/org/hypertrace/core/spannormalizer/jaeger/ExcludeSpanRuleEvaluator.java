@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -17,11 +18,13 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
 import org.hypertrace.span.processing.config.service.v1.Field;
+import org.hypertrace.span.processing.config.service.v1.ListValue;
 import org.hypertrace.span.processing.config.service.v1.LogicalOperator;
 import org.hypertrace.span.processing.config.service.v1.LogicalSpanFilterExpression;
 import org.hypertrace.span.processing.config.service.v1.RelationalOperator;
 import org.hypertrace.span.processing.config.service.v1.RelationalSpanFilterExpression;
 import org.hypertrace.span.processing.config.service.v1.SpanFilter;
+import org.hypertrace.span.processing.config.service.v1.SpanFilterValue;
 
 @Slf4j
 public class ExcludeSpanRuleEvaluator {
@@ -121,22 +124,22 @@ public class ExcludeSpanRuleEvaluator {
           processTags,
           relationalSpanFilterExpression.getOperator(),
           spanAttributeKey,
-          relationalSpanFilterExpression.getRightOperand().getStringValue());
+          relationalSpanFilterExpression.getRightOperand());
     } else {
       Field field = relationalSpanFilterExpression.getField();
       switch (field) {
         case FIELD_SERVICE_NAME:
           return matches(
-              relationalSpanFilterExpression.getOperator(),
               serviceName,
-              relationalSpanFilterExpression.getRightOperand().getStringValue());
+              relationalSpanFilterExpression.getRightOperand(),
+              relationalSpanFilterExpression.getOperator());
         case FIELD_ENVIRONMENT_NAME:
           return matches(
               tags,
               processTags,
               relationalSpanFilterExpression.getOperator(),
               ENVIRONMENT_ATTRIBUTE,
-              relationalSpanFilterExpression.getRightOperand().getStringValue());
+              relationalSpanFilterExpression.getRightOperand());
         case FIELD_URL:
           return FULL_URL_ATTRIBUTES.stream()
               .anyMatch(
@@ -146,7 +149,7 @@ public class ExcludeSpanRuleEvaluator {
                           processTags,
                           relationalSpanFilterExpression.getOperator(),
                           urlAttribute,
-                          relationalSpanFilterExpression.getRightOperand().getStringValue()));
+                          relationalSpanFilterExpression.getRightOperand()));
         default:
           log.error("Unknown filter field: {}", field);
           return false;
@@ -159,27 +162,61 @@ public class ExcludeSpanRuleEvaluator {
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
       RelationalOperator operator,
       String lhs,
-      String rhs) {
-    return (tags.containsKey(lhs) && matches(operator, tags.get(lhs).getVStr(), rhs))
-        || (processTags.containsKey(lhs) && matches(operator, processTags.get(lhs).getVStr(), rhs));
+      SpanFilterValue rhs) {
+    return (tags.containsKey(lhs) && matches(tags.get(lhs).getVStr(), rhs, operator))
+        || (processTags.containsKey(lhs) && matches(processTags.get(lhs).getVStr(), rhs, operator));
   }
 
-  private boolean matches(RelationalOperator operator, String lhs, String rhs) {
-    switch (operator) {
+  private boolean matches(
+      String lhs,
+      String rhs,
+      org.hypertrace.span.processing.config.service.v1.RelationalOperator relationalOperator) {
+    switch (relationalOperator) {
+      case RELATIONAL_OPERATOR_CONTAINS:
+        return lhs.contains(rhs);
       case RELATIONAL_OPERATOR_EQUALS:
-        return StringUtils.equals(lhs, rhs);
+        return lhs.equals(rhs);
       case RELATIONAL_OPERATOR_NOT_EQUALS:
-        return !StringUtils.equals(lhs, rhs);
+        return !lhs.equals(rhs);
       case RELATIONAL_OPERATOR_STARTS_WITH:
-        return StringUtils.startsWith(lhs, rhs);
+        return lhs.startsWith(rhs);
       case RELATIONAL_OPERATOR_ENDS_WITH:
-        return StringUtils.endsWith(lhs, rhs);
+        return lhs.endsWith(rhs);
       case RELATIONAL_OPERATOR_REGEX_MATCH:
         return lhs.matches(rhs);
-      case RELATIONAL_OPERATOR_CONTAINS:
-        return StringUtils.contains(lhs, rhs);
       default:
-        log.error("Unknown relational operator: {}", operator);
+        log.error("Unsupported relational operator for string value rhs:{}", relationalOperator);
+        return false;
+    }
+  }
+
+  private boolean matches(
+      String lhs,
+      ListValue rhs,
+      org.hypertrace.span.processing.config.service.v1.RelationalOperator relationalOperator) {
+    switch (relationalOperator) {
+      case RELATIONAL_OPERATOR_IN:
+        return rhs.getValuesList().stream()
+            .map(org.hypertrace.span.processing.config.service.v1.SpanFilterValue::getStringValue)
+            .collect(Collectors.toUnmodifiableList())
+            .contains(lhs);
+      default:
+        log.error("Unsupported relational operator for list value rhs:{}", relationalOperator);
+        return false;
+    }
+  }
+
+  private boolean matches(
+      String lhs,
+      org.hypertrace.span.processing.config.service.v1.SpanFilterValue rhs,
+      org.hypertrace.span.processing.config.service.v1.RelationalOperator relationalOperator) {
+    switch (rhs.getValueCase()) {
+      case STRING_VALUE:
+        return matches(lhs, rhs.getStringValue(), relationalOperator);
+      case LIST_VALUE:
+        return matches(lhs, rhs.getListValue(), relationalOperator);
+      default:
+        log.error("Unknown span filter value type:{}", rhs);
         return false;
     }
   }
