@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
+import org.hypertrace.core.grpcutils.context.ContextualKey;
 import org.hypertrace.core.grpcutils.context.RequestContext;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.client.ConfigServiceClient;
@@ -31,7 +32,7 @@ public class ExcludeSpanRulesCache {
   private static final Duration CACHE_REFRESH_DURATION_DEFAULT = Duration.ofMillis(180000);
   private static final Duration CACHE_EXPIRY_DURATION_DEFAULT = Duration.ofMillis(300000);
   private static ExcludeSpanRulesCache INSTANCE;
-  private final LoadingCache<String, List<ExcludeSpanRule>> excludeSpanRulesCache;
+  private final LoadingCache<ContextualKey<Void>, List<ExcludeSpanRule>> excludeSpanRulesCache;
 
   private ExcludeSpanRulesCache(Config config) {
     Duration cacheRefreshDuration =
@@ -55,18 +56,20 @@ public class ExcludeSpanRulesCache {
                 CacheLoader.asyncReloading(
                     new CacheLoader<>() {
                       @Override
-                      public List<ExcludeSpanRule> load(@Nonnull String tenantId) {
+                      public List<ExcludeSpanRule> load(@Nonnull ContextualKey<Void> key) {
                         try {
-                          return configServiceClient
-                              .getAllExcludeSpanRules(RequestContext.forTenantId(tenantId))
-                              .getRuleDetailsList()
-                              .stream()
-                              .map(ExcludeSpanRuleDetails::getRule)
-                              .collect(Collectors.toUnmodifiableList());
+                          return key.callInContext(
+                              () ->
+                                  configServiceClient
+                                      .getAllExcludeSpanRules(key.getContext())
+                                      .getRuleDetailsList()
+                                      .stream()
+                                      .map(ExcludeSpanRuleDetails::getRule)
+                                      .collect(Collectors.toUnmodifiableList()));
                         } catch (Exception e) {
                           log.error(
                               "Could not get all exclude span rules for tenant id {}:{}",
-                              tenantId,
+                              key.getContext().getTenantId(),
                               e);
                           return Collections.emptyList();
                         }
@@ -85,6 +88,6 @@ public class ExcludeSpanRulesCache {
   }
 
   public List<ExcludeSpanRule> get(String tenantId) throws ExecutionException {
-    return excludeSpanRulesCache.get(tenantId);
+    return excludeSpanRulesCache.get(RequestContext.forTenantId(tenantId).buildContextualKey());
   }
 }
