@@ -176,6 +176,13 @@ public class HttpSemanticConventionUtils {
     return false;
   }
 
+  public static Optional<String> getFullHttpUrl(Event event) {
+    Optional<String> fullHttpUrl = getHttpUrl(event);
+    return fullHttpUrl.isPresent()
+        ? fullHttpUrl
+        : getValidHttpUrl(event).map(AttributeValue::getValue);
+  }
+
   /**
    * OTel mandates one of the following set to be present for http server span - http.scheme,
    * http.host, http.target - http.scheme, http.server_name, net.host.port, http.target -

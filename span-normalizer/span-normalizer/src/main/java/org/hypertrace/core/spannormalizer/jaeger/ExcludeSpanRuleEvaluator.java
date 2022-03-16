@@ -15,6 +15,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
 import org.hypertrace.span.processing.config.service.v1.Field;
@@ -74,6 +75,10 @@ public class ExcludeSpanRuleEvaluator {
                 : StringUtils.EMPTY;
 
     return applyExcludeSpanRules(excludeSpanRules, tags, processTags, serviceName);
+  }
+
+  public boolean shouldDropEvent(Event event) {
+    return false;
   }
 
   private boolean applyExcludeSpanRules(

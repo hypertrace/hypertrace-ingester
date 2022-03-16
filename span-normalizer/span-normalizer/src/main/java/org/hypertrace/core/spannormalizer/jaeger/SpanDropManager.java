@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import lombok.extern.slf4j.Slf4j;
+import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 
 @Slf4j
@@ -88,6 +89,10 @@ public class SpanDropManager {
         || shouldDropSpansBasedOnSpanFilter(tenantId, span, spanTags, processTags)
         || shouldDropSpansBasedOnExcludeRules(tenantId, span, spanTags, processTags)
         || shouldDropSpansBasedOnLateArrival(tenantId, span);
+  }
+
+  public boolean shouldDropEvent(Event event) {
+    return excludeSpanRuleEvaluator.shouldDropEvent(event);
   }
 
   private boolean shouldDropSpansBasedOnSpanFilter(

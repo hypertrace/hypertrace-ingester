@@ -20,6 +20,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_DOT_AGENT;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_METHOD;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
+import static org.hypertrace.core.spannormalizer.util.EventBuilder.buildEvent;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -32,6 +33,7 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -96,7 +98,8 @@ public class MigrationTestHttp {
         };
 
     Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -136,7 +139,8 @@ public class MigrationTestHttp {
       throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -151,7 +155,8 @@ public class MigrationTestHttp {
       throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -165,7 +170,8 @@ public class MigrationTestHttp {
       throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -179,7 +185,8 @@ public class MigrationTestHttp {
       throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -196,7 +203,8 @@ public class MigrationTestHttp {
             Map.of(
                 RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
                 RawSpanConstants.getValue(HTTP_PATH), "  "));
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     assertFalse(HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).isPresent());
 
@@ -205,7 +213,8 @@ public class MigrationTestHttp {
             Map.of(
                 RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
                 RawSpanConstants.getValue(HTTP_PATH), "/"));
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
   }
@@ -216,7 +225,8 @@ public class MigrationTestHttp {
       throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -230,7 +240,8 @@ public class MigrationTestHttp {
       throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -245,7 +256,8 @@ public class MigrationTestHttp {
       throws Exception {
 
     Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -259,7 +271,8 @@ public class MigrationTestHttp {
 
     Span span =
         createSpanFromTags(Map.of(RawSpanConstants.getValue(HTTP_URL), "/dispatch/test?a=b&k1=v1"));
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
     assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
   }
 
@@ -269,7 +282,8 @@ public class MigrationTestHttp {
     Span span =
         createSpanFromTags(
             Map.of(RawSpanConstants.getValue(HTTP_URL), "http://abc.xyz/dispatch/test?a=b&k1=v1"));
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -292,7 +306,8 @@ public class MigrationTestHttp {
                     .setVStr("https://example.ai/apis/5673/events?a1=v1&a2=v2"))
             .build();
 
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -313,7 +328,8 @@ public class MigrationTestHttp {
                     .setVStr("https://example.ai/apis/5673/events/?a1=v1&a2=v2"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -334,7 +350,8 @@ public class MigrationTestHttp {
                     .setVStr("https://example.ai/apis/5673/events"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -354,7 +371,8 @@ public class MigrationTestHttp {
                     .setVStr("https://example.ai"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -373,7 +391,8 @@ public class MigrationTestHttp {
                     .setVStr("/apis/5673/events?a1=v1&a2=v2"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -395,7 +414,8 @@ public class MigrationTestHttp {
                     .setVStr("http://example.ai:9000/?a1=v1&a2=v2"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -425,7 +445,8 @@ public class MigrationTestHttp {
                     .setVStr("/some-test-path"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -457,7 +478,8 @@ public class MigrationTestHttp {
         };
 
     Span span = createSpanFromTags(tagsMap);
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -490,7 +512,8 @@ public class MigrationTestHttp {
   @Test
   public void testPopulateOtherFieldsOTelSpan() throws Exception {
     Span span = Span.newBuilder().build();
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
     assertFalse(HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
@@ -506,7 +529,8 @@ public class MigrationTestHttp {
                     .setVStr("https://example.ai/apis/5673/events?a1=v1&a2=v2"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -527,7 +551,8 @@ public class MigrationTestHttp {
                     .setVStr("https://example.ai/apis/5673/events/?a1=v1&a2=v2"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 
@@ -547,7 +572,8 @@ public class MigrationTestHttp {
                     .setVStr("https://example.ai/apis/5673/events"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -567,7 +593,8 @@ public class MigrationTestHttp {
                     .setVStr("https://example.ai"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 
@@ -585,7 +612,8 @@ public class MigrationTestHttp {
                     .setVStr("/apis/5673/events?a1=v1&a2=v2"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 
@@ -606,7 +634,8 @@ public class MigrationTestHttp {
                     .setVStr("http://example.ai:9000/?a1=v1&a2=v2"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 
@@ -635,7 +664,8 @@ public class MigrationTestHttp {
                     .setVStr("/some-test-path"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
     assertEquals(
@@ -673,7 +703,8 @@ public class MigrationTestHttp {
                         "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel"))
             .build();
 
-    rawSpan = normalizer.convert("tenant-key", span);
+    rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
     assertEquals(
@@ -689,7 +720,8 @@ public class MigrationTestHttp {
             Map.of(
                 OTelHttpSemanticConventions.HTTP_TARGET.getValue(),
                 "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel"));
-    RawSpan rawSpan = normalizer.convert("tenant-key", span);
+    RawSpan rawSpan =
+        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 
