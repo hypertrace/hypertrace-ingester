@@ -110,7 +110,11 @@ public class JaegerSpanPreProcessor
 
     // filter tags
     Span processedSpan = tagsFilter.apply(tenantId, span);
-    return new PreProcessedSpan(tenantId, processedSpan, event);
+    return new PreProcessedSpan(
+        tenantId,
+        processedSpan,
+        buildEvent(
+            tenantId, processedSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey()));
   }
 
   @Override
