@@ -94,6 +94,7 @@ public class ExcludeSpanRuleEvaluator {
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
       String serviceName) {
     return excludeSpanRules.stream()
+        .filter(excludeSpanRule -> !excludeSpanRule.getRuleInfo().getDisabled())
         .anyMatch(
             excludeSpanRule ->
                 applyFilter(
@@ -102,6 +103,7 @@ public class ExcludeSpanRuleEvaluator {
 
   private boolean applyExcludeSpanRules(List<ExcludeSpanRule> excludeSpanRules, Event event) {
     return excludeSpanRules.stream()
+        .filter(excludeSpanRule -> !excludeSpanRule.getRuleInfo().getDisabled())
         .anyMatch(excludeSpanRule -> applyFilter(excludeSpanRule.getRuleInfo().getFilter(), event));
   }
 

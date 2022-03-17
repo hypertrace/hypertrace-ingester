@@ -1123,6 +1123,25 @@ class JaegerSpanPreProcessorTest {
             .build();
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNull(preProcessedSpan);
+
+    // case8: same as above but with rule disabled. So don't drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setDisabled(true)
+                            .setFilter(
+                                buildRelationalFilter(
+                                    Field.FIELD_URL,
+                                    null,
+                                    RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                    "health"))
+                            .build())
+                    .build()));
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
   }
 
   @Test
