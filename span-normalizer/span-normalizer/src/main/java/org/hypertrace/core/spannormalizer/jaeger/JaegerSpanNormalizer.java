@@ -79,13 +79,6 @@ public class JaegerSpanNormalizer {
       Builder rawSpanBuilder = fastNewBuilder(RawSpan.Builder.class);
       rawSpanBuilder.setCustomerId(tenantId);
       rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
-      // Build Event
-      //      Event event =
-      //          buildEvent(
-      //              tenantId,
-      //              jaegerSpan,
-      //              spanTags,
-      //              tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
       rawSpanBuilder.setEvent(event);
       rawSpanBuilder.setReceivedTimeMillis(System.currentTimeMillis());
       resourceNormalizer
@@ -100,110 +93,6 @@ public class JaegerSpanNormalizer {
       return rawSpan;
     };
   }
-
-  //  /**
-  //   * Builds the event object from the jaeger span. Note: tagsMap should contain keys that have
-  //   * already been converted to lowercase by the caller.
-  //   */
-  //  private Event buildEvent(
-  //      String tenantId,
-  //      Span jaegerSpan,
-  //      @Nonnull Map<String, KeyValue> tagsMap,
-  //      Optional<String> tenantIdKey) {
-  //    Event.Builder eventBuilder = fastNewBuilder(Event.Builder.class);
-  //    eventBuilder.setCustomerId(tenantId);
-  //    eventBuilder.setEventId(jaegerSpan.getSpanId().asReadOnlyByteBuffer());
-  //    eventBuilder.setEventName(jaegerSpan.getOperationName());
-  //
-  //    // time related stuff
-  //    long startTimeMillis = Timestamps.toMillis(jaegerSpan.getStartTime());
-  //    eventBuilder.setStartTimeMillis(startTimeMillis);
-  //    long endTimeMillis =
-  //        Timestamps.toMillis(Timestamps.add(jaegerSpan.getStartTime(),
-  // jaegerSpan.getDuration()));
-  //    eventBuilder.setEndTimeMillis(endTimeMillis);
-  //
-  //    // SPAN REFS
-  //    List<JaegerSpanInternalModel.SpanRef> referencesList = jaegerSpan.getReferencesList();
-  //    if (referencesList.size() > 0) {
-  //      eventBuilder.setEventRefList(new ArrayList<>());
-  //      // Convert the reflist to a set to remove duplicate references. This has been observed in
-  // the
-  //      // field.
-  //      Set<JaegerSpanInternalModel.SpanRef> referencesSet = new HashSet<>(referencesList);
-  //      for (JaegerSpanInternalModel.SpanRef spanRef : referencesSet) {
-  //        EventRef.Builder builder = fastNewBuilder(EventRef.Builder.class);
-  //        builder.setTraceId(spanRef.getTraceId().asReadOnlyByteBuffer());
-  //        builder.setEventId(spanRef.getSpanId().asReadOnlyByteBuffer());
-  //        builder.setRefType(EventRefType.valueOf(spanRef.getRefType().toString()));
-  //        eventBuilder.getEventRefList().add(builder.build());
-  //      }
-  //    }
-  //
-  //    // span attributes to event attributes
-  //    Map<String, AttributeValue> attributeFieldMap = new HashMap<>();
-  //    eventBuilder.setAttributesBuilder(
-  //        fastNewBuilder(Attributes.Builder.class).setAttributeMap(attributeFieldMap));
-  //
-  //    List<KeyValue> tagsList = jaegerSpan.getTagsList();
-  //    // Stop populating first class fields for - grpc, rpc, http, and sql.
-  //    // see more details:
-  //    // https://github.com/hypertrace/hypertrace/issues/244
-  //    // https://github.com/hypertrace/hypertrace/issues/245
-  //    for (KeyValue keyValue : tagsList) {
-  //      // Convert all attributes to lower case so that we don't have to
-  //      // deal with the case sensitivity across different layers in the
-  //      // platform.
-  //      String key = keyValue.getKey().toLowerCase();
-  //      // Do not add the tenant id to the tags.
-  //      if ((tenantIdKey.isPresent() && key.equals(tenantIdKey.get()))) {
-  //        continue;
-  //      }
-  //      attributeFieldMap.put(key, JaegerHTTagsConverter.createFromJaegerKeyValue(keyValue));
-  //    }
-  //
-  //    // Jaeger Fields - flags, warnings, logs, jaeger service name in the Process
-  //    JaegerFields.Builder jaegerFieldsBuilder = eventBuilder.getJaegerFieldsBuilder();
-  //    // FLAGS
-  //    jaegerFieldsBuilder.setFlags(jaegerSpan.getFlags());
-  //
-  //    // WARNINGS
-  //    ProtocolStringList warningsList = jaegerSpan.getWarningsList();
-  //    if (warningsList.size() > 0) {
-  //      jaegerFieldsBuilder.setWarnings(warningsList);
-  //    }
-  //
-  //    // Jaeger service name can come from either first class field in Span or the tag
-  //    // `jaeger.servicename`
-  //    String serviceName =
-  //        !StringUtils.isEmpty(jaegerSpan.getProcess().getServiceName())
-  //            ? jaegerSpan.getProcess().getServiceName()
-  //            : attributeFieldMap.containsKey(OLD_JAEGER_SERVICENAME_KEY)
-  //                ? attributeFieldMap.get(OLD_JAEGER_SERVICENAME_KEY).getValue()
-  //                : StringUtils.EMPTY;
-  //
-  //    if (!StringUtils.isEmpty(serviceName)) {
-  //      eventBuilder.setServiceName(serviceName);
-  //      // in case `jaeger.servicename` is present in the map, remove it
-  //      attributeFieldMap.remove(OLD_JAEGER_SERVICENAME_KEY);
-  //      attributeFieldMap.put(
-  //          RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME),
-  //          AttributeValueCreator.create(serviceName));
-  //    }
-  //
-  //    // EVENT METRICS
-  //    Map<String, MetricValue> metricMap = new HashMap<>();
-  //    MetricValue durationMetric =
-  //        fastNewBuilder(MetricValue.Builder.class)
-  //            .setValue((double) (endTimeMillis - startTimeMillis))
-  //            .build();
-  //    metricMap.put("Duration", durationMetric);
-  //
-  //
-  // eventBuilder.setMetrics(fastNewBuilder(Metrics.Builder.class).setMetricMap(metricMap).build());
-  //
-  //    return eventBuilder.build();
-  //  }
 
   // Check if debug log is enabled before calling this method
   private void logSpanConversion(Span jaegerSpan, RawSpan rawSpan) {

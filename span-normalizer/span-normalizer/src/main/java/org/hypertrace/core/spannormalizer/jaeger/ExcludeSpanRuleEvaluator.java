@@ -85,8 +85,6 @@ public class ExcludeSpanRuleEvaluator {
     if (excludeSpanRules.isEmpty()) {
       return false;
     }
-    //    boolean a = applyExcludeSpanRules(excludeSpanRules, event);
-    //    return a;
     return applyExcludeSpanRules(excludeSpanRules, event);
   }
 
