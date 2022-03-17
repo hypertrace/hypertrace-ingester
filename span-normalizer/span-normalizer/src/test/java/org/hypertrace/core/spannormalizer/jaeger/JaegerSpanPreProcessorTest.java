@@ -1089,6 +1089,40 @@ class JaegerSpanPreProcessorTest {
                     .build()));
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNotNull(preProcessedSpan);
+
+    // case8: url contains health. build url for otel format. Drop happens based on event
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildRelationalFilter(
+                                    Field.FIELD_URL,
+                                    null,
+                                    RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                    "health"))
+                            .build())
+                    .build()));
+
+    process =
+        Process.newBuilder()
+            .setServiceName("testService")
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .build();
+
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+            .addTags(KeyValue.newBuilder().setKey("http.scheme").setVStr("http").build())
+            .addTags(KeyValue.newBuilder().setKey("http.host").setVStr("xyz.com").build())
+            .addTags(
+                KeyValue.newBuilder().setKey("http.target").setVStr("/api/v1/health/check").build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
   }
 
   @Test

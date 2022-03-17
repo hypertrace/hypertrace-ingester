@@ -10,9 +10,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
@@ -72,18 +72,15 @@ public class SpanDropManager {
     return configuredThreshold;
   }
 
-  public boolean shouldDropSpan(
-      JaegerSpanInternalModel.Span span,
-      Map<String, JaegerSpanInternalModel.KeyValue> spanTags,
-      Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
+  public boolean shouldDropSpan(JaegerSpanInternalModel.Span span, String tenantId) {
 
-    Optional<String> maybeTenantId =
-        tenantIdHandler.getAllowedTenantId(span, spanTags, processTags);
-    if (maybeTenantId.isEmpty()) {
-      return true;
-    }
+    Map<String, JaegerSpanInternalModel.KeyValue> spanTags =
+        span.getTagsList().stream()
+            .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
+    Map<String, JaegerSpanInternalModel.KeyValue> processTags =
+        span.getProcess().getTagsList().stream()
+            .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
 
-    String tenantId = maybeTenantId.get();
     // TODO: Eventually get rid of span filter and tenantID based filter
     return shouldDropSpansBasedOnTenantIdFilter(tenantId)
         || shouldDropSpansBasedOnSpanFilter(tenantId, span, spanTags, processTags)
@@ -91,8 +88,18 @@ public class SpanDropManager {
         || shouldDropSpansBasedOnLateArrival(tenantId, span);
   }
 
-  public boolean shouldDropEvent(Event event) {
-    return excludeSpanRuleEvaluator.shouldDropEvent(event);
+  public boolean shouldDropEvent(Event event, String tenantId) {
+    if (excludeSpanRuleEvaluator.shouldDropEvent(event, tenantId)) {
+      tenantToSpansDroppedCount
+          .computeIfAbsent(
+              tenantId,
+              tenant ->
+                  PlatformMetricsRegistry.registerCounter(
+                      DROPPED_SPANS_COUNTER, Map.of("tenantId", tenantId)))
+          .increment();
+      return true;
+    }
+    return false;
   }
 
   private boolean shouldDropSpansBasedOnSpanFilter(
