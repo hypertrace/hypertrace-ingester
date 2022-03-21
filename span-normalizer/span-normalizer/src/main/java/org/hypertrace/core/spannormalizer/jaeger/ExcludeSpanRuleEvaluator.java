@@ -1,22 +1,15 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
-import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY;
-import static org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils.FULL_URL_ATTRIBUTES;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.config.utils.SpanFilterMatcher;
-import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
 import org.hypertrace.span.processing.config.service.v1.Field;
@@ -44,13 +37,10 @@ public class ExcludeSpanRuleEvaluator {
     this.spanFilterMatcher = new SpanFilterMatcher();
   }
 
-  private static final String ENVIRONMENT_ATTRIBUTE = "deployment.environment";
-
   @SneakyThrows
   public boolean shouldDropSpan(
-      Optional<String> tenantIdKey,
       String tenantId,
-      JaegerSpanInternalModel.Span jaegerSpan,
+      Event event,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
     List<ExcludeSpanRule> excludeSpanRules = excludeSpanRulesCache.get(tenantId);
@@ -58,63 +48,29 @@ public class ExcludeSpanRuleEvaluator {
       return false;
     }
 
-    Map<String, AttributeValue> attributeFieldMap = new HashMap<>();
-
-    List<JaegerSpanInternalModel.KeyValue> tagsList = jaegerSpan.getTagsList();
-    for (JaegerSpanInternalModel.KeyValue keyValue : tagsList) {
-      String key = keyValue.getKey().toLowerCase();
-      if ((tenantIdKey.isPresent() && key.equals(tenantIdKey.get()))) {
-        continue;
-      }
-      attributeFieldMap.put(key, JaegerHTTagsConverter.createFromJaegerKeyValue(keyValue));
-    }
-
-    String serviceName =
-        !StringUtils.isEmpty(jaegerSpan.getProcess().getServiceName())
-            ? jaegerSpan.getProcess().getServiceName()
-            : attributeFieldMap.containsKey(OLD_JAEGER_SERVICENAME_KEY)
-                ? attributeFieldMap.get(OLD_JAEGER_SERVICENAME_KEY).getValue()
-                : StringUtils.EMPTY;
-
-    return applyExcludeSpanRules(excludeSpanRules, tags, processTags, serviceName);
-  }
-
-  @SneakyThrows
-  public boolean shouldDropEvent(Event event, String tenantId) {
-    List<ExcludeSpanRule> excludeSpanRules = excludeSpanRulesCache.get(tenantId);
-    if (excludeSpanRules.isEmpty()) {
-      return false;
-    }
-    return applyExcludeSpanRules(excludeSpanRules, event);
+    return applyExcludeSpanRules(excludeSpanRules, tags, processTags, event);
   }
 
   private boolean applyExcludeSpanRules(
       List<ExcludeSpanRule> excludeSpanRules,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
-      String serviceName) {
+      Event event) {
     return excludeSpanRules.stream()
         .filter(excludeSpanRule -> !excludeSpanRule.getRuleInfo().getDisabled())
         .anyMatch(
             excludeSpanRule ->
-                applyFilter(
-                    excludeSpanRule.getRuleInfo().getFilter(), tags, processTags, serviceName));
-  }
-
-  private boolean applyExcludeSpanRules(List<ExcludeSpanRule> excludeSpanRules, Event event) {
-    return excludeSpanRules.stream()
-        .filter(excludeSpanRule -> !excludeSpanRule.getRuleInfo().getDisabled())
-        .anyMatch(excludeSpanRule -> applyFilter(excludeSpanRule.getRuleInfo().getFilter(), event));
+                applyFilter(excludeSpanRule.getRuleInfo().getFilter(), tags, processTags, event));
   }
 
   private boolean applyFilter(
       SpanFilter filter,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
-      String serviceName) {
+      Event event) {
     if (filter.hasRelationalSpanFilter()) {
       return matchesRelationalSpanFilter(
-          filter.getRelationalSpanFilter(), tags, processTags, serviceName);
+          filter.getRelationalSpanFilter(), tags, processTags, event);
     } else {
       LogicalSpanFilterExpression logicalSpanFilterExpression = filter.getLogicalSpanFilter();
       if (filter
@@ -122,28 +78,10 @@ public class ExcludeSpanRuleEvaluator {
           .getOperator()
           .equals(LogicalOperator.LOGICAL_OPERATOR_AND)) {
         return logicalSpanFilterExpression.getOperandsList().stream()
-            .allMatch(spanFilter -> applyFilter(spanFilter, tags, processTags, serviceName));
+            .allMatch(spanFilter -> applyFilter(spanFilter, tags, processTags, event));
       } else {
         return logicalSpanFilterExpression.getOperandsList().stream()
-            .anyMatch(spanFilter -> applyFilter(spanFilter, tags, processTags, serviceName));
-      }
-    }
-  }
-
-  private boolean applyFilter(SpanFilter filter, Event event) {
-    if (filter.hasRelationalSpanFilter()) {
-      return matchesRelationalSpanFilter(filter.getRelationalSpanFilter(), event);
-    } else {
-      LogicalSpanFilterExpression logicalSpanFilterExpression = filter.getLogicalSpanFilter();
-      if (filter
-          .getLogicalSpanFilter()
-          .getOperator()
-          .equals(LogicalOperator.LOGICAL_OPERATOR_AND)) {
-        return logicalSpanFilterExpression.getOperandsList().stream()
-            .allMatch(spanFilter -> applyFilter(spanFilter, event));
-      } else {
-        return logicalSpanFilterExpression.getOperandsList().stream()
-            .anyMatch(spanFilter -> applyFilter(spanFilter, event));
+            .anyMatch(spanFilter -> applyFilter(spanFilter, tags, processTags, event));
       }
     }
   }
@@ -152,7 +90,7 @@ public class ExcludeSpanRuleEvaluator {
       RelationalSpanFilterExpression relationalSpanFilterExpression,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags,
-      String serviceName) {
+      Event event) {
 
     if (relationalSpanFilterExpression.hasSpanAttributeKey()) {
       String spanAttributeKey = relationalSpanFilterExpression.getSpanAttributeKey();
@@ -162,43 +100,6 @@ public class ExcludeSpanRuleEvaluator {
           relationalSpanFilterExpression.getOperator(),
           spanAttributeKey,
           relationalSpanFilterExpression.getRightOperand());
-    } else {
-      Field field = relationalSpanFilterExpression.getField();
-      switch (field) {
-        case FIELD_SERVICE_NAME:
-          return spanFilterMatcher.matches(
-              serviceName,
-              relationalSpanFilterExpression.getRightOperand(),
-              relationalSpanFilterExpression.getOperator());
-        case FIELD_ENVIRONMENT_NAME:
-          return matches(
-              tags,
-              processTags,
-              relationalSpanFilterExpression.getOperator(),
-              ENVIRONMENT_ATTRIBUTE,
-              relationalSpanFilterExpression.getRightOperand());
-        case FIELD_URL:
-          return FULL_URL_ATTRIBUTES.stream()
-              .anyMatch(
-                  urlAttribute ->
-                      matches(
-                          tags,
-                          processTags,
-                          relationalSpanFilterExpression.getOperator(),
-                          urlAttribute,
-                          relationalSpanFilterExpression.getRightOperand()));
-        default:
-          log.error("Unknown filter field: {}", field);
-          return false;
-      }
-    }
-  }
-
-  private boolean matchesRelationalSpanFilter(
-      RelationalSpanFilterExpression relationalSpanFilterExpression, Event event) {
-
-    if (relationalSpanFilterExpression.hasSpanAttributeKey()) {
-      return false;
     } else {
       Field field = relationalSpanFilterExpression.getField();
       switch (field) {

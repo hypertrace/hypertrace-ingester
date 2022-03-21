@@ -100,21 +100,17 @@ public class JaegerSpanPreProcessor
       return null;
     }
     String tenantId = tenantIdMaybe.get();
+    // filter tags
+    Span processedSpan = tagsFilter.apply(tenantId, span);
     Event event =
-        buildEvent(tenantId, span, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
+        buildEvent(
+            tenantId, processedSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
 
-    if (spanDropManager.shouldDropSpan(span, tenantId)
-        || spanDropManager.shouldDropEvent(event, tenantId)) {
+    if (spanDropManager.shouldDropSpan(span, event, tenantId)) {
       return null;
     }
 
-    // filter tags
-    Span processedSpan = tagsFilter.apply(tenantId, span);
-    return new PreProcessedSpan(
-        tenantId,
-        processedSpan,
-        buildEvent(
-            tenantId, processedSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey()));
+    return new PreProcessedSpan(tenantId, processedSpan, event);
   }
 
   @Override

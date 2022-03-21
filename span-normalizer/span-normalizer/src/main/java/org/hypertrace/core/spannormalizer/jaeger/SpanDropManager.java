@@ -72,7 +72,7 @@ public class SpanDropManager {
     return configuredThreshold;
   }
 
-  public boolean shouldDropSpan(JaegerSpanInternalModel.Span span, String tenantId) {
+  public boolean shouldDropSpan(JaegerSpanInternalModel.Span span, Event event, String tenantId) {
 
     Map<String, JaegerSpanInternalModel.KeyValue> spanTags =
         span.getTagsList().stream()
@@ -84,22 +84,9 @@ public class SpanDropManager {
     // TODO: Eventually get rid of span filter and tenantID based filter
     return shouldDropSpansBasedOnTenantIdFilter(tenantId)
         || shouldDropSpansBasedOnSpanFilter(tenantId, span, spanTags, processTags)
-        || shouldDropSpansBasedOnExcludeRules(tenantId, span, spanTags, processTags)
+        // event is needed to evaluate the first class field related relational filters
+        || shouldDropSpansBasedOnExcludeRules(tenantId, event, spanTags, processTags)
         || shouldDropSpansBasedOnLateArrival(tenantId, span);
-  }
-
-  public boolean shouldDropEvent(Event event, String tenantId) {
-    if (excludeSpanRuleEvaluator.shouldDropEvent(event, tenantId)) {
-      tenantToSpansDroppedCount
-          .computeIfAbsent(
-              tenantId,
-              tenant ->
-                  PlatformMetricsRegistry.registerCounter(
-                      DROPPED_SPANS_COUNTER, Map.of("tenantId", tenantId)))
-          .increment();
-      return true;
-    }
-    return false;
   }
 
   private boolean shouldDropSpansBasedOnSpanFilter(
@@ -123,15 +110,10 @@ public class SpanDropManager {
 
   private boolean shouldDropSpansBasedOnExcludeRules(
       String tenantId,
-      JaegerSpanInternalModel.Span span,
+      Event event,
       Map<String, JaegerSpanInternalModel.KeyValue> spanTags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
-    if (excludeSpanRuleEvaluator.shouldDropSpan(
-        tenantIdHandler.getTenantIdProvider().getTenantIdTagKey(),
-        tenantId,
-        span,
-        spanTags,
-        processTags)) {
+    if (excludeSpanRuleEvaluator.shouldDropSpan(tenantId, event, spanTags, processTags)) {
       // increment dropped counter at tenant level
       tenantToSpansDroppedCount
           .computeIfAbsent(
