@@ -1,5 +1,7 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static org.hypertrace.core.spannormalizer.util.EventBuilder.buildEvent;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import com.typesafe.config.ConfigFactory;
@@ -9,6 +11,7 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.hypertrace.core.datamodel.LogEvents;
@@ -45,7 +48,11 @@ public class JaegerSpanToLogRecordsTransformerTest {
     jaegerSpanToLogRecordsTransformer.init(processorContext);
     KeyValue<String, LogEvents> keyValue =
         jaegerSpanToLogRecordsTransformer.transform(
-            null, new PreProcessedSpan("tenant-1", getTestSpan()));
+            null,
+            new PreProcessedSpan(
+                "tenant-1",
+                getTestSpan(),
+                buildEvent("tenant-1", getTestSpan(), Optional.of("tenant-key"))));
     Assertions.assertNull(keyValue);
   }
 

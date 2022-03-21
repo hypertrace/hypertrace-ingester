@@ -47,6 +47,7 @@ import java.util.Optional;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
+import org.hypertrace.core.semantic.convention.constants.deployment.OTelDeploymentSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.http.HttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
@@ -174,6 +175,19 @@ public class HttpSemanticConventionUtils {
       // ignore
     }
     return false;
+  }
+
+  public static Optional<String> getFullHttpUrl(Event event) {
+    Optional<String> fullHttpUrl = getHttpUrl(event);
+    return fullHttpUrl.isPresent()
+        ? fullHttpUrl
+        : getValidHttpUrl(event).map(AttributeValue::getValue);
+  }
+
+  public static Optional<String> getEnvironmentForSpan(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getStringAttribute(
+            event, OTelDeploymentSemanticConventions.DEPLOYMENT_ENVIRONMENT.getValue()));
   }
 
   /**

@@ -10,10 +10,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 
 @Slf4j
@@ -71,22 +72,20 @@ public class SpanDropManager {
     return configuredThreshold;
   }
 
-  public boolean shouldDropSpan(
-      JaegerSpanInternalModel.Span span,
-      Map<String, JaegerSpanInternalModel.KeyValue> spanTags,
-      Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
+  public boolean shouldDropSpan(JaegerSpanInternalModel.Span span, Event event, String tenantId) {
 
-    Optional<String> maybeTenantId =
-        tenantIdHandler.getAllowedTenantId(span, spanTags, processTags);
-    if (maybeTenantId.isEmpty()) {
-      return true;
-    }
+    Map<String, JaegerSpanInternalModel.KeyValue> spanTags =
+        span.getTagsList().stream()
+            .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
+    Map<String, JaegerSpanInternalModel.KeyValue> processTags =
+        span.getProcess().getTagsList().stream()
+            .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
 
-    String tenantId = maybeTenantId.get();
     // TODO: Eventually get rid of span filter and tenantID based filter
     return shouldDropSpansBasedOnTenantIdFilter(tenantId)
         || shouldDropSpansBasedOnSpanFilter(tenantId, span, spanTags, processTags)
-        || shouldDropSpansBasedOnExcludeRules(tenantId, span, spanTags, processTags)
+        // event is needed to evaluate the first class field related relational filters
+        || shouldDropSpansBasedOnExcludeRules(tenantId, event, spanTags, processTags)
         || shouldDropSpansBasedOnLateArrival(tenantId, span);
   }
 
@@ -111,15 +110,10 @@ public class SpanDropManager {
 
   private boolean shouldDropSpansBasedOnExcludeRules(
       String tenantId,
-      JaegerSpanInternalModel.Span span,
+      Event event,
       Map<String, JaegerSpanInternalModel.KeyValue> spanTags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
-    if (excludeSpanRuleEvaluator.shouldDropSpan(
-        tenantIdHandler.getTenantIdProvider().getTenantIdTagKey(),
-        tenantId,
-        span,
-        spanTags,
-        processTags)) {
+    if (excludeSpanRuleEvaluator.shouldDropSpan(tenantId, event, spanTags, processTags)) {
       // increment dropped counter at tenant level
       tenantToSpansDroppedCount
           .computeIfAbsent(

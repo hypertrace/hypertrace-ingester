@@ -45,7 +45,7 @@ public class JaegerSpanToAvroRawSpanTransformer
     Span value = preProcessedSpan.getSpan();
     String tenantId = preProcessedSpan.getTenantId();
     try {
-      RawSpan rawSpan = converter.convert(tenantId, value);
+      RawSpan rawSpan = converter.convert(tenantId, value, preProcessedSpan.getEvent());
       if (null != rawSpan) {
         // these are spans per tenant that we were able to parse / convert, and had tenantId.
         tenantToSpanReceivedCount
