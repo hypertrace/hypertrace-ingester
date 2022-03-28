@@ -16,6 +16,7 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
+import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,10 +38,10 @@ public class TraceEnricher extends KafkaStreamsApp {
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
 
-    KStream<String, StructuredTrace> inputStream =
-        (KStream<String, StructuredTrace>) inputStreams.get(inputTopic);
+    KStream<TraceIdentity, StructuredTrace> inputStream =
+        (KStream<TraceIdentity, StructuredTrace>) inputStreams.get(inputTopic);
     if (inputStream == null) {
-      inputStream = streamsBuilder.stream(inputTopic, Consumed.with(Serdes.String(), null));
+      inputStream = streamsBuilder.stream(inputTopic, Consumed.with(null, null));
       inputStreams.put(inputTopic, inputStream);
     }
 

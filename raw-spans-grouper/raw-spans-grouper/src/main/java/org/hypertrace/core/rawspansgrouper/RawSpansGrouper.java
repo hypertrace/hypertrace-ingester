@@ -11,7 +11,6 @@ import com.typesafe.config.Config;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
@@ -73,7 +72,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     streamsBuilder.addStateStore(spanStoreBuilder);
     streamsBuilder.addStateStore(traceStateStoreBuilder);
 
-    Produced<String, StructuredTrace> outputTopicProducer = Produced.with(Serdes.String(), null);
+    Produced<TraceIdentity, StructuredTrace> outputTopicProducer = Produced.with(null, null);
     outputTopicProducer = outputTopicProducer.withName(OUTPUT_TOPIC_PRODUCER);
 
     inputStream

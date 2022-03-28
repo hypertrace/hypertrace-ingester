@@ -214,7 +214,7 @@ class TraceEmitPunctuator implements Punctuator {
                       PUNCTUATE_LATENCY_TIMER, Map.of("tenantId", k)))
           .record(Duration.between(startTime, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
 
-      context.forward(null, trace, outputTopicProducer);
+      context.forward(key, trace, outputTopicProducer);
     } else {
       // implies spans for the trace have arrived within the last 'sessionTimeoutMs' interval
       // so the session inactivity window is extended from the last timestamp

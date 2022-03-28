@@ -1,3 +1,5 @@
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
@@ -7,18 +9,15 @@ import java.util.Map;
 import java.util.Properties;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.TestInputTopic;
-import org.apache.kafka.streams.TestOutputTopic;
-import org.apache.kafka.streams.TopologyTestDriver;
+import org.apache.kafka.streams.*;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
+import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants;
 import org.hypertrace.traceenricher.trace.enricher.TraceEnricher;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
@@ -64,48 +63,64 @@ public class HypertraceTraceEnricherTest {
     // create topology test driver for trace-enricher
     TopologyTestDriver topologyTestDriver = new TopologyTestDriver(streamsBuilder.build(), props);
 
+    Serde<TraceIdentity> traceKeySerde = new AvroSerde<>();
     Serde<StructuredTrace> htStructuredTraceSerde = new AvroSerde<>();
 
     // create input topic for HT-model StructuredTrace
-    TestInputTopic<String, StructuredTrace> inputTopic =
+    TestInputTopic<TraceIdentity, StructuredTrace> inputTopic =
         topologyTestDriver.createInputTopic(
             config.getString(StructuredTraceEnricherConstants.INPUT_TOPIC_CONFIG_KEY),
-            Serdes.String().serializer(),
+            traceKeySerde.serializer(),
             htStructuredTraceSerde.serializer());
 
     // create output topic for closed-model StructuredTrace
-    TestOutputTopic outputTopic =
+    TestOutputTopic<String, StructuredTrace> outputTopic =
         topologyTestDriver.createOutputTopic(
             config.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
             htStructuredTraceSerde.deserializer());
 
     // create instance of HT-model StructuredTrace
-    StructuredTrace htStructuredTrace = createHTStructuredTrace("customer1", "1234");
+    KeyValue<TraceIdentity, StructuredTrace> traceKVPair1 =
+        createHTStructuredTrace("customer1", "1234");
+    KeyValue<TraceIdentity, StructuredTrace> traceKVPair2 =
+        createHTStructuredTrace("customer2", "5678");
 
     // Write an input record into input topic
-    inputTopic.pipeInput(htStructuredTrace);
+    inputTopic.pipeInput(traceKVPair1.key, traceKVPair1.value);
+    // enricher should be able to handle null keys as well for backward compatibility
+    inputTopic.pipeInput(null, traceKVPair2.value);
 
     // Read the output record from output topic
-    StructuredTrace structuredTrace = (StructuredTrace) outputTopic.readValue();
+    StructuredTrace structuredTrace1 = outputTopic.readValue();
+    StructuredTrace structuredTrace2 = outputTopic.readValue();
 
-    Assertions.assertEquals(
-        HexUtils.getHex("1234".getBytes()), HexUtils.getHex(structuredTrace.getTraceId()));
+    assertEquals(
+        HexUtils.getHex("1234".getBytes()), HexUtils.getHex(structuredTrace1.getTraceId()));
+    assertEquals(
+        HexUtils.getHex("5678".getBytes()), HexUtils.getHex(structuredTrace2.getTraceId()));
   }
 
-  private org.hypertrace.core.datamodel.StructuredTrace createHTStructuredTrace(
+  private KeyValue<TraceIdentity, StructuredTrace> createHTStructuredTrace(
       String customerId, String traceId) {
-    return StructuredTrace.newBuilder()
-        .setCustomerId(customerId)
-        .setTraceId(ByteBuffer.wrap(traceId.getBytes()))
-        .setStartTimeMillis(System.currentTimeMillis() - 10000)
-        .setEndTimeMillis(System.currentTimeMillis())
-        .setAttributes(Attributes.newBuilder().build())
-        .setEntityList(new ArrayList<>())
-        .setEntityEdgeList(new ArrayList<>())
-        .setEventEdgeList(new ArrayList<>())
-        .setEntityEventEdgeList(new ArrayList<>())
-        .setEventList(new ArrayList<>())
-        .build();
+    TraceIdentity traceKey =
+        TraceIdentity.newBuilder()
+            .setTenantId(customerId)
+            .setTraceId(ByteBuffer.wrap(traceId.getBytes()))
+            .build();
+    StructuredTrace trace =
+        StructuredTrace.newBuilder()
+            .setCustomerId(customerId)
+            .setTraceId(ByteBuffer.wrap(traceId.getBytes()))
+            .setStartTimeMillis(System.currentTimeMillis() - 10000)
+            .setEndTimeMillis(System.currentTimeMillis())
+            .setAttributes(Attributes.newBuilder().build())
+            .setEntityList(new ArrayList<>())
+            .setEntityEdgeList(new ArrayList<>())
+            .setEventEdgeList(new ArrayList<>())
+            .setEntityEventEdgeList(new ArrayList<>())
+            .setEventList(new ArrayList<>())
+            .build();
+    return KeyValue.pair(traceKey, trace);
   }
 }
