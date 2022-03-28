@@ -16,7 +16,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TestInputTopic;
@@ -73,7 +72,7 @@ public class RawSpansGrouperTest {
     TestOutputTopic<TraceIdentity, StructuredTrace> outputTopic =
         td.createOutputTopic(
             config.getString(RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY),
-            Serdes.String().deserializer(),
+            traceIdentitySerde.deserializer(),
             defaultValueSerde.deserializer());
 
     String tenantId = "tenant1";
