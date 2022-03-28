@@ -17,12 +17,13 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.hypertrace.traceenricher.enrichment.EnrichmentProcessor;
 import org.hypertrace.traceenricher.enrichment.EnrichmentRegistry;
 import org.hypertrace.traceenricher.enrichment.clients.DefaultClientRegistry;
 
 public class StructuredTraceEnrichProcessor
-    implements Transformer<String, StructuredTrace, KeyValue<String, StructuredTrace>> {
+    implements Transformer<TraceIdentity, StructuredTrace, KeyValue<String, StructuredTrace>> {
 
   private static EnrichmentProcessor processor = null;
   private DefaultClientRegistry clientRegistry;
@@ -53,7 +54,7 @@ public class StructuredTraceEnrichProcessor
   }
 
   @Override
-  public KeyValue<String, StructuredTrace> transform(String key, StructuredTrace value) {
+  public KeyValue<String, StructuredTrace> transform(TraceIdentity key, StructuredTrace value) {
     processor.process(value);
     return new KeyValue<>(null, value);
   }

@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs} time to accept spans.
  */
 public class RawSpansProcessor
-    implements Transformer<TraceIdentity, RawSpan, KeyValue<String, StructuredTrace>> {
+    implements Transformer<TraceIdentity, RawSpan, KeyValue<TraceIdentity, StructuredTrace>> {
 
   private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
   private static final String PROCESSING_LATENCY_TIMER =
@@ -109,7 +109,7 @@ public class RawSpansProcessor
     restorePunctuators();
   }
 
-  public KeyValue<String, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
+  public KeyValue<TraceIdentity, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
     Instant start = Instant.now();
     long currentTimeMs = System.currentTimeMillis();
 

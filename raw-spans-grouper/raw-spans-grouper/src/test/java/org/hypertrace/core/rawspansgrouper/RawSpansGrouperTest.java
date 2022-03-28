@@ -22,6 +22,7 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.apache.kafka.streams.test.TestRecord;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -69,7 +70,7 @@ public class RawSpansGrouperTest {
             traceIdentitySerde.serializer(),
             defaultValueSerde.serializer());
 
-    TestOutputTopic outputTopic =
+    TestOutputTopic<TraceIdentity, StructuredTrace> outputTopic =
         td.createOutputTopic(
             config.getString(RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY),
             Serdes.String().deserializer(),
@@ -214,7 +215,7 @@ public class RawSpansGrouperTest {
     td.advanceWallClockTime(Duration.ofSeconds(32));
 
     // trace1 should have 2 span span1, span2
-    StructuredTrace trace = (StructuredTrace) outputTopic.readValue();
+    StructuredTrace trace = outputTopic.readValue();
     assertEquals(2, trace.getEventList().size());
     Set<String> traceEventIds =
         trace.getEventList().stream()
@@ -224,7 +225,7 @@ public class RawSpansGrouperTest {
     assertTrue(traceEventIds.contains("event-2"));
 
     // trace2 should have 1 span span3
-    trace = (StructuredTrace) outputTopic.readValue();
+    trace = outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
     assertEquals("event-4", new String(trace.getEventList().get(0).getEventId().array()));
 
@@ -235,12 +236,12 @@ public class RawSpansGrouperTest {
     td.advanceWallClockTime(Duration.ofSeconds(35));
 
     // trace1 should have 1 span i.e. span3
-    trace = (StructuredTrace) outputTopic.readValue();
+    trace = outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
     assertEquals("event-3", new String(trace.getEventList().get(0).getEventId().array()));
 
     // trace2 should have 1 span i.e. span4
-    trace = (StructuredTrace) outputTopic.readValue();
+    trace = outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
     assertEquals("event-5", new String(trace.getEventList().get(0).getEventId().array()));
 
@@ -253,7 +254,7 @@ public class RawSpansGrouperTest {
     td.advanceWallClockTime(Duration.ofSeconds(35));
 
     // trace should be truncated with 5 spans
-    trace = (StructuredTrace) outputTopic.readValue();
+    trace = outputTopic.readValue();
     assertEquals(5, trace.getEventList().size());
 
     // input 8 spans of trace-4 for tenant2, as there is global upper limit apply, it will emit only
@@ -267,8 +268,11 @@ public class RawSpansGrouperTest {
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span18);
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span19);
     td.advanceWallClockTime(Duration.ofSeconds(35));
-    trace = (StructuredTrace) outputTopic.readValue();
-    assertEquals(6, trace.getEventList().size());
+
+    TestRecord<TraceIdentity, StructuredTrace> testRecord = outputTopic.readRecord();
+
+    assertEquals(tenant2, testRecord.getKey().getTenantId());
+    assertEquals(6, testRecord.getValue().getEventList().size());
   }
 
   private Event createEvent(String eventId, String tenantId) {
