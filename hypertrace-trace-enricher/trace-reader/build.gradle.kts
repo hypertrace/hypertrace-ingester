@@ -20,10 +20,10 @@ dependencies {
   compileOnly("org.projectlombok:lombok:1.18.20")
 
   constraints {
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.1") {
       because("Denial of Service (DoS) " +
-          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
-          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
+          "[High Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2421244] in " +
+          "com.fasterxml.jackson.core:jackson-databind@2.13.1")
     }
   }
 
