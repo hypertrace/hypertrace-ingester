@@ -64,22 +64,22 @@ creator:
 ############################################
 viewGenIndividualConfigs:
   view-gen-backend-entity:
-    inputTopic: "enriched-structured-traces"
+    inputTopics: ["enriched-structured-traces"]
     outputTopic: "backend-entity-view-events"
   view-gen-raw-service:
-    inputTopic: "enriched-structured-traces"
+    inputTopics: ["enriched-structured-traces"]
     outputTopic: "raw-service-view-events"
   view-gen-raw-traces:
-    inputTopic: "enriched-structured-traces"
+    inputTopics: ["enriched-structured-traces"]
     outputTopic: "raw-trace-view-events"
   view-gen-service-call:
-    inputTopic: "enriched-structured-traces"
+    inputTopics: ["enriched-structured-traces"]
     outputTopic: "service-call-view-events"
   view-gen-span-event:
-    inputTopic: "enriched-structured-traces"
+    inputTopics: ["enriched-structured-traces"]
     outputTopic: "span-event-view"
   view-gen-log-event:
-    inputTopic: "raw-logs"
+    inputTopics: ["raw-logs"]
     outputTopic: "log-event-view"
 
 viewGeneratorGroups:

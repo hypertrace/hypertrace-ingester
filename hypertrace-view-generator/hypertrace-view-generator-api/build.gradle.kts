@@ -17,10 +17,10 @@ dependencies {
     api("org.apache.commons:commons-compress:1.21") {
       because("Multiple vulnerabilities in avro-declared version")
     }
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") {
       because("Denial of Service (DoS) " +
-          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
-          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
+          "[High Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2421244] in " +
+          "com.fasterxml.jackson.core:jackson-databind@2.13.1")
     }
   }
 }

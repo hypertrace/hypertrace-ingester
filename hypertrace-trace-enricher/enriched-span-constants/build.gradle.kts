@@ -65,19 +65,11 @@ sourceSets {
 dependencies {
   api("com.google.protobuf:protobuf-java-util:3.17.3")
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.20")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.22")
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":semantic-convention-utils"))
   implementation("org.hypertrace.entity.service:entity-service-api:0.8.5")
-
-  constraints {
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
-      because("Denial of Service (DoS) " +
-          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
-          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
-    }
-  }
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")

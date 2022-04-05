@@ -9,6 +9,6 @@ metadata:
     release: {{ $global.Release.Name }}
 data:
   application.conf: |-
-    input.topic = {{ $val.inputTopic }}
+    input.topics = {{ $val.inputTopics | toJson }}
     output.topic = {{ $val.outputTopic }}
 {{- end }}

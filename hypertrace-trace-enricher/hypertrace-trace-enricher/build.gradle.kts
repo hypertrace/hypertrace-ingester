@@ -31,7 +31,7 @@ tasks.test {
 dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-impl"))
   implementation(project(":span-normalizer:span-normalizer-api"))
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.20")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.22")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.33")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.33")
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
@@ -43,11 +43,6 @@ dependencies {
     runtimeOnly("io.netty:netty-handler-proxy:4.1.71.Final")
     implementation("org.glassfish.jersey.core:jersey-common:2.34") {
       because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
-    }
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
-      because("Denial of Service (DoS) " +
-          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
-          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
     }
   }
 
