@@ -45,7 +45,7 @@ dependencies {
 
   // constrains
   constraints {
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.1") {
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") {
       because("Denial of Service (DoS) " +
           "[High Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2421244] " +
           "in com.fasterxml.jackson.core:jackson-databind@2.13.1")
