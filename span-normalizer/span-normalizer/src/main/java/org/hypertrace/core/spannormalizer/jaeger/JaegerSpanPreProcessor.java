@@ -105,7 +105,6 @@ public class JaegerSpanPreProcessor
     Event event =
         buildEvent(
             tenantId, processedSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
-
     if (spanDropManager.shouldDropSpan(span, event, tenantId)) {
       return null;
     }

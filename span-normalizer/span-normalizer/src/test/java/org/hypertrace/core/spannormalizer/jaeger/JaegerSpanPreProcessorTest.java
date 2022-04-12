@@ -1658,6 +1658,52 @@ class JaegerSpanPreProcessorTest {
     Assertions.assertFalse(preProcessedSpan.getSpan().getTagsList().contains(notAllowed3));
   }
 
+  @Test
+  public void testRateLimitBasedSpanFilter() {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(
+        Map.of(
+            "processor",
+            Map.of(
+                "tenantIdTagKey",
+                "tenant-key",
+                "spanDropFilters",
+                Collections.emptyList(),
+                "late.arrival.threshold.duration",
+                "1d"),
+            "rate.limit.config",
+            List.of(
+                Map.of(
+                    "tenantId", tenantId, "groupingKey", "servicename", "maxSpansPerMinute", 2))));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+
+    Process process =
+        Process.newBuilder()
+            .setServiceName("testService")
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .build();
+
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey("http.url")
+                    .setVStr("http://xyz.com/api/v1/health/check")
+                    .build())
+            .build();
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+  }
+
   private Map<String, Object> getCommonConfig() {
     return Map.of(
         "span.type",
@@ -1677,7 +1723,9 @@ class JaegerSpanPreProcessorTest {
         "clients",
         Map.of("config.service.config", Map.of("host", "localhost", "port", 50101)),
         "span.rules.exclude.cache",
-        Map.of("refreshAfterWriteDuration", "3m", "expireAfterWriteDuration", "5m"));
+        Map.of("refreshAfterWriteDuration", "3m", "expireAfterWriteDuration", "5m"),
+        "rate.limit.config",
+        List.of());
   }
 
   private static SpanFilter buildRelationalFilter(

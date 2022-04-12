@@ -36,11 +36,13 @@ public class SpanDropManager {
   private List<String> tenantIdsToExclude;
   private static final Duration minArrivalThreshold = Duration.of(30, ChronoUnit.SECONDS);
   private final Duration lateArrivalThresholdDuration;
+  private RateLimitingSpanFilter rateLimitingSpanFilter;
 
   public SpanDropManager(Config config) {
     tenantIdHandler = new TenantIdHandler(config);
     spanFilter = new SpanFilter(config);
     excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator(config);
+    rateLimitingSpanFilter = new RateLimitingSpanFilter(config);
     lateArrivalThresholdDuration = configureLateArrivalThreshold(config);
     tenantIdsToExclude =
         config.hasPath(TENANT_IDS_TO_EXCLUDE_CONFIG)
@@ -57,6 +59,7 @@ public class SpanDropManager {
     spanFilter = new SpanFilter(config);
     excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator(excludeSpanRulesCache);
     lateArrivalThresholdDuration = configureLateArrivalThreshold(config);
+    rateLimitingSpanFilter = new RateLimitingSpanFilter(config);
     tenantIdsToExclude =
         config.hasPath(TENANT_IDS_TO_EXCLUDE_CONFIG)
             ? config.getStringList(TENANT_IDS_TO_EXCLUDE_CONFIG)
@@ -82,11 +85,16 @@ public class SpanDropManager {
             .collect(Collectors.toMap(t -> t.getKey().toLowerCase(), t -> t, (v1, v2) -> v2));
 
     // TODO: Eventually get rid of span filter and tenantID based filter
-    return shouldDropSpansBasedOnTenantIdFilter(tenantId)
+    return shouldDropSpanBasedOnRateLimitConfig(tenantId, event)
+        || shouldDropSpansBasedOnTenantIdFilter(tenantId)
         || shouldDropSpansBasedOnSpanFilter(tenantId, span, spanTags, processTags)
         // event is needed to evaluate the first class field related relational filters
         || shouldDropSpansBasedOnExcludeRules(tenantId, event, spanTags, processTags)
         || shouldDropSpansBasedOnLateArrival(tenantId, span);
+  }
+
+  private boolean shouldDropSpanBasedOnRateLimitConfig(String tenantId, Event event) {
+    return rateLimitingSpanFilter.shouldDropSpan(tenantId, event);
   }
 
   private boolean shouldDropSpansBasedOnSpanFilter(
