@@ -107,13 +107,13 @@ data:
       }
     }
     {{- if hasKey .Values.spanNormalizerConfig "rateLimitConfig" }}
-      rate.limit.config = [
-        {{- range $k,$v := $.Values.spanNormalizerConfig.rateLimitConfig }}
-          {
-            tenantId = {{ $v.tenantId }}
-            groupingKey = {{ $v.groupingKey }}
-            maxSpansPerMinute = {{ $v.maxSpansPerMinute }}
-          },
-        {{- end }}
-      ]
+    rate.limit.config = [
+      {{- range $k,$v := $.Values.spanNormalizerConfig.rateLimitConfig }}
+      {
+        tenantId = {{ $v.tenantId }}
+        groupingKey = {{ $v.groupingKey }}
+        maxSpansPerMinute = {{ $v.maxSpansPerMinute }}
+      },
+      {{- end }}
+    ]
     {{- end }}
