@@ -35,12 +35,11 @@ public class RateLimitingSpanFilter {
     for (String attribute : seenAttributes) {
       String key = generateKey(tenantId, attribute);
       if (!tenantMaxSpansPerMinuteMap.containsKey(key)
-          || !event.getAttributes().getAttributeMap().containsKey(attribute)) {
+          || !event.getAttributes().getAttributeMap().containsKey(attribute)
+          || !tenantSpanCountMap.containsKey(key)) {
         continue;
       }
-      if (!tenantSpanCountMap.containsKey(key)) {
-        continue;
-      }
+
       Long startTimeKey = tenantSpanCountMap.get(key).keySet().iterator().next();
       if (event.getStartTimeMillis() - startTimeKey > SPAN_COUNT_WINDOW) {
         tenantSpanCountMap.put(key, Map.of(event.getStartTimeMillis(), 1L));
