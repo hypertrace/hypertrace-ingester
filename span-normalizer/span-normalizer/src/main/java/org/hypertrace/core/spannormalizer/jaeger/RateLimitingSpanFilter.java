@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import org.hypertrace.core.datamodel.Event;
 
-// make uuid from tenantId and groupingKey
-// add config in helm
 public class RateLimitingSpanFilter {
 
   private static final String RATE_LIMIT_CONFIG_PATH = "rate.limit.config";
@@ -25,16 +23,18 @@ public class RateLimitingSpanFilter {
     for (Config rateLimitConfig : config.getConfigList(RATE_LIMIT_CONFIG_PATH)) {
       String tenantId = rateLimitConfig.getString(TENANT_ID_KEY);
       String groupingKey = rateLimitConfig.getString(GROUPING_KEY_KEY);
-      tenantMaxSpansPerMinuteMap.put(
-          tenantId + groupingKey, rateLimitConfig.getLong(MAX_SPANS_PER_MINUTE_KEY));
-      tenantSpanCountMap.put(tenantId + groupingKey, Map.of(0L, 0L));
+      String key = generateKey(tenantId, groupingKey);
+      tenantMaxSpansPerMinuteMap.put(key, rateLimitConfig.getLong(MAX_SPANS_PER_MINUTE_KEY));
+      tenantSpanCountMap.put(key, Map.of(0L, 0L));
       seenAttributes.add(groupingKey);
     }
   }
 
   public boolean shouldDropSpan(String tenantId, Event event) {
     if (seenAttributes.stream()
-        .noneMatch(attribute -> tenantMaxSpansPerMinuteMap.containsKey(tenantId + attribute))) {
+        .noneMatch(
+            attribute ->
+                tenantMaxSpansPerMinuteMap.containsKey(generateKey(tenantId, attribute)))) {
       return false;
     }
 
@@ -42,22 +42,25 @@ public class RateLimitingSpanFilter {
       if (!event.getAttributes().getAttributeMap().containsKey(attribute)) {
         continue;
       }
-      if (!tenantSpanCountMap.containsKey(tenantId + attribute)) {
+      String key = generateKey(tenantId, attribute);
+      if (!tenantSpanCountMap.containsKey(key)) {
         continue;
       }
-      Long startTimeKey = tenantSpanCountMap.get(tenantId + attribute).keySet().iterator().next();
+      Long startTimeKey = tenantSpanCountMap.get(key).keySet().iterator().next();
       if (event.getStartTimeMillis() - startTimeKey > SPAN_COUNT_WINDOW) {
-        tenantSpanCountMap.put(tenantId + attribute, Map.of(event.getStartTimeMillis(), 1L));
+        tenantSpanCountMap.put(key, Map.of(event.getStartTimeMillis(), 1L));
       } else {
-        long currentProcessedSpansCount =
-            tenantSpanCountMap.get(tenantId + attribute).get(startTimeKey);
-        if (currentProcessedSpansCount >= tenantMaxSpansPerMinuteMap.get(tenantId + attribute)) {
+        long currentProcessedSpansCount = tenantSpanCountMap.get(key).get(startTimeKey);
+        if (currentProcessedSpansCount >= tenantMaxSpansPerMinuteMap.get(key)) {
           return true;
         }
-        tenantSpanCountMap.put(
-            tenantId + attribute, Map.of(startTimeKey, currentProcessedSpansCount + 1));
+        tenantSpanCountMap.put(key, Map.of(startTimeKey, currentProcessedSpansCount + 1));
       }
     }
     return false;
+  }
+
+  private String generateKey(String first, String second) {
+    return first + "/" + second;
   }
 }
