@@ -38,6 +38,7 @@ public class RateLimitingSpanFilter {
       return false;
     }
 
+    boolean shouldDropSpan = false;
     for (String attribute : seenAttributes) {
       if (!event.getAttributes().getAttributeMap().containsKey(attribute)) {
         continue;
@@ -52,12 +53,12 @@ public class RateLimitingSpanFilter {
       } else {
         long currentProcessedSpansCount = tenantSpanCountMap.get(key).get(startTimeKey);
         if (currentProcessedSpansCount >= tenantMaxSpansPerMinuteMap.get(key)) {
-          return true;
+          shouldDropSpan = true;
         }
         tenantSpanCountMap.put(key, Map.of(startTimeKey, currentProcessedSpansCount + 1));
       }
     }
-    return false;
+    return shouldDropSpan;
   }
 
   private String generateKey(String first, String second) {

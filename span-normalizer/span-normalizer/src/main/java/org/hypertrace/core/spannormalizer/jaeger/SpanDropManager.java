@@ -94,7 +94,18 @@ public class SpanDropManager {
   }
 
   private boolean shouldDropSpanBasedOnRateLimitConfig(String tenantId, Event event) {
-    return rateLimitingSpanFilter.shouldDropSpan(tenantId, event);
+    if (rateLimitingSpanFilter.shouldDropSpan(tenantId, event)) {
+      // increment dropped counter at tenant level
+      tenantToSpansDroppedCount
+          .computeIfAbsent(
+              tenantId,
+              tenant ->
+                  PlatformMetricsRegistry.registerCounter(
+                      DROPPED_SPANS_COUNTER, Map.of("tenantId", tenantId)))
+          .increment();
+      return true;
+    }
+    return false;
   }
 
   private boolean shouldDropSpansBasedOnSpanFilter(
