@@ -106,6 +106,7 @@ spanNormalizerConfig:
     cache:
       refreshAfterWriteDuration: 3m
       expireAfterWriteDuration: 5m
+  rateLimitConfig: []
 
 logConfig:
   name: span-normalizer-log-appender-config

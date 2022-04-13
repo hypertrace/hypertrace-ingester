@@ -106,3 +106,14 @@ data:
         expireAfterWriteDuration = {{ .Values.spanNormalizerConfig.excludeSpanRulesConfig.cache.expireAfterWriteDuration }}
       }
     }
+    {{- if hasKey .Values.spanNormalizerConfig "rateLimitConfig" }}
+    rate.limit.config = [
+      {{- range $k,$v := $.Values.spanNormalizerConfig.rateLimitConfig }}
+      {
+        tenantId = {{ $v.tenantId }}
+        groupingKey = {{ $v.groupingKey }}
+        maxSpansPerMinute = {{ $v.maxSpansPerMinute }}
+      },
+      {{- end }}
+    ]
+    {{- end }}
