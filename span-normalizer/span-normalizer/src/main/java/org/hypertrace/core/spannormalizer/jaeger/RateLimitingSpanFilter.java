@@ -31,19 +31,13 @@ public class RateLimitingSpanFilter {
   }
 
   public boolean shouldDropSpan(String tenantId, Event event) {
-    if (seenAttributes.stream()
-        .noneMatch(
-            attribute ->
-                tenantMaxSpansPerMinuteMap.containsKey(generateKey(tenantId, attribute)))) {
-      return false;
-    }
-
     boolean shouldDropSpan = false;
     for (String attribute : seenAttributes) {
-      if (!event.getAttributes().getAttributeMap().containsKey(attribute)) {
+      String key = generateKey(tenantId, attribute);
+      if (!tenantMaxSpansPerMinuteMap.containsKey(key)
+          || !event.getAttributes().getAttributeMap().containsKey(attribute)) {
         continue;
       }
-      String key = generateKey(tenantId, attribute);
       if (!tenantSpanCountMap.containsKey(key)) {
         continue;
       }
