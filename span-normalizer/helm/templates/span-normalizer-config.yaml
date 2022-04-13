@@ -111,7 +111,7 @@ data:
         {{- range $k,$v := $.Values.spanNormalizerConfig.rateLimitConfig }}
           {
             tenantId = {{ $v.tenantId }}
-            groupintKey = {{ $v.groupingKey }}
+            groupingKey = {{ $v.groupingKey }}
             maxSpansPerMinute = {{ $v.maxSpansPerMinute }}
           },
         {{- end }}
