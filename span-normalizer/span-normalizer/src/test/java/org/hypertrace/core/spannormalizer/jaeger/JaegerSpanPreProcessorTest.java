@@ -1660,7 +1660,8 @@ class JaegerSpanPreProcessorTest {
 
   @Test
   public void testRateLimitBasedSpanFilter() {
-    String tenantId = "tenant-" + random.nextLong();
+    String tenantId1 = "tenant-" + random.nextLong();
+    String tenantId2 = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
     configs.putAll(
         Map.of(
@@ -1674,8 +1675,9 @@ class JaegerSpanPreProcessorTest {
                 "1d"),
             "rate.limit.config",
             List.of(
+                Map.of("tenantId", tenantId1, "groupingKey", "servicename", "maxSpansPerMinute", 2),
                 Map.of(
-                    "tenantId", tenantId, "groupingKey", "servicename", "maxSpansPerMinute", 2))));
+                    "tenantId", tenantId2, "groupingKey", "http.method", "maxSpansPerMinute", 0))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
@@ -1683,13 +1685,12 @@ class JaegerSpanPreProcessorTest {
     Process process =
         Process.newBuilder()
             .setServiceName("testService")
-            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId1).build())
             .build();
 
     Span span =
         Span.newBuilder()
             .setProcess(process)
-            .addTags(KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
             .addTags(
                 KeyValue.newBuilder()
                     .setKey("http.url")
@@ -1702,6 +1703,24 @@ class JaegerSpanPreProcessorTest {
     Assertions.assertNotNull(preProcessedSpan);
     preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
     Assertions.assertNull(preProcessedSpan);
+
+    process =
+        Process.newBuilder()
+            .setServiceName("testService")
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId2).build())
+            .build();
+
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey("http.url")
+                    .setVStr("http://xyz.com/api/v1/health/check")
+                    .build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
   }
 
   private Map<String, Object> getCommonConfig() {
