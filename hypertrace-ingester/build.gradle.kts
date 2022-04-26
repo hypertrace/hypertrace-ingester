@@ -17,13 +17,14 @@ application {
 
 hypertraceDocker {
   defaultImage {
+    imageName.set("hypertrace-ingester")
     javaApplication {
       serviceName.set("${project.name}")
       adminPort.set(8099)
     }
-    namespace.set("hypertrace-ingester")
-    tag(getCommitHash())
+    namespace.set("razorpay")
   }
+  tag("${project.name}" + "_" + getCommitHash())
 }
 
 dependencies {

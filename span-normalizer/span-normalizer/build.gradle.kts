@@ -13,12 +13,14 @@ application {
 
 hypertraceDocker {
   defaultImage {
+    imageName.set("hypertrace-ingester")
     javaApplication {
+      serviceName.set("${project.name}")
       adminPort.set(8099)
     }
-    namespace.set("hypertrace-ingester")
-    tag(getCommitHash())
+    namespace.set("razorpay")
   }
+  tag("${project.name}" + "_" + getCommitHash())
 }
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
