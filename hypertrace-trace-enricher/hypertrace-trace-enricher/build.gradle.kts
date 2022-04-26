@@ -72,5 +72,5 @@ dependencies {
 }
 
 fun getCommitHash(): String {
-  return System.getenv("COMMIT_SHA").toString()
+  return "0dcce420277ecb38af1fcebfb1da6ab2ed7ad7fe"
 }
