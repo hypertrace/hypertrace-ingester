@@ -12,8 +12,8 @@ application {
 }
 
 hypertraceDocker {
-  defaultImage {
-    imageName.set("hypertrace-ui")
+  image("hypertrace-ui") {
+    dockerFile.set(file("./build/docker/Dockerfile"))
     javaApplication {
       serviceName.set("${project.name}")
       adminPort.set(8099)
