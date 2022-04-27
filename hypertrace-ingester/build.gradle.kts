@@ -17,11 +17,14 @@ application {
 
 hypertraceDocker {
   defaultImage {
+    imageName.set("hypertrace-ingester")
     javaApplication {
       serviceName.set("${project.name}")
       adminPort.set(8099)
     }
+    namespace.set("razorpay")
   }
+  tag("${project.name}" + "_" + getCommitHash())
 }
 
 dependencies {
@@ -112,4 +115,8 @@ tasks.register<Copy>("createCopySpecForSubJobTest") {
   with(
           createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator", "test")
   ).into("./build/resources/test/configs/")
+}
+
+fun getCommitHash(): String {
+  return System.getenv("COMMIT_SHA").toString()
 }

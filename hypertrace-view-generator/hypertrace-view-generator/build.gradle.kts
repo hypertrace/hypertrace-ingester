@@ -13,11 +13,14 @@ application {
 
 hypertraceDocker {
   defaultImage {
+    imageName.set("hypertrace-ingester")
     javaApplication {
-      serviceName.set("all-views")
+      serviceName.set("${project.name}")
       adminPort.set(8099)
     }
+    namespace.set("razorpay")
   }
+  tag("${project.name}" + "_" + getCommitHash())
 }
 
 tasks.test {
@@ -45,4 +48,8 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("com.google.code.gson:gson:2.8.7")
+}
+
+fun getCommitHash(): String {
+  return System.getenv("COMMIT_SHA").toString()
 }

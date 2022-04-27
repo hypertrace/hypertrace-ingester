@@ -2,9 +2,11 @@ name: test
 on:
   push:
     branches:
-      - main
-  pull_request:
-
+      - main 
+  pull_request_target: 
+    branches:
+      - main  
+# disabling while testing ci flow
 jobs:
   test:
     runs-on: ubuntu-20.04
@@ -31,13 +33,6 @@ jobs:
         uses: hypertrace/github-actions/gradle@main
         with: 
           args: jacocoTestReport
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          name: unit test reports
-          fail_ci_if_error: true
-          flags: unit
 
       - name: copy test reports
         uses: hypertrace/github-actions/gradle@main
