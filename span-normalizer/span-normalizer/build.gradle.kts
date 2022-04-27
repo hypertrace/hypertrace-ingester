@@ -12,6 +12,9 @@ application {
 }
 
 hypertraceDocker {
+  defaultImage {
+    onlyIf { false } // Disable default image
+  }
   image("hypertrace-ui") {
     dockerFile.set(file("./build/docker/Dockerfile"))
     javaApplication {
@@ -20,7 +23,11 @@ hypertraceDocker {
     }
     namespace.set("razorpay")
   }
-  tag("${project.name}" + "_" + getCommitHash())
+  tag("${project.name}" + "_" + getCommitHash()) {
+    onlyIf { candidateImage ->
+      candidateImage.name == "hypertrace-ui"
+    }
+  }
 }
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.

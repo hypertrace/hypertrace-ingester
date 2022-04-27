@@ -38,6 +38,8 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
           tagLatest: false
+          IMAGE_TAG: ${{ github.sha }}
+          COMMIT_SHA: ${{ github.sha }}
 
       - name: push docker image
         uses: hypertrace/github-actions/gradle@main
