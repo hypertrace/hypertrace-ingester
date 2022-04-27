@@ -15,7 +15,7 @@ hypertraceDocker {
   defaultImage {
     onlyIf { false } // Disable default image
   }
-  image("hypertrace-ui") {
+  image("hypertrace-service") {
     dockerFile.set(file("./build/docker/Dockerfile"))
     javaApplication {
       serviceName.set("${project.name}")
@@ -25,7 +25,7 @@ hypertraceDocker {
   }
   tag("${project.name}" + "_" + getCommitHash()) {
     onlyIf { candidateImage ->
-      candidateImage.name == "hypertrace-ui"
+      candidateImage.name == "hypertrace-service"
     }
   }
 }
