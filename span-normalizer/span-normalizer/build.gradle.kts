@@ -18,7 +18,6 @@ hypertraceDocker {
       serviceName.set("${project.name}")
       adminPort.set(8099)
     }
-    namespace.set("razorpay")
   }
   tag("${project.name}" + "_" + getCommitHash())
 }
