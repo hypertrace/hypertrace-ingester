@@ -17,21 +17,14 @@ application {
 
 hypertraceDocker {
   defaultImage {
-    onlyIf { false } // Disable default image
-  }
-  image("hypertrace-service") {
-    dockerFile.set(file("./build/docker/Dockerfile"))
+    imageName.set("hypertrace-service")
     javaApplication {
       serviceName.set("${project.name}")
       adminPort.set(8099)
     }
     namespace.set("razorpay")
   }
-  tag("${project.name}" + "_" + getCommitHash()) {
-    onlyIf { candidateImage ->
-      candidateImage.name == "hypertrace-service"
-    }
-  }
+  tag("${project.name}" + "_" + getCommitHash())
 }
 
 dependencies {
