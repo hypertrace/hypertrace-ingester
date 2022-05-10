@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static java.util.stream.Collectors.toSet;
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 
 import com.typesafe.config.Config;
@@ -8,6 +9,7 @@ import io.micrometer.core.instrument.Timer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -42,7 +44,7 @@ public class JaegerSpanNormalizer {
       new ConcurrentHashMap<>();
   private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
   private final TenantIdHandler tenantIdHandler;
-  private final Config config;
+  private final Set<String> tagsToRedact;
 
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
@@ -56,7 +58,10 @@ public class JaegerSpanNormalizer {
   }
 
   public JaegerSpanNormalizer(Config config) {
-    this.config = config;
+    this.tagsToRedact =
+        config.getStringList(SpanNormalizerConstants.PII_FIELDS_CONFIG_KEY).stream()
+            .map(String::toUpperCase)
+            .collect(toSet());
     this.tenantIdHandler = new TenantIdHandler(config);
   }
 
@@ -96,21 +101,20 @@ public class JaegerSpanNormalizer {
         logSpanConversion(jaegerSpan, rawSpan);
       }
 
-      // redact PII/PCI fields
-      config
-          .getList(SpanNormalizerConstants.PII_FIELDS_CONFIG_KEY)
+      // redact PII tags
+      var attributeMap = rawSpan.getEvent().getAttributes().getAttributeMap();
+      Set<String> tagKeys = attributeMap.keySet();
+
+      tagKeys.stream()
+          .filter(tagKey -> tagsToRedact.contains(tagKey.toUpperCase()))
           .forEach(
-              field -> {
-                String key = (String) field.unwrapped();
-                var attributeMap = rawSpan.getEvent().getAttributes().getAttributeMap();
-                if (attributeMap.containsKey(key)) {
+              tagKey ->
                   attributeMap.put(
-                      key,
+                      tagKey,
                       AttributeValue.newBuilder()
                           .setValue(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL)
-                          .build());
-                }
-              });
+                          .build()));
+
       return rawSpan;
     };
   }

@@ -82,7 +82,7 @@ public class JaegerSpanNormalizerTest {
         "schema.registry.config",
         Map.of("schema.registry.url", "http://localhost:8081"),
         "piiFields",
-        List.of("http.method", "http.url", "amount"));
+        List.of("http.method", "http.url", "amount", "Authorization"));
   }
 
   @Test
@@ -250,7 +250,8 @@ public class JaegerSpanNormalizerTest {
             .addTags(0, KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
             .addTags(1, KeyValue.newBuilder().setKey("http.url").setVStr("hypertrace.org"))
             .addTags(2, KeyValue.newBuilder().setKey("kind").setVStr("client"))
-            .addTags(3, KeyValue.newBuilder().setKey("amount").setVInt64(2300).build())
+            .addTags(3, KeyValue.newBuilder().setKey("authorization").setVStr("authToken").build())
+            .addTags(4, KeyValue.newBuilder().setKey("amount").setVInt64(2300).build())
             .build();
 
     RawSpan rawSpan =
@@ -265,5 +266,7 @@ public class JaegerSpanNormalizerTest {
         SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("http.method").getValue());
     Assertions.assertEquals(
         SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("amount").getValue());
+    Assertions.assertEquals(
+        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("authorization").getValue());
   }
 }
