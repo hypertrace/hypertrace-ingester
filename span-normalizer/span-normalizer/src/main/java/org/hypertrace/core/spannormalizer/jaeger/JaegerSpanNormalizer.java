@@ -101,7 +101,7 @@ public class JaegerSpanNormalizer {
         logSpanConversion(jaegerSpan, rawSpan);
       }
 
-      // redact PII tags
+      // redact PII tags, tag comparisons are case insensitive
       var attributeMap = rawSpan.getEvent().getAttributes().getAttributeMap();
       Set<String> tagKeys = attributeMap.keySet();
 
