@@ -3,7 +3,6 @@ package org.hypertrace.core.spannormalizer.jaeger;
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigList;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Timer;
 import java.io.ByteArrayOutputStream;
@@ -25,7 +24,6 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.RawSpan.Builder;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
-import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +32,7 @@ public class JaegerSpanNormalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanNormalizer.class);
 
-  /**
-   * Service name can be sent against this key as well
-   */
+  /** Service name can be sent against this key as well */
   public static final String OLD_JAEGER_SERVICENAME_KEY = "jaeger.servicename";
 
   private static final String SPAN_NORMALIZATION_TIME_METRIC = "span.normalization.time";
@@ -100,17 +96,21 @@ public class JaegerSpanNormalizer {
         logSpanConversion(jaegerSpan, rawSpan);
       }
 
-      //redact PII/PCI fields
-      config.getList(SpanNormalizerConstants.PII_FIELDS_CONFIG_KEY).forEach(field -> {
-        String key = (String) field.unwrapped();
-        var attributeMap = rawSpan.getEvent().getAttributes()
-            .getAttributeMap();
-        if (attributeMap.containsKey(key)) {
-          attributeMap
-              .put(key, AttributeValue.newBuilder()
-                  .setValue(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL).build());
-        }
-      });
+      // redact PII/PCI fields
+      config
+          .getList(SpanNormalizerConstants.PII_FIELDS_CONFIG_KEY)
+          .forEach(
+              field -> {
+                String key = (String) field.unwrapped();
+                var attributeMap = rawSpan.getEvent().getAttributes().getAttributeMap();
+                if (attributeMap.containsKey(key)) {
+                  attributeMap.put(
+                      key,
+                      AttributeValue.newBuilder()
+                          .setValue(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL)
+                          .build());
+                }
+              });
       return rawSpan;
     };
   }

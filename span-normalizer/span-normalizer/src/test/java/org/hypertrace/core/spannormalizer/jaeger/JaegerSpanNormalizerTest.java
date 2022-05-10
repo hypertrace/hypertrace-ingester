@@ -45,7 +45,7 @@ public class JaegerSpanNormalizerTest {
   @BeforeEach
   public void resetSingleton()
       throws SecurityException, NoSuchFieldException, IllegalArgumentException,
-      IllegalAccessException {
+          IllegalAccessException {
     // Since JaegerToRawSpanConverter is a singleton, we need to reset it for unit tests to
     // recreate the instance.
     Field instance = JaegerSpanNormalizer.class.getDeclaredField("INSTANCE");
@@ -80,7 +80,8 @@ public class JaegerSpanNormalizerTest {
             "bootstrap.servers",
             "localhost:9092"),
         "schema.registry.config",
-        Map.of("schema.registry.url", "http://localhost:8081"), "piiFields",
+        Map.of("schema.registry.url", "http://localhost:8081"),
+        "piiFields",
         List.of("http.method", "http.url", "amount"));
   }
 
@@ -243,11 +244,14 @@ public class JaegerSpanNormalizerTest {
     configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
     JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
     Process process = Process.newBuilder().build();
-    Span span = Span.newBuilder().setProcess(process)
-        .addTags(0, KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
-        .addTags(1, KeyValue.newBuilder().setKey("http.url").setVStr("hypertrace.org"))
-        .addTags(2, KeyValue.newBuilder().setKey("kind").setVStr("client"))
-        .addTags(3, KeyValue.newBuilder().setKey("amount").setVInt64(2300).build()).build();
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(0, KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+            .addTags(1, KeyValue.newBuilder().setKey("http.url").setVStr("hypertrace.org"))
+            .addTags(2, KeyValue.newBuilder().setKey("kind").setVStr("client"))
+            .addTags(3, KeyValue.newBuilder().setKey("amount").setVInt64(2300).build())
+            .build();
 
     RawSpan rawSpan =
         normalizer.convert(tenantId, span, buildEvent(tenantId, span, Optional.empty()));
@@ -257,9 +261,9 @@ public class JaegerSpanNormalizerTest {
     Assertions.assertEquals("client", attributes.get("kind").getValue());
     Assertions.assertEquals(
         SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("http.url").getValue());
-    Assertions.assertEquals(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL,
-        attributes.get("http.method").getValue());
-    Assertions.assertEquals(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL,
-        attributes.get("amount").getValue());
+    Assertions.assertEquals(
+        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("http.method").getValue());
+    Assertions.assertEquals(
+        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("amount").getValue());
   }
 }
