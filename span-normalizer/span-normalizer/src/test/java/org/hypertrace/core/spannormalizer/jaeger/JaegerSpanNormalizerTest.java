@@ -23,6 +23,7 @@ import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.spannormalizer.SpanNormalizer;
+import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
 public class JaegerSpanNormalizerTest {
+
   private final Random random = new Random();
 
   @BeforeAll
@@ -43,7 +45,7 @@ public class JaegerSpanNormalizerTest {
   @BeforeEach
   public void resetSingleton()
       throws SecurityException, NoSuchFieldException, IllegalArgumentException,
-          IllegalAccessException {
+      IllegalAccessException {
     // Since JaegerToRawSpanConverter is a singleton, we need to reset it for unit tests to
     // recreate the instance.
     Field instance = JaegerSpanNormalizer.class.getDeclaredField("INSTANCE");
@@ -78,7 +80,8 @@ public class JaegerSpanNormalizerTest {
             "bootstrap.servers",
             "localhost:9092"),
         "schema.registry.config",
-        Map.of("schema.registry.url", "http://localhost:8081"));
+        Map.of("schema.registry.url", "http://localhost:8081"), "piiFields",
+        List.of("http.method", "http.url", "amount"));
   }
 
   @Test
@@ -231,5 +234,32 @@ public class JaegerSpanNormalizerTest {
     Assertions.assertEquals(
         "{\"value\":{\"string\":\"test-val\"},\"binary_value\":null,\"value_list\":null,\"value_map\":null}",
         JaegerSpanNormalizer.convertToJsonString(attributeValue, AttributeValue.getClassSchema()));
+  }
+
+  @Test
+  public void testPiiFieldRedaction() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+    Process process = Process.newBuilder().build();
+    Span span = Span.newBuilder().setProcess(process)
+        .addTags(0, KeyValue.newBuilder().setKey("http.method").setVStr("GET").build())
+        .addTags(1, KeyValue.newBuilder().setKey("http.url").setVStr("hypertrace.org"))
+        .addTags(2, KeyValue.newBuilder().setKey("kind").setVStr("client"))
+        .addTags(3, KeyValue.newBuilder().setKey("amount").setVInt64(2300).build()).build();
+
+    RawSpan rawSpan =
+        normalizer.convert(tenantId, span, buildEvent(tenantId, span, Optional.empty()));
+
+    var attributes = rawSpan.getEvent().getAttributes().getAttributeMap();
+
+    Assertions.assertEquals("client", attributes.get("kind").getValue());
+    Assertions.assertEquals(
+        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("http.url").getValue());
+    Assertions.assertEquals(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL,
+        attributes.get("http.method").getValue());
+    Assertions.assertEquals(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL,
+        attributes.get("amount").getValue());
   }
 }
