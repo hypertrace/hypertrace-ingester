@@ -48,5 +48,4 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
-          DOCKER_REGISTRY: razorpay
           COMMIT_SHA: ${{ github.sha }}
