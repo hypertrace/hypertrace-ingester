@@ -2,9 +2,11 @@ name: test
 on:
   push:
     branches:
-      - main
-  pull_request:
-
+      - main 
+  pull_request_target: 
+    branches:
+      - main  
+# disabling while testing ci flow
 jobs:
   test:
     runs-on: ubuntu-20.04
@@ -32,27 +34,28 @@ jobs:
         with: 
           args: jacocoTestReport
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          name: unit test reports
-          flags: unit
+#       - name: Upload coverage to Codecov
+#         uses: codecov/codecov-action@v2
+#         with:
+#           name: unit test reports
+#           flags: unit
 
-      - name: copy test reports
-        uses: hypertrace/github-actions/gradle@main
-        with: 
-          args: copyAllReports --output-dir=/tmp/test-reports
 
-      - name: Archive test reports
-        uses: actions/upload-artifact@v1
-        with:
-          name: test-reports
-          path: /tmp/test-reports
-        if: always()
+#       - name: copy test reports
+#         uses: hypertrace/github-actions/gradle@main
+#         with: 
+#           args: copyAllReports --output-dir=/tmp/test-reports
+
+#       - name: Archive test reports
+#         uses: actions/upload-artifact@v1
+#         with:
+#           name: test-reports
+#           path: /tmp/test-reports
+#         if: always()
      
-      - name: Publish Unit Test Results
-        uses: docker://ghcr.io/enricomi/publish-unit-test-result-action:v1.6
-        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          files: ./**/build/test-results/**/*.xml
+#       - name: Publish Unit Test Results
+#         uses: docker://ghcr.io/enricomi/publish-unit-test-result-action:v1.6
+#         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+#         with:
+#           github_token: ${{ secrets.GITHUB_TOKEN }}
+#           files: ./**/build/test-results/**/*.xml

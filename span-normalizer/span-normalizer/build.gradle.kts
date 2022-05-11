@@ -13,10 +13,14 @@ application {
 
 hypertraceDocker {
   defaultImage {
+    imageName.set("hypertrace-service")
     javaApplication {
+      serviceName.set("${project.name}")
       adminPort.set(8099)
     }
+    namespace.set("razorpay")
   }
+  tag("${project.name}" + "_" + getCommitHash())
 }
 
 // Config for gw run to be able to run this locally. Just execute gw run here on Intellij or on the console.
@@ -69,4 +73,13 @@ dependencies {
   testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:6.0.1-ccs")
+}
+
+fun getCommitHash(): String {
+  val os = com.bmuschko.gradle.docker.shaded.org.apache.commons.io.output.ByteArrayOutputStream()
+  project.exec {
+    commandLine = "git rev-parse --verify HEAD".split(" ")
+    standardOutput = os
+  }
+  return String(os.toByteArray()).trim()
 }

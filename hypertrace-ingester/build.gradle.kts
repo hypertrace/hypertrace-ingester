@@ -17,11 +17,14 @@ application {
 
 hypertraceDocker {
   defaultImage {
+    imageName.set("hypertrace-service")
     javaApplication {
       serviceName.set("${project.name}")
       adminPort.set(8099)
     }
+    namespace.set("razorpay")
   }
+  tag("${project.name}" + "_" + getCommitHash())
 }
 
 dependencies {
@@ -163,4 +166,13 @@ tasks.register<Copy>("createCopySpecForSubJobTest") {
   with(
           createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator", "test")
   ).into("./build/resources/test/configs/")
+}
+
+fun getCommitHash(): String {
+  val os = com.bmuschko.gradle.docker.shaded.org.apache.commons.io.output.ByteArrayOutputStream()
+  project.exec {
+    commandLine = "git rev-parse --verify HEAD".split(" ")
+    standardOutput = os
+  }
+  return String(os.toByteArray()).trim()
 }
