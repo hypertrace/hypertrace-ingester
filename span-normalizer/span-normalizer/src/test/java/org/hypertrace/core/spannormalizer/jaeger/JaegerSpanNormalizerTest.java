@@ -24,6 +24,7 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
+import org.hypertrace.core.spannormalizer.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -268,5 +269,52 @@ public class JaegerSpanNormalizerTest {
         SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("amount").getValue());
     Assertions.assertEquals(
         SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("authorization").getValue());
+  }
+
+  @Test
+  public void testPiiFieldRedactionWithNoConfig() throws Exception {
+    String tenantId = "tenant-" + random.nextLong();
+
+    Map<String, Object> config =
+        Map.of(
+            "span.type",
+            "jaeger",
+            "input.topic",
+            "jaeger-spans",
+            "output.topic",
+            "raw-spans-from-jaeger-spans",
+            "kafka.streams.config",
+            Map.of(
+                "application.id",
+                "jaeger-spans-to-raw-spans-job",
+                "bootstrap.servers",
+                "localhost:9092"),
+            "schema.registry.config",
+            Map.of("schema.registry.url", "http://localhost:8081"));
+
+    Map<String, Object> configs = new HashMap<>(config);
+    configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+    Process process = Process.newBuilder().build();
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(0, TestUtils.createKeyValue("http.method", "GET"))
+            .addTags(1, TestUtils.createKeyValue("http.url", "hypertrace.org"))
+            .addTags(2, TestUtils.createKeyValue("kind", "client"))
+            .addTags(3, TestUtils.createKeyValue("authorization", "authToken"))
+            .addTags(4, TestUtils.createKeyValue("amount", 2300))
+            .build();
+
+    RawSpan rawSpan =
+        normalizer.convert(tenantId, span, buildEvent(tenantId, span, Optional.empty()));
+
+    var attributes = rawSpan.getEvent().getAttributes().getAttributeMap();
+
+    Assertions.assertEquals("client", attributes.get("kind").getValue());
+    Assertions.assertEquals("hypertrace.org", attributes.get("http.url").getValue());
+    Assertions.assertEquals("GET", attributes.get("http.method").getValue());
+    Assertions.assertEquals(2300, Integer.valueOf(attributes.get("amount").getValue()));
+    Assertions.assertEquals("authToken", attributes.get("authorization").getValue());
   }
 }

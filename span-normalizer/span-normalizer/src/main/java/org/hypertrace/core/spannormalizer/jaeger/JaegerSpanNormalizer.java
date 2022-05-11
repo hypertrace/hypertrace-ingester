@@ -1,6 +1,5 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
-import static java.util.stream.Collectors.toSet;
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 
 import com.typesafe.config.Config;
@@ -8,6 +7,7 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Timer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -44,7 +44,7 @@ public class JaegerSpanNormalizer {
       new ConcurrentHashMap<>();
   private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
   private final TenantIdHandler tenantIdHandler;
-  private final Set<String> tagsToRedact;
+  private final Set<String> tagsToRedact = new HashSet<>();
 
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
@@ -58,10 +58,11 @@ public class JaegerSpanNormalizer {
   }
 
   public JaegerSpanNormalizer(Config config) {
-    this.tagsToRedact =
-        config.getStringList(SpanNormalizerConstants.PII_FIELDS_CONFIG_KEY).stream()
-            .map(String::toUpperCase)
-            .collect(toSet());
+    if (config.hasPath(SpanNormalizerConstants.PII_FIELDS_CONFIG_KEY)) {
+      config.getStringList(SpanNormalizerConstants.PII_FIELDS_CONFIG_KEY).stream()
+          .map(String::toUpperCase)
+          .forEach(tagsToRedact::add);
+    }
     this.tenantIdHandler = new TenantIdHandler(config);
   }
 
