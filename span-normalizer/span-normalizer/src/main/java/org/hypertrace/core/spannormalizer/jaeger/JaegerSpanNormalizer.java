@@ -9,13 +9,11 @@ import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Timer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -31,7 +29,6 @@ import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.JsonEncoder;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecordBase;
-import org.hypertrace.core.datamodel.AttributeValue;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -45,9 +42,9 @@ import org.hypertrace.core.datamodel.RawSpan.Builder;
 import org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
-import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
+import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
 import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,9 +107,9 @@ public class JaegerSpanNormalizer {
 
   @Nonnull
   private Callable<RawSpan> getRawSpanNormalizerCallable(
-      Span jaegerSpan, String tenantId, Event event) {
+      Span jaegerSpan, Map<String, KeyValue> spanTags, String tenantId) {
     return () -> {
-      Builder rawSpanBuilder = fastNewBuilder(RawSpan.Builder.class);
+      Builder rawSpanBuilder = RawSpan.newBuilder();
       rawSpanBuilder.setCustomerId(tenantId);
       rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
       // Build Event

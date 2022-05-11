@@ -251,8 +251,7 @@ public class JaegerSpanNormalizerTest {
             .addTags(4, KeyValue.newBuilder().setKey("amount").setVInt64(2300).build())
             .build();
 
-    RawSpan rawSpan =
-        normalizer.convert(tenantId, span, buildEvent(tenantId, span, Optional.empty()));
+    RawSpan rawSpan = normalizer.convert(tenantId, span);
 
     var attributes = rawSpan.getEvent().getAttributes().getAttributeMap();
 
@@ -305,8 +304,7 @@ public class JaegerSpanNormalizerTest {
             .addTags(4, TestUtils.createKeyValue("amount", 2300))
             .build();
 
-    RawSpan rawSpan =
-        normalizer.convert(tenantId, span, buildEvent(tenantId, span, Optional.empty()));
+    RawSpan rawSpan = normalizer.convert(tenantId, span);
 
     var attributes = rawSpan.getEvent().getAttributes().getAttributeMap();
 
