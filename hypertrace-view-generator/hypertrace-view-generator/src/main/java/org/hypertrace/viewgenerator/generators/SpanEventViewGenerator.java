@@ -1,11 +1,13 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.datamodel.shared.SpanAttributeUtils.getStringAttribute;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.hypertrace.core.datamodel.Entity;
@@ -129,7 +131,7 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       Map<ByteBuffer, ByteBuffer> childToParentEventIds,
       Map<ByteBuffer, Event> exitSpanToCalleeApiEntrySpanMap) {
 
-    SpanEventView.Builder builder = SpanEventView.newBuilder();
+    SpanEventView.Builder builder = fastNewBuilder(SpanEventView.Builder.class);
 
     builder.setTenantId(event.getCustomerId());
     builder.setSpanId(event.getEventId());
@@ -224,6 +226,8 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
       builder.setErrorCount((int) errorMetric.getValue().doubleValue());
     }
 
+    builder.setSpans(1);
+
     MetricValue exceptionMetric = event.getMetrics().getMetricMap().get(EXCEPTION_COUNT_CONSTANT);
     if (exceptionMetric != null && exceptionMetric.getValue() > 0.0d) {
       builder.setExceptionCount((int) exceptionMetric.getValue().doubleValue());
@@ -314,7 +318,10 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
             .orElse(HttpSemanticConventionUtils.getHttpPath(event).orElse(null));
 
       case PROTOCOL_GRPC:
-        return event.getEventName();
+        return Optional.ofNullable(
+                SpanAttributeUtils.getStringAttribute(
+                    event, EnrichedSpanConstants.GRPC_REQUEST_URL))
+            .orElse(event.getEventName());
     }
     return null;
   }

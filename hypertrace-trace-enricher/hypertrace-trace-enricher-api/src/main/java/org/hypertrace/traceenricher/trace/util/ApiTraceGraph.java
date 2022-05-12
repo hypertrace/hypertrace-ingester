@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.trace.util;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -389,7 +391,7 @@ public class ApiTraceGraph {
             entryBoundaryEventOfDestinationApiNode);
       } else {
         ApiNodeEventEdge apiNodeEventEdge =
-            ApiNodeEventEdge.newBuilder()
+            fastNewBuilder(ApiNodeEventEdge.Builder.class)
                 .setSrcApiNodeIndex(srcIndex)
                 .setTgtApiNodeIndex(targetIndex)
                 .setSrcEventIndex(srcIndexInTrace)

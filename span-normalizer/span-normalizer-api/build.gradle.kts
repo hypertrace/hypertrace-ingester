@@ -16,11 +16,11 @@ val generateLocalGoGrpcFiles = false
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.15.7"
+    artifact = "com.google.protobuf:protoc:3.17.3"
   }
   plugins {
     id("grpc_java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.41.0"
+      artifact = "io.grpc:protoc-gen-grpc-java:1.42.0"
     }
 
     if (generateLocalGoGrpcFiles) {
@@ -61,6 +61,11 @@ dependencies {
   constraints {
     api("org.apache.commons:commons-compress:1.21") {
       because("Multiple vulnerabilities in avro-declared version")
+    }
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+      because("Denial of Service (DoS) " +
+          "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
+          "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
     }
   }
 }

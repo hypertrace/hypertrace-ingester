@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor.SPANS_COUNTER;
 
@@ -57,7 +58,7 @@ public class JaegerSpanToAvroRawSpanTransformer
         // we use the (tenant_id, trace_id) as the key so that raw_span_grouper
         // job can do a groupByKey without having to create a repartition topic
         TraceIdentity traceIdentity =
-            TraceIdentity.newBuilder()
+            fastNewBuilder(TraceIdentity.Builder.class)
                 .setTenantId(tenantId)
                 .setTraceId(rawSpan.getTraceId())
                 .build();

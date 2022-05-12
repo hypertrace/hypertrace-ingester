@@ -1,5 +1,7 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -416,7 +418,7 @@ public class ServiceCallViewGenerator extends BaseViewGenerator<ServiceCallView>
   }
 
   private ServiceCallView.Builder createAndInitializeBuilder(StructuredTrace trace) {
-    ServiceCallView.Builder builder = ServiceCallView.newBuilder();
+    ServiceCallView.Builder builder = fastNewBuilder(ServiceCallView.Builder.class);
     addTraceCommonAttributes(trace, builder);
 
     return builder;

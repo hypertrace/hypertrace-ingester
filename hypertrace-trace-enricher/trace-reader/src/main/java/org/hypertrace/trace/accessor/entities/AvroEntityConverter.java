@@ -1,6 +1,7 @@
 package org.hypertrace.trace.accessor.entities;
 
 import static java.util.Objects.nonNull;
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -24,7 +25,7 @@ public interface AvroEntityConverter {
     return convertAttributes(entity.getAttributesMap())
         .map(
             attributes ->
-                Entity.newBuilder()
+                fastNewBuilder(Entity.Builder.class)
                     .setEntityType(entity.getEntityType())
                     .setEntityId(entity.getEntityId())
                     .setCustomerId(tenantId)
@@ -44,7 +45,9 @@ public interface AvroEntityConverter {
                     .onErrorComplete()
                     .map(value -> Map.entry(entry.getKey(), value)))
         .toMap(Entry::getKey, Entry::getValue)
-        .map(convertedMap -> Attributes.newBuilder().setAttributeMap(convertedMap).build());
+        .map(
+            convertedMap ->
+                fastNewBuilder(Attributes.Builder.class).setAttributeMap(convertedMap).build());
   }
 
   private static Single<AttributeValue> convertAttributeValue(
@@ -76,7 +79,7 @@ public interface AvroEntityConverter {
                             "Avro value lists do not support nested lists or maps")))
         .map(AttributeValue::getValue) // Unwrap and flatten
         .toList()
-        .map(list -> AttributeValue.newBuilder().setValueList(list).build());
+        .map(list -> fastNewBuilder(AttributeValue.Builder.class).setValueList(list).build());
   }
 
   private static Single<AttributeValue> convertValueMap(AttributeValueMap valueMap) {
@@ -94,7 +97,7 @@ public interface AvroEntityConverter {
                     .map(AttributeValue::getValue) // Unwrap and flatten
                     .map(value -> Map.entry(entry.getKey(), value)))
         .toMap(Entry::getKey, Entry::getValue)
-        .map(map -> AttributeValue.newBuilder().setValueMap(map).build());
+        .map(map -> fastNewBuilder(AttributeValue.Builder.class).setValueMap(map).build());
   }
 
   private static Single<AttributeValue> convertValue(Value value) {
@@ -115,7 +118,7 @@ public interface AvroEntityConverter {
         return buildAttributeStringValueSingle(String.valueOf(value.getBoolean()));
       case BYTES:
         return Single.just(
-            AttributeValue.newBuilder()
+            fastNewBuilder(AttributeValue.Builder.class)
                 .setBinaryValue(value.getBytes().asReadOnlyByteBuffer())
                 .build());
       case CUSTOM:
@@ -128,6 +131,6 @@ public interface AvroEntityConverter {
   }
 
   private static Single<AttributeValue> buildAttributeStringValueSingle(String value) {
-    return Single.just(AttributeValue.newBuilder().setValue(value).build());
+    return Single.just(fastNewBuilder(AttributeValue.Builder.class).setValue(value).build());
   }
 }

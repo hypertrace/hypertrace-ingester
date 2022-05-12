@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -78,12 +79,12 @@ public class JaegerSpanToLogRecordsTransformer
   LogEvents buildLogEventRecords(Span value, String tenantId) {
     ByteBuffer spanId = value.getSpanId().asReadOnlyByteBuffer();
     ByteBuffer traceId = value.getTraceId().asReadOnlyByteBuffer();
-    return LogEvents.newBuilder()
+    return fastNewBuilder(LogEvents.Builder.class)
         .setLogEvents(
             value.getLogsList().stream()
                 .map(
                     log ->
-                        LogEvent.newBuilder()
+                        fastNewBuilder(LogEvent.Builder.class)
                             .setTenantId(tenantId)
                             .setSpanId(spanId)
                             .setTraceId(traceId)
@@ -95,7 +96,7 @@ public class JaegerSpanToLogRecordsTransformer
   }
 
   private Attributes buildAttributes(List<JaegerSpanInternalModel.KeyValue> keyValues) {
-    return Attributes.newBuilder()
+    return fastNewBuilder(Attributes.Builder.class)
         .setAttributeMap(
             keyValues.stream()
                 .collect(

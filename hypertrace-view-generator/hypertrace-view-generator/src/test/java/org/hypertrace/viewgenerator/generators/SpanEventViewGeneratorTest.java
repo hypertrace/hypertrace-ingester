@@ -80,6 +80,23 @@ public class SpanEventViewGeneratorTest {
   }
 
   @Test
+  public void test_getRequestUrl_grpcProctol_shouldReturnEnrichedAttribute() {
+    Event event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "grpc.request.url",
+                        AttributeValue.newBuilder().setValue("Recv.hipstershop.AdService").build()))
+                .build());
+    when(event.getEventName()).thenReturn("Sent.hipstershop.AdService.GetAds");
+    assertEquals(
+        "Recv.hipstershop.AdService",
+        spanEventViewGenerator.getRequestUrl(event, Protocol.PROTOCOL_GRPC));
+  }
+
+  @Test
   public void testGetRequestUrl_fullUrlIsAbsent() {
     Event event =
         createMockEventWithAttribute(

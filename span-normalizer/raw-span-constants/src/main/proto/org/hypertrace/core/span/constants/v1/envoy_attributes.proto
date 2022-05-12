@@ -12,7 +12,7 @@ enum Envoy {
   ENVOY_EGRESS_SPAN = 3 [(string_value) = "egress"];
   ENVOY_REQUEST_SIZE = 4 [(string_value) = "request_size"];
   ENVOY_RESPONSE_SIZE = 5 [(string_value) = "response_size"];
-  ENVOY_GRPC_STATUS_MESSAGE = 6 [(string_value) = "gprc.message"];
+  ENVOY_GRPC_STATUS_MESSAGE = 6 [(string_value) = "grpc.message"];
   ENVOY_DOWNSTREAM_CLUSTER = 7 [(string_value) = "downstream_cluster"];
   ENVOY_ERROR_REASON = 8 [(string_value) = "error.reason"];
   ENVOY_GRPC_STATUS_CODE = 9 [(string_value) ="grpc.status_code"];

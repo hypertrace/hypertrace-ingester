@@ -6,11 +6,6 @@ plugins {
     id("org.hypertrace.jacoco-report-plugin")
 }
 
-repositories {
-    // Need this to fetch confluent's kafka-avro-serializer dependency
-    maven("http://packages.confluent.io/maven")
-}
-
 application {
     mainClass.set("org.hypertrace.core.serviceframework.PlatformServiceLauncher")
 }
@@ -41,11 +36,11 @@ dependencies {
         because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
     }
     implementation(project(":span-normalizer:span-normalizer-api"))
-    implementation("org.hypertrace.core.datamodel:data-model:0.1.19")
-    implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.26")
-    implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.26")
+    implementation("org.hypertrace.core.datamodel:data-model:0.1.20")
+    implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.33")
+    implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.33")
 
-    implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.21")
+    implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.23")
     implementation("com.typesafe:config:1.4.1")
     implementation("de.javakaffee:kryo-serializers:0.45")
     implementation("io.confluent:kafka-avro-serializer:5.5.0")
@@ -53,7 +48,15 @@ dependencies {
 
     // Logging
     implementation("org.slf4j:slf4j-api:1.7.30")
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
+
+    constraints {
+        implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1") {
+            because("Denial of Service (DoS) " +
+                "[Medium Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2326698] " +
+                "in com.fasterxml.jackson.core:jackson-databind@2.12.2")
+        }
+    }
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
     testImplementation("org.mockito:mockito-core:3.8.0")
