@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,11 +46,13 @@ import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
+import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
 import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JaegerSpanNormalizer {
+
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanNormalizer.class);
 
   /** Service name can be sent against this key as well */
@@ -62,6 +65,7 @@ public class JaegerSpanNormalizer {
       new ConcurrentHashMap<>();
   private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
   private final TenantIdHandler tenantIdHandler;
+  private final Set<String> tagsToRedact = new HashSet<>();
 
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
@@ -75,6 +79,11 @@ public class JaegerSpanNormalizer {
   }
 
   public JaegerSpanNormalizer(Config config) {
+    if (config.hasPath(SpanNormalizerConstants.PII_FIELDS_CONFIG_KEY)) {
+      config.getStringList(SpanNormalizerConstants.PII_FIELDS_CONFIG_KEY).stream()
+          .map(String::toUpperCase)
+          .forEach(tagsToRedact::add);
+    }
     this.tenantIdHandler = new TenantIdHandler(config);
   }
 
@@ -118,11 +127,42 @@ public class JaegerSpanNormalizer {
           .normalize(jaegerSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey())
           .ifPresent(rawSpanBuilder::setResource);
 
+      // redact PII tags, tag comparisons are case insensitive
+      var attributeMap = rawSpanBuilder.getEvent().getAttributes().getAttributeMap();
+      Set<String> tagKeys = attributeMap.keySet();
+
+      AtomicReference<Boolean> containsPIIFields = new AtomicReference<>();
+      containsPIIFields.set(false);
+
+      tagKeys.stream()
+          .filter(tagKey -> tagsToRedact.contains(tagKey.toUpperCase()))
+          .peek(tagKey -> containsPIIFields.set(true))
+          .forEach(
+              tagKey ->
+                  attributeMap.put(
+                      tagKey,
+                      AttributeValue.newBuilder()
+                          .setValue(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL)
+                          .build()));
+
+      // if the trace contains PII field, add a field to indicate this. We can later slice-and-dice
+      // based on this tag
+      if (containsPIIFields.get()) {
+        rawSpanBuilder
+            .getEvent()
+            .getAttributes()
+            .getAttributeMap()
+            .put(
+                SpanNormalizerConstants.CONTAINS_PII_TAGS_KEY,
+                AttributeValue.newBuilder().setValue("true").build());
+      }
+
       // build raw span
       RawSpan rawSpan = rawSpanBuilder.build();
       if (LOG.isDebugEnabled()) {
         logSpanConversion(jaegerSpan, rawSpan);
       }
+
       return rawSpan;
     };
   }
