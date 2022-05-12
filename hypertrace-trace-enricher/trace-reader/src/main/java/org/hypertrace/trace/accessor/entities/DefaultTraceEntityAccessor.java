@@ -4,6 +4,7 @@ import static io.reactivex.rxjava3.core.Maybe.zip;
 import static java.util.function.Predicate.not;
 
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -61,20 +62,21 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   }
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
-    Entity entity = this.buildEntity(entityType, trace, span).blockingGet();
-    if (entity == null) {
-      return;
-    }
-    UpsertCondition upsertCondition =
-        this.buildUpsertCondition(entityType, trace, span)
-            .defaultIfEmpty(UpsertCondition.getDefaultInstance())
-            .blockingGet();
+    this.buildEntity(entityType, trace, span)
+        .subscribeOn(Schedulers.io())
+        .subscribe(
+            entity -> {
+              UpsertCondition upsertCondition =
+                  this.buildUpsertCondition(entityType, trace, span)
+                      .defaultIfEmpty(UpsertCondition.getDefaultInstance())
+                      .blockingGet();
 
-    this.entityDataClient.createOrUpdateEntityEventually(
-        RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
-        entity,
-        upsertCondition,
-        this.writeThrottleDuration);
+              this.entityDataClient.createOrUpdateEntityEventually(
+                  RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
+                  entity,
+                  upsertCondition,
+                  this.writeThrottleDuration);
+            });
   }
 
   private Maybe<UpsertCondition> buildUpsertCondition(

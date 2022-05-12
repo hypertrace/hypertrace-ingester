@@ -1,5 +1,7 @@
 package org.hypertrace.viewgenerator.generators;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.google.common.collect.Lists;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -28,7 +30,7 @@ public class RawTraceViewGenerator extends BaseViewGenerator<RawTraceView> {
       Map<ByteBuffer, Event> eventMap,
       Map<ByteBuffer, List<ByteBuffer>> parentToChildrenEventIds,
       Map<ByteBuffer, ByteBuffer> childToParentEventIds) {
-    RawTraceView.Builder builder = RawTraceView.newBuilder();
+    RawTraceView.Builder builder = fastNewBuilder(RawTraceView.Builder.class);
     builder.setTenantId(structuredTrace.getCustomerId());
     builder.setTraceId(structuredTrace.getTraceId());
 

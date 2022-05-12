@@ -17,6 +17,9 @@ import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.serviceframework.config.ConfigUtils;
 import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.hypertrace.core.viewgenerator.service.MultiViewGeneratorLauncher;
+import org.hypertrace.metrics.exporter.MetricsExporterService;
+import org.hypertrace.metrics.generator.MetricsGenerator;
+import org.hypertrace.metrics.processor.MetricsProcessor;
 import org.hypertrace.traceenricher.trace.enricher.TraceEnricher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +32,21 @@ public class HypertraceIngester extends KafkaStreamsApp {
   private static final String HYPERTRACE_INGESTER_JOB_CONFIG = "hypertrace-ingester-job-config";
 
   private Map<String, Pair<String, KafkaStreamsApp>> jobNameToSubTopology = new HashMap<>();
+  private MetricsExporterService metricsExporterService;
+  boolean metricsPipelineEnabled;
 
   public HypertraceIngester(ConfigClient configClient) {
     super(configClient);
+    Config config = getAppConfig();
+    metricsPipelineEnabled =
+        config.hasPath("metrics.pipeline.enable")
+            ? config.getBoolean("metrics.pipeline.enable")
+            : false;
+    if (metricsPipelineEnabled) {
+      String metricsPipelineExporter = config.getString("metrics.pipeline.exporter");
+      metricsExporterService = new MetricsExporterService(configClient);
+      metricsExporterService.setConfig(getSubJobConfig(metricsPipelineExporter));
+    }
   }
 
   private KafkaStreamsApp getSubTopologyInstance(String name) {
@@ -49,6 +64,12 @@ public class HypertraceIngester extends KafkaStreamsApp {
       case "all-views":
         kafkaStreamsApp = new MultiViewGeneratorLauncher(ConfigClientFactory.getClient());
         break;
+      case "hypertrace-metrics-processor":
+        kafkaStreamsApp = new MetricsProcessor(ConfigClientFactory.getClient());
+        break;
+      case "hypertrace-metrics-generator":
+        kafkaStreamsApp = new MetricsGenerator(ConfigClientFactory.getClient());
+        break;
       default:
         throw new RuntimeException(String.format("Invalid configured sub-topology : [%s]", name));
     }
@@ -61,31 +82,47 @@ public class HypertraceIngester extends KafkaStreamsApp {
       StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> inputStreams) {
 
+    // build for trace pipeline
     List<String> subTopologiesNames = getSubTopologiesNames(properties);
-
     for (String subTopologyName : subTopologiesNames) {
       LOGGER.info("Building sub topology :{}", subTopologyName);
-
-      // create an instance and retains is reference to be used later in other methods
-      KafkaStreamsApp subTopology = getSubTopologyInstance(subTopologyName);
-      jobNameToSubTopology.put(
-          subTopologyName, Pair.of(subTopology.getJobConfigKey(), subTopology));
-
-      // need to use its own copy as input/output topics are different
-      Config subTopologyJobConfig = getSubJobConfig(subTopologyName);
-      Map<String, Object> flattenSubTopologyConfig =
-          subTopology.getStreamsConfig(subTopologyJobConfig);
-      flattenSubTopologyConfig.put(subTopology.getJobConfigKey(), subTopologyJobConfig);
-
-      // add specific job properties
-      addProperties(properties, flattenSubTopologyConfig);
-      streamsBuilder = subTopology.buildTopology(properties, streamsBuilder, inputStreams);
-
-      // retain per job key and its topology
-      jobNameToSubTopology.put(
-          subTopologyName, Pair.of(subTopology.getJobConfigKey(), subTopology));
+      streamsBuilder = buildSubTopology(subTopologyName, properties, streamsBuilder, inputStreams);
     }
 
+    // build for metrics pipeline
+    if (metricsPipelineEnabled) {
+      List<String> metricsSubTopologiesNames = getMetricsPipelineSubTopologiesNames(properties);
+      for (String subTopologyName : metricsSubTopologiesNames) {
+        LOGGER.info("Building metrics pipeline sub topology :{}", subTopologyName);
+        streamsBuilder =
+            buildSubTopology(subTopologyName, properties, streamsBuilder, inputStreams);
+      }
+    }
+
+    return streamsBuilder;
+  }
+
+  private StreamsBuilder buildSubTopology(
+      String subTopologyName,
+      Map<String, Object> properties,
+      StreamsBuilder streamsBuilder,
+      Map<String, KStream<?, ?>> inputStreams) {
+    // create an instance and retains is reference to be used later in other methods
+    KafkaStreamsApp subTopology = getSubTopologyInstance(subTopologyName);
+    jobNameToSubTopology.put(subTopologyName, Pair.of(subTopology.getJobConfigKey(), subTopology));
+
+    // need to use its own copy as input/output topics are different
+    Config subTopologyJobConfig = getSubJobConfig(subTopologyName);
+    Map<String, Object> flattenSubTopologyConfig =
+        subTopology.getStreamsConfig(subTopologyJobConfig);
+    flattenSubTopologyConfig.put(subTopology.getJobConfigKey(), subTopologyJobConfig);
+
+    // add specific job properties
+    addProperties(properties, flattenSubTopologyConfig);
+    streamsBuilder = subTopology.buildTopology(properties, streamsBuilder, inputStreams);
+
+    // retain per job key and its topology
+    jobNameToSubTopology.put(subTopologyName, Pair.of(subTopology.getJobConfigKey(), subTopology));
     return streamsBuilder;
   }
 
@@ -114,8 +151,36 @@ public class HypertraceIngester extends KafkaStreamsApp {
     return outputTopics.stream().collect(Collectors.toList());
   }
 
+  @Override
+  protected void doInit() {
+    super.doInit();
+    if (metricsPipelineEnabled) {
+      this.metricsExporterService.doInit();
+    }
+  }
+
+  @Override
+  protected void doStart() {
+    super.doStart();
+    if (metricsPipelineEnabled) {
+      this.metricsExporterService.doStart();
+    }
+  }
+
+  @Override
+  protected void doStop() {
+    super.doStop();
+    if (metricsPipelineEnabled) {
+      this.metricsExporterService.doStop();
+    }
+  }
+
   private List<String> getSubTopologiesNames(Map<String, Object> properties) {
     return getJobConfig(properties).getStringList("sub.topology.names");
+  }
+
+  private List<String> getMetricsPipelineSubTopologiesNames(Map<String, Object> properties) {
+    return getJobConfig(properties).getStringList("metrics.pipeline.sub.topology.names");
   }
 
   private Config getSubJobConfig(String jobName) {

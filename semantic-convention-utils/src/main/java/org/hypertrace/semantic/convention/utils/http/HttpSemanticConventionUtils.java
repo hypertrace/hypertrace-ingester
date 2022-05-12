@@ -9,7 +9,11 @@ import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSem
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_URL;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_RESPONSE_SIZE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_REQUEST_BODY;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_HTTP_RESPONSE_BODY;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_BODY_TRUNCATED;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
@@ -18,6 +22,8 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_QUERY_STRI
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_BODY_TRUNCATED;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT;
@@ -71,6 +77,14 @@ public class HttpSemanticConventionUtils {
   private static final String OTEL_HTTP_TARGET = OTelHttpSemanticConventions.HTTP_TARGET.getValue();
   private static final String RELATIVE_URL_CONTEXT = "http://hypertrace.org";
 
+  private static final String HTTP_REQUEST_BODY = RawSpanConstants.getValue(HTTP_HTTP_REQUEST_BODY);
+  private static final String HTTP_REQUEST_BODY_TRUNCATED_ATTR =
+      RawSpanConstants.getValue(HTTP_REQUEST_BODY_TRUNCATED);
+  private static final String HTTP_RESPONSE_BODY =
+      RawSpanConstants.getValue(HTTP_HTTP_RESPONSE_BODY);
+  private static final String HTTP_RESPONSE_BODY_TRUNCATED_ATTR =
+      RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED);
+
   private static final String SLASH = "/";
 
   private static final List<String> USER_AGENT_ATTRIBUTES =
@@ -116,13 +130,15 @@ public class HttpSemanticConventionUtils {
       List.of(
           RawSpanConstants.getValue(ENVOY_REQUEST_SIZE),
           RawSpanConstants.getValue(HTTP_REQUEST_SIZE),
-          OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue());
+          OTelHttpSemanticConventions.HTTP_REQUEST_SIZE.getValue(),
+          RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_LENGTH));
 
   private static final List<String> RESPONSE_SIZE_ATTRIBUTES =
       List.of(
           RawSpanConstants.getValue(ENVOY_RESPONSE_SIZE),
           RawSpanConstants.getValue(HTTP_RESPONSE_SIZE),
-          OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue());
+          OTelHttpSemanticConventions.HTTP_RESPONSE_SIZE.getValue(),
+          RawSpanConstants.getValue(HTTP_RESPONSE_CONTENT_LENGTH));
 
   private static final List<String> STATUS_CODE_ATTRIBUTES =
       List.of(
@@ -168,8 +184,10 @@ public class HttpSemanticConventionUtils {
    */
   public static Optional<String> getHttpUrlForOTelFormat(
       Map<String, AttributeValue> attributeValueMap) {
-    if (attributeValueMap.containsKey(HTTP_URL.getValue())) {
-      return Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
+    Optional<String> httpUrlForOTelFormat = Optional.empty();
+    if (attributeValueMap.containsKey(HTTP_URL.getValue())
+        && isAbsoluteUrl(attributeValueMap.get(HTTP_URL.getValue()).getValue())) {
+      httpUrlForOTelFormat = Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
     } else if (attributeValueMap.containsKey(HTTP_SCHEME.getValue())
         && attributeValueMap.containsKey(HTTP_HOST.getValue())
         && attributeValueMap.containsKey(HTTP_TARGET.getValue())) {
@@ -179,15 +197,19 @@ public class HttpSemanticConventionUtils {
               attributeValueMap.get(HTTP_SCHEME.getValue()).getValue(),
               attributeValueMap.get(HTTP_HOST.getValue()).getValue(),
               attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
-      return Optional.of(url);
+      httpUrlForOTelFormat = Optional.of(url);
     } else if (SpanSemanticConventionUtils.isClientSpanForOtelFormat(attributeValueMap)
         || SpanSemanticConventionUtils.isClientSpanForOCFormat(attributeValueMap)) {
-      return getHttpUrlForOtelFormatClientSpan(attributeValueMap);
+      httpUrlForOTelFormat = getHttpUrlForOtelFormatClientSpan(attributeValueMap);
     } else if (SpanSemanticConventionUtils.isServerSpanForOtelFormat(attributeValueMap)
         || SpanSemanticConventionUtils.isServerSpanForOCFormat(attributeValueMap)) {
-      return getHttpUrlForOtelFormatServerSpan(attributeValueMap);
+      httpUrlForOTelFormat = getHttpUrlForOtelFormatServerSpan(attributeValueMap);
     }
-    return Optional.empty();
+
+    if (httpUrlForOTelFormat.isEmpty() && attributeValueMap.containsKey(HTTP_URL.getValue())) {
+      return Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
+    }
+    return httpUrlForOTelFormat;
   }
 
   private static Optional<String> getHttpUrlForOtelFormatClientSpan(
@@ -474,13 +496,31 @@ public class HttpSemanticConventionUtils {
   public static Optional<Integer> getHttpRequestSize(Event event) {
     String httpRequestSize =
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, REQUEST_SIZE_ATTRIBUTES);
-    return Optional.ofNullable(httpRequestSize).map(Integer::parseInt);
+
+    Optional<String> requestSize = Optional.ofNullable(httpRequestSize);
+    if (!requestSize.isEmpty()) return requestSize.map(Integer::parseInt);
+
+    if (SpanAttributeUtils.getBooleanAttribute(event, HTTP_REQUEST_BODY_TRUNCATED_ATTR)) {
+      return Optional.empty();
+    }
+
+    String requestBody = SpanAttributeUtils.getStringAttribute(event, HTTP_REQUEST_BODY);
+    return Optional.ofNullable(requestBody).map(String::length);
   }
 
   public static Optional<Integer> getHttpResponseSize(Event event) {
     String httpResponseSize =
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, RESPONSE_SIZE_ATTRIBUTES);
-    return Optional.ofNullable(httpResponseSize).map(Integer::parseInt);
+
+    Optional<String> responseSize = Optional.ofNullable(httpResponseSize);
+    if (!responseSize.isEmpty()) return responseSize.map(Integer::parseInt);
+
+    if (SpanAttributeUtils.getBooleanAttribute(event, HTTP_RESPONSE_BODY_TRUNCATED_ATTR)) {
+      return Optional.empty();
+    }
+
+    String responseBody = SpanAttributeUtils.getStringAttribute(event, HTTP_RESPONSE_BODY);
+    return Optional.ofNullable(responseBody).map(String::length);
   }
 
   public static int getHttpResponseStatusCode(Event event) {

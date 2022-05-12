@@ -1,6 +1,8 @@
 package org.hypertrace.core.rawspansgrouper;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
@@ -63,6 +65,7 @@ public class RawSpansProcessor
   private To outputTopic;
   private double dataflowSamplingPercent = -1;
   private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
+  private long defaultMaxSpanCountLimit = Long.MAX_VALUE;
 
   // counter for number of spans dropped per tenant
   private static final ConcurrentMap<String, Counter> droppedSpansCounter =
@@ -96,6 +99,10 @@ public class RawSpansProcessor
               (entry) -> {
                 maxSpanCountMap.put(entry.getKey(), subConfig.getLong(entry.getKey()));
               });
+    }
+
+    if (jobConfig.hasPath(DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT)) {
+      defaultMaxSpanCountLimit = jobConfig.getLong(DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT);
     }
 
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
@@ -134,7 +141,7 @@ public class RawSpansProcessor
 
     if (firstEntry) {
       traceState =
-          TraceState.newBuilder()
+          fastNewBuilder(TraceState.Builder.class)
               .setTraceStartTimestamp(currentTimeMs)
               .setTraceEndTimestamp(currentTimeMs)
               .setEmitTs(traceEmitTs)
@@ -163,9 +170,15 @@ public class RawSpansProcessor
   }
 
   private boolean shouldDropSpan(TraceIdentity key, TraceState traceState) {
-    if (traceState != null
-        && maxSpanCountMap.containsKey(key.getTenantId())
-        && traceState.getSpanIds().size() >= maxSpanCountMap.get(key.getTenantId())) {
+    int inFlightSpansPerTrace =
+        traceState != null ? traceState.getSpanIds().size() : Integer.MIN_VALUE;
+    long maxSpanCountTenantLimit =
+        maxSpanCountMap.containsKey(key.getTenantId())
+            ? maxSpanCountMap.get(key.getTenantId())
+            : defaultMaxSpanCountLimit;
+
+    if (inFlightSpansPerTrace >= maxSpanCountTenantLimit) {
+
       if (logger.isDebugEnabled()) {
         logger.debug(
             "Dropping span [{}] from tenant_id={}, trace_id={} after grouping {} spans",
@@ -174,6 +187,7 @@ public class RawSpansProcessor
             HexUtils.getHex(key.getTraceId()),
             traceState.getSpanIds().size());
       }
+
       // increment the counter for dropped spans
       droppedSpansCounter
           .computeIfAbsent(
@@ -182,19 +196,19 @@ public class RawSpansProcessor
                   PlatformMetricsRegistry.registerCounter(
                       DROPPED_SPANS_COUNTER, Map.of("tenantId", k)))
           .increment();
+
+      // increment the counter when the number of spans reaches the max.span.count limit.
+      if (inFlightSpansPerTrace == maxSpanCountTenantLimit) {
+        truncatedTracesCounter
+            .computeIfAbsent(
+                key.getTenantId(),
+                k ->
+                    PlatformMetricsRegistry.registerCounter(
+                        TRUNCATED_TRACES_COUNTER, Map.of("tenantId", k)))
+            .increment();
+      }
+      // drop the span as limit is reached
       return true;
-    }
-    // increment the counter when the number of spans reaches the max.span.count limit.
-    if (traceState != null
-        && maxSpanCountMap.containsKey(key.getTenantId())
-        && traceState.getSpanIds().size() == maxSpanCountMap.get(key.getTenantId())) {
-      truncatedTracesCounter
-          .computeIfAbsent(
-              key.getTenantId(),
-              k ->
-                  PlatformMetricsRegistry.registerCounter(
-                      TRUNCATED_TRACES_COUNTER, Map.of("tenantId", k)))
-          .increment();
     }
     return false;
   }

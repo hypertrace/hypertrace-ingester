@@ -103,5 +103,7 @@ protocol SpanEventViewProtocol {
     map<string> api_callee_name_count = {};
 
     int api_trace_error_span_count = 0;
+
+    int spans = 1;
   }
 }

@@ -1,5 +1,7 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import com.google.protobuf.ProtocolStringList;
 import com.google.protobuf.util.Timestamps;
 import com.typesafe.config.Config;
@@ -109,7 +111,7 @@ public class JaegerSpanNormalizer {
   private Callable<RawSpan> getRawSpanNormalizerCallable(
       Span jaegerSpan, Map<String, KeyValue> spanTags, String tenantId) {
     return () -> {
-      Builder rawSpanBuilder = RawSpan.newBuilder();
+      Builder rawSpanBuilder = fastNewBuilder(RawSpan.Builder.class);
       rawSpanBuilder.setCustomerId(tenantId);
       rawSpanBuilder.setTraceId(jaegerSpan.getTraceId().asReadOnlyByteBuffer());
       // Build Event
@@ -174,7 +176,7 @@ public class JaegerSpanNormalizer {
       Span jaegerSpan,
       @Nonnull Map<String, KeyValue> tagsMap,
       Optional<String> tenantIdKey) {
-    Event.Builder eventBuilder = Event.newBuilder();
+    Event.Builder eventBuilder = fastNewBuilder(Event.Builder.class);
     eventBuilder.setCustomerId(tenantId);
     eventBuilder.setEventId(jaegerSpan.getSpanId().asReadOnlyByteBuffer());
     eventBuilder.setEventName(jaegerSpan.getOperationName());
@@ -194,7 +196,7 @@ public class JaegerSpanNormalizer {
       // field.
       Set<JaegerSpanInternalModel.SpanRef> referencesSet = new HashSet<>(referencesList);
       for (JaegerSpanInternalModel.SpanRef spanRef : referencesSet) {
-        EventRef.Builder builder = EventRef.newBuilder();
+        EventRef.Builder builder = fastNewBuilder(EventRef.Builder.class);
         builder.setTraceId(spanRef.getTraceId().asReadOnlyByteBuffer());
         builder.setEventId(spanRef.getSpanId().asReadOnlyByteBuffer());
         builder.setRefType(EventRefType.valueOf(spanRef.getRefType().toString()));
@@ -204,7 +206,8 @@ public class JaegerSpanNormalizer {
 
     // span attributes to event attributes
     Map<String, AttributeValue> attributeFieldMap = new HashMap<>();
-    eventBuilder.setAttributesBuilder(Attributes.newBuilder().setAttributeMap(attributeFieldMap));
+    eventBuilder.setAttributesBuilder(
+        fastNewBuilder(Attributes.Builder.class).setAttributeMap(attributeFieldMap));
 
     List<KeyValue> tagsList = jaegerSpan.getTagsList();
     // Stop populating first class fields for - grpc, rpc, http, and sql.
@@ -255,10 +258,12 @@ public class JaegerSpanNormalizer {
     // EVENT METRICS
     Map<String, MetricValue> metricMap = new HashMap<>();
     MetricValue durationMetric =
-        MetricValue.newBuilder().setValue((double) (endTimeMillis - startTimeMillis)).build();
+        fastNewBuilder(MetricValue.Builder.class)
+            .setValue((double) (endTimeMillis - startTimeMillis))
+            .build();
     metricMap.put("Duration", durationMetric);
 
-    eventBuilder.setMetrics(Metrics.newBuilder().setMetricMap(metricMap).build());
+    eventBuilder.setMetrics(fastNewBuilder(Metrics.Builder.class).setMetricMap(metricMap).build());
 
     return eventBuilder.build();
   }
