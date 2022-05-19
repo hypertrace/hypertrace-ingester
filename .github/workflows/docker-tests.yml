@@ -1,8 +1,6 @@
 name: e2e test
 on:
   push:
-    branches:
-      - main
     paths-ignore:
       - '**/*.md'
   pull_request_target:
