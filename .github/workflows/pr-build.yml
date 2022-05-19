@@ -4,8 +4,9 @@ on:
   pull_request_target:
     branches:
       - main
+
 jobs:
-  validate-avros:
+  build:
     runs-on: ubuntu-20.04
     steps:
       # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
@@ -15,52 +16,8 @@ jobs:
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
           fetch-depth: 0
+          submodules: recursive
 
-      - name: create checksum file
-        uses: hypertrace/github-actions/checksum@main
-
-      - name: Cache packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.gradle
-          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
-          restore-keys: |
-            gradle-packages-${{ runner.os }}-${{ github.job }}
-            gradle-packages-${{ runner.os }}
-
-      - name: validate avros
-        uses: hypertrace/github-actions/gradle@main
-        with:
-          args: avroCompatibilityCheck
-  validate-helm-charts:
-    runs-on: ubuntu-20.04
-    container: 
-      image: hypertrace/helm-gcs-packager:0.3.1
-      credentials:
-        username: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
-        password: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
-     # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2.3.4
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-          fetch-depth: 0
-
-      - name: validate charts
-        run: ./.github/workflows/helm.sh validate
-  build:
-    runs-on: ubuntu-20.04
-    steps:
-       # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
-      - name: Check out code
-        uses: actions/checkout@v2.3.4
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-          fetch-depth: 0
-      
       - name: create checksum file
         uses: hypertrace/github-actions/checksum@main
 
@@ -80,32 +37,44 @@ jobs:
           password: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
 
       - name: Build with Gradle
-          uses: hypertrace/github-actions/gradle@main
-          with:
-            args: build dockerBuildImages
-          
-      - name: push docker image
-          uses: hypertrace/github-actions/gradle@main
-          with:
-            args: dockerPushImages
-          env:
-            DOCKER_USERNAME: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
-            DOCKER_PASSWORD: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
+        uses: hypertrace/github-actions/gradle@main
+        with:
+          args: build dockerBuildImages
 
-#   snyk-scan:
-#     runs-on: ubuntu-20.04
-#     steps:
-#     # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
-#       - name: Check out code
-#         uses: actions/checkout@v2.3.4
-#         with:
-#           ref: ${{github.event.pull_request.head.ref}}
-#           repository: ${{github.event.pull_request.head.repo.full_name}}
-#           fetch-depth: 0
-#       - name: Setup snyk
-#         uses: snyk/actions/setup@0.3.0
-#       - name: Snyk test
-#         run: snyk test --all-sub-projects --org=hypertrace --severity-threshold=low --policy-path=.snyk --configuration-matching='^runtimeClasspath$' --remote-repo-url='${{ github.server_url }}/${{ github.repository }}.git'
-#         env:
-#           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-#           GRADLE_OPTS: -Dorg.gradle.workers.max=1
+  validate-helm-charts:
+    runs-on: ubuntu-20.04
+    container:
+      image: hypertrace/helm-gcs-packager:0.3.1
+      credentials:
+        username: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
+        password: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
+      # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2.3.4
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+          fetch-depth: 0
+
+      - name: validate charts
+        run: ./.github/workflows/helm.sh validate
+
+#  snyk-scan:
+#    runs-on: ubuntu-20.04
+#    steps:
+#    # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
+#      - name: Check out code
+#        uses: actions/checkout@v2.3.4
+#        with:
+#          ref: ${{github.event.pull_request.head.ref}}
+#          repository: ${{github.event.pull_request.head.repo.full_name}}
+#          fetch-depth: 0
+#          submodules: recursive
+#      - name: Setup snyk
+#        uses: snyk/actions/setup@0.3.0
+#      - name: Snyk test
+#        run: snyk test --all-sub-projects --org=hypertrace --severity-threshold=low --policy-path=.snyk --configuration-matching='^runtimeClasspath$'
+#        env:
+#          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+#          GRADLE_OPTS: -Dorg.gradle.workers.max=1 # Snyk doesn't handle parallelism
