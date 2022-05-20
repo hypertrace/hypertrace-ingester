@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 public class EnrichmentProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(EnrichmentProcessor.class);
-  private static final String ENRICHMENT_ARRIVAL_TIME = "enrichment.arrival.time";
-  private static final Timer enrichmentArrivalTimer =
+  private static final String ENRICHMENT_COMPLETION_TIME = "enrichment.completion.time";
+  private static final Timer enrichmentLagTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
 
   // Must use linked hashmap
@@ -68,8 +68,6 @@ public class EnrichmentProcessor {
 
   /** Enriches the Trace by Invoking various Enrichers registered in */
   public void process(StructuredTrace trace) {
-    DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(
-        trace, enrichmentArrivalTimer, ENRICHMENT_ARRIVAL_TIME);
     AvroToJsonLogger.log(LOG, "Structured Trace before all the enrichment is: {}", trace);
     for (Entry<String, Enricher> entry : enrichers.entrySet()) {
       String metricKey = String.format("%s/%s", trace.getCustomerId(), entry.getKey());
@@ -101,6 +99,8 @@ public class EnrichmentProcessor {
       }
     }
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
+    DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(
+        trace, enrichmentLagTimer, ENRICHMENT_COMPLETION_TIME);
   }
 
   private void applyEnricher(Enricher enricher, StructuredTrace trace) {
