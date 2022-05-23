@@ -2,11 +2,10 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.hypertrace.core.datamodel.AttributeValue;
+import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
@@ -98,8 +97,15 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       org.hypertrace.entity.data.service.v1.Entity entity =
           factory.getService(
               event.getCustomerId(), serviceName, ServiceType.JAEGER_SERVICE.name(), attributes);
+      List<String> serviceLabels =
+          convertAttributeValueToList(
+              entity
+                  .getAttributesMap()
+                  .getOrDefault(
+                      ENTITY_LABELS,
+                      org.hypertrace.entity.data.service.v1.AttributeValue.getDefaultInstance()));
       org.hypertrace.core.datamodel.Entity avroEntity =
-          EntityAvroConverter.convertToAvroEntity(entity, true);
+          EntityAvroConverter.convertToAvroEntity(entity, false);
       if (avroEntity != null) {
         addEntity(trace, event, avroEntity);
 
@@ -109,12 +115,6 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
             event,
             SERVICE_NAME_ATTR_NAME,
             AttributeValueCreator.create(avroEntity.getEntityName()));
-        // LABEL ENRICHMENT
-        List<String> serviceLabels = new ArrayList<>();
-        if (avroEntity.getAttributes().getAttributeMap().containsKey(ENTITY_LABELS)) {
-          AttributeValue labels = avroEntity.getAttributes().getAttributeMap().get(ENTITY_LABELS);
-          serviceLabels = labels.getValueList();
-        }
         addEnrichedAttribute(event, SERVICE_LABELS, AttributeValueCreator.create(serviceLabels));
       }
     }
@@ -135,5 +135,12 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       parentSvcName = parent != null ? EnrichedSpanUtils.getServiceName(parent) : null;
     }
     return Optional.ofNullable(parentSvcName);
+  }
+
+  private List<String> convertAttributeValueToList(
+      org.hypertrace.entity.data.service.v1.AttributeValue attributeValue) {
+    return attributeValue.getValueList().getValuesList().stream()
+        .map(value -> value.getValue().getString())
+        .collect(Collectors.toList());
   }
 }
