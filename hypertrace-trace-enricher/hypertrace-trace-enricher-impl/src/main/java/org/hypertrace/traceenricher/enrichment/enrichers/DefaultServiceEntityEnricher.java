@@ -2,8 +2,11 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
@@ -32,6 +35,8 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_NAME);
   private static final String SPAN_ID_KEY = "span_id";
   private static final String TRACE_ID_KEY = "trace_id";
+  private static final String ENTITY_LABELS = "labels";
+  private static final String SERVICE_LABELS = "serviceLabels";
 
   private ServiceEntityFactory factory;
 
@@ -94,7 +99,7 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
           factory.getService(
               event.getCustomerId(), serviceName, ServiceType.JAEGER_SERVICE.name(), attributes);
       org.hypertrace.core.datamodel.Entity avroEntity =
-          EntityAvroConverter.convertToAvroEntity(entity, false);
+          EntityAvroConverter.convertToAvroEntity(entity, true);
       if (avroEntity != null) {
         addEntity(trace, event, avroEntity);
 
@@ -104,6 +109,13 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
             event,
             SERVICE_NAME_ATTR_NAME,
             AttributeValueCreator.create(avroEntity.getEntityName()));
+        // LABEL ENRICHMENT
+        List<String> serviceLabels = new ArrayList<>();
+        if (avroEntity.getAttributes().getAttributeMap().containsKey(ENTITY_LABELS)) {
+          AttributeValue labels = avroEntity.getAttributes().getAttributeMap().get(ENTITY_LABELS);
+          serviceLabels = labels.getValueList();
+        }
+        addEnrichedAttribute(event, SERVICE_LABELS, AttributeValueCreator.create(serviceLabels));
       }
     }
   }

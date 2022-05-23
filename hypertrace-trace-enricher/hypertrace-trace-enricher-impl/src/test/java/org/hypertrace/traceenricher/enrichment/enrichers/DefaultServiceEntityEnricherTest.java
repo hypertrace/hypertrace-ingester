@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -20,6 +21,8 @@ import org.hypertrace.core.datamodel.EventRefType;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
+import org.hypertrace.entity.data.service.v1.AttributeValueList;
+import org.hypertrace.entity.data.service.v1.Value;
 import org.hypertrace.entity.v1.entitytype.EntityType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
@@ -95,6 +98,7 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
             .setEntityType(EntityType.SERVICE.name())
             .setEntityId(ENTITY_ID)
             .setEntityName(serviceName)
+            .putAttributes("labels", createAttributeValue(List.of("label1", "label2", "label3")))
             .build();
     doReturn(Collections.singletonList(service))
         .when(edsClient)
@@ -109,6 +113,9 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
     assertEquals(1, e1.getEntityIdList().size());
     assertEquals(serviceName, EnrichedSpanUtils.getServiceName(e1));
     assertEquals(ENTITY_ID, EnrichedSpanUtils.getServiceId(e1));
+    assertEquals(
+        List.of("label1", "label2", "label3"),
+        e1.getEnrichedAttributes().getAttributeMap().get("serviceLabels").getValueList());
   }
 
   @Test
@@ -455,6 +462,21 @@ public class DefaultServiceEntityEnricherTest extends AbstractAttributeEnricherT
         .setEventName(eventName)
         .setServiceName(serviceName)
         .setEventRefList(eventRefList)
+        .build();
+  }
+
+  private org.hypertrace.entity.data.service.v1.AttributeValue createAttributeValue(
+      List<String> list) {
+    List<org.hypertrace.entity.data.service.v1.AttributeValue> values =
+        list.stream()
+            .map(
+                labelId ->
+                    org.hypertrace.entity.data.service.v1.AttributeValue.newBuilder()
+                        .setValue(Value.newBuilder().setString(labelId).build())
+                        .build())
+            .collect(Collectors.toList());
+    return org.hypertrace.entity.data.service.v1.AttributeValue.newBuilder()
+        .setValueList(AttributeValueList.newBuilder().addAllValues(values).build())
         .build();
   }
 }
