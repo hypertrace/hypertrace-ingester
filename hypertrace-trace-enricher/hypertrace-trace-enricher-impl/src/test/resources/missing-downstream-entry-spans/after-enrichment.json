@@ -111,14 +111,6 @@
               "value_list": null,
               "value_map": null
             },
-            "serviceLabels": {
-              "value": null,
-              "binary_value": null,
-              "value_list": {
-                "array": []
-              },
-              "value_map": null
-            },
             "SERVICE_ID": {
               "value": {
                 "string": "api_01-id"
@@ -254,14 +246,6 @@
               "value_list": null,
               "value_map": null
             },
-            "serviceLabels": {
-              "value": null,
-              "binary_value": null,
-              "value_list": {
-                "array": []
-              },
-              "value_map": null
-            },
             "SERVICE_ID": {
               "value": {
                 "string": "api_01-id"
@@ -387,14 +371,6 @@
               },
               "binary_value": null,
               "value_list": null,
-              "value_map": null
-            },
-            "serviceLabels": {
-              "value": null,
-              "binary_value": null,
-              "value_list": {
-                "array": []
-              },
               "value_map": null
             },
             "SERVICE_ID": {
@@ -524,14 +500,6 @@
               "value_list": null,
               "value_map": null
             },
-            "serviceLabels": {
-              "value": null,
-              "binary_value": null,
-              "value_list": {
-                "array": []
-              },
-              "value_map": null
-            },
             "SERVICE_ID": {
               "value": {
                 "string": "api_02-id"
@@ -657,14 +625,6 @@
               },
               "binary_value": null,
               "value_list": null,
-              "value_map": null
-            },
-            "serviceLabels": {
-              "value": null,
-              "binary_value": null,
-              "value_list": {
-                "array": []
-              },
               "value_map": null
             },
             "SERVICE_ID": {
@@ -800,14 +760,6 @@
               },
               "binary_value": null,
               "value_list": null,
-              "value_map": null
-            },
-            "serviceLabels": {
-              "value": null,
-              "binary_value": null,
-              "value_list": {
-                "array": []
-              },
               "value_map": null
             },
             "SERVICE_ID": {
