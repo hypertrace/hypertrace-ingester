@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.Event;
@@ -13,6 +14,7 @@ import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
+import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.servicetype.ServiceType;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
@@ -97,13 +99,7 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
       org.hypertrace.entity.data.service.v1.Entity entity =
           factory.getService(
               event.getCustomerId(), serviceName, ServiceType.JAEGER_SERVICE.name(), attributes);
-      List<String> serviceLabels =
-          convertAttributeValueToList(
-              entity
-                  .getAttributesMap()
-                  .getOrDefault(
-                      ENTITY_LABELS,
-                      org.hypertrace.entity.data.service.v1.AttributeValue.getDefaultInstance()));
+      AttributeValue serviceLabels = entity.getAttributesMap().get(ENTITY_LABELS);
       org.hypertrace.core.datamodel.Entity avroEntity =
           EntityAvroConverter.convertToAvroEntity(entity, false);
       if (avroEntity != null) {
@@ -115,7 +111,12 @@ public class DefaultServiceEntityEnricher extends AbstractTraceEnricher {
             event,
             SERVICE_NAME_ATTR_NAME,
             AttributeValueCreator.create(avroEntity.getEntityName()));
-        addEnrichedAttribute(event, SERVICE_LABELS, AttributeValueCreator.create(serviceLabels));
+        if (Objects.nonNull(serviceLabels)) {
+          addEnrichedAttribute(
+              event,
+              SERVICE_LABELS,
+              AttributeValueCreator.create(convertAttributeValueToList(serviceLabels)));
+        }
       }
     }
   }
