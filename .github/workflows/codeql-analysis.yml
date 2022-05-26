@@ -31,6 +31,18 @@ jobs:
       - name: create checksum file
         uses: hypertrace/github-actions/checksum@main
 
+      - name: create checksum file
+        uses: hypertrace/github-actions/checksum@main
+
+      - name: Cache packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle
+          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
+          restore-keys: |
+            gradle-packages-${{ runner.os }}-${{ github.job }}
+            gradle-packages-${{ runner.os }}
+
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
