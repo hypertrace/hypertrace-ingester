@@ -20,7 +20,7 @@ protobuf {
   }
   plugins {
     id("grpc_java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.42.0"
+      artifact = "io.grpc:protoc-gen-grpc-java:1.45.1"
     }
 
     if (generateLocalGoGrpcFiles) {
