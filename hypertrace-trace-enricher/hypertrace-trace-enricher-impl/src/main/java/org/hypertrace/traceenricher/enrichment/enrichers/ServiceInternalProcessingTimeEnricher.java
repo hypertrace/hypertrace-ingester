@@ -2,8 +2,10 @@ package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import org.hypertrace.core.datamodel.ApiNodeEventEdge;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -11,8 +13,12 @@ import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
+import org.slf4j.LoggerFactory;
 
 public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher {
+
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(
+      ServiceInternalProcessingTimeEnricher.class);
 
   public void enrichTrace(StructuredTrace trace) {
     ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
@@ -34,17 +40,34 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
       //    |---C2---|
       //      |---C3---|
       for (var edge : edges) {
-        edgeDurationSum += edge.getEndTimeMillis() - edge.getStartTimeMillis();
+        edgeDurationSum += getApiNodeEventEdgeDuration(edge);
       }
       Optional<Event> entryApiBoundaryEventMaybe = apiNode.getEntryApiBoundaryEvent();
       if (entryApiBoundaryEventMaybe.isPresent()) {
         var entryApiBoundaryEvent = entryApiBoundaryEventMaybe.get();
-        var entryApiBoundaryEventDuration =
-            entryApiBoundaryEvent.getEndTimeMillis() - entryApiBoundaryEvent.getStartTimeMillis();
-        entryApiBoundaryEvent.getAttributes().getAttributeMap()
-            .put(EnrichedSpanConstants.INTERNAL_SVC_LATENCY, AttributeValueCreator.create(
-                String.valueOf(entryApiBoundaryEventDuration - edgeDurationSum)));
+        var entryApiBoundaryEventDuration = getEventDuration(entryApiBoundaryEvent);
+        try {
+          entryApiBoundaryEvent.getAttributes().getAttributeMap()
+              .put(EnrichedSpanConstants.INTERNAL_SVC_LATENCY, AttributeValueCreator.create(
+                  String.valueOf(entryApiBoundaryEventDuration - edgeDurationSum)));
+        } catch (NullPointerException e) {
+          LOG.error(
+              "NPE while calculating service internal time. entryApiBoundaryEventDuration {}, edgeDurationSum {}",
+              entryApiBoundaryEventDuration, edgeDurationSum, e);
+        }
       }
     }
+  }
+
+  private static Double getEventDuration(Event event) {
+    assert event.getMetrics().getMetricMap() != null;
+    assert event.getMetrics().getMetricMap().containsKey("Duration");
+    return event.getMetrics().getMetricMap().get("Duration").getValue();
+  }
+
+  private static Double getApiNodeEventEdgeDuration(ApiNodeEventEdge edge) {
+    assert edge.getMetrics().getMetricMap() != null;
+    assert edge.getMetrics().getMetricMap().containsKey("Duration");
+    return edge.getMetrics().getMetricMap().get("Duration").getValue();
   }
 }

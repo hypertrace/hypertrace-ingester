@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ServiceInternalProcessingTimeEnricher extends AbstractAttributeEnricherTest {
+public class ServiceInternalProcessingTimeEnricherTest extends AbstractAttributeEnricherTest {
 
   private final Enricher testCandidate = new ServiceInternalProcessingTimeEnricher();
   private StructuredTrace trace;
@@ -88,34 +88,40 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractAttributeEnri
     testCandidate.enrichTrace(trace);
     //All three services below don't have any exit calls to API, only backends. We assert that the time of these exit spans is
     //not subtracted from the entry span.
-    var entryEventsForRouteSvc = getEntryEventForService(entryApiBoundaryEvents, "route");
+    var entryEventsForRouteSvc = getEntryEventsForService(entryApiBoundaryEvents, "route");
     for (Event event : entryEventsForRouteSvc) {
       Assertions.assertEquals(
           getEventDuration(event),
           event.getAttributes().getAttributeMap()
               .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
     }
-    var entryEventsForCustomerSvc = getEntryEventForService(entryApiBoundaryEvents, "customer");
+    var entryEventsForCustomerSvc = getEntryEventsForService(entryApiBoundaryEvents, "customer");
     for (Event event : entryEventsForCustomerSvc) {
       Assertions.assertEquals(getEventDuration(event),
           event.getAttributes().getAttributeMap()
               .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
     }
-    var entryEventsDriverSvc = getEntryEventForService(entryApiBoundaryEvents, "driver");
+    var entryEventsDriverSvc = getEntryEventsForService(entryApiBoundaryEvents, "driver");
     for (Event event : entryEventsDriverSvc) {
       Assertions.assertEquals(getEventDuration(event),
           event.getAttributes().getAttributeMap()
               .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
     }
+    var entryEventForFrontendSvc = getEntryEventsForService(entryApiBoundaryEvents, "frontend").get(
+        0);
+    //total outbound edge duration = 1016ms
+    //entry event duration = 678ms
+    Assertions.assertEquals("-335.0", entryEventForFrontendSvc.getAttributes().getAttributeMap()
+        .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
   }
 
-  private static List<Event> getEntryEventForService(List<Event> entryApiBoundaryEvents,
+  private static List<Event> getEntryEventsForService(List<Event> entryApiBoundaryEvents,
       String service) {
     return entryApiBoundaryEvents.stream()
         .filter(a -> a.getServiceName().equals(service)).collect(Collectors.toList());
   }
 
   private static String getEventDuration(Event event) {
-    return String.valueOf(event.getEndTimeMillis() - event.getStartTimeMillis());
+    return String.valueOf(event.getMetrics().getMetricMap().get("Duration").getValue());
   }
 }
