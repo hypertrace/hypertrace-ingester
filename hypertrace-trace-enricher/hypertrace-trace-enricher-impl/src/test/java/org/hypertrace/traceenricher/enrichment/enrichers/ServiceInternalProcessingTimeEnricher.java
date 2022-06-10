@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class ServiceInternalEnricherTest extends AbstractAttributeEnricherTest {
+public class ServiceInternalProcessingTimeEnricher extends AbstractAttributeEnricherTest {
 
-  private final Enricher testCandidate = new ServiceInternalTimeEnricher();
+  private final Enricher testCandidate = new ServiceInternalProcessingTimeEnricher();
   private StructuredTrace trace;
 
   @BeforeEach

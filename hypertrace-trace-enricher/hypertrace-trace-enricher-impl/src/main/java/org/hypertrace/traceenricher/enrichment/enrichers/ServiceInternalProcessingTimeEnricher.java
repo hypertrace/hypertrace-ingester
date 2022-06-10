@@ -12,7 +12,7 @@ import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
 
-public class ServiceInternalTimeEnricher extends AbstractTraceEnricher {
+public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher {
 
   public void enrichTrace(StructuredTrace trace) {
     ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
