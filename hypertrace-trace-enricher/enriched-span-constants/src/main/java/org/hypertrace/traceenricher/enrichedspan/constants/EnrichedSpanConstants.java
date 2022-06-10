@@ -17,7 +17,7 @@ public class EnrichedSpanConstants {
   public static final String UNIQUE_API_NODES_COUNT = "unique.apis.count";
   public static final String GRPC_REQUEST_URL = "grpc.request.url";
   public static final String GRPC_REQUEST_ENDPOINT = "grpc.request.endpoint";
-  public static final String INTERNAL_SVC_LATENCY = "enriched.serviceInternalLatency";
+  public static final String INTERNAL_SVC_LATENCY = "enriched.serviceInternalProcessingTime";
 
   /**
    * Returns the constant value for the given Enum.
