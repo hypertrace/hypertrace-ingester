@@ -6,8 +6,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
 import org.hypertrace.traceenricher.enrichment.Enricher;
@@ -71,5 +73,49 @@ public class ServiceInternalEnricherTest extends AbstractAttributeEnricherTest {
         a -> Assertions.assertTrue(
             a.getEntryApiBoundaryEvent().get().getAttributes().getAttributeMap()
                 .containsKey(EnrichedSpanConstants.INTERNAL_SVC_LATENCY)));
+  }
+
+  @Test
+  public void validateServiceInternalLatencyValueInSpans() {
+    ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
+    var apiNodes = apiTraceGraph.getApiNodeList();
+    List<Event> entryApiBoundaryEvents = apiNodes.stream()
+        .map(a -> a.getEntryApiBoundaryEvent().get())
+        .collect(toList());
+    //assert pre-conditions
+    Assertions.assertEquals(13, entryApiBoundaryEvents.size());
+    //execute
+    testCandidate.enrichTrace(trace);
+    //All three services below don't have any exit calls to API, only backends. We assert that the time of these exit spans is
+    //not subtracted from the entry span.
+    var entryEventsForRouteSvc = getEntryEventForService(entryApiBoundaryEvents, "route");
+    for (Event event : entryEventsForRouteSvc) {
+      Assertions.assertEquals(
+          getEventDuration(event),
+          event.getAttributes().getAttributeMap()
+              .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
+    }
+    var entryEventsForCustomerSvc = getEntryEventForService(entryApiBoundaryEvents, "customer");
+    for (Event event : entryEventsForCustomerSvc) {
+      Assertions.assertEquals(getEventDuration(event),
+          event.getAttributes().getAttributeMap()
+              .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
+    }
+    var entryEventsDriverSvc = getEntryEventForService(entryApiBoundaryEvents, "driver");
+    for (Event event : entryEventsDriverSvc) {
+      Assertions.assertEquals(getEventDuration(event),
+          event.getAttributes().getAttributeMap()
+              .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
+    }
+  }
+
+  private static List<Event> getEntryEventForService(List<Event> entryApiBoundaryEvents,
+      String service) {
+    return entryApiBoundaryEvents.stream()
+        .filter(a -> a.getServiceName().equals(service)).collect(Collectors.toList());
+  }
+
+  private static String getEventDuration(Event event) {
+    return String.valueOf(event.getEndTimeMillis() - event.getStartTimeMillis());
   }
 }
