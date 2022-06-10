@@ -76,7 +76,7 @@ public class ServiceInternalProcessingTimeEnricherTest extends AbstractAttribute
   }
 
   @Test
-  public void validateServiceInternalLatencyValueInSpans() {
+  public void validateServiceInternalTimeValueInSpans() {
     ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
     var apiNodes = apiTraceGraph.getApiNodeList();
     List<Event> entryApiBoundaryEvents = apiNodes.stream()
