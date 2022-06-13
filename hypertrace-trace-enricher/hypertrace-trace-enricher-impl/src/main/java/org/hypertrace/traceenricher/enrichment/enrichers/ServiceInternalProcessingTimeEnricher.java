@@ -47,6 +47,7 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
         var entryApiBoundaryEvent = entryApiBoundaryEventMaybe.get();
         var entryApiBoundaryEventDuration = getEventDuration(entryApiBoundaryEvent);
         try {
+
           entryApiBoundaryEvent.getAttributes().getAttributeMap()
               .put(EnrichedSpanConstants.INTERNAL_SVC_LATENCY, AttributeValueCreator.create(
                   String.valueOf(entryApiBoundaryEventDuration - edgeDurationSum)));
