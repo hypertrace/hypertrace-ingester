@@ -51,74 +51,101 @@ public class ServiceInternalProcessingTimeEnricherTest extends AbstractAttribute
     // this trace has 4 services
     // frontend service has 1 api_entry span and that api_node has 12 exit calls [drive: 1,
     // customer: 1, route: 10]
-    //setup
+    // setup
     ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
     var apiNodes = apiTraceGraph.getApiNodeList();
-    //Assert preconditions
+    // Assert preconditions
     Assertions.assertEquals(13, apiNodes.size());
     apiNodes.forEach(
         apiNode -> Assertions.assertTrue(apiNode.getEntryApiBoundaryEvent().isPresent()));
-    List<String> serviceNames = apiNodes.stream().map(apiNode -> {
-      Assertions.assertTrue(apiNode.getEntryApiBoundaryEvent().isPresent());
-      return apiNode.getEntryApiBoundaryEvent().get().getServiceName();
-    }).collect(toList());
+    List<String> serviceNames =
+        apiNodes.stream()
+            .map(
+                apiNode -> {
+                  Assertions.assertTrue(apiNode.getEntryApiBoundaryEvent().isPresent());
+                  return apiNode.getEntryApiBoundaryEvent().get().getServiceName();
+                })
+            .collect(toList());
     Assertions.assertTrue(serviceNames.contains("frontend"));
     Assertions.assertTrue(serviceNames.contains("driver"));
     Assertions.assertTrue(serviceNames.contains("customer"));
     Assertions.assertTrue(serviceNames.contains("route"));
-    //execute
+    // execute
     testCandidate.enrichTrace(trace);
-    //assertions: All entry spans should have this tag
-    apiTraceGraph.getApiNodeList().forEach(
-        a -> Assertions.assertTrue(
-            a.getEntryApiBoundaryEvent().get().getAttributes().getAttributeMap()
-                .containsKey(EnrichedSpanConstants.INTERNAL_SVC_LATENCY)));
+    // assertions: All entry spans should have this tag
+    apiTraceGraph
+        .getApiNodeList()
+        .forEach(
+            a ->
+                Assertions.assertTrue(
+                    a.getEntryApiBoundaryEvent()
+                        .get()
+                        .getAttributes()
+                        .getAttributeMap()
+                        .containsKey(EnrichedSpanConstants.INTERNAL_SVC_LATENCY)));
   }
 
   @Test
   public void validateServiceInternalTimeValueInSpans() {
     ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
     var apiNodes = apiTraceGraph.getApiNodeList();
-    List<Event> entryApiBoundaryEvents = apiNodes.stream()
-        .map(a -> a.getEntryApiBoundaryEvent().get())
-        .collect(toList());
-    //assert pre-conditions
+    List<Event> entryApiBoundaryEvents =
+        apiNodes.stream().map(a -> a.getEntryApiBoundaryEvent().get()).collect(toList());
+    // assert pre-conditions
     Assertions.assertEquals(13, entryApiBoundaryEvents.size());
-    //execute
+    // execute
     testCandidate.enrichTrace(trace);
-    //All three services below don't have any exit calls to API, only backends. We assert that the time of these exit spans is
-    //not subtracted from the entry span.
+    // All three services below don't have any exit calls to API, only backends. We assert that the
+    // time of these exit spans is
+    // not subtracted from the entry span.
     var entryEventsForRouteSvc = getEntryEventsForService(entryApiBoundaryEvents, "route");
     for (Event event : entryEventsForRouteSvc) {
       Assertions.assertEquals(
           getEventDuration(event),
-          event.getAttributes().getAttributeMap()
-              .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
+          event
+              .getAttributes()
+              .getAttributeMap()
+              .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY)
+              .getValue());
     }
     var entryEventsForCustomerSvc = getEntryEventsForService(entryApiBoundaryEvents, "customer");
     for (Event event : entryEventsForCustomerSvc) {
-      Assertions.assertEquals(getEventDuration(event),
-          event.getAttributes().getAttributeMap()
-              .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
+      Assertions.assertEquals(
+          getEventDuration(event),
+          event
+              .getAttributes()
+              .getAttributeMap()
+              .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY)
+              .getValue());
     }
     var entryEventsDriverSvc = getEntryEventsForService(entryApiBoundaryEvents, "driver");
     for (Event event : entryEventsDriverSvc) {
-      Assertions.assertEquals(getEventDuration(event),
-          event.getAttributes().getAttributeMap()
-              .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
+      Assertions.assertEquals(
+          getEventDuration(event),
+          event
+              .getAttributes()
+              .getAttributeMap()
+              .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY)
+              .getValue());
     }
-    var entryEventForFrontendSvc = getEntryEventsForService(entryApiBoundaryEvents, "frontend").get(
-        0);
-    //total outbound edge duration = 1016ms
-    //entry event duration = 678ms
-    Assertions.assertEquals("-335.0", entryEventForFrontendSvc.getAttributes().getAttributeMap()
-        .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY).getValue());
+    var entryEventForFrontendSvc =
+        getEntryEventsForService(entryApiBoundaryEvents, "frontend").get(0);
+    // total outbound edge duration = 1016ms
+    // entry event duration = 678ms
+    Assertions.assertEquals(
+        "-335.0",
+        entryEventForFrontendSvc
+            .getAttributes()
+            .getAttributeMap()
+            .get(EnrichedSpanConstants.INTERNAL_SVC_LATENCY)
+            .getValue());
   }
 
-  private static List<Event> getEntryEventsForService(List<Event> entryApiBoundaryEvents,
-      String service) {
+  private static List<Event> getEntryEventsForService(
+      List<Event> entryApiBoundaryEvents, String service) {
     return entryApiBoundaryEvents.stream()
-        .filter(a -> a.getServiceName().equals(service)).collect(Collectors.toList());
+        .filter(a -> a.getServiceName().equals(service))
+        .collect(Collectors.toList());
   }
 
   private static String getEventDuration(Event event) {
