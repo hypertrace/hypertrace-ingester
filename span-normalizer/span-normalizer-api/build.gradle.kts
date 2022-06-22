@@ -16,11 +16,11 @@ val generateLocalGoGrpcFiles = false
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.17.3"
+    artifact = "com.google.protobuf:protoc:3.21.1"
   }
   plugins {
     id("grpc_java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.42.0"
+      artifact = "io.grpc:protoc-gen-grpc-java:1.45.1"
     }
 
     if (generateLocalGoGrpcFiles) {

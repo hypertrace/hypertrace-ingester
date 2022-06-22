@@ -30,6 +30,7 @@ dependencies {
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   implementation(project(":semantic-convention-utils"))
+  implementation("com.google.guava:guava:31.1-jre")
 
   // TODO: migrate in core
   implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.4.1")

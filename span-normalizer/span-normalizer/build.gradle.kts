@@ -42,9 +42,10 @@ dependencies {
   implementation("org.hypertrace.config.service:config-utils:0.1.32")
   implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.7.1")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.7.1")
+  implementation("com.google.guava:guava:31.1-jre")
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.42.0")
+  runtimeOnly("io.grpc:grpc-netty:1.45.1")
   constraints {
     runtimeOnly("io.netty:netty-codec-http2:4.1.71.Final")
     runtimeOnly("io.netty:netty-handler-proxy:4.1.71.Final")

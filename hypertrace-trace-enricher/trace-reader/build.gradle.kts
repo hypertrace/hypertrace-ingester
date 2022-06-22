@@ -15,6 +15,7 @@ dependencies {
   implementation("org.hypertrace.core.grpcutils:grpc-client-rx-utils:0.6.2")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.6.2")
   implementation("io.reactivex.rxjava3:rxjava:3.0.11")
+  implementation("com.google.guava:guava:31.1-jre")
 
   annotationProcessor("org.projectlombok:lombok:1.18.20")
   compileOnly("org.projectlombok:lombok:1.18.20")
