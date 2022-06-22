@@ -28,6 +28,9 @@ dependencies {
           "[High Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2421244] in " +
           "com.fasterxml.jackson.core:jackson-databind@2.13.1")
     }
+    implementation("com.google.protobuf:protobuf-java:3.21.1") {
+      because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-2331703")
+    }
   }
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")

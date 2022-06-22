@@ -39,13 +39,6 @@ dependencies {
   implementation("com.typesafe:config:1.4.1")
   implementation("com.google.guava:guava:31.1-jre")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.25")
-  constraints {
-    runtimeOnly("io.netty:netty-codec-http2:4.1.71.Final")
-    runtimeOnly("io.netty:netty-handler-proxy:4.1.71.Final")
-    implementation("org.glassfish.jersey.core:jersey-common:2.34") {
-      because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
-    }
-  }
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.45.1")
