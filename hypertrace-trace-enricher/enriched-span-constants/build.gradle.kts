@@ -17,11 +17,11 @@ val generateLocalGoGrpcFiles = false
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.17.3"
+    artifact = "com.google.protobuf:protoc:3.21.1"
   }
   plugins {
     id("grpc_java") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.42.0"
+      artifact = "io.grpc:protoc-gen-grpc-java:1.45.1"
     }
 
     if (generateLocalGoGrpcFiles) {
@@ -63,13 +63,14 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.17.3")
+  api("com.google.protobuf:protobuf-java-util:3.21.1")
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.22")
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":semantic-convention-utils"))
   implementation("org.hypertrace.entity.service:entity-service-api:0.8.5")
+  implementation("com.google.guava:guava:31.1-jre")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")

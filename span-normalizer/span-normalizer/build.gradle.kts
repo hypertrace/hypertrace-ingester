@@ -40,18 +40,12 @@ dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.1.25")
   implementation("org.hypertrace.config.service:span-processing-config-service-api:0.1.27")
   implementation("org.hypertrace.config.service:config-utils:0.1.32")
-  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.7.1")
-  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.7.1")
+  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.7.4")
+  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.7.4")
+  implementation("com.google.guava:guava:31.1-jre")
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.42.0")
-  constraints {
-    runtimeOnly("io.netty:netty-codec-http2:4.1.71.Final")
-    runtimeOnly("io.netty:netty-handler-proxy:4.1.71.Final")
-    implementation("org.glassfish.jersey.core:jersey-common:2.34") {
-      because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
-    }
-  }
+  runtimeOnly("io.grpc:grpc-netty:1.45.1")
   annotationProcessor("org.projectlombok:lombok:1.18.18")
   compileOnly("org.projectlombok:lombok:1.18.18")
 

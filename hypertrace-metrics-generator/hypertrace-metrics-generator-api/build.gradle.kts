@@ -8,7 +8,7 @@ plugins {
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.17.3"
+    artifact = "com.google.protobuf:protoc:3.21.1"
   }
 }
 
@@ -21,7 +21,7 @@ sourceSets {
 }
 
 dependencies {
-  implementation("com.google.protobuf:protobuf-java:3.18.2")
+  implementation("com.google.protobuf:protobuf-java:3.21.1")
   implementation("org.apache.kafka:kafka-clients:6.0.1-ccs")
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 }

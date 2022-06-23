@@ -5,9 +5,5 @@ ignore:
   SNYK-JAVA-IONETTY-1042268:
     - '*':
         reason: no available replacement
-        expires: 2022-05-31T00:00:00.000Z
-  SNYK-JAVA-COMGOOGLEPROTOBUF-2331703:
-    - '*':
-        reason: introduced by io.opentelemetry:opentelemetry-proto@1.6.0-alpha
-        expires: 2022-05-31T00:00:00.000Z
+        expires: 2022-07-31T00:00:00.000Z
 patch: {}
