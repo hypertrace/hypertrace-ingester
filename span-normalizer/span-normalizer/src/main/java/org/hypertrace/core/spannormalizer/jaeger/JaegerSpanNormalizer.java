@@ -59,8 +59,13 @@ import org.slf4j.LoggerFactory;
 public class JaegerSpanNormalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanNormalizer.class);
+  private static final Logger FILE_LOGGER = LoggerFactory.getLogger("tagsLogger");
+  private static final Map<String, String> ATTRIBUTES = new ConcurrentHashMap<>();
+  private static boolean HAS_LOGGED_ATTRIBUTES = false;
 
-  /** Service name can be sent against this key as well */
+  /**
+   * Service name can be sent against this key as well
+   */
   public static final String OLD_JAEGER_SERVICENAME_KEY = "jaeger.servicename";
 
   private static final String SPAN_NORMALIZATION_TIME_METRIC = "span.normalization.time";
@@ -171,6 +176,21 @@ public class JaegerSpanNormalizer {
         logSpanConversion(jaegerSpan, rawSpan);
       }
 
+      if (!HAS_LOGGED_ATTRIBUTES && FILE_LOGGER.isDebugEnabled()) {
+        //Each entry = 10 bytes for keys + 50 bytes for values on an average. Total map size ~ 6M
+        if (ATTRIBUTES.size() > 100_000) {
+          synchronized (this) {
+            ATTRIBUTES.forEach((k, v) -> FILE_LOGGER.debug("{},{}", k, v));
+            ATTRIBUTES.clear();
+            HAS_LOGGED_ATTRIBUTES = true;
+          }
+        } else {
+          Map<String, AttributeValue> attributes = rawSpan.getEvent().getAttributes()
+              .getAttributeMap();
+          attributes.forEach((k, v) -> ATTRIBUTES.put(k, v.getValue()));
+        }
+      }
+
       return rawSpan;
     };
   }
@@ -191,9 +211,9 @@ public class JaegerSpanNormalizer {
                 tagKey ->
                     tagKeysToRedact.contains(tagKey.toUpperCase())
                         || attributeMap
-                            .get(tagKey)
-                            .getValue()
-                            .equals(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL))
+                        .get(tagKey)
+                        .getValue()
+                        .equals(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL))
             .peek(
                 tagKey -> {
                   containsPIIFields.set(true);
