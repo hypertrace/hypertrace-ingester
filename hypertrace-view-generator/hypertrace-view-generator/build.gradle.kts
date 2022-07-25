@@ -20,7 +20,7 @@ hypertraceDocker {
     }
     namespace.set("razorpay")
   }
-  tag("${project.name}" + "_" + getCommitHash())
+  tag("${project.name}" + "_" + System.getenv("IMAGE_TAG"))
 }
 
 tasks.test {
@@ -48,13 +48,4 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("com.google.code.gson:gson:2.8.9")
-}
-
-fun getCommitHash(): String {
-  val os = com.bmuschko.gradle.docker.shaded.org.apache.commons.io.output.ByteArrayOutputStream()
-  project.exec {
-    commandLine = "git rev-parse --verify HEAD".split(" ")
-    standardOutput = os
-  }
-  return String(os.toByteArray()).trim()
 }

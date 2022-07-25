@@ -40,6 +40,8 @@ jobs:
         uses: hypertrace/github-actions/gradle@main
         with: 
           args: dockerBuildImages
+        env:
+          IMAGE_TAG: ${{ github.sha }}
 
       - name: Verify hypertrace image
         working-directory: ./.github/workflows/hypertrace-ingester
@@ -86,6 +88,8 @@ jobs:
         uses: hypertrace/github-actions/gradle@main
         with: 
           args: dockerBuildImages
+        env:
+          IMAGE_TAG: ${{ github.sha }}
 
       - name: Verify hypertrace image
         working-directory: ./.github/workflows/hypertrace-ingester
