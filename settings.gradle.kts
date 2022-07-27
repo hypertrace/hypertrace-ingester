@@ -10,7 +10,7 @@ plugins {
   id("org.hypertrace.version-settings") version "0.2.0"
 }
 
-rootProject.name = "hypertrace-ingester"
+rootProject.name = "hypertrace-ingester-root"
 
 // trace-enricher
 include("hypertrace-trace-enricher:enriched-span-constants")
