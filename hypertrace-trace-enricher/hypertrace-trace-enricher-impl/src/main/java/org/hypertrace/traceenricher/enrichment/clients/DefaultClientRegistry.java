@@ -146,7 +146,6 @@ public class DefaultClientRegistry implements ClientRegistry {
 
   protected ManagedChannel buildChannel(String host, int port, int maxMessageSize) {
     return this.grpcChannelRegistry.forPlaintextAddress(
-            host, port,
-            GrpcChannelConfig.builder().maxInboundMessageSize(maxMessageSize).build());
+        host, port, GrpcChannelConfig.builder().maxInboundMessageSize(maxMessageSize).build());
   }
 }
