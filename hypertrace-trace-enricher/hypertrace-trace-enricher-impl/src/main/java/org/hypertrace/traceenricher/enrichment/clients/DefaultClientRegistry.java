@@ -9,6 +9,7 @@ import java.util.concurrent.Executor;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.client.GrpcChannelConfig;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.grpcutils.client.RequestContextClientCallCredsProviderFactory;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
@@ -141,5 +142,11 @@ public class DefaultClientRegistry implements ClientRegistry {
 
   protected ManagedChannel buildChannel(String host, int port) {
     return this.grpcChannelRegistry.forPlaintextAddress(host, port);
+  }
+
+  protected ManagedChannel buildChannel(String host, int port, int maxMessageSize) {
+    return this.grpcChannelRegistry.forPlaintextAddress(
+            host, port,
+            GrpcChannelConfig.builder().maxInboundMessageSize(maxMessageSize).build());
   }
 }
