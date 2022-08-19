@@ -42,6 +42,82 @@ jobs:
         with: 
           args: build -x avroCompatibilityCheck dockerBuildImages
 
+      - name: Determine docker tag
+        id: tag
+        run: echo ::set-output name=tag::$(./gradlew -q printDockerImageDefaultTag | head -1)
+
+      - name: Scan docker image
+        uses: azure/container-scan@v0.1
+        with:
+          image-name: hypertrace/hypertrace-ingester:${{ steps.tag.outputs.tag }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        continue-on-error: true
+
+      - name: Scan docker image
+        uses: azure/container-scan@v0.1
+        with:
+          image-name: hypertrace/hypertrace-metrics-processor::${{ steps.tag.outputs.tag }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        continue-on-error: true
+
+      - name: Scan docker image
+        uses: azure/container-scan@v0.1
+        with:
+          image-name: hypertrace/raw-spans-grouper:${{ steps.tag.outputs.tag }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        continue-on-error: true
+
+      - name: Scan docker image
+        uses: azure/container-scan@v0.1
+        with:
+          image-name: hypertrace/hypertrace-view-generator:${{ steps.tag.outputs.tag }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        continue-on-error: true
+
+      - name: Scan docker image
+        uses: azure/container-scan@v0.1
+        with:
+          image-name: hypertrace/hypertrace-trace-enricher:${{ steps.tag.outputs.tag }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        continue-on-error: true
+
+      - name: Scan docker image
+        uses: azure/container-scan@v0.1
+        with:
+          image-name: hypertrace/hypertrace-metrics-generator:${{ steps.tag.outputs.tag }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        continue-on-error: true
+
+      - name: Scan docker image
+        uses: azure/container-scan@v0.1
+        with:
+          image-name: hypertrace/span-normalizer:${{ steps.tag.outputs.tag }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        continue-on-error: true
+
+      - name: Scan docker image
+        uses: azure/container-scan@v0.1
+        with:
+          image-name: hypertrace/hypertrace-metrics-exporter:${{ steps.tag.outputs.tag }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        continue-on-error: true
+
+      - name: Scan docker image
+        uses: azure/container-scan@v0.1
+        with:
+          image-name: hypertrace/hypertrace-view-creator:${{ steps.tag.outputs.tag }}
+        env:
+          DOCKLE_HOST: "unix:///var/run/docker.sock"
+        continue-on-error: true
+
   validate-helm-charts:
     runs-on: ubuntu-20.04
     container: 
