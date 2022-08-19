@@ -2,6 +2,7 @@ package org.hypertrace.traceenricher.enrichment;
 
 import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry.registerCounter;
 
+import com.google.common.util.concurrent.ExecutionError;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
@@ -88,16 +89,16 @@ public class EnrichmentProcessor {
                 metricKey,
                 k -> PlatformMetricsRegistry.registerTimer(ENRICHED_TRACES_TIMER, metricTags))
             .record(timeElapsed, TimeUnit.MILLISECONDS);
-      } catch (Throwable throwable) {
+      } catch (Exception | ExecutionError throwable) {
+        String errorMessage =
+            String.format(
+                "Could not apply the enricher: %s to the trace with traceId: %s",
+                entry.getKey(), HexUtils.getHex(trace.getTraceId()));
         traceErrorsCounters
             .computeIfAbsent(
                 metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags))
             .increment();
-        LOG.error(
-            "Could not apply the enricher: {} to the trace with traceId: {}",
-            entry.getKey(),
-            HexUtils.getHex(trace.getTraceId()),
-            throwable);
+        LOG.error(errorMessage, throwable);
       }
     }
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
