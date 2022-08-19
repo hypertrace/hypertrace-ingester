@@ -2,6 +2,7 @@ package org.hypertrace.traceenricher.enrichment;
 
 import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry.registerCounter;
 
+import com.google.common.util.concurrent.ExecutionError;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
@@ -88,19 +89,30 @@ public class EnrichmentProcessor {
                 metricKey,
                 k -> PlatformMetricsRegistry.registerTimer(ENRICHED_TRACES_TIMER, metricTags))
             .record(timeElapsed, TimeUnit.MILLISECONDS);
-      } catch (Throwable throwable) {
-        traceErrorsCounters
-            .computeIfAbsent(
-                metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags))
-            .increment();
-        LOG.error(
-            "Could not apply the enricher: {} to the trace with traceId: {}",
-            entry.getKey(),
-            HexUtils.getHex(trace.getTraceId()),
-            throwable);
+      } catch (Exception exception) {
+        String errorMessage =
+            String.format(
+                "Could not apply the enricher: %s to the trace with traceId: %s",
+                entry.getKey(), HexUtils.getHex(trace.getTraceId()));
+        logErrorAndUpdateMetric(errorMessage, exception, metricKey, metricTags);
+      } catch (ExecutionError executionError) {
+        String errorMessage =
+            String.format(
+                "Could not apply the enricher: %s to the trace with traceId: %s",
+                entry.getKey(), HexUtils.getHex(trace.getTraceId()));
+        logErrorAndUpdateMetric(errorMessage, executionError, metricKey, metricTags);
       }
     }
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
+  }
+
+  private void logErrorAndUpdateMetric(
+      String errorMessage, Throwable throwable, String metricKey, Map<String, String> metricTags) {
+    traceErrorsCounters
+        .computeIfAbsent(
+            metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags))
+        .increment();
+    LOG.error(errorMessage, throwable);
   }
 
   private void applyEnricher(Enricher enricher, StructuredTrace trace) {
