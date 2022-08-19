@@ -88,7 +88,7 @@ public class EnrichmentProcessor {
                 metricKey,
                 k -> PlatformMetricsRegistry.registerTimer(ENRICHED_TRACES_TIMER, metricTags))
             .record(timeElapsed, TimeUnit.MILLISECONDS);
-      } catch (Exception e) {
+      } catch (Throwable throwable) {
         traceErrorsCounters
             .computeIfAbsent(
                 metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags))
@@ -97,7 +97,7 @@ public class EnrichmentProcessor {
             "Could not apply the enricher: {} to the trace with traceId: {}",
             entry.getKey(),
             HexUtils.getHex(trace.getTraceId()),
-            e);
+            throwable);
       }
     }
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
