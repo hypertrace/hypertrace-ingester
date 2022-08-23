@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichment;
 
 import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry.registerCounter;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.DROP_TRACE_ATTRIBUTE;
 
 import com.google.common.util.concurrent.ExecutionError;
 import io.micrometer.core.instrument.Counter;
@@ -15,6 +16,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
@@ -105,6 +107,12 @@ public class EnrichmentProcessor {
   }
 
   private void applyEnricher(Enricher enricher, StructuredTrace trace) {
+    Map<String, AttributeValue> attributeMap = trace.getAttributes().getAttributeMap();
+    AttributeValue dropTraceAttrValue = attributeMap.get(DROP_TRACE_ATTRIBUTE);
+    boolean shouldDropTrace = dropTraceAttrValue != null;
+    if (shouldDropTrace) {
+      return;
+    }
     // Enrich entities
     List<Entity> entityList = trace.getEntityList();
     LOG.debug("Enriching Entities for {}", enricher.getClass().getName());
