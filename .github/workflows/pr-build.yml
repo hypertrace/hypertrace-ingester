@@ -3,7 +3,7 @@ on:
   push:
   pull_request_target:
     branches:
-      - main
+      - rzp_main
 jobs:
   validate-avros:
     runs-on: ubuntu-20.04
