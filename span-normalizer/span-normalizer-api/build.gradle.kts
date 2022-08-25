@@ -57,7 +57,7 @@ sourceSets {
 }
 dependencies {
   api("com.google.api.grpc:proto-google-common-protos:2.7.1")
-  api("org.apache.avro:avro:1.10.2")
+  api("org.apache.avro:avro:1.11.0")
   constraints {
     api("org.apache.commons:commons-compress:1.21") {
       because("Multiple vulnerabilities in avro-declared version")
