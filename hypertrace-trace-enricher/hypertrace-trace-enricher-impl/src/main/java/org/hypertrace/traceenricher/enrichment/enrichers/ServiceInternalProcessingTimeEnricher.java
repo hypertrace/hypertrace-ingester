@@ -22,12 +22,14 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
     ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
     List<ApiNode<Event>> apiNodeList = apiTraceGraph.getApiNodeList();
     LOG.debug("Logging apiNodeList...");
-    apiNodeList.forEach(a -> {
-      Optional<Event> entryApiBoundaryEvent = a.getEntryApiBoundaryEvent();
-      entryApiBoundaryEvent.ifPresent(event -> {
-        LOG.debug(event.toString());
-      });
-    });
+    apiNodeList.forEach(
+        a -> {
+          Optional<Event> entryApiBoundaryEvent = a.getEntryApiBoundaryEvent();
+          entryApiBoundaryEvent.ifPresent(
+              event -> {
+                LOG.debug(event.toString());
+              });
+        });
     LOG.debug("Done logging apiNodeList...");
     for (ApiNode<Event> apiNode : apiNodeList) {
       List<ApiNodeEventEdge> edges = apiTraceGraph.getOutboundEdgesForApiNode(apiNode);
