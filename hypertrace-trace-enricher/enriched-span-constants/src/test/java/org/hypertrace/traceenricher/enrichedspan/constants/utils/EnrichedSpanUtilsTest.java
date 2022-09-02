@@ -345,6 +345,58 @@ public class EnrichedSpanUtilsTest {
     assertEquals(spaceIds, EnrichedSpanUtils.getSpaceIds(e));
   }
 
+  @Test
+  public void testGetRequestHeadersExceptCookies() {
+    Map<String, String> spanRequestHeadersExceptCookies =
+        Map.of("sample-security-type", "sample-security-val", "security-key", "security-val");
+    Event e = createMockEventWithRequestHeadersAndCookies();
+    assertEquals(
+        spanRequestHeadersExceptCookies, EnrichedSpanUtils.getRequestHeadersExceptCookies(e));
+  }
+
+  @Test
+  public void testGetRequestCookies() {
+    Map<String, String> spanRequestCookies = Map.of("name", "cookie-name", "token", "token-val");
+    Event e = createMockEventWithRequestHeadersAndCookies();
+    assertEquals(spanRequestCookies, EnrichedSpanUtils.getRequestCookies(e));
+  }
+
+  @Test
+  public void testGetResponseHeadersExceptCookies() {
+    Map<String, String> spanResponseHeadersExceptCookies =
+        Map.of("sample-security-type", "sample-security-val", "security-key", "security-val");
+    Event e = createMockEventWithResponseHeadersAndCookies();
+    assertEquals(
+        spanResponseHeadersExceptCookies, EnrichedSpanUtils.getResponseHeadersExceptCookies(e));
+  }
+
+  @Test
+  public void testGetResponseCookies() {
+    Map<String, String> spanResponseCookies = Map.of("name", "cookie-name");
+    Event e = createMockEventWithResponseHeadersAndCookies();
+    assertEquals(spanResponseCookies, EnrichedSpanUtils.getResponseCookies(e));
+  }
+
+  private Event createMockEventWithResponseHeadersAndCookies() {
+    Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+    addAttribute(e, "http.response.header.sample-security-type", "sample-security-val");
+    addAttribute(e, "grpc.response.metadata.security-key", "security-val");
+    addAttribute(e, "http.response.header.set-cookie", "name=cookie-name");
+    return e;
+  }
+
+  private Event createMockEventWithRequestHeadersAndCookies() {
+    Event e = mock(Event.class);
+    when(e.getAttributes())
+        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
+    addAttribute(e, "http.request.header.sample-security-type", "sample-security-val");
+    addAttribute(e, "grpc.request.metadata.security-key", "security-val");
+    addAttribute(e, "http.request.header.cookie", "name=cookie-name;token=token-val");
+    return e;
+  }
+
   private void addAttribute(Event event, String key, String val) {
     event
         .getAttributes()

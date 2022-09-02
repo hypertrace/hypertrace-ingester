@@ -455,7 +455,7 @@ public class EnrichedSpanUtils {
     Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
     return attributes.entrySet().stream()
         .filter(entry -> EnrichedSpanUtils.isHttpResponseHeader(entry.getKey()))
-        .filter(entry -> EnrichedSpanUtils.isHttpResponseCookie(entry.getKey()))
+        .filter(entry -> !EnrichedSpanUtils.isHttpResponseCookie(entry.getKey()))
         .filter(entry -> nullCheck(entry.getValue()))
         .collect(
             Collectors.toUnmodifiableMap(
@@ -617,6 +617,7 @@ public class EnrichedSpanUtils {
   }
 
   private static boolean isHttpRequestCookie(String requestHeaderAttributeKey) {
+    String temp = requestHeaderAttributeKey;
     return requestHeaderAttributeKey.equals(REQUEST_COOKIE_HEADER_KEY);
   }
 
