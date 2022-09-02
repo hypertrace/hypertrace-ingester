@@ -348,7 +348,11 @@ public class EnrichedSpanUtilsTest {
   @Test
   public void testGetRequestHeadersExceptCookies() {
     Map<String, String> spanRequestHeadersExceptCookies =
-        Map.of("sample-security-type", "sample-security-val", "security-key", "security-val");
+        Map.of(
+            "sample-security-type",
+            "sample-security-val",
+            "sample-security-key",
+            "sample-security-val");
     Event e = createMockEventWithRequestHeadersAndCookies();
     assertEquals(
         spanRequestHeadersExceptCookies, EnrichedSpanUtils.getRequestHeadersExceptCookies(e));
@@ -356,7 +360,8 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void testGetRequestCookies() {
-    Map<String, String> spanRequestCookies = Map.of("name", "cookie-name", "token", "token-val");
+    Map<String, String> spanRequestCookies =
+        Map.of("name", "sample-cookie-name", "token", "sample-token-val");
     Event e = createMockEventWithRequestHeadersAndCookies();
     assertEquals(spanRequestCookies, EnrichedSpanUtils.getRequestCookies(e));
   }
@@ -364,7 +369,11 @@ public class EnrichedSpanUtilsTest {
   @Test
   public void testGetResponseHeadersExceptCookies() {
     Map<String, String> spanResponseHeadersExceptCookies =
-        Map.of("sample-security-type", "sample-security-val", "security-key", "security-val");
+        Map.of(
+            "sample-security-type",
+            "sample-security-val",
+            "sample-security-key",
+            "sample-security-val");
     Event e = createMockEventWithResponseHeadersAndCookies();
     assertEquals(
         spanResponseHeadersExceptCookies, EnrichedSpanUtils.getResponseHeadersExceptCookies(e));
@@ -372,7 +381,7 @@ public class EnrichedSpanUtilsTest {
 
   @Test
   public void testGetResponseCookies() {
-    Map<String, String> spanResponseCookies = Map.of("name", "cookie-name");
+    Map<String, String> spanResponseCookies = Map.of("name", "sample-cookie-name");
     Event e = createMockEventWithResponseHeadersAndCookies();
     assertEquals(spanResponseCookies, EnrichedSpanUtils.getResponseCookies(e));
   }
@@ -382,8 +391,8 @@ public class EnrichedSpanUtilsTest {
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
     addAttribute(e, "http.response.header.sample-security-type", "sample-security-val");
-    addAttribute(e, "grpc.response.metadata.security-key", "security-val");
-    addAttribute(e, "http.response.header.set-cookie", "name=cookie-name");
+    addAttribute(e, "grpc.response.metadata.sample-security-key", "sample-security-val");
+    addAttribute(e, "http.response.header.set-cookie", "name=sample-cookie-name");
     return e;
   }
 
@@ -392,8 +401,8 @@ public class EnrichedSpanUtilsTest {
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
     addAttribute(e, "http.request.header.sample-security-type", "sample-security-val");
-    addAttribute(e, "grpc.request.metadata.security-key", "security-val");
-    addAttribute(e, "http.request.header.cookie", "name=cookie-name;token=token-val");
+    addAttribute(e, "grpc.request.metadata.sample-security-key", "sample-security-val");
+    addAttribute(e, "http.request.header.cookie", "name=sample-cookie-name;token=sample-token-val");
     return e;
   }
 
