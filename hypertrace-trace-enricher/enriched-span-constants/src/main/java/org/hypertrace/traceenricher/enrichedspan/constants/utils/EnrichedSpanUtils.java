@@ -1,9 +1,18 @@
 package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 
+import static com.google.common.net.HttpHeaders.COOKIE;
+import static com.google.common.net.HttpHeaders.SET_COOKIE;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_METADATA;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_METADATA;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_HEADER;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA;
+import static org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils.isRpcSystemGrpc;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-
 import java.net.HttpCookie;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -13,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.apache.avro.reflect.Nullable;
 import org.apache.commons.codec.binary.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
@@ -39,16 +47,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.google.common.net.HttpHeaders.COOKIE;
-import static com.google.common.net.HttpHeaders.SET_COOKIE;
-import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_METADATA;
-import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_METADATA;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER;
-import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_HEADER;
-import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA;
-import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA;
-import static org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils.isRpcSystemGrpc;
 
 /**
  * Utility class to easily read named attributes from an enriched span. This is equivalent of an
@@ -118,23 +116,23 @@ public class EnrichedSpanUtils {
   private static final String OTEL_HTTP_USER_AGENT =
       OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue();
   private static final String HTTP_RESPONSE_HEADER_PREFIX =
-          RawSpanConstants.getValue(HTTP_RESPONSE_HEADER) + DOT;
+      RawSpanConstants.getValue(HTTP_RESPONSE_HEADER) + DOT;
   private static final String HTTP_REQUEST_HEADER_PREFIX =
-          RawSpanConstants.getValue(HTTP_REQUEST_HEADER) + DOT;
+      RawSpanConstants.getValue(HTTP_REQUEST_HEADER) + DOT;
   private static final String RESPONSE_COOKIE_HEADER_PREFIX =
-          HTTP_RESPONSE_HEADER_PREFIX + SET_COOKIE.toLowerCase();
+      HTTP_RESPONSE_HEADER_PREFIX + SET_COOKIE.toLowerCase();
   private static final String REQUEST_COOKIE_HEADER_KEY =
-          HTTP_REQUEST_HEADER_PREFIX + COOKIE.toLowerCase();
+      HTTP_REQUEST_HEADER_PREFIX + COOKIE.toLowerCase();
   private static final String GRPC_REQUEST_METADATA_PREFIX =
-          RawSpanConstants.getValue(GRPC_REQUEST_METADATA) + DOT;
+      RawSpanConstants.getValue(GRPC_REQUEST_METADATA) + DOT;
   private static final String GRPC_RESPONSE_METADATA_PREFIX =
-          RawSpanConstants.getValue(GRPC_RESPONSE_METADATA) + DOT;
+      RawSpanConstants.getValue(GRPC_RESPONSE_METADATA) + DOT;
   private static final String RPC_REQUEST_METADATA_PREFIX = RPC_REQUEST_METADATA.getValue() + DOT;
   private static final String RPC_RESPONSE_METADATA_PREFIX = RPC_RESPONSE_METADATA.getValue() + DOT;
   private static final Splitter SEMICOLON_SPLITTER =
-          Splitter.on(";").trimResults().omitEmptyStrings();
+      Splitter.on(";").trimResults().omitEmptyStrings();
   private static final Splitter COOKIE_KEY_VALUE_SPLITTER =
-          Splitter.on("=").limit(2).trimResults().omitEmptyStrings();
+      Splitter.on("=").limit(2).trimResults().omitEmptyStrings();
 
   @VisibleForTesting
   static final List<String> USER_AGENT_ATTRIBUTES =
