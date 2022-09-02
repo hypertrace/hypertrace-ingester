@@ -353,17 +353,9 @@ public class EnrichedSpanUtilsTest {
             "sample-security-val",
             "sample-security-key",
             "sample-security-val");
-    Event e = createMockEventWithRequestHeadersAndCookies();
+    Event e = createMockEventWithHeadersAndCookies();
     assertEquals(
         spanRequestHeadersExceptCookies, EnrichedSpanUtils.getRequestHeadersExceptCookies(e));
-  }
-
-  @Test
-  public void testGetRequestCookies() {
-    Map<String, String> spanRequestCookies =
-        Map.of("name", "sample-cookie-name", "token", "sample-token-val");
-    Event e = createMockEventWithRequestHeadersAndCookies();
-    assertEquals(spanRequestCookies, EnrichedSpanUtils.getRequestCookies(e));
   }
 
   @Test
@@ -374,35 +366,36 @@ public class EnrichedSpanUtilsTest {
             "sample-security-val",
             "sample-security-key",
             "sample-security-val");
-    Event e = createMockEventWithResponseHeadersAndCookies();
+    Event e = createMockEventWithHeadersAndCookies();
     assertEquals(
         spanResponseHeadersExceptCookies, EnrichedSpanUtils.getResponseHeadersExceptCookies(e));
   }
 
   @Test
+  public void testGetRequestCookies() {
+    Map<String, String> spanRequestCookies =
+        Map.of("name", "sample-cookie-name", "token", "sample-token-val");
+    Event e = createMockEventWithHeadersAndCookies();
+    assertEquals(spanRequestCookies, EnrichedSpanUtils.getRequestCookies(e));
+  }
+
+  @Test
   public void testGetResponseCookies() {
     Map<String, String> spanResponseCookies = Map.of("name", "sample-cookie-name");
-    Event e = createMockEventWithResponseHeadersAndCookies();
+    Event e = createMockEventWithHeadersAndCookies();
     assertEquals(spanResponseCookies, EnrichedSpanUtils.getResponseCookies(e));
   }
 
-  private Event createMockEventWithResponseHeadersAndCookies() {
-    Event e = mock(Event.class);
-    when(e.getAttributes())
-        .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
-    addAttribute(e, "http.response.header.sample-security-type", "sample-security-val");
-    addAttribute(e, "grpc.response.metadata.sample-security-key", "sample-security-val");
-    addAttribute(e, "http.response.header.set-cookie", "name=sample-cookie-name");
-    return e;
-  }
-
-  private Event createMockEventWithRequestHeadersAndCookies() {
+  private Event createMockEventWithHeadersAndCookies() {
     Event e = mock(Event.class);
     when(e.getAttributes())
         .thenReturn(Attributes.newBuilder().setAttributeMap(new HashMap<>()).build());
     addAttribute(e, "http.request.header.sample-security-type", "sample-security-val");
     addAttribute(e, "grpc.request.metadata.sample-security-key", "sample-security-val");
     addAttribute(e, "http.request.header.cookie", "name=sample-cookie-name;token=sample-token-val");
+    addAttribute(e, "http.response.header.sample-security-type", "sample-security-val");
+    addAttribute(e, "grpc.response.metadata.sample-security-key", "sample-security-val");
+    addAttribute(e, "http.response.header.set-cookie", "name=sample-cookie-name");
     return e;
   }
 
