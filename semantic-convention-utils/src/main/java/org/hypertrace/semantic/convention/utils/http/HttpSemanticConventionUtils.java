@@ -125,8 +125,7 @@ public class HttpSemanticConventionUtils {
   private static final List<String> SCHEME_ATTRIBUTES =
       List.of(
           HttpSemanticConventions.HTTP_REQUEST_X_FORWARDED_PROTO.getValue(),
-          OTelHttpSemanticConventions.HTTP_SCHEME.getValue(),
-          HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue());
+          OTelHttpSemanticConventions.HTTP_SCHEME.getValue());
 
   public static final List<String> FULL_URL_ATTRIBUTES =
       List.of(
