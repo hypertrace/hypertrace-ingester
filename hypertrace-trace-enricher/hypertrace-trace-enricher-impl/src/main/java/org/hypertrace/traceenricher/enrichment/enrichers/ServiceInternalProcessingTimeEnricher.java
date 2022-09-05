@@ -1,8 +1,10 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.ApiNodeEventEdge;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
@@ -21,17 +23,8 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
   public void enrichTrace(StructuredTrace trace) {
     ApiTraceGraph apiTraceGraph = ApiTraceGraphBuilder.buildGraph(trace);
     List<ApiNode<Event>> apiNodeList = apiTraceGraph.getApiNodeList();
-    LOG.debug("Logging apiNodeList...");
-    apiNodeList.forEach(
-        a -> {
-          Optional<Event> entryApiBoundaryEvent = a.getEntryApiBoundaryEvent();
-          entryApiBoundaryEvent.ifPresent(
-              event -> {
-                LOG.debug(event.toString());
-              });
-        });
-    LOG.debug("Done logging apiNodeList...");
     for (ApiNode<Event> apiNode : apiNodeList) {
+      List<Event> exitApiBoundaryEvents = apiNode.getExitApiBoundaryEvents();
       List<ApiNodeEventEdge> edges = apiTraceGraph.getOutboundEdgesForApiNode(apiNode);
       int edgeDurationSum = 0;
       // Note: this logic of summing the duration of each child span does not work if children spans
@@ -53,6 +46,16 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
       for (var edge : edges) {
         edgeDurationSum += getApiNodeEventEdgeDuration(edge);
       }
+      //now sum up http or https backends
+      double httpExitCallsSum = exitApiBoundaryEvents
+          .stream().filter(event -> {
+            Map<String, AttributeValue> enrichedAttributes = event.getEnrichedAttributes()
+                .getAttributeMap();
+            return enrichedAttributes.containsKey("BACKEND_PROTOCOL")
+                && enrichedAttributes.get("BACKEND_PROTOCOL").getValue().contains("HTTP");
+          })
+          .mapToDouble(event -> event.getMetrics().getMetricMap().get("Duration").getValue())
+          .sum();
       Optional<Event> entryApiBoundaryEventMaybe = apiNode.getEntryApiBoundaryEvent();
       if (entryApiBoundaryEventMaybe.isPresent()) {
         var entryApiBoundaryEvent = entryApiBoundaryEventMaybe.get();
@@ -64,7 +67,7 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
               .put(
                   EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
                   AttributeValueCreator.create(
-                      String.valueOf(entryApiBoundaryEventDuration - edgeDurationSum)));
+                      String.valueOf(entryApiBoundaryEventDuration - edgeDurationSum - httpExitCallsSum)));
         } catch (NullPointerException e) {
           LOG.error(
               "NPE while calculating service internal time. entryApiBoundaryEventDuration {}, edgeDurationSum {}",
