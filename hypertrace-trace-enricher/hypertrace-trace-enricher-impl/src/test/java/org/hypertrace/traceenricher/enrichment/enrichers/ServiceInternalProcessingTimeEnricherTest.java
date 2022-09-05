@@ -17,8 +17,10 @@ import org.hypertrace.traceenricher.trace.util.ApiTraceGraph;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 public class ServiceInternalProcessingTimeEnricherTest extends AbstractAttributeEnricherTest {
 
   private final Enricher testCandidate = new ServiceInternalProcessingTimeEnricher();

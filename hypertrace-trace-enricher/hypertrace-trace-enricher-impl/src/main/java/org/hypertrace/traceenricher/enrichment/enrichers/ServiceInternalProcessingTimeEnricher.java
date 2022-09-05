@@ -46,16 +46,18 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
       for (var edge : edges) {
         edgeDurationSum += getApiNodeEventEdgeDuration(edge);
       }
-      //now sum up http or https backends
-      double httpExitCallsSum = exitApiBoundaryEvents
-          .stream().filter(event -> {
-            Map<String, AttributeValue> enrichedAttributes = event.getEnrichedAttributes()
-                .getAttributeMap();
-            return enrichedAttributes.containsKey("BACKEND_PROTOCOL")
-                && enrichedAttributes.get("BACKEND_PROTOCOL").getValue().contains("HTTP");
-          })
-          .mapToDouble(event -> event.getMetrics().getMetricMap().get("Duration").getValue())
-          .sum();
+      // now sum up http or https backends
+      double httpExitCallsSum =
+          exitApiBoundaryEvents.stream()
+              .filter(
+                  event -> {
+                    Map<String, AttributeValue> enrichedAttributes =
+                        event.getEnrichedAttributes().getAttributeMap();
+                    return enrichedAttributes.containsKey("BACKEND_PROTOCOL")
+                        && enrichedAttributes.get("BACKEND_PROTOCOL").getValue().contains("HTTP");
+                  })
+              .mapToDouble(event -> event.getMetrics().getMetricMap().get("Duration").getValue())
+              .sum();
       Optional<Event> entryApiBoundaryEventMaybe = apiNode.getEntryApiBoundaryEvent();
       if (entryApiBoundaryEventMaybe.isPresent()) {
         var entryApiBoundaryEvent = entryApiBoundaryEventMaybe.get();
@@ -67,7 +69,8 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
               .put(
                   EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
                   AttributeValueCreator.create(
-                      String.valueOf(entryApiBoundaryEventDuration - edgeDurationSum - httpExitCallsSum)));
+                      String.valueOf(
+                          entryApiBoundaryEventDuration - edgeDurationSum - httpExitCallsSum)));
         } catch (NullPointerException e) {
           LOG.error(
               "NPE while calculating service internal time. entryApiBoundaryEventDuration {}, edgeDurationSum {}",
