@@ -340,6 +340,51 @@ public class HttpSemanticConventionUtilsTest {
                 .build());
     when(e.getEnrichedAttributes()).thenReturn(null);
     assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(e));
+
+    // when only origin header exists expect whatever is the scheme of the origin header
+    // when origin header has 'https'
+    event =
+        createMockEventWithAttribute(
+            HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(), "https://abc.xyz");
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    // when origin header has 'http'
+    event =
+        createMockEventWithAttribute(
+            HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(), "http://abc.xyz");
+    assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    // when http url and origin header exists with scheme https then expect https
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(),
+                        AttributeValue.newBuilder().setValue("https://abc.xyz.ai").build(),
+                        RawSpanConstants.getValue(Http.HTTP_URL),
+                        AttributeValue.newBuilder()
+                            .setValue("http://abc.xyz.ai/apis/5673/events?a1=v1&a2=v2")
+                            .build()))
+                .build());
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    // when http url and origin header exists with scheme http then expect http
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(),
+                        AttributeValue.newBuilder().setValue("http://abc.xyz.ai").build(),
+                        RawSpanConstants.getValue(Http.HTTP_URL),
+                        AttributeValue.newBuilder()
+                            .setValue("http://abc.xyz.ai/apis/5673/events?a1=v1&a2=v2")
+                            .build()))
+                .build());
+    assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
   }
 
   @Test

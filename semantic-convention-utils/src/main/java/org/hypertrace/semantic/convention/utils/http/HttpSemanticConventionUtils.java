@@ -40,6 +40,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.util.StringUtils;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -91,6 +93,8 @@ public class HttpSemanticConventionUtils {
   private static final String SLASH = "/";
 
   private static final String HTTP_REQUEST_FORWARDED_ATTRIBUTE = HTTP_REQUEST_FORWARDED.getValue();
+  private static final String HTTP_REQUEST_ORIGIN =
+      HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue();
 
   private static final List<String> USER_AGENT_ATTRIBUTES =
       List.of(
@@ -425,15 +429,39 @@ public class HttpSemanticConventionUtils {
 
   public static Optional<String> getHttpScheme(Event event) {
 
+    Optional<String> scheme = Optional.empty();
+    // 1. check for http.url attribute and extract scheme from it if it is a full URL
     Optional<String> url = getHttpUrlFromRawAttributes(event);
     if (url.isPresent() && isAbsoluteUrl(url.get())) {
       try {
-        return Optional.of(getNormalizedUrl(url.get()).getProtocol());
+        scheme = Optional.of(getNormalizedUrl(url.get()).getProtocol());
       } catch (MalformedURLException e) {
         LOGGER.warn(
             "On extracting httpScheme, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
+
+    // 2. if scheme was extracted from step 1) then check if it is 'https' and return it.
+    Optional<String> schemeFromOtherRawAttributes;
+    if (scheme.isPresent()) {
+      if (scheme.get().equalsIgnoreCase("https")) {
+        return scheme;
+      }
+      // 3. else check if there are other attributes that like 'origin', 'x-forwarded-proto' etc
+      // that have the actual scheme
+      //    this is for scenarios where a LB fronts the service and terminates SSL.
+      //    If this scheme is 'https' then return this instead
+      else {
+        schemeFromOtherRawAttributes = getHttpSchemeFromRawAttributes(event);
+        if (schemeFromOtherRawAttributes.isPresent()
+            && schemeFromOtherRawAttributes.get().equalsIgnoreCase("https")) {
+          return schemeFromOtherRawAttributes;
+        }
+      }
+      // 4. Just return the scheme which should be 'http'
+      return scheme;
+    }
+    // 5. If scheme from URL couldn't be extracted then try the raw attributes
     return getHttpSchemeFromRawAttributes(event);
   }
 
@@ -460,6 +488,24 @@ public class HttpSemanticConventionUtils {
         return optionalExtractedProtoValue;
       }
     }
+
+    AttributeValue httpRequestOriginValue = attributeValueMap.get(HTTP_REQUEST_ORIGIN);
+    if (httpRequestOriginValue != null && !StringUtils.isEmpty(httpRequestOriginValue.getValue())) {
+      String origin = httpRequestOriginValue.getValue();
+      /** Syntax: Origin: null Origin: <scheme>://<hostname> Origin: <scheme>://<hostname>:<port> */
+      if (StringUtils.isNotEmpty(origin)) {
+        try {
+          String scheme = new URI(origin).getScheme();
+          return Optional.of(scheme);
+        } catch (URISyntaxException e) {
+          LOGGER.warn(
+              "On extracting scheme, received an invalid origin header: {}, {}",
+              origin,
+              e.getMessage());
+        }
+      }
+    }
+
     for (String scheme : SCHEME_ATTRIBUTES) {
       if (attributeValueMap.get(scheme) != null
           && !StringUtils.isEmpty(attributeValueMap.get(scheme).getValue())) {
