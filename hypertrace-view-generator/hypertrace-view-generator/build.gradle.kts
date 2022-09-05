@@ -42,6 +42,9 @@ dependencies {
   implementation("org.apache.avro:avro:1.11.0")
   implementation("org.apache.commons:commons-lang3:3.12.0")
 
+  // logging
+  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
+
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("com.google.code.gson:gson:2.8.9")
