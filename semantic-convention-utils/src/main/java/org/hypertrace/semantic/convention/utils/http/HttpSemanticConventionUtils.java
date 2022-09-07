@@ -496,8 +496,14 @@ public class HttpSemanticConventionUtils {
       if (StringUtils.isNotEmpty(origin)) {
         try {
           String scheme = new URI(origin).getScheme();
-          return Optional.of(scheme);
-        } catch (URISyntaxException e) {
+          // handle the case where the value of origin is the "null" string
+          if(StringUtils.isNotEmpty(scheme)) {
+            return Optional.of(scheme);
+          }
+          if(LOGGER.isDebugEnabled()){
+            LOGGER.debug("Extracted scheme {} from origin {}", scheme, origin);
+          }
+        } catch (Exception e) {
           LOGGER.warn(
               "On extracting scheme, received an invalid origin header: {}, {}",
               origin,

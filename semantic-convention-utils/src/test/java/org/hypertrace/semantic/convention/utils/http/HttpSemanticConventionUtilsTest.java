@@ -385,6 +385,22 @@ public class HttpSemanticConventionUtilsTest {
                             .build()))
                 .build());
     assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    // when http url and origin header is null string then expect scheme of the url
+    event = mock(Event.class);
+    when(event.getAttributes())
+            .thenReturn(
+                    Attributes.newBuilder()
+                            .setAttributeMap(
+                                    Map.of(
+                                            HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(),
+                                            AttributeValue.newBuilder().setValue("null").build(),
+                                            RawSpanConstants.getValue(Http.HTTP_URL),
+                                            AttributeValue.newBuilder()
+                                                    .setValue("http://abc.xyz.ai/apis/5673/events?a1=v1&a2=v2")
+                                                    .build()))
+                            .build());
+    assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
   }
 
   @Test
