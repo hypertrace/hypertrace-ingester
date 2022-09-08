@@ -28,7 +28,8 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
         List<Event> exitApiBoundaryEvents = apiNode.getExitApiBoundaryEvents();
         List<ApiNodeEventEdge> edges = apiTraceGraph.getOutboundEdgesForApiNode(apiNode);
         int edgeDurationSum = 0;
-        // Note: this logic of summing the duration of each child span does not work if children spans
+        // Note: this logic of summing the duration of each child span does not work if children
+        // spans
         // were
         // concurrent to one-another. In that case, the parent span waits only for
         // max(duration_child_1,
