@@ -500,9 +500,6 @@ public class HttpSemanticConventionUtils {
           if(StringUtils.isNotEmpty(scheme)) {
             return Optional.of(scheme);
           }
-          if(LOGGER.isDebugEnabled()){
-            LOGGER.debug("Extracted scheme {} from origin {}", scheme, origin);
-          }
         } catch (Exception e) {
           LOGGER.warn(
               "On extracting scheme, received an invalid origin header: {}, {}",
