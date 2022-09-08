@@ -33,7 +33,7 @@ dependencies {
   implementation("com.google.guava:guava:31.1-jre")
 
   // TODO: migrate in core
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.4.5")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.4.7")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.23")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.43")
 
@@ -41,6 +41,9 @@ dependencies {
 
   implementation("org.apache.avro:avro:1.11.0")
   implementation("org.apache.commons:commons-lang3:3.12.0")
+
+  // logging
+  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
   testImplementation("org.mockito:mockito-core:3.8.0")
