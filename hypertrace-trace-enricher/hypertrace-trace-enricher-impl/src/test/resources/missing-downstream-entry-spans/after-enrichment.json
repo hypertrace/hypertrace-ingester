@@ -55,6 +55,14 @@
               "binary_value": null,
               "value_list": null,
               "value_map": null
+            },
+            "enriched.serviceInternalProcessingTime":{
+              "value": {
+                "string": "4041.0"
+              },
+              "binary_value":null,
+              "value_list":null,
+              "value_map":null
             }
           }
         }
