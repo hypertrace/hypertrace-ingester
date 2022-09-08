@@ -27,7 +27,7 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
       for (ApiNode<Event> apiNode : apiNodeList) {
         List<Event> exitApiBoundaryEvents = apiNode.getExitApiBoundaryEvents();
         List<ApiNodeEventEdge> edges = apiTraceGraph.getOutboundEdgesForApiNode(apiNode);
-        int edgeDurationSum = 0;
+        int totalEdgeDurations = 0;
         // Note: this logic of summing the duration of each child span does not work if children
         // spans
         // were
@@ -46,7 +46,7 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
         //    |---C2---|
         //      |---C3---|
         for (var edge : edges) {
-          edgeDurationSum += getApiNodeEventEdgeDuration(edge);
+          totalEdgeDurations += getApiNodeEventEdgeDuration(edge);
         }
         // now sum up http or https backends
         double httpExitCallsSum =
@@ -72,12 +72,14 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
                     EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
                     AttributeValueCreator.create(
                         String.valueOf(
-                            entryApiBoundaryEventDuration - edgeDurationSum - httpExitCallsSum)));
+                            entryApiBoundaryEventDuration
+                                - totalEdgeDurations
+                                - httpExitCallsSum)));
           } catch (NullPointerException e) {
             LOG.error(
-                "NPE while calculating service internal time. entryApiBoundaryEventDuration {}, edgeDurationSum {}",
+                "NPE while calculating service internal time. entryApiBoundaryEventDuration {}, totalEdgeDurations {}",
                 entryApiBoundaryEventDuration,
-                edgeDurationSum,
+                totalEdgeDurations,
                 e);
             throw e;
           }
