@@ -41,7 +41,6 @@ import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.util.StringUtils;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -496,8 +495,11 @@ public class HttpSemanticConventionUtils {
       if (StringUtils.isNotEmpty(origin)) {
         try {
           String scheme = new URI(origin).getScheme();
-          return Optional.of(scheme);
-        } catch (URISyntaxException e) {
+          // handle the case where the value of origin is the "null" string
+          if (StringUtils.isNotEmpty(scheme)) {
+            return Optional.of(scheme);
+          }
+        } catch (Exception e) {
           LOGGER.warn(
               "On extracting scheme, received an invalid origin header: {}, {}",
               origin,
