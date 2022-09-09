@@ -38,15 +38,19 @@ dependencies {
 
   constraints {
     implementation("org.glassfish.jersey.core:jersey-common:2.34") {
-      because("introduced by org.hypertrace.core.kafkastreams.framework:" +
+      because(
+        "introduced by org.hypertrace.core.kafkastreams.framework:" +
           "kafka-streams-framework@0.1.21 > io.confluent:kafka-streams-avro-serde@6.0.1 > " +
           "io.confluent:kafka-schema-registry-client@6.0.1 > " +
-          "org.glassfish.jersey.core:jersey-common@2.30")
+          "org.glassfish.jersey.core:jersey-common@2.30"
+      )
     }
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") {
-      because("Denial of Service (DoS) " +
+      because(
+        "Denial of Service (DoS) " +
           "[High Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2421244] in " +
-          "com.fasterxml.jackson.core:jackson-databind@2.13.1")
+          "com.fasterxml.jackson.core:jackson-databind@2.13.1"
+      )
     }
     implementation("com.google.protobuf:protobuf-java:3.21.1") {
       because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-2331703")
