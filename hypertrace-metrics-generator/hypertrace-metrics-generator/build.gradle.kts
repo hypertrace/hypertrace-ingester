@@ -35,25 +35,8 @@ dependencies {
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 
-  // all constraints
-  constraints {
-    implementation("org.glassfish.jersey.core:jersey-common:2.34") {
-      because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
-    }
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") {
-      because(
-        "Denial of Service (DoS) " +
-          "[High Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2421244] " +
-          "in com.fasterxml.jackson.core:jackson-databind@2.13.1"
-      )
-    }
-    implementation("com.google.protobuf:protobuf-java:3.21.1") {
-      because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-2331703")
-    }
-  }
-
   // test
-  testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:7.2.1-ccs")

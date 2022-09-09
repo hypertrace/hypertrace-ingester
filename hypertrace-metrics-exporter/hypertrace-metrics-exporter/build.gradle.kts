@@ -43,22 +43,8 @@ dependencies {
   // kafka
   implementation("org.apache.kafka:kafka-clients:7.2.1-ccs")
 
-  // constrains
-  constraints {
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") {
-      because(
-        "Denial of Service (DoS) " +
-          "[High Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2421244] " +
-          "in com.fasterxml.jackson.core:jackson-databind@2.13.1"
-      )
-    }
-    implementation("com.google.protobuf:protobuf-java:3.21.1") {
-      because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-2331703")
-    }
-  }
-
   // test
-  testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:3.8.0")
   testImplementation("com.google.code.gson:gson:2.8.9")
 }

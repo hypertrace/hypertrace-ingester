@@ -20,7 +20,7 @@ dependencies {
   annotationProcessor("org.projectlombok:lombok:1.18.20")
   compileOnly("org.projectlombok:lombok:1.18.20")
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-inline:3.8.0")
   testImplementation("org.mockito:mockito-junit-jupiter:3.8.0")
   testRuntimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")

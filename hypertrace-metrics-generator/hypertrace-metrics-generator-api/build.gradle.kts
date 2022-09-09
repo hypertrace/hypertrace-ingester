@@ -24,4 +24,8 @@ dependencies {
   implementation("com.google.protobuf:protobuf-java:3.21.1")
   implementation("org.apache.kafka:kafka-clients:7.2.1-ccs")
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
+
+  // Logging
+  implementation("org.slf4j:slf4j-api:1.7.30")
+  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 }
