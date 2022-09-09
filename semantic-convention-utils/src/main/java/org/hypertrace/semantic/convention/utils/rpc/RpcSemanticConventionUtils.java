@@ -142,12 +142,16 @@ public class RpcSemanticConventionUtils {
     return Optional.empty();
   }
 
-  /** @return attribute keys for grpc method */
+  /**
+   * @return attribute keys for grpc method
+   */
   public static List<String> getAttributeKeysForGrpcMethod() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_GRPC_METHOD, OTEL_RPC_METHOD));
   }
 
-  /** @return attribute keys for grpc status code */
+  /**
+   * @return attribute keys for grpc status code
+   */
   public static List<String> getAttributeKeysForGrpcStatusCode() {
     return ALL_GRPC_STATUS_CODES;
   }

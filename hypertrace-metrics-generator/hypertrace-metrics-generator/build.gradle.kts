@@ -41,9 +41,11 @@ dependencies {
       because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
     }
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") {
-      because("Denial of Service (DoS) " +
+      because(
+        "Denial of Service (DoS) " +
           "[High Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2421244] " +
-          "in com.fasterxml.jackson.core:jackson-databind@2.13.1")
+          "in com.fasterxml.jackson.core:jackson-databind@2.13.1"
+      )
     }
     implementation("com.google.protobuf:protobuf-java:3.21.1") {
       because("https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-2331703")
