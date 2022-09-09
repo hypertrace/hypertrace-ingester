@@ -41,7 +41,7 @@ dependencies {
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 
   // kafka
-  implementation("org.apache.kafka:kafka-clients:2.7.2")
+  implementation("org.apache.kafka:kafka-clients:7.2.1-ccs")
 
   // constrains
   constraints {
