@@ -35,10 +35,11 @@ dependencies {
 
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
+  implementation("com.google.protobuf:protobuf-java:3.21.5")
 
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-  testImplementation("org.mockito:mockito-core:3.8.0")
-  testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
+  testImplementation("org.mockito:mockito-core:4.7.0")
+  testImplementation("org.junit-pioneer:junit-pioneer:1.7.1")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:7.2.1-ccs")
 }

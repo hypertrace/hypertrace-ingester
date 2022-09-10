@@ -36,6 +36,7 @@ dependencies {
   // https://github.com/open-telemetry/opentelemetry-java/pull/3700
   // For now, the exported time stamp will be the current time stamp.
   implementation("io.opentelemetry:opentelemetry-exporter-prometheus:1.7.0-alpha")
+  implementation("com.google.protobuf:protobuf-java:3.21.5")
 
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
@@ -45,6 +46,6 @@ dependencies {
 
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-  testImplementation("org.mockito:mockito-core:3.8.0")
+  testImplementation("org.mockito:mockito-core:4.7.0")
   testImplementation("com.google.code.gson:gson:2.8.9")
 }

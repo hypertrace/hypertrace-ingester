@@ -46,7 +46,7 @@ dependencies {
   runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-  testImplementation("org.mockito:mockito-core:3.8.0")
+  testImplementation("org.mockito:mockito-core:4.7.0")
   testImplementation("org.junit-pioneer:junit-pioneer:1.3.8")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:7.2.1-ccs")
 }

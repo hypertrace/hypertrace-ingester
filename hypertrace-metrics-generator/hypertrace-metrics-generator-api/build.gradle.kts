@@ -21,7 +21,7 @@ sourceSets {
 }
 
 dependencies {
-  implementation("com.google.protobuf:protobuf-java:3.21.1")
+  implementation("com.google.protobuf:protobuf-java:3.21.5")
   implementation("org.apache.kafka:kafka-clients:7.2.1-ccs")
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 

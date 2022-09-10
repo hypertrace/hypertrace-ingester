@@ -1,5 +1,6 @@
 plugins {
   `java-library`
+  id("org.hypertrace.publish-plugin")
   id("com.github.davidmc24.gradle.plugin.avro")
 }
 

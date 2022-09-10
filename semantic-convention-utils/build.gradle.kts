@@ -16,5 +16,5 @@ dependencies {
   implementation("com.google.guava:guava:31.1-jre")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-  testImplementation("org.mockito:mockito-core:3.8.0")
+  testImplementation("org.mockito:mockito-core:4.7.0")
 }
