@@ -16,6 +16,12 @@ tasks.test {
 }
 
 dependencies {
+  constraints {
+    implementation("commons-collections:commons-collections:3.2.2") {
+      because("https://nvd.nist.gov/vuln/detail/CVE-2015-6420")
+    }
+  }
+
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.4.7") {
     // excluding unused but vulnerable tpls
@@ -26,8 +32,8 @@ dependencies {
     exclude("org.apache.pinot", "pinot-thrift")
     exclude("org.apache.logging.log4j", "log4j-1.2-api")
   }
+  // replacement for log4j-1.2
   implementation("ch.qos.reload4j:reload4j:1.2.22")
-
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:4.7.0")
 }
