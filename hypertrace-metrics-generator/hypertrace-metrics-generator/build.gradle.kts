@@ -33,7 +33,7 @@ dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.0")
 
   // open telemetry proto
-  implementation("io.opentelemetry:opentelemetry-proto:1.18.0")
+  implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
   implementation("com.google.protobuf:protobuf-java:3.21.5")
 
   // test
