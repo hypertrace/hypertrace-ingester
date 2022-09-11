@@ -56,18 +56,6 @@ sourceSets {
   }
 }
 dependencies {
-  api("com.google.api.grpc:proto-google-common-protos:2.7.1")
-  api("org.apache.avro:avro:1.11.0")
-  constraints {
-    api("org.apache.commons:commons-compress:1.21") {
-      because("Multiple vulnerabilities in avro-declared version")
-    }
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.2.2") {
-      because(
-        "Denial of Service (DoS) " +
-          "[High Severity][https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-2421244] in " +
-          "com.fasterxml.jackson.core:jackson-databind@2.13.1"
-      )
-    }
-  }
+  api("com.google.api.grpc:proto-google-common-protos:2.9.2")
+  api("org.apache.avro:avro:1.11.1")
 }
