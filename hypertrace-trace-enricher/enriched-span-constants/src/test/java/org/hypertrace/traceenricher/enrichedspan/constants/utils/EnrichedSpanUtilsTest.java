@@ -345,6 +345,47 @@ public class EnrichedSpanUtilsTest {
     assertEquals(spaceIds, EnrichedSpanUtils.getSpaceIds(e));
   }
 
+  @Test
+  public void testGetRequestHeadersExceptCookies() {
+    Map<String, String> spanRequestHeadersExceptCookies =
+        Map.of(
+            "sample-security-type",
+            "sample-security-val",
+            "sample-security-key",
+            "sample-security-val");
+    Event e = createMockEventWithHeadersAndCookies();
+    assertEquals(
+        spanRequestHeadersExceptCookies, EnrichedSpanUtils.getRequestHeadersExceptCookies(e));
+  }
+
+  @Test
+  public void testGetResponseHeadersExceptCookies() {
+    Map<String, String> spanResponseHeadersExceptCookies =
+        Map.of(
+            "sample-security-type",
+            "sample-security-val",
+            "sample-security-key",
+            "sample-security-val");
+    Event e = createMockEventWithHeadersAndCookies();
+    assertEquals(
+        spanResponseHeadersExceptCookies, EnrichedSpanUtils.getResponseHeadersExceptCookies(e));
+  }
+
+  @Test
+  public void testGetRequestCookies() {
+    Map<String, String> spanRequestCookies =
+        Map.of("name", "sample-cookie-name", "token", "sample-token-val");
+    Event e = EnrichedSpanUtilsTest.createMockEventWithHeadersAndCookies();
+    assertEquals(spanRequestCookies, EnrichedSpanUtils.getRequestCookies(e));
+  }
+
+  @Test
+  public void testGetResponseCookies() {
+    Map<String, String> spanResponseCookies = Map.of("name", "sample-cookie-name");
+    Event e = EnrichedSpanUtilsTest.createMockEventWithHeadersAndCookies();
+    assertEquals(spanResponseCookies, EnrichedSpanUtils.getResponseCookies(e));
+  }
+
   public static Event createMockEventWithHeadersAndCookies() {
     Event e = mock(Event.class);
     when(e.getAttributes())

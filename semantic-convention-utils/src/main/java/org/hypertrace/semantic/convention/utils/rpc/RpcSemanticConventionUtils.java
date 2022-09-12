@@ -33,9 +33,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
@@ -425,6 +427,42 @@ public class RpcSemanticConventionUtils {
       return Optional.of(attributeValueMap.get(RPC_REQUEST_METADATA_PATH.getValue()).getValue());
     }
     return Optional.empty();
+  }
+
+  public static Map<String, String> getGrpcHeadersExceptCookies(Event event, String prefix) {
+    if (SpanSemanticConventionUtils.isEmptyAttributesMap(event)) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
+
+    return attributes.entrySet().stream()
+        .filter(entry -> entry.getKey().startsWith(prefix))
+        .filter(entry -> SpanSemanticConventionUtils.isValueNotNull(entry.getValue()))
+        .collect(
+            Collectors.toUnmodifiableMap(
+                entry -> entry.getKey().substring(prefix.length()),
+                entry -> entry.getValue().getValue()));
+  }
+
+  public static Map<String, String> getRpcHeadersExceptCookies(Event event, String prefix) {
+    if (SpanSemanticConventionUtils.isEmptyAttributesMap(event)) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
+
+    if (!isRpcSystemGrpc(attributes)) {
+      return Collections.emptyMap();
+    }
+
+    return attributes.entrySet().stream()
+        .filter(entry -> entry.getKey().startsWith(prefix))
+        .filter(entry -> SpanSemanticConventionUtils.isValueNotNull(entry.getValue()))
+        .collect(
+            Collectors.toUnmodifiableMap(
+                entry -> entry.getKey().substring(prefix.length()),
+                entry -> entry.getValue().getValue()));
   }
 
   public static Optional<String> getGrpcXForwardedFor(Event event) {

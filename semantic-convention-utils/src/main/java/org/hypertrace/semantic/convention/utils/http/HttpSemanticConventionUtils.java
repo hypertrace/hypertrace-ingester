@@ -1,5 +1,7 @@
 package org.hypertrace.semantic.convention.utils.http;
 
+import static com.google.common.net.HttpHeaders.COOKIE;
+import static com.google.common.net.HttpHeaders.SET_COOKIE;
 import static org.hypertrace.core.semantic.convention.constants.http.HttpSemanticConventions.HTTP_REQUEST_FORWARDED;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_HOST;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
@@ -16,6 +18,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_LENGTH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_CONTENT_TYPE;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER_PATH;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_PATH;
@@ -25,6 +28,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT;
@@ -36,17 +40,25 @@ import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_M
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_STATUS_CODE;
 import static org.hypertrace.core.span.constants.v1.OTSpanTag.OT_SPAN_TAG_HTTP_URL;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.util.StringUtils;
+import java.net.HttpCookie;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.deployment.OTelDeploymentSemanticConventions;
 import org.hypertrace.core.semantic.convention.constants.http.HttpSemanticConventions;
@@ -89,11 +101,25 @@ public class HttpSemanticConventionUtils {
   private static final String HTTP_RESPONSE_BODY_TRUNCATED_ATTR =
       RawSpanConstants.getValue(HTTP_RESPONSE_BODY_TRUNCATED);
 
+  private static final String DOT = ".";
+  private static final String HTTP_REQUEST_HEADER_PREFIX =
+      RawSpanConstants.getValue(HTTP_REQUEST_HEADER) + DOT;
+  private static final String REQUEST_COOKIE_HEADER_KEY =
+      HTTP_REQUEST_HEADER_PREFIX + COOKIE.toLowerCase();
+  private static final Splitter SEMICOLON_SPLITTER =
+      Splitter.on(";").trimResults().omitEmptyStrings();
+  private static final Splitter COOKIE_KEY_VALUE_SPLITTER =
+      Splitter.on("=").limit(2).trimResults().omitEmptyStrings();
+
   private static final String SLASH = "/";
 
   private static final String HTTP_REQUEST_FORWARDED_ATTRIBUTE = HTTP_REQUEST_FORWARDED.getValue();
   private static final String HTTP_REQUEST_ORIGIN =
       HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue();
+  private static final String HTTP_RESPONSE_HEADER_PREFIX =
+      RawSpanConstants.getValue(HTTP_RESPONSE_HEADER) + DOT;
+  public static final String RESPONSE_COOKIE_HEADER_PREFIX =
+      HTTP_RESPONSE_HEADER_PREFIX + SET_COOKIE.toLowerCase();
 
   private static final List<String> USER_AGENT_ATTRIBUTES =
       List.of(
@@ -651,6 +677,86 @@ public class HttpSemanticConventionUtils {
           attributeValueMap.get(RawSpanConstants.getValue(HTTP_REQUEST_HEADER_PATH)).getValue());
     }
     return Optional.empty();
+  }
+
+  public static Map<String, String> getHttpHeadersExceptCookies(
+      Event event, Predicate<Map.Entry<String, AttributeValue>> notCookieFilter, String prefix) {
+    if (SpanSemanticConventionUtils.isEmptyAttributesMap(event)) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
+
+    return attributes.entrySet().stream()
+        .filter(entry -> entry.getKey().startsWith(prefix))
+        .filter(notCookieFilter)
+        .filter(entry -> SpanSemanticConventionUtils.isValueNotNull(entry.getValue()))
+        .collect(
+            Collectors.toUnmodifiableMap(
+                entry -> entry.getKey().substring(prefix.length()),
+                entry -> entry.getValue().getValue()));
+  }
+
+  public static Map<String, String> getHttpRequestCookies(Event event) {
+    String requestCookie =
+        SpanSemanticConventionUtils.getStringAttribute(event, REQUEST_COOKIE_HEADER_KEY);
+    if (requestCookie == null || requestCookie.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, String> cookies = new HashMap<>();
+
+    List<String> cookiePairs = SEMICOLON_SPLITTER.splitToList(requestCookie);
+    for (String cookiePair : cookiePairs) {
+      List<String> cookieKeyValue = COOKIE_KEY_VALUE_SPLITTER.splitToList(cookiePair);
+      if (cookieKeyValue.size() != 2) {
+        LOGGER.debug(
+            "Invalid cookie pair {} for tenant {} and event {}",
+            cookiePair,
+            event.getCustomerId(),
+            HexUtils.getHex(event.getEventId()));
+        continue;
+      }
+
+      cookies.put(cookieKeyValue.get(0), cookieKeyValue.get(1));
+    }
+
+    return Collections.unmodifiableMap(cookies);
+  }
+
+  public static Map<String, String> getHttpResponseCookies(Event event) {
+    if (SpanSemanticConventionUtils.isEmptyAttributesMap(event)) {
+      return Collections.emptyMap();
+    }
+
+    List<HttpCookie> cookies = new ArrayList<>();
+
+    Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
+    for (Map.Entry<String, AttributeValue> entry : attributes.entrySet()) {
+      String attributeKey = entry.getKey();
+
+      if (!SpanSemanticConventionUtils.isHttpResponseCookie(attributeKey)) {
+        continue;
+      }
+
+      String attributeValue = entry.getValue().getValue();
+      try {
+        cookies.addAll(HttpCookie.parse(attributeValue));
+      } catch (Exception e) {
+        LOGGER.debug(
+            "Unable to parse cookie for header key {} and value {} for tenant {} and event {}",
+            attributeKey,
+            attributeValue,
+            event.getCustomerId(),
+            HexUtils.getHex(event.getEventId()),
+            e);
+      }
+    }
+
+    return cookies.stream()
+        .collect(
+            Collectors.toUnmodifiableMap(
+                HttpCookie::getName, HttpCookie::getValue, (cookie1, cookie2) -> cookie1));
   }
 
   public static Optional<String> getHttpXForwardedFor(Event event) {
