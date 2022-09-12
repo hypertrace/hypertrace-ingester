@@ -156,12 +156,16 @@ public class HttpSemanticConventionUtils {
           RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE),
           OTelHttpSemanticConventions.HTTP_STATUS_CODE.getValue());
 
-  /** @return attribute keys for http method */
+  /**
+   * @return attribute keys for http method
+   */
   public static List<String> getAttributeKeysForHttpMethod() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_HTTP_METHOD, OTEL_HTTP_METHOD));
   }
 
-  /** @return attribute keys for http request method */
+  /**
+   * @return attribute keys for http request method
+   */
   public static List<String> getAttributeKeysForHttpRequestMethod() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_HTTP_REQUEST_METHOD));
   }

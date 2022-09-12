@@ -100,7 +100,9 @@ class TraceEmitPunctuator implements Punctuator {
     this.cancellable = cancellable;
   }
 
-  /** @param timestamp correspond to current system time */
+  /**
+   * @param timestamp correspond to current system time
+   */
   @Override
   public void punctuate(long timestamp) {
     Instant startTime = Instant.now();

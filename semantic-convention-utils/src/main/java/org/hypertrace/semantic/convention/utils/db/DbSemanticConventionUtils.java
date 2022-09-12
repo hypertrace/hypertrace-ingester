@@ -396,12 +396,16 @@ public class DbSemanticConventionUtils {
         SpanAttributeUtils.getStringAttributeWithDefault(event, OTEL_DB_SYSTEM, StringUtils.EMPTY));
   }
 
-  /** @return attribute keys representing mongo operation */
+  /**
+   * @return attribute keys representing mongo operation
+   */
   public static List<String> getAttributeKeysForMongoOperation() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_OPERATION, OTEL_DB_OPERATION));
   }
 
-  /** @return attribute keys representing mongo namespace */
+  /**
+   * @return attribute keys representing mongo namespace
+   */
   public static List<String> getAttributeKeysForMongoNamespace() {
     return Lists.newArrayList(Sets.newHashSet(OTHER_MONGO_NAMESPACE, OTEL_MONGO_COLLECTION));
   }
