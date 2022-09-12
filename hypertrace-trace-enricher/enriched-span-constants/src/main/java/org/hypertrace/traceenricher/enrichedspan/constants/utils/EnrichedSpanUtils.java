@@ -2,31 +2,21 @@ package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 
 import static com.google.common.net.HttpHeaders.COOKIE;
 import static com.google.common.net.HttpHeaders.SET_COOKIE;
-import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_METADATA;
-import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_METADATA;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_HEADER;
-import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA;
-import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA;
-import static org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils.isRpcSystemGrpc;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import java.net.HttpCookie;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.apache.avro.reflect.Nullable;
 import org.apache.commons.codec.binary.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
@@ -45,15 +35,12 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Http;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Utility class to easily read named attributes from an enriched span. This is equivalent of an
  * enriched span POJO.
  */
 public class EnrichedSpanUtils {
-  private static final Logger LOGGER = LoggerFactory.getLogger(EnrichedSpanUtils.class);
   private static final String DOT = ".";
   private static final String SERVICE_ID_ATTR =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_ID);
@@ -123,16 +110,6 @@ public class EnrichedSpanUtils {
       HTTP_RESPONSE_HEADER_PREFIX + SET_COOKIE.toLowerCase();
   private static final String REQUEST_COOKIE_HEADER_KEY =
       HTTP_REQUEST_HEADER_PREFIX + COOKIE.toLowerCase();
-  private static final String GRPC_REQUEST_METADATA_PREFIX =
-      RawSpanConstants.getValue(GRPC_REQUEST_METADATA) + DOT;
-  private static final String GRPC_RESPONSE_METADATA_PREFIX =
-      RawSpanConstants.getValue(GRPC_RESPONSE_METADATA) + DOT;
-  private static final String RPC_REQUEST_METADATA_PREFIX = RPC_REQUEST_METADATA.getValue() + DOT;
-  private static final String RPC_RESPONSE_METADATA_PREFIX = RPC_RESPONSE_METADATA.getValue() + DOT;
-  private static final Splitter SEMICOLON_SPLITTER =
-      Splitter.on(";").trimResults().omitEmptyStrings();
-  private static final Splitter COOKIE_KEY_VALUE_SPLITTER =
-      Splitter.on("=").limit(2).trimResults().omitEmptyStrings();
 
   @VisibleForTesting
   static final List<String> USER_AGENT_ATTRIBUTES =
@@ -145,7 +122,7 @@ public class EnrichedSpanUtils {
           OTEL_HTTP_USER_AGENT);
 
   @Nullable
-  private static String getStringAttribute(Event event, String attributeKey) {
+  public static String getStringAttribute(Event event, String attributeKey) {
     AttributeValue value = SpanAttributeUtils.getAttributeValue(event, attributeKey);
     return value == null ? null : value.getValue();
   }
@@ -160,10 +137,6 @@ public class EnrichedSpanUtils {
       }
     }
     return null;
-  }
-
-  private static boolean nullCheck(AttributeValue attributeValue) {
-    return attributeValue != null && attributeValue.getValue() != null;
   }
 
   public static Protocol getProtocol(Event.Builder eventBuilder) {
@@ -417,211 +390,19 @@ public class EnrichedSpanUtils {
     return !StringUtils.equals(event.getServiceName(), parentEvent.getServiceName());
   }
 
-  public static Map<String, String> getRequestHeadersExceptCookies(Event event) {
-    Map<String, String> spanRequestHeaders = new HashMap<>();
-    spanRequestHeaders.putAll(getHttpRequestHeadersExceptCookies(event));
-    spanRequestHeaders.putAll(getGrpcRequestMetadata(event));
-    return spanRequestHeaders;
-  }
-
-  public static Map<String, String> getResponseHeadersExceptCookies(Event event) {
-    Map<String, String> spanResponseHeaders = new HashMap<>();
-    spanResponseHeaders.putAll(getHttpResponseHeadersExceptCookies(event));
-    spanResponseHeaders.putAll(getGrpcResponseMetadata(event));
-    return spanResponseHeaders;
-  }
-
-  public static Map<String, String> getHttpRequestHeadersExceptCookies(Event event) {
-    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
-      return Collections.emptyMap();
-    }
-
-    Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
-
-    return attributes.entrySet().stream()
-        .filter(entry -> EnrichedSpanUtils.isHttpRequestHeader(entry.getKey()))
-        .filter(entry -> !EnrichedSpanUtils.isHttpRequestCookie(entry.getKey()))
-        .filter(entry -> nullCheck(entry.getValue()))
-        .collect(
-            Collectors.toUnmodifiableMap(
-                entry -> entry.getKey().substring(HTTP_REQUEST_HEADER_PREFIX.length()),
-                entry -> entry.getValue().getValue()));
-  }
-
-  public static Map<String, String> getHttpResponseHeadersExceptCookies(Event event) {
-    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
-      return Collections.emptyMap();
-    }
-    Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
-    return attributes.entrySet().stream()
-        .filter(entry -> EnrichedSpanUtils.isHttpResponseHeader(entry.getKey()))
-        .filter(entry -> !EnrichedSpanUtils.isHttpResponseCookie(entry.getKey()))
-        .filter(entry -> nullCheck(entry.getValue()))
-        .collect(
-            Collectors.toUnmodifiableMap(
-                entry -> entry.getKey().substring(HTTP_RESPONSE_HEADER_PREFIX.length()),
-                entry -> entry.getValue().getValue()));
-  }
-
-  public static Map<String, String> getGrpcRequestMetadata(Event event) {
-    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
-      return Collections.emptyMap();
-    }
-    Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
-    // try to read keys with the prefix "grpc.request.metadata."
-    Map<String, String> requestMetadataMap =
-        new HashMap<>(
-            attributes.entrySet().stream()
-                .filter(entry -> entry.getKey().startsWith(GRPC_REQUEST_METADATA_PREFIX))
-                .filter(entry -> nullCheck(entry.getValue()))
-                .collect(
-                    Collectors.toUnmodifiableMap(
-                        entry -> entry.getKey().substring(GRPC_REQUEST_METADATA_PREFIX.length()),
-                        entry -> entry.getValue().getValue())));
-
-    // If the rpc system is grpc then read the keys with prefix "rpc.request.metadata"
-    if (isRpcSystemGrpc(attributes)) {
-      requestMetadataMap.putAll(
-          attributes.entrySet().stream()
-              .filter(entry -> entry.getKey().startsWith(RPC_REQUEST_METADATA_PREFIX))
-              .filter(entry -> nullCheck(entry.getValue()))
-              .collect(
-                  Collectors.toUnmodifiableMap(
-                      entry -> entry.getKey().substring(RPC_REQUEST_METADATA_PREFIX.length()),
-                      entry -> entry.getValue().getValue())));
-    }
-
-    return Collections.unmodifiableMap(requestMetadataMap);
-  }
-
-  public static Map<String, String> getGrpcResponseMetadata(Event event) {
-    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
-      return Collections.emptyMap();
-    }
-    Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
-    Map<String, String> responseMetadataMap = new HashMap<>();
-    // try to read keys with the prefix "grpc.response.metadata."
-    responseMetadataMap.putAll(
-        attributes.entrySet().stream()
-            .filter(entry -> entry.getKey().startsWith(GRPC_RESPONSE_METADATA_PREFIX))
-            .filter(entry -> nullCheck(entry.getValue()))
-            .collect(
-                Collectors.toUnmodifiableMap(
-                    entry -> entry.getKey().substring(GRPC_RESPONSE_METADATA_PREFIX.length()),
-                    entry -> entry.getValue().getValue())));
-
-    // If the rpc system is grpc then read the keys with prefix "rpc.response.metadata"
-    if (isRpcSystemGrpc(attributes)) {
-      responseMetadataMap.putAll(
-          attributes.entrySet().stream()
-              .filter(entry -> entry.getKey().startsWith(RPC_RESPONSE_METADATA_PREFIX))
-              .filter(entry -> nullCheck(entry.getValue()))
-              .collect(
-                  Collectors.toUnmodifiableMap(
-                      entry -> entry.getKey().substring(RPC_RESPONSE_METADATA_PREFIX.length()),
-                      entry -> entry.getValue().getValue())));
-    }
-
-    return Collections.unmodifiableMap(responseMetadataMap);
-  }
-
-  /**
-   * The request cookies are populated as `http.request.header.cookie` with value as
-   * cookie1=value1;cookie2=value2;cookie3=value3
-   *
-   * @return map of cookie key -> value
-   *     <ul>
-   *       <li>cookie1 -> value1
-   *       <li>cookie2 -> value2
-   *       <li>cookie3 -> value3
-   *     </ul>
-   */
-  public static Map<String, String> getRequestCookies(Event event) {
-    String requestCookie = getStringAttribute(event, REQUEST_COOKIE_HEADER_KEY);
-    if (requestCookie == null || requestCookie.isEmpty()) {
-      return Collections.emptyMap();
-    }
-
-    Map<String, String> cookies = new HashMap<>();
-
-    List<String> cookiePairs = SEMICOLON_SPLITTER.splitToList(requestCookie);
-    for (String cookiePair : cookiePairs) {
-      List<String> cookieKeyValue = COOKIE_KEY_VALUE_SPLITTER.splitToList(cookiePair);
-      if (cookieKeyValue.size() != 2) {
-        LOGGER.debug(
-            "Invalid cookie pair {} for tenant {} and event {}",
-            cookiePair,
-            event.getCustomerId(),
-            HexUtils.getHex(event.getEventId()));
-        continue;
-      }
-
-      cookies.put(cookieKeyValue.get(0), cookieKeyValue.get(1));
-    }
-
-    return Collections.unmodifiableMap(cookies);
-  }
-
-  /**
-   * The response cookies are populated as `http.response.header.set-cookie[0] -> cookie1=value1`,
-   * `http.response.header.set-cookie[1] -> cookie2=value2` and so on in span attributes
-   *
-   * @return map of cookie key -> value *
-   *     <ul>
-   *       *
-   *       <li>cookie1 -> value1
-   *       <li>cookie2 -> value2
-   *     </ul>
-   */
-  public static Map<String, String> getResponseCookies(Event event) {
-    if (event.getAttributes() == null || event.getAttributes().getAttributeMap() == null) {
-      return Collections.emptyMap();
-    }
-
-    List<HttpCookie> cookies = new ArrayList<>();
-
-    Map<String, AttributeValue> attributes = event.getAttributes().getAttributeMap();
-    for (Map.Entry<String, AttributeValue> entry : attributes.entrySet()) {
-      String attributeKey = entry.getKey();
-
-      if (!isHttpResponseCookie(attributeKey)) {
-        continue;
-      }
-
-      String attributeValue = entry.getValue().getValue();
-      try {
-        cookies.addAll(HttpCookie.parse(attributeValue));
-      } catch (Exception e) {
-        LOGGER.debug(
-            "Unable to parse cookie for header key {} and value {} for tenant {} and event {}",
-            attributeKey,
-            attributeValue,
-            event.getCustomerId(),
-            HexUtils.getHex(event.getEventId()),
-            e);
-      }
-    }
-
-    return cookies.stream()
-        .collect(
-            Collectors.toUnmodifiableMap(
-                HttpCookie::getName, HttpCookie::getValue, (cookie1, cookie2) -> cookie1));
-  }
-
-  private static boolean isHttpRequestHeader(String requestHeaderAttributeKey) {
-    return requestHeaderAttributeKey.startsWith(HTTP_REQUEST_HEADER_PREFIX);
-  }
-
-  private static boolean isHttpResponseHeader(String responseHeaderAttributeKey) {
-    return responseHeaderAttributeKey.startsWith(HTTP_RESPONSE_HEADER_PREFIX);
-  }
-
-  private static boolean isHttpRequestCookie(String requestHeaderAttributeKey) {
-    String temp = requestHeaderAttributeKey;
+  public static boolean isHttpRequestCookie(String requestHeaderAttributeKey) {
     return requestHeaderAttributeKey.equals(REQUEST_COOKIE_HEADER_KEY);
   }
 
-  private static boolean isHttpResponseCookie(String requestHeaderAttributeKey) {
+  public static boolean isHttpResponseCookie(String requestHeaderAttributeKey) {
     return requestHeaderAttributeKey.startsWith(RESPONSE_COOKIE_HEADER_PREFIX);
+  }
+
+  public static boolean isValueNotNull(AttributeValue attributeValue) {
+    return Optional.ofNullable(attributeValue).map(AttributeValue::getValue).isPresent();
+  }
+
+  public static boolean isEmptyAttributesMap(Event event) {
+    return Optional.ofNullable(event.getAttributes()).map(Attributes::getAttributeMap).isEmpty();
   }
 }
