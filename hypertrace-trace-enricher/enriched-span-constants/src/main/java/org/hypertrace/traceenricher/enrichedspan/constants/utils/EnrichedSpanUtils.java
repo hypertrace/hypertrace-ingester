@@ -409,7 +409,7 @@ public class EnrichedSpanUtils {
     requestHeadersExceptCookies.putAll(
         HttpSemanticConventionUtils.getHttpHeadersExceptCookies(
             event,
-            entry -> !EnrichedSpanUtils.isHttpRequestCookie(entry.getKey()),
+            entry -> !HttpSemanticConventionUtils.isHttpRequestCookie(entry.getKey()),
             HTTP_REQUEST_HEADER_PREFIX));
 
     // To get grpc request headers except cookies we use grpc.request.metadata. as prefix
@@ -440,7 +440,7 @@ public class EnrichedSpanUtils {
     responseHeadersExceptCookies.putAll(
         HttpSemanticConventionUtils.getHttpHeadersExceptCookies(
             event,
-            entry -> !EnrichedSpanUtils.isHttpResponseCookie(entry.getKey()),
+            entry -> !HttpSemanticConventionUtils.isHttpResponseCookie(entry.getKey()),
             HTTP_RESPONSE_HEADER_PREFIX));
 
     // To get grpc response headers except cookies we use grpc.response.metadata. as prefix
@@ -490,13 +490,5 @@ public class EnrichedSpanUtils {
       return false;
     }
     return !StringUtils.equals(event.getServiceName(), parentEvent.getServiceName());
-  }
-
-  public static boolean isHttpRequestCookie(String requestHeaderAttributeKey) {
-    return requestHeaderAttributeKey.equals(REQUEST_COOKIE_HEADER_KEY);
-  }
-
-  public static boolean isHttpResponseCookie(String responseHeaderAttributeKey) {
-    return responseHeaderAttributeKey.startsWith(RESPONSE_COOKIE_HEADER_PREFIX);
   }
 }

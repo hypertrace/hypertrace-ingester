@@ -771,6 +771,14 @@ public class HttpSemanticConventionUtils {
             event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_TYPE))));
   }
 
+  public static boolean isHttpRequestCookie(String requestHeaderAttributeKey) {
+    return requestHeaderAttributeKey.equals(REQUEST_COOKIE_HEADER_KEY);
+  }
+
+  public static boolean isHttpResponseCookie(String responseHeaderAttributeKey) {
+    return responseHeaderAttributeKey.startsWith(RESPONSE_COOKIE_HEADER_PREFIX);
+  }
+
   static Optional<String> getPathFromUrlObject(String urlPath) {
     try {
       URL url = getNormalizedUrl(urlPath);
@@ -787,11 +795,6 @@ public class HttpSemanticConventionUtils {
   private static String removeTrailingSlash(String s) {
     // Ends with "/" and it's not home page path
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
-  }
-
-  private static boolean isHttpResponseCookie(String responseHeaderAttributeKey) {
-    return responseHeaderAttributeKey.startsWith(
-        HttpSemanticConventionUtils.RESPONSE_COOKIE_HEADER_PREFIX);
   }
 
   @Nullable
