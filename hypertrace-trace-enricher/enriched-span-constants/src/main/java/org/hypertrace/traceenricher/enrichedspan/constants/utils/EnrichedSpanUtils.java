@@ -1,9 +1,19 @@
 package org.hypertrace.traceenricher.enrichedspan.constants.utils;
 
+import static com.google.common.net.HttpHeaders.COOKIE;
+import static com.google.common.net.HttpHeaders.SET_COOKIE;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_REQUEST_METADATA;
+import static org.hypertrace.core.span.constants.v1.Grpc.GRPC_RESPONSE_METADATA;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_HEADER;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_HEADER;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_REQUEST_METADATA;
+import static org.hypertrace.core.span.normalizer.constants.RpcSpanTag.RPC_RESPONSE_METADATA;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,6 +45,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
  * enriched span POJO.
  */
 public class EnrichedSpanUtils {
+  private static final String DOT = ".";
   private static final String SERVICE_ID_ATTR =
       EntityConstants.getValue(ServiceAttribute.SERVICE_ATTRIBUTE_ID);
   private static final String SERVICE_NAME_ATTR =
@@ -95,6 +106,20 @@ public class EnrichedSpanUtils {
           org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER);
   private static final String OTEL_HTTP_USER_AGENT =
       OTelHttpSemanticConventions.HTTP_USER_AGENT.getValue();
+  private static final String HTTP_RESPONSE_HEADER_PREFIX =
+      RawSpanConstants.getValue(HTTP_RESPONSE_HEADER) + DOT;
+  private static final String HTTP_REQUEST_HEADER_PREFIX =
+      RawSpanConstants.getValue(HTTP_REQUEST_HEADER) + DOT;
+  private static final String GRPC_REQUEST_METADATA_PREFIX =
+      RawSpanConstants.getValue(GRPC_REQUEST_METADATA) + DOT;
+  private static final String RPC_REQUEST_METADATA_PREFIX = RPC_REQUEST_METADATA.getValue() + DOT;
+  private static final String GRPC_RESPONSE_METADATA_PREFIX =
+      RawSpanConstants.getValue(GRPC_RESPONSE_METADATA) + DOT;
+  private static final String RPC_RESPONSE_METADATA_PREFIX = RPC_RESPONSE_METADATA.getValue() + DOT;
+  private static final String RESPONSE_COOKIE_HEADER_PREFIX =
+      HTTP_RESPONSE_HEADER_PREFIX + SET_COOKIE.toLowerCase();
+  private static final String REQUEST_COOKIE_HEADER_KEY =
+      HTTP_REQUEST_HEADER_PREFIX + COOKIE.toLowerCase();
 
   @VisibleForTesting
   static final List<String> USER_AGENT_ATTRIBUTES =
@@ -107,7 +132,7 @@ public class EnrichedSpanUtils {
           OTEL_HTTP_USER_AGENT);
 
   @Nullable
-  private static String getStringAttribute(Event event, String attributeKey) {
+  public static String getStringAttribute(Event event, String attributeKey) {
     AttributeValue value = SpanAttributeUtils.getAttributeValue(event, attributeKey);
     return value == null ? null : value.getValue();
   }
@@ -365,6 +390,98 @@ public class EnrichedSpanUtils {
             SpanAttributeUtils.getAttributeValue(event, EnrichedSpanConstants.SPACE_IDS_ATTRIBUTE))
         .map(AttributeValue::getValueList)
         .orElseGet(Collections::emptyList);
+  }
+
+  /**
+   * The request headers are populated as key-value pair
+   *
+   * @return map of headers with identifying prefix removed key -> value
+   *     <ul>
+   *       <li>header1 -> value1
+   *       <li>header2 -> value2
+   *       <li>header3 -> value3
+   *     </ul>
+   */
+  public static Map<String, String> getRequestHeadersExceptCookies(Event event) {
+    Map<String, String> requestHeadersExceptCookies = new HashMap<>();
+
+    // To get http request headers except cookies we use http.request.header. as prefix
+    requestHeadersExceptCookies.putAll(
+        HttpSemanticConventionUtils.getHttpHeadersExceptCookies(
+            event,
+            entry -> !HttpSemanticConventionUtils.isHttpRequestCookie(entry.getKey()),
+            HTTP_REQUEST_HEADER_PREFIX));
+
+    // To get grpc request headers except cookies we use grpc.request.metadata. as prefix
+    requestHeadersExceptCookies.putAll(
+        RpcSemanticConventionUtils.getGrpcHeadersExceptCookies(
+            event, GRPC_REQUEST_METADATA_PREFIX));
+
+    // To get rpc request headers except cookies we use rpc.request.metadata. as prefix
+    requestHeadersExceptCookies.putAll(
+        RpcSemanticConventionUtils.getRpcHeadersExceptCookies(event, RPC_REQUEST_METADATA_PREFIX));
+    return Collections.unmodifiableMap(requestHeadersExceptCookies);
+  }
+
+  /**
+   * The response headers are populated as key-value pair
+   *
+   * @return map of headers with identifying prefix removed key -> value
+   *     <ul>
+   *       <li>header1 -> value1
+   *       <li>header2 -> value2
+   *       <li>header3 -> value3
+   *     </ul>
+   */
+  public static Map<String, String> getResponseHeadersExceptCookies(Event event) {
+    Map<String, String> responseHeadersExceptCookies = new HashMap<>();
+
+    // To get http response headers except cookies we use http.response.header. as prefix
+    responseHeadersExceptCookies.putAll(
+        HttpSemanticConventionUtils.getHttpHeadersExceptCookies(
+            event,
+            entry -> !HttpSemanticConventionUtils.isHttpResponseCookie(entry.getKey()),
+            HTTP_RESPONSE_HEADER_PREFIX));
+
+    // To get grpc response headers except cookies we use grpc.response.metadata. as prefix
+    responseHeadersExceptCookies.putAll(
+        RpcSemanticConventionUtils.getGrpcHeadersExceptCookies(
+            event, GRPC_RESPONSE_METADATA_PREFIX));
+
+    // To get rpc response headers except cookies we use rpc.response.metadata. as prefix
+    responseHeadersExceptCookies.putAll(
+        RpcSemanticConventionUtils.getRpcHeadersExceptCookies(event, RPC_RESPONSE_METADATA_PREFIX));
+    return Collections.unmodifiableMap(responseHeadersExceptCookies);
+  }
+
+  /**
+   * The request cookies are populated as `http.request.header.cookie` with value as
+   * cookie1=value1;cookie2=value2;cookie3=value3
+   *
+   * @return map of cookie key -> value
+   *     <ul>
+   *       <li>cookie1 -> value1
+   *       <li>cookie2 -> value2
+   *       <li>cookie3 -> value3
+   *     </ul>
+   */
+  public static Map<String, String> getHttpRequestCookies(Event event) {
+    return HttpSemanticConventionUtils.getHttpRequestCookies(event);
+  }
+
+  /**
+   * The response cookies are populated as `http.response.header.set-cookie[0] -> cookie1=value1`,
+   * `http.response.header.set-cookie[1] -> cookie2=value2` and so on in span attributes
+   *
+   * @return map of cookie key -> value *
+   *     <ul>
+   *       *
+   *       <li>cookie1 -> value1
+   *       <li>cookie2 -> value2
+   *     </ul>
+   */
+  public static Map<String, String> getHttpResponseCookies(Event event) {
+    return HttpSemanticConventionUtils.getHttpResponseCookies(event);
   }
 
   /** Check whether these spans belongs to different services. */

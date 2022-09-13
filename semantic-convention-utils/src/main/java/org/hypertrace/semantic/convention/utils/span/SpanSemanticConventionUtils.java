@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
@@ -143,5 +144,13 @@ public class SpanSemanticConventionUtils {
       return SpanAttributeUtils.getStringAttribute(event, OT_PEER_NAME);
     }
     return null;
+  }
+
+  public static boolean isEmptyAttributesMap(Event event) {
+    return Optional.ofNullable(event.getAttributes()).map(Attributes::getAttributeMap).isEmpty();
+  }
+
+  public static boolean isValueNotNull(AttributeValue attributeValue) {
+    return Optional.ofNullable(attributeValue).map(AttributeValue::getValue).isPresent();
   }
 }
