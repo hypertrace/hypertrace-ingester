@@ -465,7 +465,7 @@ public class EnrichedSpanUtils {
    *       <li>cookie3 -> value3
    *     </ul>
    */
-  public static Map<String, String> getRequestCookies(Event event) {
+  public static Map<String, String> getHttpRequestCookies(Event event) {
     return HttpSemanticConventionUtils.getHttpRequestCookies(event);
   }
 
@@ -480,7 +480,7 @@ public class EnrichedSpanUtils {
    *       <li>cookie2 -> value2
    *     </ul>
    */
-  public static Map<String, String> getResponseCookies(Event event) {
+  public static Map<String, String> getHttpResponseCookies(Event event) {
     return HttpSemanticConventionUtils.getHttpResponseCookies(event);
   }
 
@@ -496,7 +496,7 @@ public class EnrichedSpanUtils {
     return requestHeaderAttributeKey.equals(REQUEST_COOKIE_HEADER_KEY);
   }
 
-  public static boolean isHttpResponseCookie(String requestHeaderAttributeKey) {
-    return requestHeaderAttributeKey.startsWith(RESPONSE_COOKIE_HEADER_PREFIX);
+  public static boolean isHttpResponseCookie(String responseHeaderAttributeKey) {
+    return responseHeaderAttributeKey.startsWith(RESPONSE_COOKIE_HEADER_PREFIX);
   }
 }

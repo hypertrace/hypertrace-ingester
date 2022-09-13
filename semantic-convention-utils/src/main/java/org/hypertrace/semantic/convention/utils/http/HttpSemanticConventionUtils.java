@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.avro.reflect.Nullable;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.HexUtils;
@@ -698,8 +699,7 @@ public class HttpSemanticConventionUtils {
   }
 
   public static Map<String, String> getHttpRequestCookies(Event event) {
-    String requestCookie =
-        SpanSemanticConventionUtils.getStringAttribute(event, REQUEST_COOKIE_HEADER_KEY);
+    String requestCookie = getStringAttribute(event, REQUEST_COOKIE_HEADER_KEY);
     if (requestCookie == null || requestCookie.isEmpty()) {
       return Collections.emptyMap();
     }
@@ -735,7 +735,7 @@ public class HttpSemanticConventionUtils {
     for (Map.Entry<String, AttributeValue> entry : attributes.entrySet()) {
       String attributeKey = entry.getKey();
 
-      if (!SpanSemanticConventionUtils.isHttpResponseCookie(attributeKey)) {
+      if (!isHttpResponseCookie(attributeKey)) {
         continue;
       }
 
@@ -787,5 +787,16 @@ public class HttpSemanticConventionUtils {
   private static String removeTrailingSlash(String s) {
     // Ends with "/" and it's not home page path
     return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
+  }
+
+  private static boolean isHttpResponseCookie(String responseHeaderAttributeKey) {
+    return responseHeaderAttributeKey.startsWith(
+        HttpSemanticConventionUtils.RESPONSE_COOKIE_HEADER_PREFIX);
+  }
+
+  @Nullable
+  private static String getStringAttribute(Event event, String attributeKey) {
+    AttributeValue value = SpanAttributeUtils.getAttributeValue(event, attributeKey);
+    return value == null ? null : value.getValue();
   }
 }

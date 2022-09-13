@@ -376,14 +376,14 @@ public class EnrichedSpanUtilsTest {
     Map<String, String> spanRequestCookies =
         Map.of("name", "sample-cookie-name", "token", "sample-token-val");
     Event e = EnrichedSpanUtilsTest.createMockEventWithHeadersAndCookies();
-    assertEquals(spanRequestCookies, EnrichedSpanUtils.getRequestCookies(e));
+    assertEquals(spanRequestCookies, EnrichedSpanUtils.getHttpRequestCookies(e));
   }
 
   @Test
   public void testGetResponseCookies() {
     Map<String, String> spanResponseCookies = Map.of("name", "sample-cookie-name");
     Event e = EnrichedSpanUtilsTest.createMockEventWithHeadersAndCookies();
-    assertEquals(spanResponseCookies, EnrichedSpanUtils.getResponseCookies(e));
+    assertEquals(spanResponseCookies, EnrichedSpanUtils.getHttpResponseCookies(e));
   }
 
   public static Event createMockEventWithHeadersAndCookies() {

@@ -2,7 +2,6 @@ package org.hypertrace.semantic.convention.utils.span;
 
 import java.util.Map;
 import java.util.Optional;
-import org.apache.avro.reflect.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -13,7 +12,6 @@ import org.hypertrace.core.semantic.convention.constants.span.OpenTracingSpanSem
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.OCAttribute;
 import org.hypertrace.core.span.constants.v1.OCSpanKind;
-import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 
 /** Utility to read span attributes */
 public class SpanSemanticConventionUtils {
@@ -154,16 +152,5 @@ public class SpanSemanticConventionUtils {
 
   public static boolean isValueNotNull(AttributeValue attributeValue) {
     return Optional.ofNullable(attributeValue).map(AttributeValue::getValue).isPresent();
-  }
-
-  @Nullable
-  public static String getStringAttribute(Event event, String attributeKey) {
-    AttributeValue value = SpanAttributeUtils.getAttributeValue(event, attributeKey);
-    return value == null ? null : value.getValue();
-  }
-
-  public static boolean isHttpResponseCookie(String requestHeaderAttributeKey) {
-    return requestHeaderAttributeKey.startsWith(
-        HttpSemanticConventionUtils.RESPONSE_COOKIE_HEADER_PREFIX);
   }
 }
