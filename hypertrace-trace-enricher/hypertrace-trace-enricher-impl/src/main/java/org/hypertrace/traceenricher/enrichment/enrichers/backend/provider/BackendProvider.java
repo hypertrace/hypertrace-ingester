@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
-import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 
 public interface BackendProvider {
   void init(Event event);

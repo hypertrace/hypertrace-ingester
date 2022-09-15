@@ -27,7 +27,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.CommonAttribute;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.AbstractAttributeEnricherTest;
-import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

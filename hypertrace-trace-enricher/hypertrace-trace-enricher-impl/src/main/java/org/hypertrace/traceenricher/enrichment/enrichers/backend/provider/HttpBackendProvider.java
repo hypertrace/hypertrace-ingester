@@ -18,7 +18,7 @@ import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
-import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 
 public class HttpBackendProvider implements BackendProvider {
   private static final String COLON = ":";

@@ -33,7 +33,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
-import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.provider.BackendProvider;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;

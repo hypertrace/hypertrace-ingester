@@ -10,7 +10,7 @@ import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
-import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 
 public class MongoBackendProvider implements BackendProvider {
   private static final String RAW_MONGO_NAMESPACE = "NAMESPACE";

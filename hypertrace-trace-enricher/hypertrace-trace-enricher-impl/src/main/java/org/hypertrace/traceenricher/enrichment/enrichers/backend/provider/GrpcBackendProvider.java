@@ -9,7 +9,7 @@ import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
-import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 
 public class GrpcBackendProvider implements BackendProvider {
 

@@ -13,7 +13,7 @@ import org.hypertrace.core.semantic.convention.constants.db.OTelDbSemanticConven
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Redis;
 import org.hypertrace.semantic.convention.utils.db.DbSemanticConventionUtils;
-import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 
 public class RedisBackendProvider implements BackendProvider {
   @Override

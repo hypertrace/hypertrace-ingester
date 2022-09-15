@@ -30,7 +30,7 @@ import org.hypertrace.entity.constants.v1.BackendAttribute;
 import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
-import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
