@@ -9,8 +9,8 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
-import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
