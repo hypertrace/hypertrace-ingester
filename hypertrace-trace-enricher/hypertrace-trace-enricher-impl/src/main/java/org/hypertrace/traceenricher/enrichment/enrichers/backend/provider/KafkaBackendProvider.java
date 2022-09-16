@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.semantic.convention.utils.messaging.MessagingSemanticConventionUtils;
-import org.hypertrace.traceenricher.enrichment.enrichers.BackendType;
+import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 
 public class KafkaBackendProvider implements BackendProvider {
 

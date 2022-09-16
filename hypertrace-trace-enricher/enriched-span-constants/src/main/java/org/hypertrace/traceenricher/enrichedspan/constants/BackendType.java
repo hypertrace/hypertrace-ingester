@@ -1,4 +1,4 @@
-package org.hypertrace.traceenricher.enrichment.enrichers;
+package org.hypertrace.traceenricher.enrichedspan.constants;
 
 public enum BackendType {
   UNKNOWN,
