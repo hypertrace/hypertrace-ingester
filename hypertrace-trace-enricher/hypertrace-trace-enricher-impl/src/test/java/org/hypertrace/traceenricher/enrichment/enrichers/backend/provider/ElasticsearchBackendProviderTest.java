@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 import com.google.common.cache.LoadingCache;
@@ -10,6 +11,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -38,13 +41,14 @@ public class ElasticsearchBackendProviderTest {
   private StructuredTrace structuredTrace;
 
   @BeforeEach
-  public void setup() {
+  public void setup() throws ExecutionException {
     backendEntityEnricher = new MockBackendEntityEnricher();
     ClientRegistry mockClientRegistry = mock(ClientRegistry.class);
     EntityCache mockEntityCache = mock(EntityCache.class);
     Mockito.when(mockClientRegistry.getEntityCache()).thenReturn(mockEntityCache);
-    Mockito.when(mockEntityCache.getBackendIdAttrsToEntityCache())
-        .thenReturn(mock(LoadingCache.class));
+    LoadingCache mockCache = mock(LoadingCache.class);
+    Mockito.when(mockEntityCache.getBackendIdAttrsToEntityCache()).thenReturn(mockCache);
+    Mockito.when(mockCache.get(any())).thenReturn(Optional.empty());
     backendEntityEnricher.init(ConfigFactory.empty(), mockClientRegistry);
 
     structuredTrace = mock(StructuredTrace.class);

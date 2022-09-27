@@ -312,7 +312,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
 
       String backendUri = maybeBackendUri.get();
       final Builder entityBuilder;
-      entityBuilder = getEntityBuilder(trace.getCustomerId(), event, type, backendUri);
+      entityBuilder = getEntityBuilder(event, type, backendUri);
 
       backendProvider.getEntityAttributes(event).forEach(entityBuilder::putAttributes);
       Map<String, org.hypertrace.core.datamodel.AttributeValue> enrichedAttributes =
@@ -335,10 +335,9 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return Optional.empty();
   }
 
-  private Builder getEntityBuilder(
-      String customerId, Event event, BackendType type, String backendUri) {
+  private Builder getEntityBuilder(Event event, BackendType type, String backendUri) {
     try {
-      RequestContext requestContext = RequestContext.forTenantId(customerId);
+      RequestContext requestContext = RequestContext.forTenantId(event.getCustomerId());
       Optional<Entity> backendEntity =
           entityCache
               .getBackendIdAttrsToEntityCache()
