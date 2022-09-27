@@ -206,7 +206,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     }
   }
 
-  private Map<String, org.hypertrace.core.datamodel.AttributeValue> getAttributesToEnrich(
+  protected Map<String, org.hypertrace.core.datamodel.AttributeValue> getAttributesToEnrich(
       Entity backend) {
     Map<String, org.hypertrace.core.datamodel.AttributeValue> attributes = new LinkedHashMap<>();
 
