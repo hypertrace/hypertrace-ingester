@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.cache.LoadingCache;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
@@ -27,10 +28,12 @@ import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class ClientSpanEndpointProviderTest {
   private static final String SERVICE_NAME_ATTR =
@@ -43,7 +46,12 @@ public class ClientSpanEndpointProviderTest {
   @BeforeEach
   public void setup() {
     backendEntityEnricher = new MockBackendEntityEnricher();
-    backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
+    ClientRegistry mockClientRegistry = mock(ClientRegistry.class);
+    EntityCache mockEntityCache = mock(EntityCache.class);
+    Mockito.when(mockClientRegistry.getEntityCache()).thenReturn(mockEntityCache);
+    Mockito.when(mockEntityCache.getBackendIdAttrsToEntityCache())
+        .thenReturn(mock(LoadingCache.class));
+    backendEntityEnricher.init(ConfigFactory.empty(), mockClientRegistry);
 
     structuredTrace = mock(StructuredTrace.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
