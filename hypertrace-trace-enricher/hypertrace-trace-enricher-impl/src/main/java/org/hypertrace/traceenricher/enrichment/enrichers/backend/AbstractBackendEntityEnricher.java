@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
  * EntityDataService.
  */
 public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnricher {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBackendEntityEnricher.class);
 
   private static final String COLON = ":";
@@ -113,7 +114,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
    * inserted in the implementing classes.
    *
    * @param structuredTraceGraph structured trace graph
-   * @param event leaf exit span
+   * @param event                leaf exit span
    * @return true if backend resolution is allowed
    */
   protected boolean canResolveBackend(StructuredTraceGraph structuredTraceGraph, Event event) {
@@ -121,7 +122,9 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return true;
   }
 
-  /** Checks if the candidateEntity is indeed a backend Entity */
+  /**
+   * Checks if the candidateEntity is indeed a backend Entity
+   */
   private boolean isValidBackendEntity(
       StructuredTrace trace, Event backendSpan, BackendInfo candidateInfo) {
     // Always create backend entity for RabbitMq, Mongo, Redis, Jdbc
@@ -158,7 +161,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     String peerServiceName = SpanSemanticConventionUtils.getPeerServiceName(backendSpan);
     if (peerServiceName != null
         && checkIfServiceEntityExists(
-            trace, backendSpan, peerServiceName, candidateInfo.getEntity())) {
+        trace, backendSpan, peerServiceName, candidateInfo.getEntity())) {
       return false;
     }
 
@@ -272,6 +275,24 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return AttributeValueCreator.create(attr.getValue().getString());
   }
 
+  protected Map<String, AttributeValue> getIdentifyingAttributes(BackendType type,
+      String backendURI, Event event) {
+    String[] hostAndPort = backendURI.split(COLON);
+    String host = hostAndPort[0];
+    String port = hostAndPort.length == 2 ? hostAndPort[1] : DEFAULT_PORT;
+    String fqn = fqnResolver.resolve(host, event);
+
+    Map<String, AttributeValue> identifyingAttributes = new HashMap<>();
+    identifyingAttributes.put(
+        BACKEND_PROTOCOL_ATTR_NAME, EnricherUtil.createAttributeValue(type.name()));
+
+    identifyingAttributes.put(
+        BACKEND_HOST_ATTR_NAME, EnricherUtil.createAttributeValue(fqn));
+    identifyingAttributes.put(
+        BACKEND_PORT_ATTR_NAME, EnricherUtil.createAttributeValue(port));
+    return identifyingAttributes;
+  }
+
   @VisibleForTesting
   public Optional<BackendInfo> resolve(
       Event event, StructuredTrace trace, StructuredTraceGraph structuredTraceGraph) {
@@ -295,9 +316,10 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       }
 
       String backendUri = maybeBackendUri.get();
-      final Builder entityBuilder = getBackendEntityBuilder(type, backendUri, event, trace);
-      backendProvider.getEntityAttributes(event).forEach(entityBuilder::putAttributes);
+      final Builder entityBuilder;
+      entityBuilder = getEntityBuilder(trace.getCustomerId(), event, type, backendUri);
 
+      backendProvider.getEntityAttributes(event).forEach(entityBuilder::putAttributes);
       Map<String, org.hypertrace.core.datamodel.AttributeValue> enrichedAttributes =
           new HashMap<>();
       Optional<String> backendOperation = backendProvider.getBackendOperation(event);
@@ -318,8 +340,23 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return Optional.empty();
   }
 
+  private Builder getEntityBuilder(String customerId, Event event, BackendType type,
+      String backendUri) {
+    try {
+      RequestContext requestContext = RequestContext.forTenantId(customerId);
+      Optional<Entity> backendEntity = entityCache
+          .getBackendIdAttrsToEntityCache()
+          .get(requestContext.buildContextualKey(getIdentifyingAttributes(type, backendUri, event)));
+      return backendEntity.map(Entity::toBuilder)
+          .orElseGet(() -> getBackendEntityBuilder(type, backendUri, event));
+    } catch (ExecutionException ex) {
+      LOGGER.error("Error while getting the backend entity ", ex);
+      return getBackendEntityBuilder(type, backendUri, event);
+    }
+  }
+
   protected Builder getBackendEntityBuilder(
-      BackendType type, String backendURI, Event event, StructuredTrace trace) {
+      BackendType type, String backendURI, Event event) {
     String[] hostAndPort = backendURI.split(COLON);
     String host = hostAndPort[0];
     String port = hostAndPort.length == 2 ? hostAndPort[1] : DEFAULT_PORT;
