@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.backend;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -315,37 +316,7 @@ public class BackendEntityEnricherTest extends AbstractAttributeEnricherTest {
     String backendId = "backendId";
     String peerService = "peerService";
 
-    // return false for backend service name identified by http backend resolver
-    AttributeValue fqnAttribute =
-        AttributeValue.newBuilder().setValue(Value.newBuilder().setString(backendName)).build();
-
-    ByTypeAndIdentifyingAttributes request =
-        ByTypeAndIdentifyingAttributes.newBuilder()
-            .setEntityType(EntityType.SERVICE.name())
-            .putIdentifyingAttributes(
-                EntityConstants.getValue(
-                    org.hypertrace.entity.constants.v1.CommonAttribute.COMMON_ATTRIBUTE_FQN),
-                fqnAttribute)
-            .build();
-
-    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(request))).thenReturn(null);
-
-    // return false for peer service name as part of span
-    AttributeValue fqnAttributePeerService =
-        AttributeValue.newBuilder().setValue(Value.newBuilder().setString(peerService)).build();
-
-    ByTypeAndIdentifyingAttributes requestPeerService =
-        ByTypeAndIdentifyingAttributes.newBuilder()
-            .setEntityType(EntityType.SERVICE.name())
-            .putIdentifyingAttributes(
-                EntityConstants.getValue(
-                    org.hypertrace.entity.constants.v1.CommonAttribute.COMMON_ATTRIBUTE_FQN),
-                fqnAttributePeerService)
-            .build();
-
-    when(edsClient.getByTypeAndIdentifyingAttributes(eq(TENANT_ID), eq(requestPeerService)))
-        .thenReturn(null);
-
+    when(edsClient.getByTypeAndIdentifyingAttributes(any(), any())).thenReturn(null);
     // create backend entity
     Map<String, String> identifyingAttributes =
         Map.of(

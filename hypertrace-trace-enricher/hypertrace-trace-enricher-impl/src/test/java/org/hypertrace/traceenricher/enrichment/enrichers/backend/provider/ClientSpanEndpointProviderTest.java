@@ -1,15 +1,19 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.backend.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.cache.LoadingCache;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -27,10 +31,12 @@ import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.AbstractBackendEntityEnricher;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.FqnResolver;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.HypertraceFqnResolver;
+import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.hypertrace.traceenricher.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class ClientSpanEndpointProviderTest {
   private static final String SERVICE_NAME_ATTR =
@@ -41,9 +47,15 @@ public class ClientSpanEndpointProviderTest {
   private StructuredTrace structuredTrace;
 
   @BeforeEach
-  public void setup() {
+  public void setup() throws ExecutionException {
     backendEntityEnricher = new MockBackendEntityEnricher();
-    backendEntityEnricher.init(ConfigFactory.empty(), mock(ClientRegistry.class));
+    ClientRegistry mockClientRegistry = mock(ClientRegistry.class);
+    EntityCache mockEntityCache = mock(EntityCache.class);
+    Mockito.when(mockClientRegistry.getEntityCache()).thenReturn(mockEntityCache);
+    LoadingCache mockCache = mock(LoadingCache.class);
+    Mockito.when(mockEntityCache.getBackendIdAttrsToEntityCache()).thenReturn(mockCache);
+    Mockito.when(mockCache.get(any())).thenReturn(Optional.empty());
+    backendEntityEnricher.init(ConfigFactory.empty(), mockClientRegistry);
 
     structuredTrace = mock(StructuredTrace.class);
     structuredTraceGraph = mock(StructuredTraceGraph.class);
