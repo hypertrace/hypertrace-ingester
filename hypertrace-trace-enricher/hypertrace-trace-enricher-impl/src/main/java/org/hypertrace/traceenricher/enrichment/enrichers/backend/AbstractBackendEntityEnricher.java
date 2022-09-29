@@ -114,7 +114,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
    * inserted in the implementing classes.
    *
    * @param structuredTraceGraph structured trace graph
-   * @param event leaf exit span
+   * @param event                leaf exit span
    * @return true if backend resolution is allowed
    */
   protected boolean canResolveBackend(StructuredTraceGraph structuredTraceGraph, Event event) {
@@ -122,7 +122,9 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return true;
   }
 
-  /** Checks if the candidateEntity is indeed a backend Entity */
+  /**
+   * Checks if the candidateEntity is indeed a backend Entity
+   */
   private boolean isValidBackendEntity(
       StructuredTrace trace, Event backendSpan, BackendInfo candidateInfo) {
     // Always create backend entity for RabbitMq, Mongo, Redis, Jdbc
@@ -159,7 +161,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     String peerServiceName = SpanSemanticConventionUtils.getPeerServiceName(backendSpan);
     if (peerServiceName != null
         && checkIfServiceEntityExists(
-            trace, backendSpan, peerServiceName, candidateInfo.getEntity())) {
+        trace, backendSpan, peerServiceName, candidateInfo.getEntity())) {
       return false;
     }
 
@@ -286,7 +288,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
 
     identifyingAttributes.put(BACKEND_HOST_ATTR_NAME, EnricherUtil.createAttributeValue(fqn));
     identifyingAttributes.put(BACKEND_PORT_ATTR_NAME, EnricherUtil.createAttributeValue(port));
-    return identifyingAttributes;
+    return Collections.unmodifiableMap(identifyingAttributes);
   }
 
   @VisibleForTesting
@@ -311,8 +313,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       }
 
       String backendUri = maybeBackendUri.get();
-      final Builder entityBuilder;
-      entityBuilder = getEntityBuilder(event, type, backendUri);
+      final Builder entityBuilder = getEntityBuilder(event, type, backendUri);
 
       backendProvider.getEntityAttributes(event).forEach(entityBuilder::putAttributes);
       Map<String, org.hypertrace.core.datamodel.AttributeValue> enrichedAttributes =
