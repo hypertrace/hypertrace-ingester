@@ -334,7 +334,8 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return Optional.empty();
   }
 
-  private Builder getEntityBuilder(StructuredTrace trace, Event event, BackendType type, String backendUri) {
+  private Builder getEntityBuilder(
+      StructuredTrace trace, Event event, BackendType type, String backendUri) {
     try {
       RequestContext requestContext = RequestContext.forTenantId(event.getCustomerId());
       Optional<Entity> backendEntity =
@@ -352,7 +353,8 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     }
   }
 
-  protected Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event, StructuredTrace trace) {
+  protected Builder getBackendEntityBuilder(
+      BackendType type, String backendURI, Event event, StructuredTrace trace) {
     String[] hostAndPort = backendURI.split(COLON);
     String host = hostAndPort[0];
     String port = hostAndPort.length == 2 ? hostAndPort[1] : DEFAULT_PORT;
