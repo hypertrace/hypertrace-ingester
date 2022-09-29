@@ -311,7 +311,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       }
 
       String backendUri = maybeBackendUri.get();
-      final Builder entityBuilder = getEntityBuilder(event, type, backendUri);
+      final Builder entityBuilder = getEntityBuilder(trace, event, type, backendUri);
 
       backendProvider.getEntityAttributes(event).forEach(entityBuilder::putAttributes);
       Map<String, org.hypertrace.core.datamodel.AttributeValue> enrichedAttributes =
@@ -334,7 +334,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return Optional.empty();
   }
 
-  private Builder getEntityBuilder(Event event, BackendType type, String backendUri) {
+  private Builder getEntityBuilder(StructuredTrace trace, Event event, BackendType type, String backendUri) {
     try {
       RequestContext requestContext = RequestContext.forTenantId(event.getCustomerId());
       Optional<Entity> backendEntity =
@@ -345,14 +345,14 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
                       getIdentifyingAttributes(type, backendUri, event)));
       return backendEntity
           .map(Entity::toBuilder)
-          .orElseGet(() -> getBackendEntityBuilder(type, backendUri, event));
+          .orElseGet(() -> getBackendEntityBuilder(type, backendUri, event, trace));
     } catch (ExecutionException ex) {
       LOGGER.error("Error while getting the backend entity ", ex);
-      return getBackendEntityBuilder(type, backendUri, event);
+      return getBackendEntityBuilder(type, backendUri, event, trace);
     }
   }
 
-  protected Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event) {
+  protected Builder getBackendEntityBuilder(BackendType type, String backendURI, Event event, StructuredTrace trace) {
     String[] hostAndPort = backendURI.split(COLON);
     String host = hostAndPort[0];
     String port = hostAndPort.length == 2 ? hostAndPort[1] : DEFAULT_PORT;
