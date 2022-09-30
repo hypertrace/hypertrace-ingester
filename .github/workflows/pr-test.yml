@@ -7,6 +7,7 @@ on:
 # disabling while testing ci flow
 jobs:
   test:
+    if: contains(github.event.pull_request.labels.*.name,'safe-to-test')
     runs-on: ubuntu-20.04
     steps:
       # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
