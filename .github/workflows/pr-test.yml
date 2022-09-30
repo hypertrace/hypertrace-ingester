@@ -37,7 +37,10 @@ jobs:
         with:
           name: unit test reports
           flags: unit
-
+      
+      - name: test-try3
+        working-directory: ./.github/workflows/hypertrace-ingester/scripts
+        run: ./tests.sh
 
       - name: copy test reports
         uses: hypertrace/github-actions/gradle@main
