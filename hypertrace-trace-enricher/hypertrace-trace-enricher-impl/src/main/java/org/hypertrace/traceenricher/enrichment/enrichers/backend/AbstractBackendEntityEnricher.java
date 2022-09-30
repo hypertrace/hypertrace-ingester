@@ -274,7 +274,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
   }
 
   protected Map<String, AttributeValue> getIdentifyingAttributes(
-      BackendType type, String backendURI, Event event) {
+      BackendType type, String backendURI, StructuredTrace trace, Event event) {
     String[] hostAndPort = backendURI.split(COLON);
     String host = hostAndPort[0];
     String port = hostAndPort.length == 2 ? hostAndPort[1] : DEFAULT_PORT;
@@ -343,7 +343,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
               .getBackendIdAttrsToEntityCache()
               .get(
                   requestContext.buildContextualKey(
-                      getIdentifyingAttributes(type, backendUri, event)));
+                      getIdentifyingAttributes(type, backendUri, trace, event)));
       return backendEntity
           .map(Entity::toBuilder)
           .orElseGet(() -> getBackendEntityBuilder(type, backendUri, event, trace));
