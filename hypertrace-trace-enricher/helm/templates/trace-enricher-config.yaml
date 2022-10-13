@@ -52,3 +52,9 @@ data:
         }
       }
     }
+    
+    enricher.UserAgentSpanEnricher {
+      cache = {
+        maxSize = {{ .Values.traceEnricherConfig.userAgentSpanEnricherConfig.userAgentCacheSize }}
+      }
+    }

@@ -97,6 +97,8 @@ traceEnricherConfig:
   attributeServicePort: 9012
   configServiceHost: config-service
   configServicePort: 50101
+  userAgentSpanEnricherConfig:
+    userAgentCacheSize: 20000
 
 logConfig:
   name: hypertrace-trace-enricher-log-config
