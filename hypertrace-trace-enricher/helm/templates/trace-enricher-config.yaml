@@ -55,6 +55,8 @@ data:
     
     enricher.UserAgentSpanEnricher {
       cache = {
-        maxSize = {{ .Values.traceEnricherConfig.userAgentSpanEnricherConfig.userAgentCacheSize }}
+        maxSize = {{ .Values.traceEnricherConfig.userAgentSpanEnricherConfig.cacheSize }}
+        write.expire.duration = {{ .Values.traceEnricherConfig.userAgentSpanEnricherConfig.expiryTime }}
+        refresh.expire.duration = {{ .Values.traceEnricherConfig.userAgentSpanEnricherConfig.refreshTime }}      
       }
     }
