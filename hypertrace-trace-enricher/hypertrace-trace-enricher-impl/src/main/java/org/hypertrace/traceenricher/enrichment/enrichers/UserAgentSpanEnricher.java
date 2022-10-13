@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.typesafe.config.Config;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +31,11 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
 
   private static final String CACHE_CONFIG_KEY = "cache";
   private static final String CACHE_CONFIG_MAX_SIZE = "maxSize";
-  private static final int CACHE_MAX_SIZE_DEFAULT = 10000;
+  public static final String CACHE_CONFIG_WRITE_EXPIRY_DURATION = "write.expire.duration";
+  public static final String CACHE_CONFIG_REFRESH_EXPIRY_DURATION = "refresh.expire.duration";
+  private static final int CACHE_MAX_SIZE_DEFAULT = 20000;
+  private static final Duration DEFAULT_WRITE_EXPIRY_DURATION = Duration.ofMinutes(10);
+  private static final Duration DEFAULT_REFRESH_EXPIRY_DURATION = Duration.ofMinutes(5);
   private static final String USER_AGENT_MAX_LENGTH_KEY = "user.agent.max.length";
   private static final int DEFAULT_USER_AGENT_MAX_LENGTH = 1000;
   private static final String DOT = ".";
@@ -47,9 +52,20 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
           enricherCacheConfig.hasPath(CACHE_CONFIG_MAX_SIZE)
               ? enricherCacheConfig.getInt(CACHE_CONFIG_MAX_SIZE)
               : CACHE_MAX_SIZE_DEFAULT;
+      Duration writeExpiryDuration =
+          enricherCacheConfig.hasPath(CACHE_CONFIG_WRITE_EXPIRY_DURATION)
+              ? enricherCacheConfig.getDuration(CACHE_CONFIG_WRITE_EXPIRY_DURATION)
+              : DEFAULT_WRITE_EXPIRY_DURATION;
+      Duration refreshExpiryDuration =
+          enricherCacheConfig.hasPath(CACHE_CONFIG_REFRESH_EXPIRY_DURATION)
+              ? enricherCacheConfig.getDuration(CACHE_CONFIG_REFRESH_EXPIRY_DURATION)
+              : DEFAULT_REFRESH_EXPIRY_DURATION;
+
       userAgentCache =
           CacheBuilder.newBuilder()
               .maximumSize(cacheSize)
+              .refreshAfterWrite(refreshExpiryDuration)
+              .expireAfterWrite(writeExpiryDuration)
               .recordStats()
               .build(
                   new CacheLoader<>() {
