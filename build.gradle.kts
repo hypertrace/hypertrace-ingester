@@ -11,7 +11,6 @@ plugins {
 
 subprojects {
   group = "org.hypertrace.ingester"
-
   pluginManager.withPlugin("org.hypertrace.publish-plugin") {
     configure<org.hypertrace.gradle.publishing.HypertracePublishExtension> {
       license.set(org.hypertrace.gradle.publishing.License.TRACEABLE_COMMUNITY)
