@@ -57,6 +57,6 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.21.1")
+  api("com.google.protobuf:protobuf-java-util:3.21.7")
   implementation("org.slf4j:slf4j-api:1.7.30")
 }
