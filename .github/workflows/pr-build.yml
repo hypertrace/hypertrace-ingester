@@ -1,9 +1,6 @@
 name: build and validate
 on:
   push:
-  pull_request_target:
-    branches:
-      - rzp_main
 jobs:
   validate-avros:
     if: contains(github.event.pull_request.labels.*.name,'safe-to-test')
@@ -33,25 +30,6 @@ jobs:
         uses: hypertrace/github-actions/gradle@main
         with:
           args: avroCompatibilityCheck
-  validate-helm-charts:
-    if: contains(github.event.pull_request.labels.*.name,'safe-to-test')
-    runs-on: ubuntu-20.04
-    container:
-      image: hypertrace/helm-gcs-packager:0.3.1
-      credentials:
-        username: ${{ secrets.PUBLIC_DOCKER_USERNAME }}
-        password: ${{ secrets.PUBLIC_DOCKER_PASSWORD }}
-     # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2.3.4
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-          fetch-depth: 0
-
-      - name: validate charts
-        run: ./.github/workflows/helm.sh validate
   build:
     if: contains(github.event.pull_request.labels.*.name,'safe-to-test')
     runs-on: ubuntu-20.04
