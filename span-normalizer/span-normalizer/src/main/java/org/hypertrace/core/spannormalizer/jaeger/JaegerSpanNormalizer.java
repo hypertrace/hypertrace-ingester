@@ -1,16 +1,13 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
-import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry.registerCounter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ProtocolStringList;
 import com.google.protobuf.util.Timestamps;
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,8 +21,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -51,7 +47,7 @@ import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
-import org.hypertrace.core.spannormalizer.jaeger.tenant.PIIMatchType;
+import org.hypertrace.core.spannormalizer.redaction.PIIPCIField;
 import org.hypertrace.core.spannormalizer.util.JaegerHTTagsConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,8 +60,6 @@ public class JaegerSpanNormalizer {
   public static final String OLD_JAEGER_SERVICENAME_KEY = "jaeger.servicename";
 
   private static final String SPAN_NORMALIZATION_TIME_METRIC = "span.normalization.time";
-  private static final String SPAN_REDACTED_ATTRIBUTES_COUNTER = "span.redacted.attributes";
-  private final Map<String, Counter> spanAttributesRedactedCounters = new ConcurrentHashMap<>();
 
   private static JaegerSpanNormalizer INSTANCE;
   private final ConcurrentMap<String, Timer> tenantToSpanNormalizationTimer =
@@ -73,9 +67,7 @@ public class JaegerSpanNormalizer {
 
   private final JaegerResourceNormalizer resourceNormalizer = new JaegerResourceNormalizer();
   private final TenantIdHandler tenantIdHandler;
-  private AttributeValue redactedAttributeValue = null;
-  private final Set<String> tagKeysToRedact = new HashSet<>();
-  private final Set<Pattern> tagRegexPatternToRedact = new HashSet<>();
+  private final List<PIIPCIField> PIIPCIFields = new ArrayList<>();
 
   public static JaegerSpanNormalizer get(Config config) {
     if (INSTANCE == null) {
@@ -90,25 +82,16 @@ public class JaegerSpanNormalizer {
 
   public JaegerSpanNormalizer(Config config) {
     try {
-      if (config.hasPath(SpanNormalizerConstants.PII_KEYS_CONFIG_KEY)) {
-        config.getStringList(SpanNormalizerConstants.PII_KEYS_CONFIG_KEY).stream()
-            .map(String::toUpperCase)
-            .forEach(tagKeysToRedact::add);
-        redactedAttributeValue =
-            AttributeValue.newBuilder()
-                .setValue(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL)
-                .build();
-      }
-      if (config.hasPath(SpanNormalizerConstants.PII_REGEX_CONFIG_KEY)) {
-        config.getStringList(SpanNormalizerConstants.PII_REGEX_CONFIG_KEY).stream()
-            .map(Pattern::compile)
-            .forEach(tagRegexPatternToRedact::add);
-        if (redactedAttributeValue == null) {
-          redactedAttributeValue =
-              AttributeValue.newBuilder()
-                  .setValue(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL)
-                  .build();
-        }
+      if (config.hasPath(SpanNormalizerConstants.SPAN_REDACTION_CONFIG_KEY)) {
+        config.getConfigList(SpanNormalizerConstants.PII_PCI_CONFIG_KEY).stream()
+            .map(
+                conf ->
+                    new PIIPCIField(
+                        conf.getString("name"),
+                        conf.getString("regexString"),
+                        conf.getStringList("keys"),
+                        conf.getString("type")))
+            .forEach(PIIPCIFields::add);
       }
     } catch (Exception e) {
       LOG.error("An exception occurred while loading redaction configs: ", e);
@@ -118,10 +101,6 @@ public class JaegerSpanNormalizer {
 
   public Timer getSpanNormalizationTimer(String tenantId) {
     return tenantToSpanNormalizationTimer.get(tenantId);
-  }
-
-  public Map<String, Counter> getSpanAttributesRedactedCounters() {
-    return spanAttributesRedactedCounters;
   }
 
   @Nullable
@@ -160,9 +139,8 @@ public class JaegerSpanNormalizer {
           .normalize(jaegerSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey())
           .ifPresent(rawSpanBuilder::setResource);
 
-      // redact PII tags, tag comparisons are case insensitive (Resource tags are skipped)
-      if (redactedAttributeValue != null) {
-        sanitiseSpan(rawSpanBuilder);
+      if (!PIIPCIFields.isEmpty()) {
+        redactSpanAttributes(rawSpanBuilder);
       }
 
       // build raw span
@@ -175,104 +153,73 @@ public class JaegerSpanNormalizer {
     };
   }
 
-  private void sanitiseSpan(Builder rawSpanBuilder) {
-
+  // redact PII tags, tag comparisons are case-insensitive (Resource tags are skipped)
+  private void redactSpanAttributes(Builder rawSpanBuilder) {
     try {
       var attributeMap = rawSpanBuilder.getEvent().getAttributes().getAttributeMap();
-      var spanServiceName = rawSpanBuilder.getEvent().getServiceName();
+
+      int piiFieldsCount = 0;
+      int pciFieldsCount = 0;
+
       Set<String> tagKeys = attributeMap.keySet();
+      for (PIIPCIField piiPciField : PIIPCIFields) {
+        Matcher matcher = null;
+        if (piiPciField.getRegexInfo().isPresent()) {
+          matcher = piiPciField.getRegexInfo().get().getRegexPattern().matcher("");
+        }
+        PIIPCIField.PIIPCIFieldType piiPciFieldType = piiPciField.getPiiPciFieldType();
+        for (String tagKey : tagKeys) {
+          /* A Simple regex like PAN no. can have false positives.
+             Hence, we only redact tag val when tagKey is present in possible list of regexTagKeySet.
+             If regexTagKeySet is empty, we redact the tag val if it matches against regex pattern.
+          */
+          if (skipRedactionForTagKey(tagKey, piiPciField.getTagKeySet())) {
+            continue;
+          }
 
-      AtomicReference<Boolean> containsPIIFields = new AtomicReference<>();
-      containsPIIFields.set(false);
-
-      try {
-        tagKeys.stream()
-            .filter(
-                tagKey ->
-                    tagKeysToRedact.contains(tagKey.toUpperCase())
-                        || attributeMap
-                            .get(tagKey)
-                            .getValue()
-                            .equals(SpanNormalizerConstants.PII_FIELD_REDACTED_VAL))
-            .peek(
-                tagKey -> {
-                  containsPIIFields.set(true);
-                  spanAttributesRedactedCounters
-                      .computeIfAbsent(
-                          PIIMatchType.KEY.toString(),
-                          k ->
-                              registerCounter(
-                                  SPAN_REDACTED_ATTRIBUTES_COUNTER,
-                                  Map.of("matchType", PIIMatchType.KEY.toString())))
-                      .increment();
-                })
-            .forEach(
-                tagKey -> {
-                  logSpanRedaction(tagKey, spanServiceName, PIIMatchType.KEY);
-                  attributeMap.put(tagKey, redactedAttributeValue);
-                });
-      } catch (Exception e) {
-        LOG.error("An exception occurred while sanitising spans with key match: ", e);
-      }
-
-      try {
-        for (Pattern pattern : tagRegexPatternToRedact) {
-          for (String tagKey : tagKeys) {
-            if (pattern.matcher(attributeMap.get(tagKey).getValue()).matches()) {
-              containsPIIFields.set(true);
-              spanAttributesRedactedCounters
-                  .computeIfAbsent(
-                      PIIMatchType.REGEX.toString(),
-                      k ->
-                          registerCounter(
-                              SPAN_REDACTED_ATTRIBUTES_COUNTER,
-                              Map.of("matchType", PIIMatchType.REGEX.toString())))
-                  .increment();
-              logSpanRedaction(tagKey, spanServiceName, PIIMatchType.REGEX);
-              attributeMap.put(tagKey, redactedAttributeValue);
+          boolean containsSensitiveData = false;
+          if (piiPciField.getRegexInfo().isPresent()) {
+            assert matcher != null;
+            matcher.reset(attributeMap.get(tagKey).getValue());
+            if (matcher.find()) {
+              containsSensitiveData = true;
             }
+          } else {
+            // this condition implies that match type of PII/PCI field is KEY based.
+            containsSensitiveData = true;
+          }
+
+          if (containsSensitiveData) {
+            if (piiPciFieldType == PIIPCIField.PIIPCIFieldType.PII) {
+              piiFieldsCount += 1;
+            } else {
+              pciFieldsCount += 1;
+            }
+            attributeMap.put(tagKey, piiPciField.getReplacementValue());
           }
         }
-      } catch (Exception e) {
-        LOG.error("An exception occurred while sanitising spans with regex match: ", e);
       }
-
       // if the trace contains PII field, add a field to indicate this. We can later slice-and-dice
       // based on this tag
-      if (containsPIIFields.get()) {
-        rawSpanBuilder
-            .getEvent()
-            .getAttributes()
-            .getAttributeMap()
-            .put(
-                SpanNormalizerConstants.CONTAINS_PII_TAGS_KEY,
-                AttributeValue.newBuilder().setValue("true").build());
+      if (piiFieldsCount > 0) {
+        attributeMap.put(
+            SpanNormalizerConstants.REDACTED_PII_TAGS_KEY,
+            AttributeValue.newBuilder().setValue(String.valueOf(piiFieldsCount)).build());
       }
+
+      if (pciFieldsCount > 0) {
+        attributeMap.put(
+            SpanNormalizerConstants.REDACTED_PCI_TAGS_KEY,
+            AttributeValue.newBuilder().setValue(String.valueOf(pciFieldsCount)).build());
+      }
+
     } catch (Exception e) {
-      LOG.error("An exception occurred while sanitising spans: ", e);
+      LOG.error("An exception occurred while performing span redaction: ", e);
     }
   }
 
-  private void logSpanRedaction(String tagKey, String spanServiceName, PIIMatchType matchType) {
-    try {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(
-            new ObjectMapper()
-                .writerWithDefaultPrettyPrinter()
-                .writeValueAsString(
-                    Map.of(
-                        "bookmark",
-                        "REDACTED_KEY",
-                        "key",
-                        tagKey,
-                        "matchtype",
-                        matchType.toString(),
-                        "serviceName",
-                        spanServiceName)));
-      }
-    } catch (Exception e) {
-      LOG.error("An exception occurred while logging span redaction: ", e);
-    }
+  private boolean skipRedactionForTagKey(String tagKey, Set<String> tagKeySet) {
+    return !tagKeySet.isEmpty() && !tagKeySet.contains(tagKey);
   }
 
   /**

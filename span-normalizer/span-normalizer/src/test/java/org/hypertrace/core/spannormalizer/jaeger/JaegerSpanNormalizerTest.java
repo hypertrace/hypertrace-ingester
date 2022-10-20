@@ -4,10 +4,10 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_METHOD;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.KeyValue;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Process;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -23,7 +23,6 @@ import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
 import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants;
-import org.hypertrace.core.spannormalizer.jaeger.tenant.PIIMatchType;
 import org.hypertrace.core.spannormalizer.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -83,9 +82,7 @@ public class JaegerSpanNormalizerTest {
         "schema.registry.config",
         Map.of("schema.registry.url", "http://localhost:8081"),
         "pii.keys",
-        List.of("http.method", "http.url", "amount", "Authorization"),
-        "pii.regex",
-        List.of("^(?:(?:\\+|0{0,2})91(\\s*[\\-]\\s*)?|[0]?)?[789]\\d{9}$"));
+        List.of("http.method", "http.url", "amount", "Authorization"));
   }
 
   @Test
@@ -243,7 +240,11 @@ public class JaegerSpanNormalizerTest {
     String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
     configs.putAll(Map.of("processor", Map.of("defaultTenantId", tenantId)));
-    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(ConfigFactory.parseMap(configs));
+    Config fileConfig =
+        ConfigFactory.parseURL(
+            getClass().getClassLoader().getResource("configs/span-normalizer/application.conf"));
+    Config config = ConfigFactory.parseMap(configs).withFallback(ConfigFactory.load(fileConfig));
+    JaegerSpanNormalizer normalizer = JaegerSpanNormalizer.get(config);
     Process process = Process.newBuilder().build();
     Span span =
         Span.newBuilder()
@@ -252,7 +253,13 @@ public class JaegerSpanNormalizerTest {
             .addTags(1, KeyValue.newBuilder().setKey("http.url").setVStr("hypertrace.org"))
             .addTags(2, KeyValue.newBuilder().setKey("kind").setVStr("client"))
             .addTags(3, KeyValue.newBuilder().setKey("authorization").setVStr("authToken").build())
-            .addTags(4, KeyValue.newBuilder().setKey("amount").setVInt64(2300).build())
+            .addTags(
+                4,
+                KeyValue.newBuilder()
+                    .setKey("amount")
+                    .setVInt64(2300)
+                    .setVType(JaegerSpanInternalModel.ValueType.INT64)
+                    .build())
             .addTags(5, KeyValue.newBuilder().setKey("phoneNum").setVStr("+919123456780").build())
             .addTags(6, KeyValue.newBuilder().setKey("phoneNum1").setVStr("7123456980").build())
             .addTags(7, KeyValue.newBuilder().setKey("phoneNum2").setVStr("+1234567890").build())
@@ -263,48 +270,54 @@ public class JaegerSpanNormalizerTest {
     RawSpan rawSpan = normalizer.convert(tenantId, span);
 
     var attributes = rawSpan.getEvent().getAttributes().getAttributeMap();
-    Map<String, Counter> counterMap = normalizer.getSpanAttributesRedactedCounters();
 
     Assertions.assertEquals("client", attributes.get("kind").getValue());
-    Assertions.assertEquals(
-        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("http.url").getValue());
-    Assertions.assertEquals(
-        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("http.method").getValue());
-    Assertions.assertEquals(
-        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("amount").getValue());
-    Assertions.assertEquals(
-        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("authorization").getValue());
-    Assertions.assertEquals(
-        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("phonenum").getValue());
-    Assertions.assertEquals(
-        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("phonenum1").getValue());
+    Assertions.assertEquals("redacted-http", attributes.get("http.url").getValue());
+    Assertions.assertEquals("redacted-http", attributes.get("http.method").getValue());
+    Assertions.assertEquals(2300, Integer.valueOf(attributes.get("amount").getValue()));
+    Assertions.assertEquals("redacted-http", attributes.get("authorization").getValue());
+    Assertions.assertEquals("redacted-phoneNo", attributes.get("phonenum").getValue());
+    Assertions.assertEquals("redacted-phoneNo", attributes.get("phonenum1").getValue());
     Assertions.assertEquals("+1234567890", attributes.get("phonenum2").getValue());
     Assertions.assertEquals("123456789", attributes.get("phonenum3").getValue());
     Assertions.assertEquals("123456789", attributes.get("phonenum3").getValue());
+    Assertions.assertEquals("redacted-otp", attributes.get("otp").getValue());
+    Assertions.assertTrue(attributes.containsKey(SpanNormalizerConstants.REDACTED_PII_TAGS_KEY));
+    Assertions.assertTrue(attributes.containsKey(SpanNormalizerConstants.REDACTED_PCI_TAGS_KEY));
     Assertions.assertEquals(
-        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("otp").getValue());
-    Assertions.assertEquals(5.0, counterMap.get(PIIMatchType.KEY.toString()).count());
-    Assertions.assertEquals(2.0, counterMap.get(PIIMatchType.REGEX.toString()).count());
-    Assertions.assertTrue(attributes.containsKey(SpanNormalizerConstants.CONTAINS_PII_TAGS_KEY));
+        "5", attributes.get(SpanNormalizerConstants.REDACTED_PCI_TAGS_KEY).getValue());
     Assertions.assertEquals(
-        "true", attributes.get(SpanNormalizerConstants.CONTAINS_PII_TAGS_KEY).getValue());
+        "1", attributes.get(SpanNormalizerConstants.REDACTED_PII_TAGS_KEY).getValue());
 
     span =
         Span.newBuilder()
             .setProcess(process)
-            .addTags(0, KeyValue.newBuilder().setKey("otp").setVStr("[redacted]").build())
+            .addTags(0, KeyValue.newBuilder().setKey("PayeeAccountNo").setVStr("123456789").build())
+            .addTags(
+                1, KeyValue.newBuilder().setKey("PayeeAccountNo1").setVStr("123456789").build())
+            .addTags(2, KeyValue.newBuilder().setKey("contact").setVStr("+2143bla").build())
             .build();
 
     rawSpan = normalizer.convert(tenantId, span);
     attributes = rawSpan.getEvent().getAttributes().getAttributeMap();
-    counterMap = normalizer.getSpanAttributesRedactedCounters();
+    Assertions.assertEquals("redacted-accountNo", attributes.get("payeeaccountno").getValue());
+    Assertions.assertEquals("123456789", attributes.get("payeeaccountno1").getValue());
+    Assertions.assertEquals("+2143bla", attributes.get("contact").getValue());
+    Assertions.assertEquals(
+        "1", attributes.get(SpanNormalizerConstants.REDACTED_PII_TAGS_KEY).getValue());
+    Assertions.assertFalse(attributes.containsKey(SpanNormalizerConstants.REDACTED_PCI_TAGS_KEY));
 
-    Assertions.assertEquals(6.0, counterMap.get(PIIMatchType.KEY.toString()).count());
-    Assertions.assertEquals(2.0, counterMap.get(PIIMatchType.REGEX.toString()).count());
-    Assertions.assertEquals(
-        SpanNormalizerConstants.PII_FIELD_REDACTED_VAL, attributes.get("otp").getValue());
-    Assertions.assertEquals(
-        "true", attributes.get(SpanNormalizerConstants.CONTAINS_PII_TAGS_KEY).getValue());
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(0, KeyValue.newBuilder().setKey("http1").setVStr("GET").build())
+            .build();
+
+    rawSpan = normalizer.convert(tenantId, span);
+    attributes = rawSpan.getEvent().getAttributes().getAttributeMap();
+    Assertions.assertEquals("GET", attributes.get("http1").getValue());
+    Assertions.assertFalse(attributes.containsKey(SpanNormalizerConstants.REDACTED_PCI_TAGS_KEY));
+    Assertions.assertFalse(attributes.containsKey(SpanNormalizerConstants.REDACTED_PII_TAGS_KEY));
   }
 
   @Test
@@ -349,7 +362,6 @@ public class JaegerSpanNormalizerTest {
     RawSpan rawSpan = normalizer.convert(tenantId, span);
 
     var attributes = rawSpan.getEvent().getAttributes().getAttributeMap();
-    Map<String, Counter> counterMap = normalizer.getSpanAttributesRedactedCounters();
 
     Assertions.assertEquals("client", attributes.get("kind").getValue());
     Assertions.assertEquals("hypertrace.org", attributes.get("http.url").getValue());
@@ -360,7 +372,7 @@ public class JaegerSpanNormalizerTest {
     Assertions.assertEquals("7123456980", attributes.get("phonenum1").getValue());
     Assertions.assertEquals("+1234567890", attributes.get("phonenum2").getValue());
     Assertions.assertEquals("123456789", attributes.get("phonenum3").getValue());
-    Assertions.assertTrue(counterMap.isEmpty());
-    Assertions.assertFalse(attributes.containsKey(SpanNormalizerConstants.CONTAINS_PII_TAGS_KEY));
+    Assertions.assertFalse(attributes.containsKey(SpanNormalizerConstants.REDACTED_PII_TAGS_KEY));
+    Assertions.assertFalse(attributes.containsKey(SpanNormalizerConstants.REDACTED_PCI_TAGS_KEY));
   }
 }
