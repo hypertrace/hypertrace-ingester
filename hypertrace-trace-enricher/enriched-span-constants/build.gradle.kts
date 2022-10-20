@@ -63,7 +63,7 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.21.5")
+  api("com.google.protobuf:protobuf-java-util:3.21.7")
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.23")
   implementation(project(":span-normalizer:raw-span-constants"))

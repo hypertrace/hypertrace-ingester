@@ -34,7 +34,7 @@ dependencies {
 
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
-  implementation("com.google.protobuf:protobuf-java:3.21.5")
+  implementation("com.google.protobuf:protobuf-java:3.21.7")
 
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
