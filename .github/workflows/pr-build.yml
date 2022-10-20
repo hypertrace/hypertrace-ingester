@@ -1,6 +1,5 @@
 name: build and validate
-on:
-  push:
+on: push
 jobs:
   validate-avros:
     if: contains(github.event.pull_request.labels.*.name,'safe-to-test')
