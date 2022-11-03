@@ -68,7 +68,6 @@ import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticCo
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.core.span.constants.v1.OTSpanTag;
-import org.hypertrace.core.span.normalizer.constants.OTelSpanTag;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -219,7 +218,7 @@ public class HttpSemanticConventionUtils {
         : getValidHttpUrl(event).map(AttributeValue::getValue);
   }
 
-  public static Optional<String> getClientSpanIpAddress(Event event) {
+  public static Optional<String> getIpAddress(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getStringAttribute(
             event, OTelSpanSemanticConventions.NET_PEER_IP.getValue()));
