@@ -343,8 +343,8 @@ public class EnrichedSpanUtils {
     return HttpSemanticConventionUtils.getFullHttpUrl(event);
   }
 
-  public static Optional<String> getDestinationIpAddrress(Event event) {
-    return HttpSemanticConventionUtils.getDestinationIpAddrress(event);
+  public static Optional<String> getDestinationIpAddress(Event event) {
+    return HttpSemanticConventionUtils.getDestinationIpAddress(event);
   }
 
   public static Optional<String> getPath(Event event) {
