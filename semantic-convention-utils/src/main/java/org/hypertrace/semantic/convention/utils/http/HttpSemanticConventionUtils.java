@@ -218,7 +218,7 @@ public class HttpSemanticConventionUtils {
         : getValidHttpUrl(event).map(AttributeValue::getValue);
   }
 
-  public static Optional<String> getIpAddress(Event event) {
+  public static Optional<String> getDestinationIpAddrress(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getStringAttribute(
             event, OTelSpanSemanticConventions.NET_PEER_IP.getValue()));
