@@ -218,6 +218,12 @@ public class HttpSemanticConventionUtils {
         : getValidHttpUrl(event).map(AttributeValue::getValue);
   }
 
+  public static Optional<String> getDestinationIpAddress(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getStringAttribute(
+            event, OTelSpanSemanticConventions.NET_PEER_IP.getValue()));
+  }
+
   public static Optional<String> getEnvironmentForSpan(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getStringAttribute(
