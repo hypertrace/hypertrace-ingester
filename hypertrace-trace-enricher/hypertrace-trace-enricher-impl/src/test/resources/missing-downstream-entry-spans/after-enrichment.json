@@ -79,6 +79,14 @@
               "binary_value": null,
               "value_list": null,
               "value_map": null
+            },
+            "enriched.internalDurationMillis":{
+              "value": {
+                "double": 4041
+              },
+              "binary_value":null,
+              "value_list":null,
+              "value_map":null
             }
           }
         }
