@@ -345,8 +345,19 @@ public class SpanEventViewGeneratorTest {
                     .setEntityIdList(Collections.singletonList("sample-entity-id"))
                     .setStartTimeMillis(System.currentTimeMillis())
                     .setEndTimeMillis(System.currentTimeMillis())
-                    .setMetrics(Metrics.newBuilder().setMetricMap(Map.of(EnrichedSpanConstants.INTERNAL_SVC_LATENCY, MetricValue.newBuilder().setValue(50d).build())).build())
-                    .setAttributesBuilder(Attributes.newBuilder().setAttributeMap(Map.of(EnrichedSpanConstants.INTERNAL_SVC_LATENCY, AttributeValue.newBuilder().setValue("50").build())))
+                    .setMetrics(
+                        Metrics.newBuilder()
+                            .setMetricMap(
+                                Map.of(
+                                    EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
+                                    MetricValue.newBuilder().setValue(50d).build()))
+                            .build())
+                    .setAttributesBuilder(
+                        Attributes.newBuilder()
+                            .setAttributeMap(
+                                Map.of(
+                                    EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
+                                    AttributeValue.newBuilder().setValue("50").build())))
                     .setEnrichedAttributesBuilder(
                         Attributes.newBuilder().setAttributeMap(Maps.newHashMap()))
                     .build()))
