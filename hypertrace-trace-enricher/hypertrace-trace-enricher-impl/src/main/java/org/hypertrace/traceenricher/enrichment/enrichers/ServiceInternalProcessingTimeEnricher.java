@@ -1,5 +1,7 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -7,6 +9,7 @@ import org.hypertrace.core.datamodel.ApiNodeEventEdge;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.MetricValue;
+import org.hypertrace.core.datamodel.MetricValue.Builder;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -82,7 +85,7 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
                 .getMetricMap()
                 .put(
                     EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
-                    MetricValue.newBuilder()
+                    fastNewBuilder(MetricValue.Builder.class)
                         .setValue(
                             entryApiBoundaryEventDuration - totalEdgeDurations - httpExitCallsSum)
                         .build());
