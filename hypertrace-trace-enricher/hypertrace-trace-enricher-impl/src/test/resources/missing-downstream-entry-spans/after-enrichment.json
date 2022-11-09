@@ -56,7 +56,7 @@
               "value_list": null,
               "value_map": null
             },
-            "enriched.internalDurationMillis":{
+            "enriched.internal.duration.millis":{
               "value": {
                 "string": "4041.0"
               },
@@ -80,7 +80,7 @@
               "value_list": null,
               "value_map": null
             },
-            "enriched.internalDurationMillis":{
+            "enriched.internal.duration.millis":{
               "value": {
                 "double": 4041
               },
