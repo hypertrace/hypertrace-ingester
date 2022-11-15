@@ -52,6 +52,7 @@ public abstract class BaseViewGenerator<OUT extends GenericRecord>
       return null;
     }
 
+
     AttributeValue attr =
         attributes
             .getAttributeMap()
