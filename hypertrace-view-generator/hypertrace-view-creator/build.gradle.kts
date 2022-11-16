@@ -15,6 +15,18 @@ tasks.test {
   useJUnitPlatform()
 }
 
+hypertraceDocker {
+  defaultImage {
+    imageName.set("hypertrace-ingester")
+    javaApplication {
+      serviceName.set("${project.name}")
+      adminPort.set(8099)
+    }
+    namespace.set("razorpay")
+  }
+  tag("${project.name}" + "_" + System.getenv("IMAGE_TAG"))
+}
+
 dependencies {
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.3.10")
