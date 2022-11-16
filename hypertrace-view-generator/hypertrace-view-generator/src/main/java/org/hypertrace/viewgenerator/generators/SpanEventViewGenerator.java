@@ -220,6 +220,14 @@ public class SpanEventViewGenerator extends BaseViewGenerator<SpanEventView> {
     builder.setEndTimeMillis(event.getEndTimeMillis());
     builder.setDurationMillis(event.getEndTimeMillis() - event.getStartTimeMillis());
 
+    // internal duration
+    double internal_duration =
+        getMetricValue(event, EnrichedSpanConstants.INTERNAL_SVC_LATENCY, -1);
+
+    if (internal_duration != -1) {
+      builder.setInternalDurationMillis((long) internal_duration);
+    }
+
     // error count
     MetricValue errorMetric = event.getMetrics().getMetricMap().get(ERROR_COUNT_CONSTANT);
     if (errorMetric != null && errorMetric.getValue() > 0.0d) {

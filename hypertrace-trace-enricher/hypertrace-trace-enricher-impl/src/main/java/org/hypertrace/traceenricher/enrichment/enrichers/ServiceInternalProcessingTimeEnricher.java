@@ -1,11 +1,14 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
+import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.hypertrace.core.datamodel.ApiNodeEventEdge;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.ApiNode;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -75,6 +78,16 @@ public class ServiceInternalProcessingTimeEnricher extends AbstractTraceEnricher
                             entryApiBoundaryEventDuration
                                 - totalEdgeDurations
                                 - httpExitCallsSum)));
+            // also put into metric map
+            entryApiBoundaryEvent
+                .getMetrics()
+                .getMetricMap()
+                .put(
+                    EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
+                    fastNewBuilder(MetricValue.Builder.class)
+                        .setValue(
+                            entryApiBoundaryEventDuration - totalEdgeDurations - httpExitCallsSum)
+                        .build());
           } catch (NullPointerException e) {
             LOG.error(
                 "NPE while calculating service internal time. entryApiBoundaryEventDuration {}, totalEdgeDurations {}",

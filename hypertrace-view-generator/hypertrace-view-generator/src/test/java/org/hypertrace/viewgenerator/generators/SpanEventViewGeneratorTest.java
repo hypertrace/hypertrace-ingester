@@ -22,6 +22,7 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -319,6 +320,59 @@ public class SpanEventViewGeneratorTest {
     spanEventViewGenerator = new SpanEventViewGenerator();
     list = spanEventViewGenerator.process(trace);
     assertEquals(5, list.get(0).getApiTraceErrorSpanCount());
+  }
+
+  @Test
+  public void testEntrySpanInternalDuration() {
+    StructuredTrace.Builder traceBuilder = StructuredTrace.newBuilder();
+    traceBuilder
+        .setCustomerId("customer1")
+        .setTraceId(ByteBuffer.wrap("sample-trace-id".getBytes()))
+        .setEntityList(
+            Collections.singletonList(
+                Entity.newBuilder()
+                    .setCustomerId("customer1")
+                    .setEntityId("sample-entity-id")
+                    .setEntityName("sample-entity-name")
+                    .setEntityType("SERVICE")
+                    .build()))
+        .setEventList(
+            Collections.singletonList(
+                Event.newBuilder()
+                    .setCustomerId("customer1")
+                    .setEventId(ByteBuffer.wrap("sample-span-id".getBytes()))
+                    .setEventName("sample-span-name")
+                    .setEntityIdList(Collections.singletonList("sample-entity-id"))
+                    .setStartTimeMillis(System.currentTimeMillis())
+                    .setEndTimeMillis(System.currentTimeMillis())
+                    .setMetrics(
+                        Metrics.newBuilder()
+                            .setMetricMap(
+                                Map.of(
+                                    EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
+                                    MetricValue.newBuilder().setValue(50d).build()))
+                            .build())
+                    .setAttributesBuilder(
+                        Attributes.newBuilder()
+                            .setAttributeMap(
+                                Map.of(
+                                    EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
+                                    AttributeValue.newBuilder().setValue("50").build())))
+                    .setEnrichedAttributesBuilder(
+                        Attributes.newBuilder().setAttributeMap(Maps.newHashMap()))
+                    .build()))
+        .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
+        .setEntityEdgeList(new ArrayList<>())
+        .setEventEdgeList(new ArrayList<>())
+        .setEntityEventEdgeList(new ArrayList<>())
+        .setStartTimeMillis(System.currentTimeMillis())
+        .setEndTimeMillis(System.currentTimeMillis());
+
+    StructuredTrace trace = traceBuilder.build();
+    SpanEventViewGenerator spanEventViewGenerator = new SpanEventViewGenerator();
+    List<SpanEventView> list = spanEventViewGenerator.process(trace);
+    long internalDurationMillis = list.get(0).getInternalDurationMillis();
+    Assertions.assertEquals(50, internalDurationMillis);
   }
 
   private Event createMockEventWithAttribute(String key, String value) {
