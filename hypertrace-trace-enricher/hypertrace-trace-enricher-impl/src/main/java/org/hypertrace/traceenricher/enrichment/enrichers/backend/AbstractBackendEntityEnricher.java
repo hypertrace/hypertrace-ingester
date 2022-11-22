@@ -123,16 +123,13 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
   }
 
   /**
-   * Method to check if backend uri should be processed or not. This will enable any custom logic to
+   * Method to check if backend uri is valid or not. This will enable any custom logic to
    * be inserted in the implementing classes.
    *
-   * @param structuredTraceGraph structured trace graph
-   * @param event leaf exit span
    * @param backendURI backend URI information
    * @return true if backend uri resolution is allowed
    */
-  protected boolean shouldResolveBackendUri(
-      StructuredTraceGraph structuredTraceGraph, Event event, String backendURI) {
+  protected boolean isValidBackendUri(String backendURI) {
     // by default allow the backend uri to proceed
     return true;
   }
@@ -326,7 +323,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       }
 
       String backendUri = maybeBackendUri.get();
-      if (!shouldResolveBackendUri(structuredTraceGraph, event, backendUri)) {
+      if (!isValidBackendUri(backendUri)) {
         return Optional.empty();
       }
 
