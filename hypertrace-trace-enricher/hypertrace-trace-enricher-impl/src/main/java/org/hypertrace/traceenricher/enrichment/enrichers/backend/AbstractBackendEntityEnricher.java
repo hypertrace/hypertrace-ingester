@@ -123,8 +123,8 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
   }
 
   /**
-   * Method to check if backend uri is valid or not. This will enable any custom logic to
-   * be inserted in the implementing classes.
+   * Method to check if backend uri is valid or not. This will enable any custom logic to be
+   * inserted in the implementing classes.
    *
    * @param backendURI backend URI information
    * @return true if backend uri resolution is allowed
