@@ -122,6 +122,18 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return true;
   }
 
+  /**
+   * Method to check if backend uri is valid or not. This will enable any custom logic to be
+   * inserted in the implementing classes.
+   *
+   * @param backendURI backend URI information
+   * @return true if backend uri resolution is allowed
+   */
+  protected boolean isValidBackendUri(String backendURI) {
+    // by default allow the backend uri to proceed
+    return true;
+  }
+
   /** Checks if the candidateEntity is indeed a backend Entity */
   private boolean isValidBackendEntity(
       StructuredTrace trace, Event backendSpan, BackendInfo candidateInfo) {
@@ -311,8 +323,11 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       }
 
       String backendUri = maybeBackendUri.get();
-      final Builder entityBuilder = getEntityBuilder(trace, event, type, backendUri);
+      if (!isValidBackendUri(backendUri)) {
+        return Optional.empty();
+      }
 
+      final Builder entityBuilder = getEntityBuilder(trace, event, type, backendUri);
       backendProvider.getEntityAttributes(event).forEach(entityBuilder::putAttributes);
       Map<String, org.hypertrace.core.datamodel.AttributeValue> enrichedAttributes =
           new HashMap<>();
