@@ -27,6 +27,7 @@ import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.entitytype.EntityType;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
@@ -37,7 +38,6 @@ import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.enrichment.enrichers.backend.provider.BackendProvider;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
 import org.hypertrace.traceenricher.enrichment.enrichers.resolver.backend.BackendInfo;
-import org.hypertrace.traceenricher.util.DomainUtil;
 import org.hypertrace.traceenricher.util.EnricherUtil;
 import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
@@ -347,7 +347,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
   private boolean isDomainExcluded(Event event, String backendUri) {
     String[] hostAndPort = backendUri.split(COLON);
     String host = fqnResolver.resolve(hostAndPort[0], event);
-    String domain = DomainUtil.getPrimaryDomain(host);
+    String domain = HttpSemanticConventionUtils.getPrimaryDomain(host);
     return backendExcludedDomains.contains(domain);
   }
 

@@ -44,6 +44,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.net.InternetDomainName;
 import io.micrometer.core.instrument.util.StringUtils;
 import java.net.HttpCookie;
 import java.net.MalformedURLException;
@@ -228,6 +229,15 @@ public class HttpSemanticConventionUtils {
     return Optional.ofNullable(
         SpanAttributeUtils.getStringAttribute(
             event, OTelDeploymentSemanticConventions.DEPLOYMENT_ENVIRONMENT.getValue()));
+  }
+
+  public static String getPrimaryDomain(String host) {
+    try {
+      return InternetDomainName.from(host).topPrivateDomain().toString();
+    } catch (Exception exception) {
+      LOGGER.error("Error while extracting the primary domain from the host {} ", host, exception);
+      return host;
+    }
   }
 
   /**
