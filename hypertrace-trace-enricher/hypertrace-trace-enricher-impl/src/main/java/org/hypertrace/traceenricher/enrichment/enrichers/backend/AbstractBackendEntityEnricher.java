@@ -27,6 +27,7 @@ import org.hypertrace.entity.data.service.v1.Entity;
 import org.hypertrace.entity.data.service.v1.Entity.Builder;
 import org.hypertrace.entity.service.constants.EntityConstants;
 import org.hypertrace.entity.v1.entitytype.EntityType;
+import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.semantic.convention.utils.span.SpanSemanticConventionUtils;
 import org.hypertrace.traceenricher.enrichedspan.constants.BackendType;
 import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
@@ -64,10 +65,12 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       EnrichedSpanConstants.getValue(Backend.BACKEND_OPERATION);
   private static final String BACKEND_DESTINATION_ATTR =
       EnrichedSpanConstants.getValue(Backend.BACKEND_DESTINATION);
+  private static final String BACKEND_EXCLUDED_DOMAINS = "backend.excluded.domains";
 
   private EdsClient edsClient;
   private EntityCache entityCache;
   private FqnResolver fqnResolver;
+  private List<String> backendExcludedDomains;
 
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {
@@ -76,6 +79,10 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     this.entityCache = clientRegistry.getEntityCache();
     setup(enricherConfig, clientRegistry);
     this.fqnResolver = getFqnResolver();
+    this.backendExcludedDomains =
+        enricherConfig.hasPath(BACKEND_EXCLUDED_DOMAINS)
+            ? enricherConfig.getStringList(BACKEND_EXCLUDED_DOMAINS)
+            : Collections.emptyList();
   }
 
   public abstract void setup(Config enricherConfig, ClientRegistry clientRegistry);
@@ -119,18 +126,6 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
    */
   protected boolean canResolveBackend(StructuredTraceGraph structuredTraceGraph, Event event) {
     // by default allow the backend resolution to proceed
-    return true;
-  }
-
-  /**
-   * Method to check if backend uri is valid or not. This will enable any custom logic to be
-   * inserted in the implementing classes.
-   *
-   * @param backendURI backend URI information
-   * @return true if backend uri resolution is allowed
-   */
-  protected boolean isValidBackendUri(String backendURI) {
-    // by default allow the backend uri to proceed
     return true;
   }
 
@@ -323,7 +318,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       }
 
       String backendUri = maybeBackendUri.get();
-      if (!isValidBackendUri(backendUri)) {
+      if (isDomainExcluded(event, backendUri)) {
         return Optional.empty();
       }
 
@@ -347,6 +342,13 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     }
 
     return Optional.empty();
+  }
+
+  private boolean isDomainExcluded(Event event, String backendUri) {
+    String[] hostAndPort = backendUri.split(COLON);
+    String host = fqnResolver.resolve(hostAndPort[0], event);
+    String domain = HttpSemanticConventionUtils.getPrimaryDomain(host);
+    return backendExcludedDomains.contains(domain);
   }
 
   private Builder getEntityBuilder(

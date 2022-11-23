@@ -591,4 +591,15 @@ public class HttpSemanticConventionUtilsTest {
             "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel");
     Assertions.assertEquals(path.get(), "/api/v1/gatekeeper/check");
   }
+
+  @Test
+  public void testGetPrimaryDomain() {
+    Assertions.assertEquals(HttpSemanticConventionUtils.getPrimaryDomain("www.xyz.com"), "xyz.com");
+    Assertions.assertEquals(
+        HttpSemanticConventionUtils.getPrimaryDomain("www.abc.xyz.com"), "xyz.com");
+    Assertions.assertEquals(HttpSemanticConventionUtils.getPrimaryDomain("abc.xyz.com"), "xyz.com");
+    Assertions.assertEquals(HttpSemanticConventionUtils.getPrimaryDomain("xyz.com"), "xyz.com");
+
+    Assertions.assertEquals(HttpSemanticConventionUtils.getPrimaryDomain("10.0.0.0"), "10.0.0.0");
+  }
 }
