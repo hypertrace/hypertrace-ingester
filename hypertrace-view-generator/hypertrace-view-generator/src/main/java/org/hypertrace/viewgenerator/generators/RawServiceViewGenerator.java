@@ -72,6 +72,7 @@ public class RawServiceViewGenerator extends BaseViewGenerator<RawServiceView> {
         double internal_duration =
             getMetricValue(event, EnrichedSpanConstants.INTERNAL_SVC_LATENCY, -1);
 
+
         if (internal_duration != -1) {
           builder.setInternalDurationMillis((long) internal_duration);
         }
