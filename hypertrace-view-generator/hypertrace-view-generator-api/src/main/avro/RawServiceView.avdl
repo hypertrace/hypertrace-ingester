@@ -18,6 +18,8 @@ protocol RawServiceViewProtocol {
 
     long duration_millis;
 
+    union { null, long } internal_duration_millis = null;
+
     union { null, string } span_kind = null;
 
     int error_count = 0;
