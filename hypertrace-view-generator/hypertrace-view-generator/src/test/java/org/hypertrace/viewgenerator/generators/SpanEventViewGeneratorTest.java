@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Maps;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -22,7 +23,6 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.MetricValue;
 import org.hypertrace.core.datamodel.Metrics;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
@@ -34,6 +34,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.BoundaryTypeValue;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.viewgenerator.api.SpanEventView;
 import org.hypertrace.viewgenerator.generators.ViewGeneratorState.TraceState;
+import org.hypertrace.viewgenerator.generators.utils.TestUtilities;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -323,56 +324,12 @@ public class SpanEventViewGeneratorTest {
   }
 
   @Test
-  public void testEntrySpanInternalDuration() {
-    StructuredTrace.Builder traceBuilder = StructuredTrace.newBuilder();
-    traceBuilder
-        .setCustomerId("customer1")
-        .setTraceId(ByteBuffer.wrap("sample-trace-id".getBytes()))
-        .setEntityList(
-            Collections.singletonList(
-                Entity.newBuilder()
-                    .setCustomerId("customer1")
-                    .setEntityId("sample-entity-id")
-                    .setEntityName("sample-entity-name")
-                    .setEntityType("SERVICE")
-                    .build()))
-        .setEventList(
-            Collections.singletonList(
-                Event.newBuilder()
-                    .setCustomerId("customer1")
-                    .setEventId(ByteBuffer.wrap("sample-span-id".getBytes()))
-                    .setEventName("sample-span-name")
-                    .setEntityIdList(Collections.singletonList("sample-entity-id"))
-                    .setStartTimeMillis(System.currentTimeMillis())
-                    .setEndTimeMillis(System.currentTimeMillis())
-                    .setMetrics(
-                        Metrics.newBuilder()
-                            .setMetricMap(
-                                Map.of(
-                                    EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
-                                    MetricValue.newBuilder().setValue(50d).build()))
-                            .build())
-                    .setAttributesBuilder(
-                        Attributes.newBuilder()
-                            .setAttributeMap(
-                                Map.of(
-                                    EnrichedSpanConstants.INTERNAL_SVC_LATENCY,
-                                    AttributeValue.newBuilder().setValue("50").build())))
-                    .setEnrichedAttributesBuilder(
-                        Attributes.newBuilder().setAttributeMap(Maps.newHashMap()))
-                    .build()))
-        .setMetrics(Metrics.newBuilder().setMetricMap(new HashMap<>()).build())
-        .setEntityEdgeList(new ArrayList<>())
-        .setEventEdgeList(new ArrayList<>())
-        .setEntityEventEdgeList(new ArrayList<>())
-        .setStartTimeMillis(System.currentTimeMillis())
-        .setEndTimeMillis(System.currentTimeMillis());
-
-    StructuredTrace trace = traceBuilder.build();
+  public void testEntrySpanInternalDuration() throws FileNotFoundException {
     SpanEventViewGenerator spanEventViewGenerator = new SpanEventViewGenerator();
-    List<SpanEventView> list = spanEventViewGenerator.process(trace);
+    List<SpanEventView> list = spanEventViewGenerator.process(TestUtilities.getSampleHotRodTrace());
     long internalDurationMillis = list.get(0).getInternalDurationMillis();
-    Assertions.assertEquals(50, internalDurationMillis);
+    Assertions.assertEquals(678, internalDurationMillis);
+    Assertions.assertNull(list.get(1).getInternalDurationMillis());
   }
 
   private Event createMockEventWithAttribute(String key, String value) {
