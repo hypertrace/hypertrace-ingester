@@ -97,6 +97,9 @@
         "metric_map": {
           "Duration": {
             "value": 678.0
+          },
+          "enriched.internal.duration.millis": {
+            "value": 678.0
           }
         }
       },
@@ -156,6 +159,9 @@
           },
           "API_NAME": {
             "value": "http get /dispatch"
+          },
+          "enriched.internal.duration.millis": {
+            "value": 678.0
           }
         }
       },

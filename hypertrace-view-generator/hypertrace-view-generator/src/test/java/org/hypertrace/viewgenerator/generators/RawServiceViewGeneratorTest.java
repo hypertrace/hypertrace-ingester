@@ -23,7 +23,8 @@ public class RawServiceViewGeneratorTest {
 
     List<RawServiceView> rawServiceViews = rawServiceViewGenerator.process(sampleTrace);
 
-    Long actualInternalDurationMillis = rawServiceViews.get(0).getInternalDurationMillis();
-    Assertions.assertNull(actualInternalDurationMillis);
+    Assertions.assertEquals(678, rawServiceViews.get(0).getInternalDurationMillis());
+
+    Assertions.assertNull(rawServiceViews.get(1).getInternalDurationMillis());
   }
 }
