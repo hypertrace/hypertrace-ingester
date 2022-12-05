@@ -68,6 +68,14 @@ public class RawServiceViewGenerator extends BaseViewGenerator<RawServiceView> {
 
         builder.setStatusCode(EnrichedSpanUtils.getStatusCode(event));
 
+        // internal duration
+        double internal_duration =
+            getMetricValue(event, EnrichedSpanConstants.INTERNAL_SVC_LATENCY, -1);
+
+        if (internal_duration != -1) {
+          builder.setInternalDurationMillis((long) internal_duration);
+        }
+
         // If this is an API entry boundary span, copy the error count from the event to the view
         // because we want only API or service errors to be present in the view.
         MetricValue errorMetric =
