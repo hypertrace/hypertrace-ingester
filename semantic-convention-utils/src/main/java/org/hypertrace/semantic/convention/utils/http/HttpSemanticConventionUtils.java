@@ -235,7 +235,7 @@ public class HttpSemanticConventionUtils {
     try {
       return InternetDomainName.from(host).topPrivateDomain().toString();
     } catch (Exception exception) {
-      LOGGER.error("Error while extracting the primary domain from the host {} ", host, exception);
+      LOGGER.debug("Error while extracting the primary domain from the host {} ", host, exception);
       return host;
     }
   }
