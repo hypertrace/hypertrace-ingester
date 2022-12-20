@@ -95,3 +95,10 @@ enum ErrorMetrics {
     ERROR_METRICS_TOTAL_SPANS_WITH_ERRORS = 3 [(string_value) = "span_count_with_errors"];
     ERROR_METRICS_TOTAL_SPANS_WITH_EXCEPTIONS = 4 [(string_value) = "span_count_with_exceptions"];
 }
+
+enum Deployment {
+    DEPLOYMENT_CANARY = 0 [(string_value) = "canary"];
+    DEPLOYMENT_BASELINE = 1 [(string_value) = "baseline"];
+    DEPLOYMENT_WEB = 2 [(string_value) = "web"];
+    DEPLOYMENT_WORKER = 3 [(string_value) = "worker"];
+}

@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants;
+import org.hypertrace.traceenricher.enrichedspan.constants.v1.Backend;
+import org.hypertrace.traceenricher.enrichedspan.constants.v1.Deployment;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.slf4j.Logger;
@@ -23,6 +26,11 @@ public class ResourceAttributeEnricher extends AbstractTraceEnricher {
   private static final Logger LOGGER = LoggerFactory.getLogger(ResourceAttributeEnricher.class);
   private static final String RESOURCE_ATTRIBUTES_CONFIG_KEY = "attributes";
   private static final String NODE_SELECTOR_KEY = "node.selector";
+
+  private static final String DEPLOYMENT_KEY = "deployment";
+
+  private static final String POD_NAME_KEY = "pod.name";
+
   private static final String ATTRIBUTES_TO_MATCH_CONFIG_KEY = "attributesToMatch";
   private List<String> resourceAttributesToAdd = new ArrayList<>();
   private Map<String, String> resourceAttributeKeysToMatch = new HashMap<>();
@@ -63,6 +71,19 @@ public class ResourceAttributeEnricher extends AbstractTraceEnricher {
                       }
                       return attributeValue;
                     }));
+
+        // Add deployment attribute if pod name is available
+        if (resourceAttributeKey.equals(POD_NAME_KEY)) {
+          resourceAttributeMaybe.ifPresent(
+                  attributeValue ->
+                          attributeMap.computeIfAbsent(
+                                  DEPLOYMENT_KEY,
+                                  key -> {
+                                    attributeValue.setValue(
+                                            getDeploymentType(attributeValue.getValue()));
+                                    return attributeValue;
+                                  }));
+        }
       }
     } catch (Exception e) {
       LOGGER.error(
@@ -76,5 +97,17 @@ public class ResourceAttributeEnricher extends AbstractTraceEnricher {
     return (event.getResourceIndex() >= 0)
         && (event.getAttributes() != null)
         && (event.getAttributes().getAttributeMap() != null);
+  }
+
+  private String getDeploymentType(String hostName) {
+      hostName = EnrichedSpanConstants.getValue(Deployment.DEPLOYMENT_CANARY);
+      if (hostName.contains(EnrichedSpanConstants.getValue(Deployment.DEPLOYMENT_CANARY))) {
+        return EnrichedSpanConstants.getValue(Deployment.DEPLOYMENT_CANARY);
+      } else if (hostName.contains(EnrichedSpanConstants.getValue(Deployment.DEPLOYMENT_BASELINE))) {
+        return EnrichedSpanConstants.getValue(Deployment.DEPLOYMENT_BASELINE);
+      } else if (hostName.contains(EnrichedSpanConstants.getValue(Deployment.DEPLOYMENT_WORKER))) {
+        return EnrichedSpanConstants.getValue(Deployment.DEPLOYMENT_WORKER);
+      }
+      return EnrichedSpanConstants.getValue(Deployment.DEPLOYMENT_WEB);
   }
 }
