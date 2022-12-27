@@ -229,7 +229,7 @@ class SpanNormalizerTest {
     inputTopic.pipeInput(span5);
     assertTrue(outputTopic.isEmpty());
 
-    // pipe in one more span which match one of spanDropFilters (operation_name, and span.kind not
+    // pipe in one more span which does not match one of spanDropFilters (operation_name, and span.kind not
     // exists)
     Span span6 =
         Span.newBuilder()
