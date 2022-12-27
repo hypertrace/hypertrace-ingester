@@ -255,7 +255,7 @@ class SpanNormalizerTest {
         HexUtils.getHex(ByteString.copyFrom("trace-6".getBytes()).toByteArray()),
         HexUtils.getHex(span6KV.key.getTraceId().array()));
 
-    // pipe in one more span which match one of spanDropFilters (operation_name, and span.kind not
+    // pipe in one more span which does not match one of spanDropFilters (operation_name, and span.kind not
     // exists)
     Span span7 =
         Span.newBuilder()
