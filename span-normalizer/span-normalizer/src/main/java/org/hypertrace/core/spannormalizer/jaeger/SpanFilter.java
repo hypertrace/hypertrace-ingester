@@ -50,6 +50,7 @@ public class SpanFilter {
 
   private static final String COMMA = ",";
   private static final String COLON = ":";
+  private static final String OPERATION_NAME = "ht.operation.name";
 
   private List<List<Pair<String, String>>> spanDropCriterion = Collections.emptyList();
   private List<List<SpanDropFilter>> spanDropFilters = Collections.emptyList();
@@ -129,7 +130,7 @@ public class SpanFilter {
       return true;
     }
 
-    if (anySpanDropFiltersMatch(spanDropFilters, tags, processTags)) {
+    if (anySpanDropFiltersMatch(span, spanDropFilters, tags, processTags)) {
       if (LOG.isDebugEnabled() && DROPPED_SPANS_RATE_LIMITER.tryAcquire()) {
         LOG.debug("Dropping span: [{}] with drop filters: [{}]", span, spanDropFilters.toString());
       }
@@ -189,6 +190,7 @@ public class SpanFilter {
   }
 
   private boolean anySpanDropFiltersMatch(
+      JaegerSpanInternalModel.Span span,
       List<List<SpanDropFilter>> spanDropFilters,
       Map<String, JaegerSpanInternalModel.KeyValue> tags,
       Map<String, JaegerSpanInternalModel.KeyValue> processTags) {
@@ -198,11 +200,12 @@ public class SpanFilter {
                 andFilters.stream()
                     .allMatch(
                         filter ->
-                            matchSpanDropFilter(filter, tags)
-                                || matchSpanDropFilter(filter, processTags)));
+                            matchSpanOperationName(filter, span.getOperationName())
+                                || matchTagsSpanDropFilter(filter, tags)
+                                || matchProcessTagsSpanDropFilter(filter, processTags)));
   }
 
-  private boolean matchSpanDropFilter(
+  private boolean matchTagsSpanDropFilter(
       SpanDropFilter filter, Map<String, JaegerSpanInternalModel.KeyValue> tags) {
     switch (filter.getOperator()) {
       case EQ:
@@ -216,6 +219,47 @@ public class SpanFilter {
             && StringUtils.contains(tags.get(filter.getTagKey()).getVStr(), filter.getTagValue());
       case EXISTS:
         return tags.containsKey(filter.getTagKey());
+      case NOT_EXISTS:
+        return !tags.isEmpty() && !tags.containsKey(filter.getTagKey());
+      default:
+        return false;
+    }
+  }
+
+  private boolean matchProcessTagsSpanDropFilter(
+      SpanDropFilter filter, Map<String, JaegerSpanInternalModel.KeyValue> tags) {
+    switch (filter.getOperator()) {
+      case EQ:
+        return tags.containsKey(filter.getTagKey())
+            && StringUtils.equals(tags.get(filter.getTagKey()).getVStr(), filter.getTagValue());
+      case NEQ:
+        return tags.containsKey(filter.getTagKey())
+            && !StringUtils.equals(tags.get(filter.getTagKey()).getVStr(), filter.getTagValue());
+      case CONTAINS:
+        return tags.containsKey(filter.getTagKey())
+            && StringUtils.contains(tags.get(filter.getTagKey()).getVStr(), filter.getTagValue());
+      case EXISTS:
+        return tags.containsKey(filter.getTagKey());
+      default:
+        return false;
+    }
+  }
+
+  private boolean matchSpanOperationName(SpanDropFilter filter, String operationName) {
+    switch (filter.getOperator()) {
+      case EQ:
+        return filter.getTagKey().equals(OPERATION_NAME)
+            && StringUtils.equals(operationName, filter.getTagValue());
+      case NEQ:
+        return filter.getTagKey().equals(OPERATION_NAME)
+            && !StringUtils.equals(operationName, filter.getTagValue());
+      case CONTAINS:
+        return filter.getTagKey().equals(OPERATION_NAME)
+            && StringUtils.contains(operationName, filter.getTagValue());
+      case EXISTS:
+        return filter.getTagKey().equals(OPERATION_NAME) && !StringUtils.isEmpty(operationName);
+      case NOT_EXISTS:
+        return filter.getTagKey().equals(OPERATION_NAME) && StringUtils.isEmpty(operationName);
       default:
         return false;
     }
