@@ -51,7 +51,6 @@ dependencies {
 
   implementation("de.javakaffee:kryo-serializers:0.45")
   implementation("org.apache.commons:commons-lang3:3.12.0")
-  implementation("org.apache.httpcomponents:httpclient:4.5.13")
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
