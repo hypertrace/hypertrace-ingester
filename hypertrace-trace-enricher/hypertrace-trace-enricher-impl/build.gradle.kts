@@ -23,7 +23,6 @@ dependencies {
   implementation("org.hypertrace.config.service:spaces-config-service-api:0.1.0")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.7.7")
 
-  implementation("org.apache.httpcomponents:httpclient:4.5.13")
   implementation("org.apache.commons:commons-lang3:3.12.0")
   implementation("org.slf4j:slf4j-api:1.7.30")
   implementation("net.sf.uadetector:uadetector-resources:2014.10")
