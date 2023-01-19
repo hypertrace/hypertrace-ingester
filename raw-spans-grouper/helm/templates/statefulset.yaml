@@ -58,6 +58,10 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+    {{- if .Values.hostNetwork }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+    {{- end }}
       restartPolicy: Always
       volumes:
         - name: service-config
