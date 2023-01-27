@@ -23,6 +23,12 @@ enum Tcp {
     TCP_PORT = 2 [(string_value) = "tcp.port"];
 }
 
+// Authentication related attributes
+enum Auth {
+    AUTH_UNSPECIFIED = 0 [(string_value) = "unspecified"];
+    AUTH_JWT = 1 [(string_value) = "auth.jwt"];
+}
+
 // HTTP related attributes
 enum Http {
     HTTP_UNSPECIFIED = 0 [(string_value) = "unspecified"];
