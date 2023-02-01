@@ -26,4 +26,9 @@ public class ApiTraceGraphBuilder {
     }
     return cachedGraph.get();
   }
+
+  public static void remove() {
+    cachedTrace.remove();
+    cachedGraph.remove();
+  }
 }
