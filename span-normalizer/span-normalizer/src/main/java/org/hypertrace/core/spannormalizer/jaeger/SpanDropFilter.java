@@ -10,6 +10,7 @@ public class SpanDropFilter {
     EQ("EQ"),
     NEQ("NEQ"),
     EXISTS("EXISTS"),
+    NOT_EXISTS("NOT_EXISTS"),
     CONTAINS("CONTAINS");
 
     private final String value;

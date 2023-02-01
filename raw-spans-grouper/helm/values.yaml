@@ -27,8 +27,10 @@ tolerations: []
 
 securityContext: {}
 
+hostNetwork: false
+
 # This is defined in resources/configs/common/application.conf as service.admin.port
-containerAdminPort: 8099
+containerAdminPort: 8051
 
 javaOpts: "-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=50.0 -XX:MaxDirectMemorySize=128M"
 

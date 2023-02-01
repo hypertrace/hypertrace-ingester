@@ -206,6 +206,82 @@ class SpanNormalizerTest {
 
     inputTopic.pipeInput(span4);
     assertTrue(outputTopic.isEmpty());
+
+    // pipe in one more span which match one of spanDropFilters (operation_name, and span.kind not
+    // exists)
+    Span span5 =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("4".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-4".getBytes()))
+            .setOperationName("/api/")
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("grpc1.url1")
+                    .setVStr("xyz")
+                    .build())
+            .build();
+
+    inputTopic.pipeInput(span5);
+    assertTrue(outputTopic.isEmpty());
+
+    // pipe in one more span which does not match one of spanDropFilters (operation_name, and
+    // span.kind not
+    // exists)
+    Span span6 =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("6".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-6".getBytes()))
+            .setOperationName("/api-should-be-there/")
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("grapc.url1")
+                    .setVStr("xyz")
+                    .build())
+            .build();
+
+    inputTopic.pipeInput(span6);
+    KeyValue<TraceIdentity, RawSpan> span6KV = outputTopic.readKeyValue();
+    assertEquals("__default", kv1.key.getTenantId());
+    assertEquals(
+        HexUtils.getHex(ByteString.copyFrom("trace-6".getBytes()).toByteArray()),
+        HexUtils.getHex(span6KV.key.getTraceId().array()));
+
+    // pipe in one more span which does not match one of spanDropFilters (operation_name, and
+    // span.kind not
+    // exists)
+    Span span7 =
+        Span.newBuilder()
+            .setSpanId(ByteString.copyFrom("7".getBytes()))
+            .setTraceId(ByteString.copyFrom("trace-7".getBytes()))
+            .setOperationName("/api/")
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("jaeger.servicename")
+                    .setVStr(SERVICE_NAME)
+                    .build())
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("span.kind")
+                    .setVStr("client")
+                    .build())
+            .build();
+
+    inputTopic.pipeInput(span7);
+    KeyValue<TraceIdentity, RawSpan> span7KV = outputTopic.readKeyValue();
+    assertEquals("__default", kv1.key.getTenantId());
+    assertEquals(
+        HexUtils.getHex(ByteString.copyFrom("trace-7".getBytes()).toByteArray()),
+        HexUtils.getHex(span7KV.key.getTraceId().array()));
   }
 
   @Test

@@ -14,7 +14,7 @@ hypertraceDocker {
   defaultImage {
     javaApplication {
       serviceName.set("${project.name}")
-      adminPort.set(8099)
+      adminPort.set(8051)
     }
   }
 }
@@ -33,7 +33,7 @@ dependencies {
     because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
   }
   implementation(project(":span-normalizer:span-normalizer-api"))
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.24")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.25")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.43")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.43")
 

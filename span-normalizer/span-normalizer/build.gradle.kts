@@ -14,7 +14,7 @@ application {
 hypertraceDocker {
   defaultImage {
     javaApplication {
-      adminPort.set(8099)
+      adminPort.set(8050)
     }
   }
 }
@@ -34,7 +34,7 @@ dependencies {
   implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":semantic-convention-utils"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.24")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.25")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.43")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.43")
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.0")
@@ -51,7 +51,6 @@ dependencies {
 
   implementation("de.javakaffee:kryo-serializers:0.45")
   implementation("org.apache.commons:commons-lang3:3.12.0")
-  implementation("org.apache.httpcomponents:httpclient:4.5.13")
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
