@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.hypertrace.config.utils.SpanFilterMatcher;
+import org.hypertrace.config.span.processing.utils.SpanFilterMatcher;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
