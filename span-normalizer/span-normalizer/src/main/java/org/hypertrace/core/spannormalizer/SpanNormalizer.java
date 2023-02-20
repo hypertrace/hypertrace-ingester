@@ -15,8 +15,13 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.processor.StreamPartitioner;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
+import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
+import org.hypertrace.core.kafkastreams.framework.partitioner.RoundRobinPartitioner;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
@@ -64,7 +69,17 @@ public class SpanNormalizer extends KafkaStreamsApp {
             .transform(JaegerSpanToAvroRawSpanTransformer::new)
             .branch(new ByPassPredicate(jobConfig), (key, value) -> true);
     branches[0].transform(RawSpanToStructuredTraceTransformer::new).to(bypassOutputTopic);
-    branches[1].to(outputTopic);
+
+    StreamPartitioner<TraceIdentity, RawSpan> groupPartitioner =
+        new GroupPartitionerBuilder<TraceIdentity, RawSpan>()
+            .buildPartitioner(
+                "spans",
+                jobConfig,
+                (traceid, span) -> span.getCustomerId(),
+                new RoundRobinPartitioner<>(),
+                new GrpcChannelRegistry());
+    branches[1].to(outputTopic, Produced.with(null, null, groupPartitioner));
+
     preProcessedStream.transform(JaegerSpanToLogRecordsTransformer::new).to(outputTopicRawLogs);
     return streamsBuilder;
   }

@@ -39,6 +39,12 @@ data:
       {{- end }}
     }
 
+    group.partitioner = {
+      enabled = {{ .Values.spanNormalizerConfig.groupPartitionerEnabled }}
+      service.host = {{ .Values.spanNormalizerConfig.groupPartitionerConfigServiceHost }}
+      service.port = {{ .Values.spanNormalizerConfig.groupPartitionerConfigServicePort }}
+    }
+
     {{- if hasKey .Values.spanNormalizerConfig "processor" }}
     processor {
       {{- if hasKey .Values.spanNormalizerConfig.processor "tenantIdTagKey" }}
