@@ -106,6 +106,9 @@ spanNormalizerConfig:
   extraKafkaStreamsConfig: {}
   configServiceHost: config-service
   configServicePort: 50101
+  groupPartitionerEnabled: false
+  groupPartitionerConfigServiceHost: config-service
+  groupPartitionerConfigServicePort: 50104
   excludeSpanRulesConfig:
     cache:
       refreshAfterWriteDuration: 3m

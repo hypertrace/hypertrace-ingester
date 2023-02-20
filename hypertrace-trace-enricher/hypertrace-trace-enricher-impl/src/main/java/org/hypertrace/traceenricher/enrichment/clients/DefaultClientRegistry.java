@@ -85,6 +85,11 @@ public class DefaultClientRegistry implements ClientRegistry {
   }
 
   @Override
+  public GrpcChannelRegistry getChannelRegistry() {
+    return grpcChannelRegistry;
+  }
+
+  @Override
   public Channel getAttributeServiceChannel() {
     return this.attributeServiceChannel;
   }
