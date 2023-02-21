@@ -16,12 +16,16 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Named;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.processor.StreamPartitioner;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
+import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
+import org.hypertrace.core.kafkastreams.framework.partitioner.KeyHashPartitioner;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -72,7 +76,17 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     streamsBuilder.addStateStore(spanStoreBuilder);
     streamsBuilder.addStateStore(traceStateStoreBuilder);
 
-    Produced<TraceIdentity, StructuredTrace> outputTopicProducer = Produced.with(null, null);
+    StreamPartitioner<TraceIdentity, StructuredTrace> groupPartitioner =
+        new GroupPartitionerBuilder<TraceIdentity, StructuredTrace>()
+            .buildPartitioner(
+                "spans",
+                jobConfig,
+                (traceid, trace) -> traceid.getTenantId(),
+                new KeyHashPartitioner<>(),
+                new GrpcChannelRegistry());
+
+    Produced<TraceIdentity, StructuredTrace> outputTopicProducer =
+        Produced.with(null, null, groupPartitioner);
     outputTopicProducer = outputTopicProducer.withName(OUTPUT_TOPIC_PRODUCER);
 
     inputStream
