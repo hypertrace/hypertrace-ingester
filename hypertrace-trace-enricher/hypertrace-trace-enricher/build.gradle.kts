@@ -40,7 +40,7 @@ dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.3")
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.45.1")
+  runtimeOnly("io.grpc:grpc-netty:1.50.0")
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")

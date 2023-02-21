@@ -46,7 +46,7 @@ dependencies {
   implementation("com.google.guava:guava:31.1-jre")
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.45.1")
+  runtimeOnly("io.grpc:grpc-netty:1.50.0")
   annotationProcessor("org.projectlombok:lombok:1.18.18")
   compileOnly("org.projectlombok:lombok:1.18.18")
 

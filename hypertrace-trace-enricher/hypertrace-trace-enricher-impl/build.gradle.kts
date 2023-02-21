@@ -32,5 +32,5 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:4.7.0")
   testImplementation("org.mockito:mockito-junit-jupiter:4.7.0")
-  testImplementation("io.grpc:grpc-core:1.45.1")
+  testImplementation("io.grpc:grpc-core:1.50.0")
 }
