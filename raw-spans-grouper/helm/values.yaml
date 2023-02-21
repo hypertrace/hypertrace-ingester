@@ -126,6 +126,10 @@ rawSpansGrouperConfig:
   # Remove the flower braces and add key: value pair here.
   extraKafkaStreamsConfig: {}
 
+  groupPartitionerEnabled: false
+  groupPartitionerConfigServiceHost: config-service
+  groupPartitionerConfigServicePort: 50104
+
   span:
     groupby:
       internal: 30
