@@ -54,6 +54,12 @@ data:
       {{- end }}
     }
 
+    group.partitioner = {
+      enabled = {{ .Values.rawSpansGrouperConfig.groupPartitionerEnabled }}
+      service.host = {{ .Values.rawSpansGrouperConfig.groupPartitionerConfigServiceHost }}
+      service.port = {{ .Values.rawSpansGrouperConfig.groupPartitionerConfigServicePort }}
+    }
+
     span.groupby.session.window.interval = {{ .Values.rawSpansGrouperConfig.span.groupby.internal }}
 
     {{- if hasKey .Values.rawSpansGrouperConfig "defaultMaxSpanCount" }}
