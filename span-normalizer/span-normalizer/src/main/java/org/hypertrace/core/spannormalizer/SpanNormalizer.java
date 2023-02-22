@@ -21,7 +21,7 @@ import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
-import org.hypertrace.core.kafkastreams.framework.partitioner.RoundRobinPartitioner;
+import org.hypertrace.core.kafkastreams.framework.partitioner.KeyHashPartitioner;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
@@ -75,8 +75,8 @@ public class SpanNormalizer extends KafkaStreamsApp {
             .buildPartitioner(
                 "spans",
                 jobConfig,
-                (traceid, span) -> span.getCustomerId(),
-                new RoundRobinPartitioner<>(),
+                (traceid, span) -> traceid.getTenantId(),
+                new KeyHashPartitioner<>(),
                 new GrpcChannelRegistry());
     branches[1].to(outputTopic, Produced.with(null, null, groupPartitioner));
 
