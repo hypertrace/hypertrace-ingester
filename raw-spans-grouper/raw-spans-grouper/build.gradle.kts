@@ -37,7 +37,8 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.48")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.48")
 
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.3")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.4")
+  implementation("org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner:0.2.4")
   implementation("de.javakaffee:kryo-serializers:0.45")
   implementation("com.google.guava:guava:31.1-jre")
 
