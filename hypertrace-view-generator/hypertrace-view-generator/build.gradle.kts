@@ -33,7 +33,7 @@ dependencies {
   implementation("com.google.guava:guava:31.1-jre")
 
   // TODO: migrate in core
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.4.9")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.4.10")
   implementation("org.hypertrace.core.datamodel:data-model:0.1.25")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.49")
 
