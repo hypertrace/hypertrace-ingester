@@ -344,6 +344,7 @@ viewGeneratorGroups:
 # Kafka topic creation job                 #
 ############################################
 kafka-topic-creator:
+  enabled: true
   jobName: view-generation-kafka-topics-creator
   helmHook: pre-install,pre-upgrade
   kafka:
