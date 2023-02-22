@@ -23,7 +23,7 @@ dependencies {
   }
 
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
-  implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.4.7") {
+  implementation("org.hypertrace.core.viewcreator:view-creator-framework:0.4.9") {
     // excluding unused but vulnerable tpls
     exclude("org.apache.calcite.avatica")
     exclude("org.apache.calcite")

@@ -18,7 +18,7 @@ dependencies {
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.25")
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.48")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.49")
   implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.11.2")
   implementation("org.hypertrace.config.service:spaces-config-service-api:0.1.47")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.11.2")

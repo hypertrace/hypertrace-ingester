@@ -32,8 +32,8 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-impl"))
   implementation(project(":span-normalizer:span-normalizer-api"))
   implementation("org.hypertrace.core.datamodel:data-model:0.1.25")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.48")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.48")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.49")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.49")
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
 
   implementation("com.google.guava:guava:31.1-jre")

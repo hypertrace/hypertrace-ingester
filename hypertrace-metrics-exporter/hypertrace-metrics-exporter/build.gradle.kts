@@ -26,8 +26,8 @@ tasks.test {
 
 dependencies {
   // common and framework
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.48")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.48")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.49")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.49")
 
   // open telemetry
   implementation("io.opentelemetry:opentelemetry-sdk-metrics:1.7.0-alpha")
@@ -36,7 +36,7 @@ dependencies {
   // https://github.com/open-telemetry/opentelemetry-java/pull/3700
   // For now, the exported time stamp will be the current time stamp.
   implementation("io.opentelemetry:opentelemetry-exporter-prometheus:1.7.0-alpha")
-  implementation("com.google.protobuf:protobuf-java:3.21.7")
+  implementation("com.google.protobuf:protobuf-java:3.22.0")
 
   // open telemetry proto
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
