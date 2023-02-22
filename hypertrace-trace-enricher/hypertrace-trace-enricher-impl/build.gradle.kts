@@ -16,7 +16,7 @@ dependencies {
   implementation(project(":semantic-convention-utils"))
   implementation(project(":hypertrace-trace-enricher:trace-reader"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.25")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.49")
   implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.11.2")
