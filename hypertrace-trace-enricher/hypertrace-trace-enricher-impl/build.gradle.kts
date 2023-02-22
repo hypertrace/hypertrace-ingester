@@ -16,9 +16,9 @@ dependencies {
   implementation(project(":semantic-convention-utils"))
   implementation(project(":hypertrace-trace-enricher:trace-reader"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.25")
+  implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.48")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.49")
   implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.11.2")
   implementation("org.hypertrace.config.service:spaces-config-service-api:0.1.47")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.11.2")
@@ -32,5 +32,5 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:4.7.0")
   testImplementation("org.mockito:mockito-junit-jupiter:4.7.0")
-  testImplementation("io.grpc:grpc-core:1.45.1")
+  testImplementation("io.grpc:grpc-core:1.50.0")
 }
