@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.typesafe.config.Config;
+import io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
+import org.hypertrace.core.grpcutils.client.GrpcRegistryConfig;
 import org.hypertrace.core.grpcutils.context.ContextualKey;
 import org.hypertrace.core.grpcutils.context.RequestContext;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
@@ -46,7 +48,14 @@ public class ExcludeSpanRulesCache {
 
     ConfigServiceConfig configServiceConfig = new ConfigServiceConfig(config);
     ConfigServiceClient configServiceClient =
-        new ConfigServiceClient(configServiceConfig, new GrpcChannelRegistry());
+        new ConfigServiceClient(
+            configServiceConfig,
+            new GrpcChannelRegistry(
+                GrpcRegistryConfig.builder()
+                    .defaultInterceptor(
+                        new MetricCollectingClientInterceptor(
+                            PlatformMetricsRegistry.getMeterRegistry()))
+                    .build()));
     this.excludeSpanRulesCache =
         CacheBuilder.newBuilder()
             .refreshAfterWrite(cacheRefreshDuration.toMillis(), TimeUnit.MILLISECONDS)

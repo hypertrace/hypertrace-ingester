@@ -3,6 +3,7 @@ package org.hypertrace.traceenricher.enrichment.clients;
 import com.typesafe.config.Config;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
+import io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executor;
@@ -11,7 +12,9 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.GrpcChannelConfig;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
+import org.hypertrace.core.grpcutils.client.GrpcRegistryConfig;
 import org.hypertrace.core.grpcutils.client.RequestContextClientCallCredsProviderFactory;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
@@ -44,9 +47,17 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final EntityCache entityCache;
   private final TraceEntityAccessor entityAccessor;
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
-  private final GrpcChannelRegistry grpcChannelRegistry = new GrpcChannelRegistry();
+  private final GrpcChannelRegistry grpcChannelRegistry;
 
   public DefaultClientRegistry(Config config, Executor cacheLoaderExecutor) {
+    this.grpcChannelRegistry =
+        new GrpcChannelRegistry(
+            GrpcRegistryConfig.builder()
+                .defaultInterceptor(
+                    new MetricCollectingClientInterceptor(
+                        PlatformMetricsRegistry.getMeterRegistry()))
+                .build());
+
     this.attributeServiceChannel =
         this.buildChannel(
             config.getString(ATTRIBUTE_SERVICE_HOST_KEY),

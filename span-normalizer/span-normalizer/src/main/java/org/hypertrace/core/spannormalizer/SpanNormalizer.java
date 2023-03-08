@@ -8,6 +8,7 @@ import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstan
 
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
+import io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +20,12 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.processor.StreamPartitioner;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
+import org.hypertrace.core.grpcutils.client.GrpcRegistryConfig;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
 import org.hypertrace.core.kafkastreams.framework.partitioner.KeyHashPartitioner;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanToAvroRawSpanTransformer;
@@ -77,7 +80,12 @@ public class SpanNormalizer extends KafkaStreamsApp {
                 jobConfig,
                 (traceid, span) -> traceid.getTenantId(),
                 new KeyHashPartitioner<>(),
-                new GrpcChannelRegistry());
+                new GrpcChannelRegistry(
+                    GrpcRegistryConfig.builder()
+                        .defaultInterceptor(
+                            new MetricCollectingClientInterceptor(
+                                PlatformMetricsRegistry.getMeterRegistry()))
+                        .build()));
     branches[1].to(outputTopic, Produced.with(null, null, groupPartitioner));
 
     preProcessedStream.transform(JaegerSpanToLogRecordsTransformer::new).to(outputTopicRawLogs);
