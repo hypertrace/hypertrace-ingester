@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.SpanAttribute;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
@@ -57,7 +58,10 @@ class JaegerSpanPreProcessorTest {
           Map<String, Object> configs = new HashMap<>(getCommonConfig());
           configs.putAll(Map.of("processor", Map.of("late.arrival.threshold.duration", "1d")));
           JaegerSpanPreProcessor jaegerSpanPreProcessor =
-              new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+              new JaegerSpanPreProcessor(
+                  ConfigFactory.parseMap(configs),
+                  excludeSpanRulesCache,
+                  new GrpcChannelRegistry());
 
           Process process = Process.newBuilder().setServiceName("testService").build();
           Span span1 =
@@ -79,7 +83,8 @@ class JaegerSpanPreProcessorTest {
             "processor",
             Map.of("defaultTenantId", "default-tenant", "late.arrival.threshold.duration", "1d")));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
 
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span1 =
@@ -97,7 +102,8 @@ class JaegerSpanPreProcessorTest {
             "processor",
             Map.of("tenantIdTagKey", "tenant-key", "late.arrival.threshold.duration", "1d")));
     jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
 
     Span span2 =
         Span.newBuilder()
@@ -134,7 +140,8 @@ class JaegerSpanPreProcessorTest {
                 "late.arrival.threshold.duration",
                 "1d")));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
 
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span1 =
@@ -169,7 +176,8 @@ class JaegerSpanPreProcessorTest {
                 "late.arrival.threshold.duration",
                 "1d")));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span1 =
         Span.newBuilder()
@@ -207,7 +215,8 @@ class JaegerSpanPreProcessorTest {
                 "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
     {
       Span span =
@@ -265,7 +274,8 @@ class JaegerSpanPreProcessorTest {
                 "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
     Span span =
         Span.newBuilder()
@@ -291,7 +301,8 @@ class JaegerSpanPreProcessorTest {
                 "late.arrival.threshold.duration", "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // root exit span
@@ -342,7 +353,8 @@ class JaegerSpanPreProcessorTest {
                 "late.arrival.threshold.duration", "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // root exit span
@@ -406,7 +418,8 @@ class JaegerSpanPreProcessorTest {
                 "late.arrival.threshold.duration", "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // root exit span
@@ -483,7 +496,8 @@ class JaegerSpanPreProcessorTest {
                             "operator", "NEQ",
                             "tagValue", "200"))))));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // case 1: match first case (http.method & http.url)
@@ -587,7 +601,8 @@ class JaegerSpanPreProcessorTest {
                             "tagKey", "grpc.url", "operator", "EXISTS", "tagValue", "health"))))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
 
     // case 1: {spanTags: [http.method & http.url],  processTags:tenant_id } matches -> drop span
 
@@ -796,7 +811,10 @@ class JaegerSpanPreProcessorTest {
                                   "tagValue",
                                   "GET"))))));
           JaegerSpanPreProcessor jaegerSpanPreProcessor =
-              new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+              new JaegerSpanPreProcessor(
+                  ConfigFactory.parseMap(configs),
+                  excludeSpanRulesCache,
+                  new GrpcChannelRegistry());
         });
   }
 
@@ -816,7 +834,8 @@ class JaegerSpanPreProcessorTest {
                 "1d")));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
 
     // case 1: {spanTags: [http.method & http.url],  processTags:tenant_id, rule: url contains
     // health } matches -> drop span
@@ -1154,7 +1173,8 @@ class JaegerSpanPreProcessorTest {
             "processor",
             Map.of("defaultTenantId", tenantId, "late.arrival.threshold.duration", "24h")));
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
 
     Instant instant = Instant.now();
     Process process = Process.newBuilder().setServiceName("testService").build();
@@ -1193,7 +1213,10 @@ class JaegerSpanPreProcessorTest {
                   Map.of(
                       "tenantIdTagKey", "tenant-key", "late.arrival.threshold.duration", "20s")));
           JaegerSpanPreProcessor jaegerSpanPreProcessor =
-              new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+              new JaegerSpanPreProcessor(
+                  ConfigFactory.parseMap(configs),
+                  excludeSpanRulesCache,
+                  new GrpcChannelRegistry());
         });
   }
 
@@ -1227,7 +1250,8 @@ class JaegerSpanPreProcessorTest {
                 List.of("http.request.header.x-allowed-1", "http.response.header.x-allowed-2"))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     KeyValue allowed1 =
@@ -1305,7 +1329,8 @@ class JaegerSpanPreProcessorTest {
                 List.of("http.request.header.x-allowed-1", "http.response.header.x-allowed-2"))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     KeyValue allowed1 =
@@ -1371,7 +1396,8 @@ class JaegerSpanPreProcessorTest {
                 List.of("x-allowed-1", "x-allowed-2"))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     KeyValue allowed1 =
@@ -1450,7 +1476,8 @@ class JaegerSpanPreProcessorTest {
                 List.of())));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // expects nothing to drop as allowed.extension.attributes configured to empty
@@ -1525,7 +1552,8 @@ class JaegerSpanPreProcessorTest {
                 List.of())));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // expects nothing to drop as allowed.extension.attributes configured to empty
@@ -1602,7 +1630,8 @@ class JaegerSpanPreProcessorTest {
                 List.of("http.request.header.x-allowed-1", "http.response.header.x-allowed-2"))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
     Process process = Process.newBuilder().setServiceName("testService").build();
 
     // expects nothing to drop as allowed.extension.attributes configured to empty
@@ -1680,7 +1709,8 @@ class JaegerSpanPreProcessorTest {
                     "tenantId", tenantId2, "groupingKey", "http.method", "maxSpansPerMinute", 0))));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
-        new JaegerSpanPreProcessor(ConfigFactory.parseMap(configs), excludeSpanRulesCache);
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
 
     Process process =
         Process.newBuilder()

@@ -10,6 +10,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.config.span.processing.utils.SpanFilterMatcher;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.hypertrace.span.processing.config.service.v1.ExcludeSpanRule;
 import org.hypertrace.span.processing.config.service.v1.Field;
@@ -26,8 +27,8 @@ public class ExcludeSpanRuleEvaluator {
   private final ExcludeSpanRulesCache excludeSpanRulesCache;
   private final SpanFilterMatcher spanFilterMatcher;
 
-  public ExcludeSpanRuleEvaluator(Config config) {
-    this.excludeSpanRulesCache = ExcludeSpanRulesCache.getInstance(config);
+  public ExcludeSpanRuleEvaluator(Config config, GrpcChannelRegistry grpcChannelRegistry) {
+    this.excludeSpanRulesCache = ExcludeSpanRulesCache.getInstance(config, grpcChannelRegistry);
     this.spanFilterMatcher = new SpanFilterMatcher();
   }
 

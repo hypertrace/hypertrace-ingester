@@ -8,7 +8,6 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_S
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 
 import com.typesafe.config.Config;
-import io.micrometer.core.instrument.binder.grpc.MetricCollectingClientInterceptor;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serde;
@@ -23,13 +22,10 @@ import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
-import org.hypertrace.core.grpcutils.client.GrpcRegistryConfig;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
 import org.hypertrace.core.kafkastreams.framework.partitioner.KeyHashPartitioner;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
-import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.hypertrace.core.spannormalizer.TraceState;
@@ -86,12 +82,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
                 jobConfig,
                 (traceid, trace) -> traceid.getTenantId(),
                 new KeyHashPartitioner<>(),
-                new GrpcChannelRegistry(
-                    GrpcRegistryConfig.builder()
-                        .defaultInterceptor(
-                            new MetricCollectingClientInterceptor(
-                                PlatformMetricsRegistry.getMeterRegistry()))
-                        .build()));
+                getGrpcChannelRegistry());
 
     Produced<TraceIdentity, StructuredTrace> outputTopicProducer =
         Produced.with(null, null, groupPartitioner);

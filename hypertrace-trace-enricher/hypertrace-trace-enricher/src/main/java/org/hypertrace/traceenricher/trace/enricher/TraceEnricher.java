@@ -46,7 +46,7 @@ public class TraceEnricher extends KafkaStreamsApp {
     }
 
     inputStream
-        .transform(StructuredTraceEnrichProcessor::new)
+        .transform(() -> new StructuredTraceEnrichProcessor(getGrpcChannelRegistry()))
         .to(outputTopic, Produced.keySerde(Serdes.String()));
 
     return streamsBuilder;

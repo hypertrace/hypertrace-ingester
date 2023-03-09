@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 
 @Slf4j
@@ -38,10 +39,10 @@ public class SpanDropManager {
   private final Duration lateArrivalThresholdDuration;
   private RateLimitingSpanFilter rateLimitingSpanFilter;
 
-  public SpanDropManager(Config config) {
+  public SpanDropManager(Config config, GrpcChannelRegistry grpcChannelRegistry) {
     tenantIdHandler = new TenantIdHandler(config);
     spanFilter = new SpanFilter(config);
-    excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator(config);
+    excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator(config, grpcChannelRegistry);
     rateLimitingSpanFilter = new RateLimitingSpanFilter(config);
     lateArrivalThresholdDuration = configureLateArrivalThreshold(config);
     tenantIdsToExclude =
