@@ -33,12 +33,9 @@ public class ExcludeSpanRulesCache {
   private static final Duration CACHE_EXPIRY_DURATION_DEFAULT = Duration.ofMillis(300000);
   private static ExcludeSpanRulesCache INSTANCE;
 
-  private final GrpcChannelRegistry grpcChannelRegistry;
   private final LoadingCache<ContextualKey<Void>, List<ExcludeSpanRule>> excludeSpanRulesCache;
 
   private ExcludeSpanRulesCache(Config config, GrpcChannelRegistry grpcChannelRegistry) {
-    this.grpcChannelRegistry = grpcChannelRegistry;
-
     Duration cacheRefreshDuration =
         config.hasPath(CACHE_REFRESH_DURATION)
             ? config.getDuration(CACHE_REFRESH_DURATION)
@@ -84,6 +81,8 @@ public class ExcludeSpanRulesCache {
         CACHE_NAME, excludeSpanRulesCache, Collections.emptyMap());
   }
 
+  // TODO: Find an alternative approach to avoid use of singleton instance
+  // without honoring the requested config/registry
   static synchronized ExcludeSpanRulesCache getInstance(
       Config config, GrpcChannelRegistry grpcChannelRegistry) {
     if (INSTANCE == null) {
