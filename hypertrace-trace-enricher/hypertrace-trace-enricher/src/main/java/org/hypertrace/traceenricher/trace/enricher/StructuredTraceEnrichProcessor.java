@@ -17,6 +17,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.hypertrace.traceenricher.enrichment.EnrichmentProcessor;
 import org.hypertrace.traceenricher.enrichment.EnrichmentRegistry;
@@ -26,7 +27,12 @@ public class StructuredTraceEnrichProcessor
     implements Transformer<TraceIdentity, StructuredTrace, KeyValue<String, StructuredTrace>> {
 
   private static EnrichmentProcessor processor = null;
+  private final GrpcChannelRegistry grpcChannelRegistry;
   private DefaultClientRegistry clientRegistry;
+
+  public StructuredTraceEnrichProcessor(GrpcChannelRegistry grpcChannelRegistry) {
+    this.grpcChannelRegistry = grpcChannelRegistry;
+  }
 
   @Override
   public void init(ProcessorContext context) {
@@ -42,6 +48,7 @@ public class StructuredTraceEnrichProcessor
           clientRegistry =
               new DefaultClientRegistry(
                   clientsConfig,
+                  grpcChannelRegistry,
                   Executors.newFixedThreadPool(
                       getCacheLoaderExecutorThreadsPoolSize(clientsConfig),
                       this.buildThreadFactory()));

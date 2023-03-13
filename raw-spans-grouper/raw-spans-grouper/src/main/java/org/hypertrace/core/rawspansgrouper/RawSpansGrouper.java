@@ -22,7 +22,6 @@ import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
 import org.hypertrace.core.kafkastreams.framework.partitioner.KeyHashPartitioner;
@@ -83,7 +82,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
                 jobConfig,
                 (traceid, trace) -> traceid.getTenantId(),
                 new KeyHashPartitioner<>(),
-                new GrpcChannelRegistry());
+                getGrpcChannelRegistry());
 
     Produced<TraceIdentity, StructuredTrace> outputTopicProducer =
         Produced.with(null, null, groupPartitioner);
