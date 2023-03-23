@@ -167,7 +167,6 @@ kafka-topic-creator:
         configs:
           cleanup.policy: "[compact, delete]"
 
-
   zookeeper:
     address: zookeeper:2181
   imagePullSecrets: []
