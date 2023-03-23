@@ -157,11 +157,16 @@ kafka-topic-creator:
           retention.ms: 86400000 # default = 604800000 (7 days)
           max.message.bytes: 10485760 # default = 1048588
       raw-spans-to-structured-traces-grouping-job-span-data-store-changelog:
+        replicationFactor: 3
+        partitions: 8
         configs:
           cleanup.policy: "[compact, delete]"
       raw-spans-to-structured-traces-grouping-job-trace-state-store-changelog:
+        replicationFactor: 3
+        partitions: 8
         configs:
           cleanup.policy: "[compact, delete]"
+
 
   zookeeper:
     address: zookeeper:2181
