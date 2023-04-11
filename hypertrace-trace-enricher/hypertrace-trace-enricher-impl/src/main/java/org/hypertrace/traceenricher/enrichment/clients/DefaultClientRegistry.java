@@ -44,9 +44,12 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final EntityCache entityCache;
   private final TraceEntityAccessor entityAccessor;
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
-  private final GrpcChannelRegistry grpcChannelRegistry = new GrpcChannelRegistry();
+  private final GrpcChannelRegistry grpcChannelRegistry;
 
-  public DefaultClientRegistry(Config config, Executor cacheLoaderExecutor) {
+  public DefaultClientRegistry(
+      Config config, GrpcChannelRegistry grpcChannelRegistry, Executor cacheLoaderExecutor) {
+    this.grpcChannelRegistry = grpcChannelRegistry;
+
     this.attributeServiceChannel =
         this.buildChannel(
             config.getString(ATTRIBUTE_SERVICE_HOST_KEY),

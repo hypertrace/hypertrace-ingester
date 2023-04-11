@@ -17,6 +17,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,16 +29,23 @@ public class JaegerSpanPreProcessor
   static final String SPANS_COUNTER = "hypertrace.reported.spans";
   private static final ConcurrentMap<String, Counter> statusToSpansCounter =
       new ConcurrentHashMap<>();
+
+  private final GrpcChannelRegistry grpcChannelRegistry;
+
   private TenantIdHandler tenantIdHandler;
   private SpanDropManager spanDropManager;
   private TagsFilter tagsFilter;
 
-  public JaegerSpanPreProcessor() {
-    // empty constructor
+  public JaegerSpanPreProcessor(GrpcChannelRegistry grpcChannelRegistry) {
+    this.grpcChannelRegistry = grpcChannelRegistry;
   }
 
   @VisibleForTesting
-  JaegerSpanPreProcessor(Config jobConfig, ExcludeSpanRulesCache excludeSpanRulesCache) {
+  JaegerSpanPreProcessor(
+      Config jobConfig,
+      ExcludeSpanRulesCache excludeSpanRulesCache,
+      GrpcChannelRegistry grpcChannelRegistry) {
+    this.grpcChannelRegistry = grpcChannelRegistry;
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanDropManager = new SpanDropManager(jobConfig, excludeSpanRulesCache);
     tagsFilter = new TagsFilter(jobConfig);
@@ -47,7 +55,7 @@ public class JaegerSpanPreProcessor
   public void init(ProcessorContext context) {
     Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
     tenantIdHandler = new TenantIdHandler(jobConfig);
-    spanDropManager = new SpanDropManager(jobConfig);
+    spanDropManager = new SpanDropManager(jobConfig, grpcChannelRegistry);
     tagsFilter = new TagsFilter(jobConfig);
   }
 
