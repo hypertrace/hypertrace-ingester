@@ -211,12 +211,12 @@ public class MigrationTestHttp {
     span =
         createSpanFromTags(
             Map.of(
-                RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
+                RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path1",
                 RawSpanConstants.getValue(HTTP_PATH), "/"));
     rawSpan =
         normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
 
-    assertEquals("/", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
+    assertEquals("/path1", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
   }
 
   @ParameterizedTest
