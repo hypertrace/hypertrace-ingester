@@ -397,7 +397,7 @@ public class HttpFieldsGeneratorTest {
         httpFieldsGenerator.getProtocolBuilder(eventBuilder1).getRequestBuilder().hasPath());
 
     Map<String, JaegerSpanInternalModel.KeyValue> tagsMap2 = new HashMap<>();
-    tagsMap2.put(RawSpanConstants.getValue(HTTP_REQUEST_PATH), createKeyValue("path1"));
+    tagsMap2.put(RawSpanConstants.getValue(HTTP_REQUEST_PATH), createKeyValue("/path1"));
     tagsMap2.put(RawSpanConstants.getValue(HTTP_PATH), createKeyValue("/"));
 
     Event.Builder eventBuilder2 = Event.newBuilder();
@@ -406,7 +406,8 @@ public class HttpFieldsGeneratorTest {
             httpFieldsGenerator.addValueToBuilder(key, keyValue, eventBuilder2, tagsMap2));
 
     assertEquals(
-        "/", httpFieldsGenerator.getProtocolBuilder(eventBuilder2).getRequestBuilder().getPath());
+        "/path1",
+        httpFieldsGenerator.getProtocolBuilder(eventBuilder2).getRequestBuilder().getPath());
   }
 
   @Test

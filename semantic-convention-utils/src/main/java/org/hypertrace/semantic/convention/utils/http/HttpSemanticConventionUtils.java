@@ -45,10 +45,10 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.net.InternetDomainName;
-import io.micrometer.core.instrument.util.StringUtils;
 import java.net.HttpCookie;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,6 +58,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.avro.reflect.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.shared.HexUtils;
@@ -202,16 +203,6 @@ public class HttpSemanticConventionUtils {
     return Lists.newArrayList(Sets.newHashSet(OTEL_HTTP_TARGET));
   }
 
-  public static boolean isAbsoluteUrl(String urlStr) {
-    try {
-      URL url = getNormalizedUrl(urlStr);
-      return url.toString().equals(urlStr);
-    } catch (MalformedURLException e) {
-      // ignore
-    }
-    return false;
-  }
-
   public static Optional<String> getFullHttpUrl(Event event) {
     Optional<String> fullHttpUrl = getHttpUrl(event);
     return fullHttpUrl.isPresent()
@@ -279,7 +270,7 @@ public class HttpSemanticConventionUtils {
     if (httpUrlForOTelFormat.isEmpty() && attributeValueMap.containsKey(HTTP_URL.getValue())) {
       return Optional.of(attributeValueMap.get(HTTP_URL.getValue()).getValue());
     }
-    return httpUrlForOTelFormat;
+    return httpUrlForOTelFormat.flatMap(HttpSemanticConventionUtils::getAbsoluteUrl);
   }
 
   private static Optional<String> getHttpUrlForOtelFormatClientSpan(
@@ -358,6 +349,17 @@ public class HttpSemanticConventionUtils {
     return Optional.empty();
   }
 
+  // https://www.baeldung.com/java-validate-url#validate-url-using-jdk
+  public static boolean isAbsoluteUrl(String urlStr) {
+    try {
+      new URL(urlStr).toURI();
+      return true;
+    } catch (MalformedURLException | URISyntaxException e) {
+      // ignore
+    }
+    return false;
+  }
+
   /**
    * accepts any absolute or relative URL. e.g. absolute URL:
    * http://hypertrace.org/customer?customer=392 relative URL: /customer?customer=392
@@ -365,14 +367,28 @@ public class HttpSemanticConventionUtils {
   public static boolean isValidUrl(String url) {
     try {
       getNormalizedUrl(url);
-    } catch (MalformedURLException e) {
+    } catch (MalformedURLException | URISyntaxException e) {
       return false;
     }
     return true;
   }
 
-  public static URL getNormalizedUrl(String url) throws MalformedURLException {
-    return new URL(new URL(RELATIVE_URL_CONTEXT), url);
+  public static URL getNormalizedUrl(String url) throws MalformedURLException, URISyntaxException {
+    String sanitizedUrl = StringUtils.stripStart(url, SLASH);
+    URL absoluteUrl = new URL(new URL(RELATIVE_URL_CONTEXT), sanitizedUrl);
+    return absoluteUrl.toURI().normalize().toURL();
+  }
+
+  public static Optional<String> getAbsoluteUrl(String url) {
+    if (!isAbsoluteUrl(url)) {
+      return Optional.empty();
+    }
+
+    try {
+      return Optional.of(getNormalizedUrl(url).toString());
+    } catch (MalformedURLException | URISyntaxException e) {
+      return Optional.empty();
+    }
   }
 
   public static Optional<String> getHttpUserAgent(Event event) {
@@ -382,10 +398,10 @@ public class HttpSemanticConventionUtils {
     }
 
     Map<String, AttributeValue> attributeValueMap = event.getAttributes().getAttributeMap();
-    for (String useragent : USER_AGENT_ATTRIBUTES) {
-      if (attributeValueMap.get(useragent) != null
-          && !StringUtils.isEmpty(attributeValueMap.get(useragent).getValue())) {
-        return Optional.of(attributeValueMap.get(useragent).getValue());
+    for (String userAgent : USER_AGENT_ATTRIBUTES) {
+      if (attributeValueMap.get(userAgent) != null
+          && !StringUtils.isEmpty(attributeValueMap.get(userAgent).getValue())) {
+        return Optional.of(attributeValueMap.get(userAgent).getValue());
       }
     }
     return Optional.empty();
@@ -412,7 +428,7 @@ public class HttpSemanticConventionUtils {
     if (url.isPresent() && isAbsoluteUrl(url.get())) {
       try {
         return Optional.of(getNormalizedUrl(url.get()).getAuthority());
-      } catch (MalformedURLException e) {
+      } catch (MalformedURLException | URISyntaxException e) {
         LOGGER.warn(
             "On extracting httpHost, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
@@ -426,12 +442,12 @@ public class HttpSemanticConventionUtils {
     Optional<String> url = getHttpUrlFromRawAttributes(event);
     if (url.isPresent() && path.isEmpty()) {
       try {
-        String pathval = getNormalizedUrl(url.get()).getPath();
-        if (StringUtils.isBlank(pathval)) {
-          pathval = SLASH;
+        String pathVal = getNormalizedUrl(url.get()).getPath();
+        if (StringUtils.isBlank(pathVal)) {
+          pathVal = SLASH;
         }
-        return Optional.of(removeTrailingSlash(pathval));
-      } catch (MalformedURLException e) {
+        return Optional.of(removeTrailingSlash(pathVal));
+      } catch (MalformedURLException | URISyntaxException e) {
         LOGGER.warn(
             "On extracting httpPath, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
@@ -481,7 +497,7 @@ public class HttpSemanticConventionUtils {
     if (url.isPresent() && isAbsoluteUrl(url.get())) {
       try {
         scheme = Optional.of(getNormalizedUrl(url.get()).getProtocol());
-      } catch (MalformedURLException e) {
+      } catch (MalformedURLException | URISyntaxException e) {
         LOGGER.warn(
             "On extracting httpScheme, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
@@ -577,10 +593,7 @@ public class HttpSemanticConventionUtils {
 
   public static Optional<String> getHttpUrl(Event event) {
     Optional<String> url = getHttpUrlFromRawAttributes(event);
-    if (url.isPresent() && !isAbsoluteUrl(url.get())) {
-      return Optional.empty();
-    }
-    return url;
+    return url.flatMap(HttpSemanticConventionUtils::getAbsoluteUrl);
   }
 
   //  input url to populateurlparts
@@ -603,7 +616,8 @@ public class HttpSemanticConventionUtils {
     }
 
     if (httpUrlFromRawAttributes != null && isAbsoluteUrl(httpUrlFromRawAttributes)) {
-      return Optional.of(httpUrlFromRawAttributes);
+      return Optional.of(httpUrlFromRawAttributes)
+          .flatMap(HttpSemanticConventionUtils::getAbsoluteUrl);
     }
 
     // check for OTel format
@@ -612,6 +626,7 @@ public class HttpSemanticConventionUtils {
       return httpUrlForOTelFormat;
     }
 
+    // The URL is not absolute URL
     return Optional.ofNullable(httpUrlFromRawAttributes);
   }
 
@@ -625,7 +640,7 @@ public class HttpSemanticConventionUtils {
     if (url.isPresent() && queryString.isEmpty()) {
       try {
         return Optional.ofNullable(getNormalizedUrl(url.get()).getQuery());
-      } catch (MalformedURLException e) {
+      } catch (MalformedURLException | URISyntaxException e) {
         LOGGER.warn(
             "On extracting httpQueryString, received an invalid URL: {}, {}",
             url.get(),
@@ -640,7 +655,9 @@ public class HttpSemanticConventionUtils {
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, REQUEST_SIZE_ATTRIBUTES);
 
     Optional<String> requestSize = Optional.ofNullable(httpRequestSize);
-    if (!requestSize.isEmpty()) return requestSize.map(Integer::parseInt);
+    if (!requestSize.isEmpty()) {
+      return requestSize.map(Integer::parseInt);
+    }
 
     if (SpanAttributeUtils.getBooleanAttribute(event, HTTP_REQUEST_BODY_TRUNCATED_ATTR)) {
       return Optional.empty();
@@ -655,7 +672,9 @@ public class HttpSemanticConventionUtils {
         SpanAttributeUtils.getFirstAvailableStringAttribute(event, RESPONSE_SIZE_ATTRIBUTES);
 
     Optional<String> responseSize = Optional.ofNullable(httpResponseSize);
-    if (!responseSize.isEmpty()) return responseSize.map(Integer::parseInt);
+    if (!responseSize.isEmpty()) {
+      return responseSize.map(Integer::parseInt);
+    }
 
     if (SpanAttributeUtils.getBooleanAttribute(event, HTTP_RESPONSE_BODY_TRUNCATED_ATTR)) {
       return Optional.empty();
@@ -799,7 +818,7 @@ public class HttpSemanticConventionUtils {
     try {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
-    } catch (MalformedURLException e) {
+    } catch (MalformedURLException | URISyntaxException e) {
       LOGGER.warn(
           "On extracting httpResponseStatusCode, received invalid URL path : {}, {}",
           urlPath,

@@ -237,11 +237,7 @@ public class HttpSemanticConventionUtilsTest {
 
   @Test
   public void testGetHttpPath() {
-    Event event =
-        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path");
-    assertEquals(Optional.of("/path"), HttpSemanticConventionUtils.getHttpPath(event));
-
-    event = mock(Event.class);
+    Event event = mock(Event.class);
     assertTrue(HttpSemanticConventionUtils.getHttpPath(event).isEmpty());
 
     event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "");
@@ -249,6 +245,25 @@ public class HttpSemanticConventionUtilsTest {
 
     event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path");
     assertTrue(HttpSemanticConventionUtils.getHttpPath(event).isEmpty());
+
+    event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path");
+    assertEquals(Optional.of("/path"), HttpSemanticConventionUtils.getHttpPath(event));
+
+    event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "//path1/path2");
+    assertEquals(Optional.of("/path1/path2"), HttpSemanticConventionUtils.getHttpPath(event));
+
+    event =
+        createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path1//path2");
+    assertEquals(Optional.of("/path1/path2"), HttpSemanticConventionUtils.getHttpPath(event));
+
+    event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_REQUEST_PATH), "////path1//path2");
+    assertEquals(Optional.of("/path1/path2"), HttpSemanticConventionUtils.getHttpPath(event));
+
+    event = createMockEventWithAttribute(RawSpanConstants.getValue(HTTP_REQUEST_PATH), "//path1");
+    assertEquals(Optional.of("/path1"), HttpSemanticConventionUtils.getHttpPath(event));
 
     event = mock(Event.class);
     when(event.getAttributes())

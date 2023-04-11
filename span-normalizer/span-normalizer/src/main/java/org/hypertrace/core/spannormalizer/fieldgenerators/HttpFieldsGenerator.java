@@ -47,6 +47,7 @@ import static org.hypertrace.semantic.convention.utils.http.HttpSemanticConventi
 import com.google.common.util.concurrent.RateLimiter;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -498,7 +499,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
     try {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
-    } catch (MalformedURLException e) {
+    } catch (MalformedURLException | URISyntaxException e) {
       if (LOG_LIMITER.tryAcquire()) {
         LOGGER.warn("Received invalid URL path : {}, {}", urlPath, e.getMessage());
       }
@@ -604,7 +605,7 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
       if (!requestBuilder.hasQueryString()) {
         requestBuilder.setQueryString(url.getQuery());
       }
-    } catch (MalformedURLException e) {
+    } catch (MalformedURLException | URISyntaxException e) {
       // Should not happen Since the url in the request should be valid.
       LOGGER.warn("Error populating url parts - An invalid URL: {}, {}", urlStr, e.getMessage());
     }
@@ -625,9 +626,9 @@ public class HttpFieldsGenerator extends ProtocolFieldsGenerator<Http.Builder> {
 
   static boolean isAbsoluteUrl(String urlStr) {
     try {
-      URL url = getNormalizedUrl(urlStr);
-      return url.toString().equals(urlStr);
-    } catch (MalformedURLException e) {
+      new URL(urlStr).toURI();
+      return true;
+    } catch (MalformedURLException | URISyntaxException e) {
       // ignore
     }
     return false;
