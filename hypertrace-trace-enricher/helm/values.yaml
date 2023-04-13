@@ -22,6 +22,8 @@ imagePullSecrets: []
 
 nodeLabels: {}
 
+securityContext: {}
+
 # This is defined in resources/configs/trace-enricher/application.conf as service.admin.port
 containerAdminPort: 8099
 
