@@ -37,7 +37,7 @@ dependencies {
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
 
   implementation("com.google.guava:guava:31.1-jre")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.5")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.6")
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.50.0")
