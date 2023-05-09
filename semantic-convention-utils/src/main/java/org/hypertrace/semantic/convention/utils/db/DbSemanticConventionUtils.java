@@ -226,7 +226,7 @@ public class DbSemanticConventionUtils {
       }
     }
     return getBackendURIForOtelFormat(event)
-        .map(rawUrl -> JDBC_EVENT_PREFIX + "://" + rawUrl)
+        .map(rawUrl -> rawUrl.contains("://") ? rawUrl : JDBC_EVENT_PREFIX + "://" + rawUrl)
         .filter(DbSemanticConventionUtils::isValidURI);
   }
 
