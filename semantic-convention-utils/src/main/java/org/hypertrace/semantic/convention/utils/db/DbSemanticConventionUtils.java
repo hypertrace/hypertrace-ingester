@@ -216,21 +216,18 @@ public class DbSemanticConventionUtils {
     if (SpanAttributeUtils.containsAttributeKey(event, SQL_URL)) {
       return Optional.of(SpanAttributeUtils.getStringAttribute(event, SQL_URL));
     }
-    Optional<String> backendUrl = getBackendURIForOtelFormat(event);
-    if (backendUrl.isPresent()) {
-      return backendUrl;
-    }
     if (SpanAttributeUtils.containsAttributeKey(
         event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue())) {
       String url =
           SpanAttributeUtils.getStringAttribute(
               event, OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue());
-      if (!isValidURI(url)) {
-        return Optional.empty();
+      if (!url.isBlank() && isValidURI(url)) {
+        return Optional.of(url);
       }
-      return Optional.of(url);
     }
-    return Optional.empty();
+    return getBackendURIForOtelFormat(event)
+        .map(rawUrl -> JDBC_EVENT_PREFIX + "://" + rawUrl)
+        .filter(DbSemanticConventionUtils::isValidURI);
   }
 
   public static Optional<String> getSqlUrlForOtelFormat(
