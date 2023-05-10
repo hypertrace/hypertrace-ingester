@@ -39,7 +39,10 @@ public class SpanSemanticConventionUtils {
         SpanAttributeUtils.getStringAttributeWithDefault(
             event,
             OTEL_NET_PEER_NAME,
-            SpanAttributeUtils.getStringAttribute(event, OTEL_NET_PEER_IP));
+            SpanAttributeUtils.getStringAttributeWithDefault(
+                event,
+                OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue(),
+                SpanAttributeUtils.getStringAttribute(event, OTEL_NET_PEER_IP)));
     if (StringUtils.isBlank(host)) {
       return Optional.empty();
     }
@@ -58,7 +61,11 @@ public class SpanSemanticConventionUtils {
   public static Optional<String> getURIForOtelFormat(
       Map<String, AttributeValue> attributeValueMap) {
     AttributeValue hostAttribute =
-        attributeValueMap.getOrDefault(OTEL_NET_PEER_NAME, attributeValueMap.get(OTEL_NET_PEER_IP));
+        attributeValueMap.getOrDefault(
+            OTEL_NET_PEER_NAME,
+            attributeValueMap.getOrDefault(
+                OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue(),
+                attributeValueMap.get(OTEL_NET_PEER_IP)));
     if (null == hostAttribute || StringUtils.isBlank(hostAttribute.getValue())) {
       return Optional.empty();
     }

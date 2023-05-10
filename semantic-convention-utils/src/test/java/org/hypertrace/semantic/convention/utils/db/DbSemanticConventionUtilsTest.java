@@ -448,6 +448,33 @@ public class DbSemanticConventionUtilsTest {
             SemanticConventionTestUtil.buildAttributeValue("jdbc:mysql://mysql:3306/shop"));
     v = DbSemanticConventionUtils.getSqlUrlForOtelFormat(map);
     assertEquals("127.0.0.1", v.get());
+
+    map =
+        Map.of(
+            OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("127.0.0.1"),
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(
+                OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("jdbc:mysql://mysql:3306/shop"));
+    v = DbSemanticConventionUtils.getSqlUrlForOtelFormat(map);
+    assertEquals("127.0.0.1", v.get());
+
+    // net.sock.peer.addr preferred over net.peer.ip
+    map =
+        Map.of(
+            OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("127.0.0.1"),
+            OTelSpanSemanticConventions.NET_PEER_IP.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("127.0.0.2"),
+            OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue(
+                OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
+            OTelDbSemanticConventions.DB_CONNECTION_STRING.getValue(),
+            SemanticConventionTestUtil.buildAttributeValue("jdbc:mysql://mysql:3306/shop"));
+    v = DbSemanticConventionUtils.getSqlUrlForOtelFormat(map);
+    assertEquals("127.0.0.1", v.get());
   }
 
   @Test

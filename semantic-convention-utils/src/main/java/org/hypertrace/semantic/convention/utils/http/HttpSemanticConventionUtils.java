@@ -212,8 +212,13 @@ public class HttpSemanticConventionUtils {
 
   public static Optional<String> getDestinationIpAddress(Event event) {
     return Optional.ofNullable(
-        SpanAttributeUtils.getStringAttribute(
-            event, OTelSpanSemanticConventions.NET_PEER_IP.getValue()));
+            SpanAttributeUtils.getStringAttribute(
+                event, OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue()))
+        .or(
+            () ->
+                Optional.ofNullable(
+                    SpanAttributeUtils.getStringAttribute(
+                        event, OTelSpanSemanticConventions.NET_PEER_IP.getValue())));
   }
 
   public static Optional<String> getEnvironmentForSpan(Event event) {
@@ -292,14 +297,19 @@ public class HttpSemanticConventionUtils {
               attributeValueMap.get(HTTP_TARGET.getValue()).getValue());
       return Optional.of(url);
     } else if (attributeValueMap.containsKey(HTTP_SCHEME.getValue())
-        && attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_PEER_IP.getValue())
+        && (attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue())
+            || attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_PEER_IP.getValue()))
         && attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_PEER_PORT.getValue())
         && attributeValueMap.containsKey(HTTP_TARGET.getValue())) {
       String url =
           String.format(
               "%s://%s:%s%s",
               getHttpSchemeFromRawAttributes(attributeValueMap).get(),
-              attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_IP.getValue()).getValue(),
+              attributeValueMap
+                  .getOrDefault(
+                      OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue(),
+                      attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_IP.getValue()))
+                  .getValue(),
               attributeValueMap
                   .get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue())
                   .getValue(),

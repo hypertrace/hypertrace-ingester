@@ -8,6 +8,7 @@ public enum OTelSpanSemanticConventions {
   NET_PEER_IP("net.peer.ip"),
   NET_PEER_PORT("net.peer.port"),
   NET_PEER_NAME("net.peer.name"),
+  NET_SOCK_PEER_ADDR("net.sock.peer.addr"),
   NET_TRANSPORT("net.transport"),
   HTTP_CLIENT_IP("http.client_ip");
 
