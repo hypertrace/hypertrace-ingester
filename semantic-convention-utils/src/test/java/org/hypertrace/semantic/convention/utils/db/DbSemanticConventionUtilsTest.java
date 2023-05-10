@@ -401,6 +401,21 @@ public class DbSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     v = DbSemanticConventionUtils.getSqlURI(e);
     assertEquals("jdbc:mysql://mysql:3306/shop", v.get());
+
+    // read from otel net attributes
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelDbSemanticConventions.DB_SYSTEM.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue(
+                    OTelDbSemanticConventions.MYSQL_DB_SYSTEM_VALUE.getValue()),
+                OTelSpanSemanticConventions.NET_PEER_NAME.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("127.0.0.1"),
+                OTelSpanSemanticConventions.NET_PEER_PORT.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("3306")));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = DbSemanticConventionUtils.getSqlURI(e);
+    assertEquals("jdbc://127.0.0.1:3306", v.get());
   }
 
   @Test
