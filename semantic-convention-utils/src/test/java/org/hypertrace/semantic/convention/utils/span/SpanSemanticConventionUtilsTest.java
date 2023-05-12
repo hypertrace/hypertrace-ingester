@@ -34,7 +34,17 @@ public class SpanSemanticConventionUtilsTest {
     Optional<String> v = SpanSemanticConventionUtils.getURIForOtelFormat(e);
     assertEquals("example.com", v.get());
 
-    // ip present
+    // net.sock.peer.addr present
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("172.0.1.17")));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = SpanSemanticConventionUtils.getURIForOtelFormat(e);
+    assertEquals("172.0.1.17", v.get());
+
+    // net.peer.ip present
     attributes =
         SemanticConventionTestUtil.buildAttributes(
             Map.of(
@@ -43,6 +53,18 @@ public class SpanSemanticConventionUtilsTest {
     when(e.getAttributes()).thenReturn(attributes);
     v = SpanSemanticConventionUtils.getURIForOtelFormat(e);
     assertEquals("172.0.1.17", v.get());
+
+    // both net.sock.peer.addr and net.peer.ip present but pref given to net.sock.peer.addr
+    attributes =
+        SemanticConventionTestUtil.buildAttributes(
+            Map.of(
+                OTelSpanSemanticConventions.NET_PEER_IP.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("172.0.1.17"),
+                OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue(),
+                SemanticConventionTestUtil.buildAttributeValue("172.0.1.18")));
+    when(e.getAttributes()).thenReturn(attributes);
+    v = SpanSemanticConventionUtils.getURIForOtelFormat(e);
+    assertEquals("172.0.1.18", v.get());
 
     // host & port
     attributes =

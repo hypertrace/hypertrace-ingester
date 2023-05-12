@@ -113,6 +113,22 @@ public class HttpSemanticConventionUtilsTest {
     url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
     assertEquals("http://172.0.8.11:1211/webshop/articles/4?s=1", url);
 
+    map.clear();
+    map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
+    map.put(
+        HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(),
+        buildAttributeValue("by=random;proto=http"));
+    map.put(
+        OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue(),
+        buildAttributeValue("172.0.8.11"));
+    map.put(OTelSpanSemanticConventions.NET_PEER_IP.getValue(), buildAttributeValue("172.0.8.12"));
+    map.put(OTelSpanSemanticConventions.NET_PEER_PORT.getValue(), buildAttributeValue("1211"));
+    map.put(HTTP_TARGET.getValue(), buildAttributeValue("/webshop/articles/4?s=1"));
+    map.put(SPAN_KIND.getValue(), buildAttributeValue(SPAN_KIND_CLIENT_VALUE.getValue()));
+    url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
+    // net.sock.peer.addr picked over net.peer.ip
+    assertEquals("http://172.0.8.11:1211/webshop/articles/4?s=1", url);
+
     // client span, span.kind present
     map.clear();
     map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
