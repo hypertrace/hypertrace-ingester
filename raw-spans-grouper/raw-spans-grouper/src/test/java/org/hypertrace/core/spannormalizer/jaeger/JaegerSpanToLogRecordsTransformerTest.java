@@ -42,7 +42,7 @@ public class JaegerSpanToLogRecordsTransformerTest {
 
     ProcessorContext processorContext = Mockito.mock(ProcessorContext.class);
     Mockito.when(processorContext.appConfigs())
-        .thenReturn(Map.of("span-normalizer-job-config", ConfigFactory.parseMap(configs)));
+        .thenReturn(Map.of("raw-spans-grouper-job-config", ConfigFactory.parseMap(configs)));
     JaegerSpanToLogRecordsTransformer jaegerSpanToLogRecordsTransformer =
         new JaegerSpanToLogRecordsTransformer();
     jaegerSpanToLogRecordsTransformer.init(processorContext);

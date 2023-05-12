@@ -15,7 +15,6 @@ import org.hypertrace.core.rawspansgrouper.RawSpansGrouper;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.serviceframework.config.ConfigUtils;
-import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.hypertrace.core.viewgenerator.service.MultiViewGeneratorLauncher;
 import org.hypertrace.metrics.exporter.MetricsExporterService;
 import org.hypertrace.metrics.generator.MetricsGenerator;
@@ -52,9 +51,9 @@ public class HypertraceIngester extends KafkaStreamsApp {
   private KafkaStreamsApp getSubTopologyInstance(String name) {
     KafkaStreamsApp kafkaStreamsApp;
     switch (name) {
-      case "span-normalizer":
-        kafkaStreamsApp = new SpanNormalizer(ConfigClientFactory.getClient());
-        break;
+        //      case "span-normalizer":
+        //        kafkaStreamsApp = new SpanNormalizer(ConfigClientFactory.getClient());
+        //        break;
       case "raw-spans-grouper":
         kafkaStreamsApp = new RawSpansGrouper(ConfigClientFactory.getClient());
         break;
