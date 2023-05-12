@@ -36,7 +36,6 @@ public class HypertraceIngesterTest {
   private static final String CONFIG_PATH = "configs/%s/application.conf";
   private HypertraceIngester underTest;
   private Config underTestConfig;
-  private Config spanNormalizerConfig;
   private Config rawSpansGrouperConfig;
   private Config traceEnricherConfig;
   private Config spanEventViewGeneratorConfig;
@@ -45,7 +44,6 @@ public class HypertraceIngesterTest {
   public void setUp() {
     underTest = new HypertraceIngester(ConfigClientFactory.getClient());
     underTestConfig = getConfig("hypertrace-ingester");
-    spanNormalizerConfig = getConfig("span-normalizer");
     rawSpansGrouperConfig = getConfig("raw-spans-grouper");
     traceEnricherConfig = getConfig("hypertrace-trace-enricher");
     spanEventViewGeneratorConfig = getConfig("view-gen-span-event");
