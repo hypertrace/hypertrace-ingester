@@ -51,9 +51,6 @@ public class HypertraceIngester extends KafkaStreamsApp {
   private KafkaStreamsApp getSubTopologyInstance(String name) {
     KafkaStreamsApp kafkaStreamsApp;
     switch (name) {
-        //      case "span-normalizer":
-        //        kafkaStreamsApp = new SpanNormalizer(ConfigClientFactory.getClient());
-        //        break;
       case "raw-spans-grouper":
         kafkaStreamsApp = new RawSpansGrouper(ConfigClientFactory.getClient());
         break;
