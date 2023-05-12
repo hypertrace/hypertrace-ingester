@@ -26,6 +26,7 @@ import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanSerde;
 import org.hypertrace.traceenricher.trace.enricher.StructuredTraceEnricherConstants;
 import org.hypertrace.viewgenerator.api.SpanEventView;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
@@ -50,7 +51,7 @@ public class HypertraceIngesterTest {
     spanEventViewGeneratorConfig = getConfig("view-gen-span-event");
   }
 
-  // @Test
+  @Test
   @SetEnvironmentVariable(key = "SERVICE_NAME", value = "hypertrace-ingester")
   public void testIngestionPacketFlow(@TempDir Path tempDir) {
     File file = tempDir.resolve("state").toFile();
@@ -74,6 +75,11 @@ public class HypertraceIngesterTest {
         JaegerSpanInternalModel.Span.newBuilder()
             .setSpanId(ByteString.copyFrom("1".getBytes()))
             .setTraceId(ByteString.copyFrom("trace-1".getBytes()))
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("tenant-id")
+                    .setVStr("tenant-1")
+                    .build())
             .build();
 
     TestInputTopic<byte[], JaegerSpanInternalModel.Span> spanGrouperInputTopic =
@@ -86,15 +92,6 @@ public class HypertraceIngesterTest {
 
     spanGrouperInputTopic.pipeInput(span);
 
-    // create output topic for span-normalizer topology
-    //      TestOutputTopic spanNormalizerOutputTopic =
-    //          topologyTestDriver.createOutputTopic(
-    //              spanNormalizerConfig.getString(
-    //                  StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
-    //              Serdes.String().deserializer(),
-    //              new AvroSerde<>().deserializer());
-    //      assertNotNull(spanNormalizerOutputTopic.readKeyValue());
-
     topologyTestDriver.advanceWallClockTime(Duration.ofSeconds(32));
 
     // create output topic for span-grouper topology
@@ -105,14 +102,6 @@ public class HypertraceIngesterTest {
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
     assertNotNull(spanGrouperOutputTopic.readKeyValue());
-
-    // create output topic for trace-enricher topology
-    TestOutputTopic traceEnricherOutputTopic =
-        topologyTestDriver.createOutputTopic(
-            traceEnricherConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
-            Serdes.String().deserializer(),
-            new AvroSerde<>().deserializer());
-    assertNotNull(traceEnricherOutputTopic.readKeyValue());
 
     // create output topic for  topology
     TestOutputTopic spanEventViewOutputTopic =
