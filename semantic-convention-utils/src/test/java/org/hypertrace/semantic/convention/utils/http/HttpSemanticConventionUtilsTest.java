@@ -28,6 +28,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_REQUEST_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_USER_AGENT_WITH_DASH;
@@ -511,6 +512,16 @@ public class HttpSemanticConventionUtilsTest {
     assertEquals(
         Optional.of("application/text"),
         HttpSemanticConventionUtils.getHttpRequestContentType(event));
+  }
+
+  @Test
+  public void testGetHttpResponseContentType() {
+    Event event =
+        createMockEventWithAttribute(
+            RawSpanConstants.getValue(HTTP_RESPONSE_CONTENT_TYPE), "application/text");
+    assertEquals(
+        Optional.of("application/text"),
+        HttpSemanticConventionUtils.getHttpResponseContentType(event));
   }
 
   @Test
