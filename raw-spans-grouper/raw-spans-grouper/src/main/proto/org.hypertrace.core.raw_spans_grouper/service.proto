@@ -1,0 +1,22 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package org.hypertrace.core.raw_span_grouper;
+
+service SpanStore{
+  rpc GetSpans(GetSpansRequest) returns (GetSpansResponse) {}
+}
+
+message GetSpansRequest{
+  repeated SpanId spanIdentities = 1;
+}
+
+
+message GetSpansResponse{
+  map<string, bytes> spans = 1;
+}
+
+message SpanId{
+  string tenant_id = 1;
+  bytes trace_id = 2;
+  bytes span_id = 3;
+}

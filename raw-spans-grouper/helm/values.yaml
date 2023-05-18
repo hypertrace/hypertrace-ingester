@@ -166,6 +166,13 @@ kafka-topic-creator:
         partitions: 8
         configs:
           cleanup.policy: "[compact, delete]"
+      global-spans-store:
+        replicationFactor: 3
+        partitions: 8
+        configs:
+          cleanup.policy: "[compact, delete]"
+          retention.ms: 21600000 # 6 hr
+
 
   zookeeper:
     address: zookeeper:2181
