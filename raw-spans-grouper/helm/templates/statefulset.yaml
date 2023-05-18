@@ -88,6 +88,9 @@ spec:
             - name: admin-port
               containerPort: {{ .Values.containerAdminPort }}
               protocol: TCP
+            - name: grpc-port
+              containerPort: 8070
+              protocol: TCP
           env:
             - name: SERVICE_NAME
               value: "{{ .Values.name }}"
