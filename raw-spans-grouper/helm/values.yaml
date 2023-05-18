@@ -15,7 +15,7 @@ replicaCount: 2
 maxUnavailable: 0
 
 image:
-  repository: hypertrace/raw-spans-grouper
+  repository: traceableai-docker-dev.jfrog.io/hypertrace/raw-spans-grouper
   pullPolicy: Always
   tagOverride: ""
 
