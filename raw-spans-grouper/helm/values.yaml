@@ -16,10 +16,10 @@ maxUnavailable: 0
 
 image:
   repository: hypertrace/raw-spans-grouper
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   tagOverride: ""
 
-imagePullSecrets: []
+imagePullSecrets: [regcred-dev]
 
 nodeLabels: {}
 
