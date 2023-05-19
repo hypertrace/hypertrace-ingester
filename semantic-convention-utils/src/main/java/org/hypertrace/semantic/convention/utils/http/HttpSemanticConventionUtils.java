@@ -28,6 +28,7 @@ import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_URL;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_REQUEST_X_FORWARDED_FOR_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_BODY_TRUNCATED;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_LENGTH;
+import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_CONTENT_TYPE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_HEADER;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_SIZE;
 import static org.hypertrace.core.span.constants.v1.Http.HTTP_RESPONSE_STATUS_CODE;
@@ -814,6 +815,12 @@ public class HttpSemanticConventionUtils {
     return Optional.ofNullable(
         SpanAttributeUtils.getFirstAvailableStringAttribute(
             event, List.of(RawSpanConstants.getValue(HTTP_REQUEST_CONTENT_TYPE))));
+  }
+
+  public static Optional<String> getHttpResponseContentType(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getFirstAvailableStringAttribute(
+            event, List.of(RawSpanConstants.getValue(HTTP_RESPONSE_CONTENT_TYPE))));
   }
 
   public static boolean isHttpRequestCookie(String requestHeaderAttributeKey) {
