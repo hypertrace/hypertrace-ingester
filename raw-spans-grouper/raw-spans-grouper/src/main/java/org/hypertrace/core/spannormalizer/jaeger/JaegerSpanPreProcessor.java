@@ -1,6 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
-import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.spannormalizer.util.EventBuilder.buildEvent;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -53,7 +53,7 @@ public class JaegerSpanPreProcessor
 
   @Override
   public void init(ProcessorContext context) {
-    Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
+    Config jobConfig = (Config) context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG);
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanDropManager = new SpanDropManager(jobConfig, grpcChannelRegistry);
     tagsFilter = new TagsFilter(jobConfig);

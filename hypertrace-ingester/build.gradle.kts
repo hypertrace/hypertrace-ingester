@@ -37,7 +37,6 @@ dependencies {
   implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":semantic-convention-utils"))
-  implementation(project(":span-normalizer:span-normalizer"))
   implementation(project(":raw-spans-grouper:raw-spans-grouper"))
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator"))
@@ -65,12 +64,6 @@ tasks.processResources {
 
 tasks.register<Copy>("copyServiceConfigs") {
   with(
-    createCopySpec(
-      "span-normalizer",
-      "span-normalizer",
-      "main",
-      "common"
-    ),
     createCopySpec(
       "raw-spans-grouper",
       "raw-spans-grouper",
@@ -143,12 +136,6 @@ tasks.test {
 
 tasks.register<Copy>("copyServiceConfigsTest") {
   with(
-    createCopySpec(
-      "span-normalizer",
-      "span-normalizer",
-      "test",
-      "span-normalizer"
-    ),
     createCopySpec(
       "raw-spans-grouper",
       "raw-spans-grouper",

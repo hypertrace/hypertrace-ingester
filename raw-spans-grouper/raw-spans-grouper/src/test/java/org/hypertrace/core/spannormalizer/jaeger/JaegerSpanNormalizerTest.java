@@ -18,11 +18,11 @@ import java.util.Optional;
 import java.util.Random;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.rawspansgrouper.RawSpansGrouper;
 import org.hypertrace.core.serviceframework.config.ConfigClientFactory;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
-import org.hypertrace.core.spannormalizer.SpanNormalizer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,10 +52,10 @@ public class JaegerSpanNormalizerTest {
   }
 
   @Test
-  @SetEnvironmentVariable(key = "SERVICE_NAME", value = "span-normalizer")
+  @SetEnvironmentVariable(key = "SERVICE_NAME", value = "raw-spans-grouper")
   public void defaultConfigParseTest() {
     try {
-      new SpanNormalizer(ConfigClientFactory.getClient());
+      new RawSpansGrouper(ConfigClientFactory.getClient());
     } catch (Exception e) {
       // We don't expect any exceptions in parsing the configuration.
       e.printStackTrace();
@@ -82,10 +82,10 @@ public class JaegerSpanNormalizerTest {
   }
 
   @Test
-  @SetEnvironmentVariable(key = "SERVICE_NAME", value = "span-normalizer")
+  @SetEnvironmentVariable(key = "SERVICE_NAME", value = "raw-spans-grouper")
   public void testTenantIdKeyConfiguration() {
     try {
-      new SpanNormalizer(ConfigClientFactory.getClient());
+      new RawSpansGrouper(ConfigClientFactory.getClient());
     } catch (Exception e) {
       // We don't expect any exceptions in parsing the configuration.
       e.printStackTrace();

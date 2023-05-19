@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.google.protobuf.ByteString;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
+import io.jaegertracing.api_v2.JaegerSpanInternalModel;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -36,7 +36,6 @@ public class HypertraceIngesterTest {
   private static final String CONFIG_PATH = "configs/%s/application.conf";
   private HypertraceIngester underTest;
   private Config underTestConfig;
-  private Config spanNormalizerConfig;
   private Config rawSpansGrouperConfig;
   private Config traceEnricherConfig;
   private Config spanEventViewGeneratorConfig;
@@ -45,7 +44,6 @@ public class HypertraceIngesterTest {
   public void setUp() {
     underTest = new HypertraceIngester(ConfigClientFactory.getClient());
     underTestConfig = getConfig("hypertrace-ingester");
-    spanNormalizerConfig = getConfig("span-normalizer");
     rawSpansGrouperConfig = getConfig("raw-spans-grouper");
     traceEnricherConfig = getConfig("hypertrace-trace-enricher");
     spanEventViewGeneratorConfig = getConfig("view-gen-span-event");
@@ -71,30 +69,26 @@ public class HypertraceIngesterTest {
     // create topology test driver for ingester
     TopologyTestDriver topologyTestDriver = new TopologyTestDriver(streamsBuilder.build(), props);
 
-    Span span =
-        Span.newBuilder()
+    JaegerSpanInternalModel.Span span =
+        JaegerSpanInternalModel.Span.newBuilder()
             .setSpanId(ByteString.copyFrom("1".getBytes()))
             .setTraceId(ByteString.copyFrom("trace-1".getBytes()))
+            .addTags(
+                JaegerSpanInternalModel.KeyValue.newBuilder()
+                    .setKey("tenant-id")
+                    .setVStr("tenant-1")
+                    .build())
             .build();
 
-    TestInputTopic<byte[], Span> spanNormalizerInputTopic =
+    TestInputTopic<byte[], JaegerSpanInternalModel.Span> spanGrouperInputTopic =
         topologyTestDriver.createInputTopic(
-            spanNormalizerConfig.getString(
+            rawSpansGrouperConfig.getString(
                 org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants
                     .INPUT_TOPIC_CONFIG_KEY),
             Serdes.ByteArray().serializer(),
             new JaegerSpanSerde().serializer());
 
-    spanNormalizerInputTopic.pipeInput(span);
-
-    // create output topic for span-normalizer topology
-    TestOutputTopic spanNormalizerOutputTopic =
-        topologyTestDriver.createOutputTopic(
-            spanNormalizerConfig.getString(
-                StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
-            Serdes.String().deserializer(),
-            new AvroSerde<>().deserializer());
-    assertNotNull(spanNormalizerOutputTopic.readKeyValue());
+    spanGrouperInputTopic.pipeInput(span);
 
     topologyTestDriver.advanceWallClockTime(Duration.ofSeconds(32));
 
@@ -106,14 +100,6 @@ public class HypertraceIngesterTest {
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
     assertNotNull(spanGrouperOutputTopic.readKeyValue());
-
-    // create output topic for trace-enricher topology
-    TestOutputTopic traceEnricherOutputTopic =
-        topologyTestDriver.createOutputTopic(
-            traceEnricherConfig.getString(StructuredTraceEnricherConstants.OUTPUT_TOPIC_CONFIG_KEY),
-            Serdes.String().deserializer(),
-            new AvroSerde<>().deserializer());
-    assertNotNull(traceEnricherOutputTopic.readKeyValue());
 
     // create output topic for  topology
     TestOutputTopic spanEventViewOutputTopic =

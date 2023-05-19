@@ -1,7 +1,7 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
-import static org.hypertrace.core.spannormalizer.constants.SpanNormalizerConstants.SPAN_NORMALIZER_JOB_CONFIG;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor.SPANS_COUNTER;
 
 import com.typesafe.config.Config;
@@ -36,7 +36,7 @@ public class JaegerSpanToAvroRawSpanTransformer
 
   @Override
   public void init(ProcessorContext context) {
-    Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
+    Config jobConfig = (Config) context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG);
     converter = JaegerSpanNormalizer.get(jobConfig);
   }
 

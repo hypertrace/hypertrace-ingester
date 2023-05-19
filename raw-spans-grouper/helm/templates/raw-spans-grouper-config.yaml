@@ -81,3 +81,83 @@ data:
       }
     }
     {{- end }}
+
+    # span normalizer config
+    {{- if hasKey .Values.spanNormalizerConfig "processor" }}
+    processor {
+      {{- if hasKey .Values.spanNormalizerConfig.processor "tenantIdTagKey" }}
+      tenantIdTagKey = "{{ .Values.spanNormalizerConfig.processor.tenantIdTagKey }}"
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "excludeTenantIds" }}
+      excludeTenantIds = {{ .Values.spanNormalizerConfig.processor.excludeTenantIds | toJson }}
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "defaultTenantId" }}
+      defaultTenantId = "{{ .Values.spanNormalizerConfig.processor.defaultTenantId }}"
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "spanDropCriterion" }}
+      spanDropCriterion = {{ .Values.spanNormalizerConfig.processor.spanDropCriterion | toJson }}
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "spanDropFilters" }}
+      spanDropFilters = {{ .Values.spanNormalizerConfig.processor.spanDropFilters | toJson }}
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "bypassKey" }}
+      bypass.key = "{{ .Values.spanNormalizerConfig.processor.bypassKey }}"
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "lateArrivalThresholdDuration" }}
+      late.arrival.threshold.duration = "{{ .Values.spanNormalizerConfig.processor.lateArrivalThresholdDuration }}"
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "allowedAttributesPrefixes" }}
+      allowed.attributes.prefixes = {{ .Values.spanNormalizerConfig.processor.allowedAttributesPrefixes | toJson }}
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "prefixedMatchedAllowedAttributes" }}
+      prefixed.matched.allowed.attributes = {{ .Values.spanNormalizerConfig.processor.prefixedMatchedAllowedAttributes | toJson }}
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "rootExitSpanDropCriterion" }}
+      rootExitSpanDropCriterion = {{ .Values.spanNormalizerConfig.processor.rootExitSpanDropCriterion | toJson }}
+      {{- end }}
+
+      {{- if hasKey .Values.spanNormalizerConfig.processor "excludeLogsTenantIds" }}
+      excludeLogsTenantIds = {{ .Values.spanNormalizerConfig.processor.excludeLogsTenantIds | toJson }}
+      {{- end }}
+    }
+    {{- end }}
+
+    {{- if hasKey .Values.spanNormalizerConfig "metrics" }}
+    metrics {
+      reporter {
+        names = {{- toJson .Values.spanNormalizerConfig.metrics.reporter.names | trim | nindent 12 }}
+      }
+    }
+    {{- end }}
+    clients {
+      config.service.config = {
+        host = {{ .Values.spanNormalizerConfig.configServiceHost }}
+        port = {{ .Values.spanNormalizerConfig.configServicePort }}
+      }
+    }
+    span.rules.exclude {
+      cache = {
+        refreshAfterWriteDuration = {{ .Values.spanNormalizerConfig.excludeSpanRulesConfig.cache.refreshAfterWriteDuration }}
+        expireAfterWriteDuration = {{ .Values.spanNormalizerConfig.excludeSpanRulesConfig.cache.expireAfterWriteDuration }}
+      }
+    }
+    {{- if hasKey .Values.spanNormalizerConfig "rateLimitConfig" }}
+    rate.limit.config = [
+      {{- range $k,$v := $.Values.spanNormalizerConfig.rateLimitConfig }}
+      {
+        tenantId = {{ $v.tenantId }}
+        groupingKey = {{ $v.groupingKey }}
+        maxSpansPerMinute = {{ $v.maxSpansPerMinute }}
+      },
+      {{- end }}
+    ]
+    {{- end }}
