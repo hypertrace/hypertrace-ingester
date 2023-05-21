@@ -35,6 +35,7 @@ public class JaegerSpanPreProcessor
   private TenantIdHandler tenantIdHandler;
   private SpanDropManager spanDropManager;
   private TagsFilter tagsFilter;
+  private ServiceNamer serviceNamer;
 
   public JaegerSpanPreProcessor(GrpcChannelRegistry grpcChannelRegistry) {
     this.grpcChannelRegistry = grpcChannelRegistry;
@@ -49,6 +50,7 @@ public class JaegerSpanPreProcessor
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanDropManager = new SpanDropManager(jobConfig, excludeSpanRulesCache);
     tagsFilter = new TagsFilter(jobConfig);
+    serviceNamer = new ServiceNamer(jobConfig);
   }
 
   @Override
@@ -57,6 +59,7 @@ public class JaegerSpanPreProcessor
     tenantIdHandler = new TenantIdHandler(jobConfig);
     spanDropManager = new SpanDropManager(jobConfig, grpcChannelRegistry);
     tagsFilter = new TagsFilter(jobConfig);
+    serviceNamer = new ServiceNamer(jobConfig);
   }
 
   @Override
@@ -112,7 +115,10 @@ public class JaegerSpanPreProcessor
     Span processedSpan = tagsFilter.apply(tenantId, span);
     Event event =
         buildEvent(
-            tenantId, processedSpan, tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
+            tenantId,
+            processedSpan,
+            serviceNamer,
+            tenantIdHandler.getTenantIdProvider().getTenantIdTagKey());
 
     if (spanDropManager.shouldDropSpan(span, event, tenantId)) {
       return null;

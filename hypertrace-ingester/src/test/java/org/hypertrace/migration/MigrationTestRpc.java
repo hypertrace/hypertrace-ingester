@@ -35,6 +35,7 @@ import org.hypertrace.core.semantic.convention.constants.error.OTelErrorSemantic
 import org.hypertrace.core.semantic.convention.constants.rpc.OTelRpcSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer;
+import org.hypertrace.core.spannormalizer.jaeger.ServiceNamer;
 import org.hypertrace.semantic.convention.utils.rpc.RpcSemanticConventionUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,7 +91,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getGrpc());
@@ -125,7 +130,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getGrpc());
@@ -142,7 +151,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getGrpc());
@@ -161,7 +174,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     assertNull(rawSpan.getEvent().getGrpc());
     assertTrue(RpcSemanticConventionUtils.getGrpcUserAgent(rawSpan.getEvent()).isEmpty());
@@ -175,7 +192,11 @@ public class MigrationTestRpc {
 
     span = createSpanFromTags(tagsMap);
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getGrpc());
     assertEquals(
@@ -191,7 +212,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     assertNull(rawSpan.getEvent().getGrpc());
     assertTrue(RpcSemanticConventionUtils.getGrpcAuthority(rawSpan.getEvent()).isEmpty());
@@ -205,7 +230,11 @@ public class MigrationTestRpc {
 
     span = createSpanFromTags(tagsMap);
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getGrpc());
@@ -244,7 +273,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getGrpc());
@@ -281,7 +314,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     assertEquals(
         "resource not found", RpcSemanticConventionUtils.getGrpcErrorMsg(rawSpan.getEvent()));
@@ -295,7 +332,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getGrpc());
@@ -314,7 +355,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getGrpc());
@@ -337,7 +382,11 @@ public class MigrationTestRpc {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     assertAll(
         () ->
