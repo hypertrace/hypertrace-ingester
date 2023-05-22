@@ -52,7 +52,11 @@ public class JaegerSpanToLogRecordsTransformerTest {
             new PreProcessedSpan(
                 "tenant-1",
                 getTestSpan(),
-                buildEvent("tenant-1", getTestSpan(), Optional.of("tenant-key"))));
+                buildEvent(
+                    "tenant-1",
+                    getTestSpan(),
+                    new ServiceNamer(ConfigFactory.empty()),
+                    Optional.of("tenant-key"))));
     Assertions.assertNull(keyValue);
   }
 

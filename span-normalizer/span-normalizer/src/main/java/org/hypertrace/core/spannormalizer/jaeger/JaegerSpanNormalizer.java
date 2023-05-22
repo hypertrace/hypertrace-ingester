@@ -29,9 +29,6 @@ import org.slf4j.LoggerFactory;
 public class JaegerSpanNormalizer {
   private static final Logger LOG = LoggerFactory.getLogger(JaegerSpanNormalizer.class);
 
-  /** Service name can be sent against this key as well */
-  public static final String OLD_JAEGER_SERVICENAME_KEY = "jaeger.servicename";
-
   private static final String SPAN_NORMALIZATION_TIME_METRIC = "span.normalization.time";
 
   private static JaegerSpanNormalizer INSTANCE;

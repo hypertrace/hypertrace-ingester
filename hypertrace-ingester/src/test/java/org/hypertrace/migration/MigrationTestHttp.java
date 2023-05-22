@@ -42,6 +42,7 @@ import org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticCo
 import org.hypertrace.core.semantic.convention.constants.span.OTelSpanSemanticConventions;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer;
+import org.hypertrace.core.spannormalizer.jaeger.ServiceNamer;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -99,7 +100,11 @@ public class MigrationTestHttp {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -140,7 +145,11 @@ public class MigrationTestHttp {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -156,7 +165,11 @@ public class MigrationTestHttp {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -171,7 +184,11 @@ public class MigrationTestHttp {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -186,7 +203,11 @@ public class MigrationTestHttp {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -204,7 +225,11 @@ public class MigrationTestHttp {
                 RawSpanConstants.getValue(HTTP_REQUEST_PATH), "path1",
                 RawSpanConstants.getValue(HTTP_PATH), "  "));
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     assertFalse(HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).isPresent());
 
@@ -214,7 +239,11 @@ public class MigrationTestHttp {
                 RawSpanConstants.getValue(HTTP_REQUEST_PATH), "/path1",
                 RawSpanConstants.getValue(HTTP_PATH), "/"));
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     assertEquals("/path1", HttpSemanticConventionUtils.getHttpPath(rawSpan.getEvent()).get());
   }
@@ -226,7 +255,11 @@ public class MigrationTestHttp {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -241,7 +274,11 @@ public class MigrationTestHttp {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -257,7 +294,11 @@ public class MigrationTestHttp {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -272,7 +313,11 @@ public class MigrationTestHttp {
     Span span =
         createSpanFromTags(Map.of(RawSpanConstants.getValue(HTTP_URL), "/dispatch/test?a=b&k1=v1"));
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
     assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
   }
 
@@ -283,7 +328,11 @@ public class MigrationTestHttp {
         createSpanFromTags(
             Map.of(RawSpanConstants.getValue(HTTP_URL), "http://abc.xyz/dispatch/test?a=b&k1=v1"));
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -307,7 +356,11 @@ public class MigrationTestHttp {
             .build();
 
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -329,7 +382,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -351,7 +408,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -372,7 +433,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -392,7 +457,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -415,7 +484,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -446,7 +519,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -479,7 +556,11 @@ public class MigrationTestHttp {
 
     Span span = createSpanFromTags(tagsMap);
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -513,7 +594,11 @@ public class MigrationTestHttp {
   public void testPopulateOtherFieldsOTelSpan() throws Exception {
     Span span = Span.newBuilder().build();
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     assertFalse(HttpSemanticConventionUtils.getHttpUrl(rawSpan.getEvent()).isPresent());
     assertFalse(HttpSemanticConventionUtils.getHttpScheme(rawSpan.getEvent()).isPresent());
@@ -530,7 +615,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -552,7 +641,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 
@@ -573,7 +666,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
 
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
@@ -594,7 +691,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 
@@ -613,7 +714,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 
@@ -635,7 +740,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 
@@ -665,7 +774,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
     assertEquals(
@@ -704,7 +817,11 @@ public class MigrationTestHttp {
             .build();
 
     rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
     assertEquals(
@@ -721,7 +838,11 @@ public class MigrationTestHttp {
                 OTelHttpSemanticConventions.HTTP_TARGET.getValue(),
                 "/api/v1/gatekeeper/check?url=%2Fpixel%2Factivities%3Fadvertisable%3DTRHRT&method=GET&service=pixel"));
     RawSpan rawSpan =
-        normalizer.convert("tenant-key", span, buildEvent("tenant-key", span, Optional.empty()));
+        normalizer.convert(
+            "tenant-key",
+            span,
+            buildEvent(
+                "tenant-key", span, new ServiceNamer(ConfigFactory.empty()), Optional.empty()));
     // now, we are not populating first class fields. So, it should be null.
     assertNull(rawSpan.getEvent().getHttp());
 

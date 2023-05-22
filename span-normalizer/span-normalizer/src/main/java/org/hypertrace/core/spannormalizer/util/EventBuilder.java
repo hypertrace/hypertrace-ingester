@@ -1,7 +1,7 @@
 package org.hypertrace.core.spannormalizer.util;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
-import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanNormalizer.OLD_JAEGER_SERVICENAME_KEY;
+import static org.hypertrace.core.spannormalizer.jaeger.ServiceNamer.OLD_JAEGER_SERVICENAME_KEY;
 
 import com.google.protobuf.ProtocolStringList;
 import com.google.protobuf.util.Timestamps;
@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -25,10 +24,14 @@ import org.hypertrace.core.datamodel.eventfields.jaeger.JaegerFields;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.JaegerAttribute;
+import org.hypertrace.core.spannormalizer.jaeger.ServiceNamer;
 
 public class EventBuilder {
   public static Event buildEvent(
-      String tenantId, JaegerSpanInternalModel.Span jaegerSpan, Optional<String> tenantIdKey) {
+      String tenantId,
+      JaegerSpanInternalModel.Span jaegerSpan,
+      ServiceNamer serviceNamer,
+      Optional<String> tenantIdKey) {
     Event.Builder eventBuilder = fastNewBuilder(Event.Builder.class);
     eventBuilder.setCustomerId(tenantId);
     eventBuilder.setEventId(jaegerSpan.getSpanId().asReadOnlyByteBuffer());
@@ -73,7 +76,7 @@ public class EventBuilder {
       // platform.
       String key = keyValue.getKey().toLowerCase();
       // Do not add the tenant id to the tags.
-      if ((tenantIdKey.isPresent() && key.equals(tenantIdKey.get()))) {
+      if (tenantIdKey.isPresent() && key.equals(tenantIdKey.get())) {
         continue;
       }
       attributeFieldMap.put(key, JaegerHTTagsConverter.createFromJaegerKeyValue(keyValue));
@@ -90,23 +93,17 @@ public class EventBuilder {
       jaegerFieldsBuilder.setWarnings(warningsList);
     }
 
-    // Jaeger service name can come from either first class field in Span or the tag
-    // `jaeger.servicename`
-    String serviceName =
-        !StringUtils.isEmpty(jaegerSpan.getProcess().getServiceName())
-            ? jaegerSpan.getProcess().getServiceName()
-            : attributeFieldMap.containsKey(OLD_JAEGER_SERVICENAME_KEY)
-                ? attributeFieldMap.get(OLD_JAEGER_SERVICENAME_KEY).getValue()
-                : StringUtils.EMPTY;
-
-    if (!StringUtils.isEmpty(serviceName)) {
-      eventBuilder.setServiceName(serviceName);
-      // in case `jaeger.servicename` is present in the map, remove it
-      attributeFieldMap.remove(OLD_JAEGER_SERVICENAME_KEY);
-      attributeFieldMap.put(
-          RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME),
-          AttributeValueCreator.create(serviceName));
-    }
+    serviceNamer
+        .findServiceName(jaegerSpan, attributeFieldMap)
+        .ifPresent(
+            serviceName -> {
+              eventBuilder.setServiceName(serviceName);
+              // in case `jaeger.servicename` is present in the map, remove it
+              attributeFieldMap.remove(OLD_JAEGER_SERVICENAME_KEY);
+              attributeFieldMap.put(
+                  RawSpanConstants.getValue(JaegerAttribute.JAEGER_ATTRIBUTE_SERVICE_NAME),
+                  AttributeValueCreator.create(serviceName));
+            });
 
     // EVENT METRICS
     Map<String, MetricValue> metricMap = new HashMap<>();
