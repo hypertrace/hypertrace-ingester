@@ -1,3 +1,4 @@
+{{- if eq .Values.chartType "application" }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -126,3 +127,4 @@ spec:
               port: {{ .Values.containerAdminPort }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+{{- end }}

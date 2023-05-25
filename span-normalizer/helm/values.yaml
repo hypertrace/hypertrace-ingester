@@ -10,6 +10,8 @@
 # You can always specify a different namespace for a resource by setting it directly in it's yaml file or
 # making it configurable by defining it in this file.
 
+chartType: "application"
+
 ###########
 # Deployment
 ###########
