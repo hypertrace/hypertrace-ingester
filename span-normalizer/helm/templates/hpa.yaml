@@ -1,4 +1,4 @@
-{{- if .Values.hpa.enabled }}
+{{- if and (.Values.hpa.enabled) ((eq .Values.chartType "application")) }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:

@@ -35,7 +35,7 @@ data:
       replication.factor = "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.replicationFactor }}"
       topic.cleanup.policy = "delete,compact"
       # RocksDB state store configs
-      state.dir = "/var/data/"
+      state.dir = "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.stateDir }}"
       rocksdb.cache.total.capacity: "{{ int .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbCacheTotalCapacity }}"
       rocksdb.cache.write.buffers.ratio: "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbCacheWriteBuffersRatio }}"
       rocksdb.cache.high.priority.pool.ratio: "{{ .Values.rawSpansGrouperConfig.kafkaStreamsConfig.rocksdbCacheHighPriorityPoolRatio }}"
