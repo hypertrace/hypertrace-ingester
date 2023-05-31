@@ -18,6 +18,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.processor.StreamPartitioner;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
 import org.hypertrace.core.kafkastreams.framework.partitioner.KeyHashPartitioner;
@@ -67,17 +68,30 @@ public class SpanNormalizer extends KafkaStreamsApp {
         preProcessedStream
             .transform(JaegerSpanToAvroRawSpanTransformer::new)
             .branch(new ByPassPredicate(jobConfig), (key, value) -> true);
-    branches[0].transform(RawSpanToStructuredTraceTransformer::new).to(bypassOutputTopic);
 
-    StreamPartitioner<TraceIdentity, RawSpan> groupPartitioner =
+    StreamPartitioner<TraceIdentity, RawSpan> groupOutputPartitioner =
         new GroupPartitionerBuilder<TraceIdentity, RawSpan>()
             .buildPartitioner(
-                "spans",
+                "inline-spans",
                 jobConfig,
                 (traceid, span) -> traceid.getTenantId(),
                 new KeyHashPartitioner<>(),
                 getGrpcChannelRegistry());
-    branches[1].to(outputTopic, Produced.with(null, null, groupPartitioner));
+
+    StreamPartitioner<String, StructuredTrace> groupBypassPartitioner =
+        new GroupPartitionerBuilder<String, StructuredTrace>()
+            .buildPartitioner(
+                "spans",
+                jobConfig,
+                (nullKey, trace) -> trace.getCustomerId(),
+                new KeyHashPartitioner<>(),
+                getGrpcChannelRegistry());
+
+    branches[0]
+        .transform(RawSpanToStructuredTraceTransformer::new)
+        .to(bypassOutputTopic, Produced.with(null, null, groupBypassPartitioner));
+
+    branches[1].to(outputTopic, Produced.with(null, null, groupOutputPartitioner));
 
     preProcessedStream.transform(JaegerSpanToLogRecordsTransformer::new).to(outputTopicRawLogs);
     return streamsBuilder;
