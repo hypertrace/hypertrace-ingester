@@ -40,7 +40,7 @@ dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.6")
   implementation("org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner:0.2.6")
   implementation("org.hypertrace.config.service:span-processing-config-service-api:0.1.47")
-  implementation("org.hypertrace.config.service:span-processing-utils:0.1.49")
+  implementation("org.hypertrace.config.service:span-processing-utils:0.1.50")
   implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.11.2")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.11.2")
   implementation("com.google.guava:guava:31.1-jre")
