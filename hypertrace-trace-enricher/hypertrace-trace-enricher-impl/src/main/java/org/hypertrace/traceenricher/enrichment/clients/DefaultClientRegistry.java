@@ -2,7 +2,6 @@ package org.hypertrace.traceenricher.enrichment.clients;
 
 import com.typesafe.config.Config;
 import io.grpc.Channel;
-import io.grpc.ManagedChannel;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executor;
@@ -24,6 +23,7 @@ import org.hypertrace.trace.accessor.entities.TraceEntityAccessorBuilder;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReaderFactory;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
+import org.hypertrace.traceenricher.util.UserAgentParser;
 
 public class DefaultClientRegistry implements ClientRegistry {
   private static final String ATTRIBUTE_SERVICE_HOST_KEY = "attribute.service.config.host";
@@ -35,9 +35,10 @@ public class DefaultClientRegistry implements ClientRegistry {
   private static final String TRACE_ENTITY_WRITE_THROTTLE_DURATION =
       "trace.entity.write.throttle.duration";
 
-  private final ManagedChannel attributeServiceChannel;
-  private final ManagedChannel configServiceChannel;
-  private final ManagedChannel entityServiceChannel;
+  private static final String USER_AGENT_PARSER_CONFIG_KEY = "useragent.parser";
+  private final Channel attributeServiceChannel;
+  private final Channel configServiceChannel;
+  private final Channel entityServiceChannel;
   private final EdsCacheClient edsCacheClient;
   private final EntityDataClient entityDataClient;
   private final CachingAttributeClient cachingAttributeClient;
@@ -45,6 +46,7 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final TraceEntityAccessor entityAccessor;
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
   private final GrpcChannelRegistry grpcChannelRegistry;
+  private final UserAgentParser userAgentParser;
 
   public DefaultClientRegistry(
       Config config, GrpcChannelRegistry grpcChannelRegistry, Executor cacheLoaderExecutor) {
@@ -85,6 +87,7 @@ public class DefaultClientRegistry implements ClientRegistry {
                     ? config.getDuration(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
                     : Duration.ofSeconds(15))
             .build();
+    this.userAgentParser = new UserAgentParser(config.getConfig(USER_AGENT_PARSER_CONFIG_KEY));
   }
 
   @Override
@@ -144,16 +147,20 @@ public class DefaultClientRegistry implements ClientRegistry {
     return this.cachingAttributeClient;
   }
 
+  @Override
+  public UserAgentParser getUserAgentParser() {
+    return this.userAgentParser;
+  }
+
   public void shutdown() {
     this.grpcChannelRegistry.shutdown();
   }
 
-  protected ManagedChannel buildChannel(String host, int port) {
+  protected Channel buildChannel(String host, int port) {
     return this.grpcChannelRegistry.forPlaintextAddress(host, port);
   }
 
-  protected ManagedChannel buildChannel(
-      String host, int port, GrpcChannelConfig grpcChannelConfig) {
+  protected Channel buildChannel(String host, int port, GrpcChannelConfig grpcChannelConfig) {
     return this.grpcChannelRegistry.forPlaintextAddress(host, port, grpcChannelConfig);
   }
 }

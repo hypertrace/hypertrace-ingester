@@ -11,6 +11,7 @@ import org.hypertrace.entity.query.service.v1.EntityQueryServiceGrpc.EntityQuery
 import org.hypertrace.trace.accessor.entities.TraceEntityAccessor;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
+import org.hypertrace.traceenricher.util.UserAgentParser;
 
 public interface ClientRegistry {
 
@@ -35,4 +36,6 @@ public interface ClientRegistry {
   EntityCache getEntityCache();
 
   CachingAttributeClient getCachingAttributeClient();
+
+  UserAgentParser getUserAgentParser();
 }

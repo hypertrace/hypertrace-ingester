@@ -50,13 +50,11 @@ data:
           host = {{ .Values.traceEnricherConfig.configServiceHost }}
           port = {{ .Values.traceEnricherConfig.configServicePort }}
         }
-      }
-    }
-    
-    enricher.UserAgentSpanEnricher {
-      cache = {
-        maxSize = {{ .Values.traceEnricherConfig.userAgentSpanEnricherConfig.cacheSize }}
-        write.expire.duration = {{ .Values.traceEnricherConfig.userAgentSpanEnricherConfig.expiryTime }}
-        refresh.expire.duration = {{ .Values.traceEnricherConfig.userAgentSpanEnricherConfig.refreshTime }}      
+        useragent.parser = {
+          cache = {
+            maxSize = {{ .Values.traceEnricherConfig.userAgentParserConfig.cacheSize }}
+            access.expire.duration = {{ .Values.traceEnricherConfig.userAgentParserConfig.expireAfterAccess }}    
+          }
+        }
       }
     }

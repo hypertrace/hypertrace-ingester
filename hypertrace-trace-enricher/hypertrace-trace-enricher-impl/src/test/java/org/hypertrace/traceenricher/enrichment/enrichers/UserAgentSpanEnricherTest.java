@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.util.Map;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
@@ -23,17 +23,24 @@ import org.hypertrace.traceenricher.enrichedspan.constants.v1.Protocol;
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.UserAgent;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.util.Constants;
+import org.hypertrace.traceenricher.util.UserAgentParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
-
+class UserAgentSpanEnricherTest extends AbstractAttributeEnricherTest {
   private UserAgentSpanEnricher enricher;
 
   @BeforeEach
   public void setUp() {
+    UserAgentParser parser =
+        new UserAgentParser(
+            ConfigFactory.parseMap(
+                Map.of(
+                    "cache.maxSize", 0, "cache.access.expire.duration", "0s", "max.length", 1000)));
+    ClientRegistry mockClientRegistry = mock(ClientRegistry.class);
+    when(mockClientRegistry.getUserAgentParser()).thenReturn(parser);
     enricher = new UserAgentSpanEnricher();
-    enricher.init(mock(Config.class), mock(ClientRegistry.class));
+    enricher.init(ConfigFactory.empty(), mockClientRegistry);
   }
 
   @Test
