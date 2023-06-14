@@ -99,10 +99,9 @@ traceEnricherConfig:
   attributeServicePort: 9012
   configServiceHost: config-service
   configServicePort: 50101
-  userAgentSpanEnricherConfig:
+  userAgentParserConfig:
     cacheSize: 20000
-    refreshTime: 5m
-    expiryTime: 10m
+    expireAfterAccess: 10m
 
 logConfig:
   name: hypertrace-trace-enricher-log-config
