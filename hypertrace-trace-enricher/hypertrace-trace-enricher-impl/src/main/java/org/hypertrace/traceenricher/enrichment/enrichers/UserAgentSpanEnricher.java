@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
@@ -31,11 +30,9 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
 
   private static final String CACHE_CONFIG_KEY = "cache";
   private static final String CACHE_CONFIG_MAX_SIZE = "maxSize";
-  public static final String CACHE_CONFIG_WRITE_EXPIRY_DURATION = "write.expire.duration";
-  public static final String CACHE_CONFIG_REFRESH_EXPIRY_DURATION = "refresh.expire.duration";
+  public static final String CACHE_CONFIG_ACCESS_EXPIRATION_DURATION = "access.expire.duration";
   private static final int CACHE_MAX_SIZE_DEFAULT = 20000;
-  private static final Duration DEFAULT_WRITE_EXPIRY_DURATION = Duration.ofMinutes(10);
-  private static final Duration DEFAULT_REFRESH_EXPIRY_DURATION = Duration.ofMinutes(5);
+  private static final Duration DEFAULT_ACCESS_EXPIRATION_DURATION = Duration.ofMinutes(5);
   private static final String USER_AGENT_MAX_LENGTH_KEY = "user.agent.max.length";
   private static final int DEFAULT_USER_AGENT_MAX_LENGTH = 1000;
   private static final String DOT = ".";
@@ -52,29 +49,17 @@ public class UserAgentSpanEnricher extends AbstractTraceEnricher {
           enricherCacheConfig.hasPath(CACHE_CONFIG_MAX_SIZE)
               ? enricherCacheConfig.getInt(CACHE_CONFIG_MAX_SIZE)
               : CACHE_MAX_SIZE_DEFAULT;
-      Duration writeExpiryDuration =
-          enricherCacheConfig.hasPath(CACHE_CONFIG_WRITE_EXPIRY_DURATION)
-              ? enricherCacheConfig.getDuration(CACHE_CONFIG_WRITE_EXPIRY_DURATION)
-              : DEFAULT_WRITE_EXPIRY_DURATION;
-      Duration refreshExpiryDuration =
-          enricherCacheConfig.hasPath(CACHE_CONFIG_REFRESH_EXPIRY_DURATION)
-              ? enricherCacheConfig.getDuration(CACHE_CONFIG_REFRESH_EXPIRY_DURATION)
-              : DEFAULT_REFRESH_EXPIRY_DURATION;
+      Duration accessExpirationDuration =
+          enricherCacheConfig.hasPath(CACHE_CONFIG_ACCESS_EXPIRATION_DURATION)
+              ? enricherCacheConfig.getDuration(CACHE_CONFIG_ACCESS_EXPIRATION_DURATION)
+              : DEFAULT_ACCESS_EXPIRATION_DURATION;
 
       userAgentCache =
           CacheBuilder.newBuilder()
               .maximumSize(cacheSize)
-              .refreshAfterWrite(refreshExpiryDuration)
-              .expireAfterWrite(writeExpiryDuration)
+              .expireAfterAccess(accessExpirationDuration)
               .recordStats()
-              .build(
-                  new CacheLoader<>() {
-                    @Override
-                    @ParametersAreNonnullByDefault
-                    public ReadableUserAgent load(String userAgentString) {
-                      return userAgentStringParser.parse(userAgentString);
-                    }
-                  });
+              .build(CacheLoader.from(userAgentStringParser::parse));
       PlatformMetricsRegistry.registerCache(
           this.getClass().getName() + DOT + "userAgentCache",
           userAgentCache,
