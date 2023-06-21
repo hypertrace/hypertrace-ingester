@@ -42,6 +42,12 @@ jobs:
         with: 
           args: build -x avroCompatibilityCheck dockerBuildImages
 
+      - name: Run Trivy vulnerability scanner
+        uses: hypertrace/github-actions/trivy-image-scan@main
+        with:
+          image: hypertrace/hypertrace-ingester
+          output-mode: github
+
   validate-helm-charts:
     runs-on: ubuntu-20.04
     container: 
@@ -60,24 +66,6 @@ jobs:
 
       - name: validate charts
         run: ./.github/workflows/helm.sh validate
-
-  snyk-scan:
-    runs-on: ubuntu-20.04
-    steps:
-    # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
-      - name: Check out code
-        uses: actions/checkout@v2.3.4
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-          fetch-depth: 0
-      - name: Setup snyk
-        uses: snyk/actions/setup@0.3.0
-      - name: Snyk test
-        run: snyk test --all-sub-projects --org=hypertrace --severity-threshold=low --policy-path=.snyk --configuration-matching='^runtimeClasspath$' --remote-repo-url='${{ github.server_url }}/${{ github.repository }}.git'
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          GRADLE_OPTS: -Dorg.gradle.workers.max=1
 
   validate-avros:
     runs-on: ubuntu-20.04
