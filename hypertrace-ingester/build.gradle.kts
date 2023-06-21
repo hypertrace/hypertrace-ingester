@@ -26,12 +26,12 @@ hypertraceDocker {
 
 dependencies {
 
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.6")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.49")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.49")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.9")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.52")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.52")
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.4.10")
+  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.4.14")
   implementation("org.apache.commons:commons-lang3:3.12.0")
 
   implementation(project(":span-normalizer:span-normalizer-constants"))
