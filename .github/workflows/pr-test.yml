@@ -14,18 +14,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      
-      - name: create checksum file
-        uses: hypertrace/github-actions/checksum@main
-
-      - name: Cache packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.gradle
-          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
-          restore-keys: |
-            gradle-packages-${{ runner.os }}-${{ github.job }}
-            gradle-packages-${{ runner.os }}
 
       - name: Unit test
         uses: hypertrace/github-actions/gradle@main

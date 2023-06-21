@@ -25,19 +25,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: create checksum file
-        uses: hypertrace/github-actions/checksum@main
-
-      - name: Cache packages
-        id: cache-packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.gradle
-          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
-          restore-keys: |
-            gradle-packages-${{ runner.os }}-${{ github.job }}
-            gradle-packages-${{ runner.os }}
-
       - name: Build with Gradle
         uses: hypertrace/github-actions/gradle@main
         with: 
@@ -70,19 +57,6 @@ jobs:
           repository: ${{github.event.pull_request.head.repo.full_name}}
           fetch-depth: 0
           submodules: recursive
-
-      - name: create checksum file
-        uses: hypertrace/github-actions/checksum@main
-
-      - name: Cache packages
-        id: cache-packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.gradle
-          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
-          restore-keys: |
-            gradle-packages-${{ runner.os }}-${{ github.job }}
-            gradle-packages-${{ runner.os }}
 
       - name: Build with Gradle
         uses: hypertrace/github-actions/gradle@main
