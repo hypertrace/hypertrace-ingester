@@ -26,7 +26,7 @@ hypertraceDocker {
 
 dependencies {
 
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.9")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.10")
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.52")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.52")
 
