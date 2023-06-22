@@ -44,3 +44,9 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           files: ./**/build/test-results/**/*.xml
+
+  dependency-check:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Dependency Check
+        uses: hypertrace/github-actions/dependency-check@main
