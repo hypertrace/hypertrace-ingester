@@ -79,10 +79,10 @@ jobs:
           output-mode: github
 
       - name: Run Trivy vulnerability scanner for metrics exporter
-          uses: hypertrace/github-actions/trivy-image-scan@main
-          with:
-            image: hypertrace/hypertrace-metrics-exporter
-            output-mode: github
+        uses: hypertrace/github-actions/trivy-image-scan@main
+        with:
+          image: hypertrace/hypertrace-metrics-exporter
+          output-mode: github
 
   validate-helm-charts:
     runs-on: ubuntu-22.04
