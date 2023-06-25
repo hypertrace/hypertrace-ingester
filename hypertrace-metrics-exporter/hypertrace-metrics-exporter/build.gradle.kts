@@ -26,8 +26,8 @@ tasks.test {
 
 dependencies {
   // common and framework
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.52")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.52")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.53")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.53")
 
   // open telemetry
   implementation("io.opentelemetry:opentelemetry-sdk-metrics:1.7.0-alpha")

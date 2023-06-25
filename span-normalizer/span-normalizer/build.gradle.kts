@@ -35,14 +35,14 @@ dependencies {
   implementation(project(":semantic-convention-utils"))
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.52")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.52")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.10")
-  implementation("org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner:0.2.10")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.53")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.53")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.11")
+  implementation("org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner:0.2.11")
   implementation("org.hypertrace.config.service:span-processing-config-service-api:0.1.47")
   implementation("org.hypertrace.config.service:span-processing-utils:0.1.52")
-  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.12.0")
-  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.12.0")
+  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.12.1")
+  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.12.1")
   implementation("com.google.guava:guava:32.0.1-jre")
 
   // Required for the GRPC clients.
@@ -58,7 +58,7 @@ dependencies {
   runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-  testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.52")
+  testImplementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.53")
   testImplementation("org.junit-pioneer:junit-pioneer:1.7.1")
   testImplementation("org.mockito:mockito-core:4.7.0")
   testImplementation("org.apache.kafka:kafka-streams-test-utils:7.2.1-ccs")
