@@ -7,25 +7,13 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
        # Set fetch-depth: 0 to fetch commit history and tags for use in version calculation
       - name: Check out code
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      
-      - name: create checksum file
-        uses: hypertrace/github-actions/checksum@main
-
-      - name: Cache packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.gradle
-          key: gradle-packages-${{ runner.os }}-${{ github.job }}-${{ hashFiles('**/checksum.txt') }}
-          restore-keys: |
-            gradle-packages-${{ runner.os }}-${{ github.job }}
-            gradle-packages-${{ runner.os }}
 
       - name: Unit test
         uses: hypertrace/github-actions/gradle@main
@@ -56,3 +44,9 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           files: ./**/build/test-results/**/*.xml
+
+  dependency-check:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Dependency Check
+        uses: hypertrace/github-actions/dependency-check@main
