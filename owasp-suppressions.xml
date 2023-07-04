@@ -1,3 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+  <suppress>
+    <notes><![CDATA[
+   file name: grpc-client-utils-0.12.0.jar
+   file name: grpc-context-utils-0.12.0.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.hypertrace\.core\.grpcutils/.*@.*$</packageUrl>
+    <cpe>cpe:/a:grpc:grpc</cpe>
+    <cpe>cpe:/a:utils_project:utils</cpe>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+    We need to get pinot to upgrade this dep, it's 16 years old. Upgrades fix this issue but have changed package/group names
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/commons\-httpclient/commons\-httpclient@.*$</packageUrl>
+    <cve>CVE-2012-5783</cve>
+    <cve>CVE-2020-13956</cve>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+    False positive. Matching android app "wire"
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/com\.squareup\.wire/wire\-.*@.*$</packageUrl>
+    <cpe>cpe:/a:wire:wire</cpe>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+    This CVE impacts the maven build, not the runtime - ref https://spark.apache.org/security.html#CVE-2018-11804
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.spark/spark\-.*@.*$</packageUrl>
+    <cve>CVE-2018-11804</cve>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+    These CVEs impacts spark as standalone master, not being used in that way here - refs:
+     https://spark.apache.org/security.html#CVE-2018-11770
+     https://spark.apache.org/security.html#CVE-2018-17190
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.spark/spark\-.*@.*$</packageUrl>
+    <cve>CVE-2018-11770</cve>
+    <cve>CVE-2018-17190</cve>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+   file name: pinot-minion-builtin-tasks-0.12.1.jar
+   Pinot mismatches
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.pinot/pinot\-minion\-builtin\-tasks@.*$</packageUrl>
+    <cpe>cpe:/a:tasks:tasks</cpe>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+   file name: span-processing-utils-0.1.52.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.hypertrace\.config\.service/span\-processing\-utils@.*$</packageUrl>
+    <cpe>cpe:/a:utils_project:utils</cpe>
+    <cpe>cpe:/a:processing:processing</cpe>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+   file name: span-processing-config-service-api-0.1.52.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.hypertrace\.config\.service/span\-processing\-config\-service\-api@.*$</packageUrl>
+    <cpe>cpe:/a:processing:processing</cpe>
+    <cpe>cpe:/a:service_project:service</cpe>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+   file name: opentelemetry-exporter-prometheus-1.27.0-alpha.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/io\.opentelemetry/opentelemetry\-exporter\-prometheus@.*$</packageUrl>
+    <cpe>cpe:/a:prometheus:prometheus</cpe>
+  </suppress>
+  <suppress until="2023-07-30Z">
+    <notes><![CDATA[
+   file name: json-20230618.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.json/json@.*$</packageUrl>
+    <cve>CVE-2022-45688</cve>
+  </suppress>
+  <suppress until="2023-07-30Z">
+    <notes><![CDATA[
+   file name: jackson-databind-2.15.2.jar
+   Its a disputed one, recheck after a month.
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
+    <cve>CVE-2023-35116</cve>
+  </suppress>
 </suppressions>

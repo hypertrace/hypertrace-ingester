@@ -34,11 +34,11 @@ dependencies {
   }
   implementation(project(":span-normalizer:span-normalizer-api"))
   implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.53")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.53")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.54")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.54")
 
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.11")
-  implementation("org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner:0.2.11")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.14")
+  implementation("org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner:0.2.14")
   implementation("de.javakaffee:kryo-serializers:0.45")
   implementation("com.google.guava:guava:32.0.1-jre")
 

@@ -17,10 +17,10 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher:trace-reader"))
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
-  implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.53")
+  implementation("org.hypertrace.entity.service:entity-service-client:0.8.75")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.54")
   implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.12.1")
-  implementation("org.hypertrace.config.service:spaces-config-service-api:0.1.47")
+  implementation("org.hypertrace.config.service:spaces-config-service-api:0.1.52")
   implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.12.1")
 
   implementation("org.apache.commons:commons-lang3:3.12.0")

@@ -57,6 +57,9 @@ sourceSets {
 }
 
 dependencies {
-  api("com.google.protobuf:protobuf-java-util:3.21.7")
+  api("com.google.protobuf:protobuf-java-util:3.23.3")
+  constraints {
+    implementation("com.google.guava:guava:32.0.1-jre")
+  }
   implementation("org.slf4j:slf4j-api:1.7.30")
 }
