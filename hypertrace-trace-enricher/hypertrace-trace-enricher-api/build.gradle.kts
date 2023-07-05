@@ -13,7 +13,7 @@ dependencies {
 
   implementation("org.slf4j:slf4j-api:1.7.30")
   implementation("org.apache.commons:commons-lang3:3.12.0")
-  implementation("com.google.guava:guava:31.1-jre")
+  implementation("com.google.guava:guava:32.0.1-jre")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:3.9.0")
