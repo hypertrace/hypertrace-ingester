@@ -3,10 +3,10 @@
   <suppress>
     <notes><![CDATA[
     All mismatch to hypertrace libs
-   file name: grpc-client-utils-0.12.0.jar
-   file name: grpc-context-utils-0.12.0.jar
-   file name: span-processing-utils-0.1.52.jar
-   file name: span-processing-config-service-api-0.1.52.jar
+    file name: grpc-client-utils-0.12.0.jar
+    file name: grpc-context-utils-0.12.0.jar
+    file name: span-processing-utils-0.1.52.jar
+    file name: span-processing-config-service-api-0.1.52.jar
    ]]></notes>
     <packageUrl regex="true">^pkg:maven/org\.hypertrace\..*@.*$</packageUrl>
     <cpe>cpe:/a:grpc:grpc</cpe>
