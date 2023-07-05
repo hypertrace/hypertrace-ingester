@@ -22,14 +22,9 @@ sourceSets {
 
 dependencies {
   implementation("com.google.protobuf:protobuf-java:3.23.3")
-  implementation("org.apache.kafka:kafka-clients:7.4.0-ccs")
+  implementation(platform("org.hypertrace.core.kafkastreams.framework:kafka-bom:0.2.14"))
+  implementation("org.apache.kafka:kafka-clients")
   implementation("io.opentelemetry:opentelemetry-proto:1.7.1-alpha")
-  constraints {
-    // https://mvnrepository.com/artifact/org.xerial.snappy/snappy-java
-    implementation("org.xerial.snappy:snappy-java:1.1.10.1") {
-      because("cpe:/a:xerial:snappy-java")
-    }
-  }
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")

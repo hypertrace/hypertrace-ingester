@@ -40,11 +40,6 @@ dependencies {
   implementation("org.hypertrace.entity.service:entity-service-api:0.8.75")
 
   implementation("org.apache.avro:avro:1.11.1")
-  constraints {
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.14.2") {
-      because("version 2.12.7.1 has a vulnerability https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-3038424")
-    }
-  }
   implementation("org.apache.commons:commons-lang3:3.12.0")
 
   // logging

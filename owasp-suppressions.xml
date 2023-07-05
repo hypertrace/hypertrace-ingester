@@ -2,12 +2,16 @@
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
   <suppress>
     <notes><![CDATA[
+    All mismatch to hypertrace libs
    file name: grpc-client-utils-0.12.0.jar
    file name: grpc-context-utils-0.12.0.jar
+   file name: span-processing-utils-0.1.52.jar
+   file name: span-processing-config-service-api-0.1.52.jar
    ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.hypertrace\.core\.grpcutils/.*@.*$</packageUrl>
+    <packageUrl regex="true">^pkg:maven/org\.hypertrace\..*@.*$</packageUrl>
     <cpe>cpe:/a:grpc:grpc</cpe>
     <cpe>cpe:/a:utils_project:utils</cpe>
+    <cpe>cpe:/a:processing:processing</cpe>
   </suppress>
   <suppress>
     <notes><![CDATA[
@@ -48,22 +52,6 @@
    ]]></notes>
     <packageUrl regex="true">^pkg:maven/org\.apache\.pinot/pinot\-minion\-builtin\-tasks@.*$</packageUrl>
     <cpe>cpe:/a:tasks:tasks</cpe>
-  </suppress>
-  <suppress>
-    <notes><![CDATA[
-   file name: span-processing-utils-0.1.52.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.hypertrace\.config\.service/span\-processing\-utils@.*$</packageUrl>
-    <cpe>cpe:/a:utils_project:utils</cpe>
-    <cpe>cpe:/a:processing:processing</cpe>
-  </suppress>
-  <suppress>
-    <notes><![CDATA[
-   file name: span-processing-config-service-api-0.1.52.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.hypertrace\.config\.service/span\-processing\-config\-service\-api@.*$</packageUrl>
-    <cpe>cpe:/a:processing:processing</cpe>
-    <cpe>cpe:/a:service_project:service</cpe>
   </suppress>
   <suppress>
     <notes><![CDATA[

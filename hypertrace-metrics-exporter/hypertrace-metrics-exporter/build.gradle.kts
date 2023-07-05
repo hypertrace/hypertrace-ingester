@@ -42,13 +42,9 @@ dependencies {
   implementation("io.opentelemetry:opentelemetry-proto:1.6.0-alpha")
 
   // kafka
-  implementation("org.apache.kafka:kafka-clients:7.4.0-ccs")
-  constraints {
-    // https://mvnrepository.com/artifact/org.xerial.snappy/snappy-java
-    implementation("org.xerial.snappy:snappy-java:1.1.10.1") {
-      because("cpe:/a:xerial:snappy-java")
-    }
-  }
+  implementation(platform("org.hypertrace.core.kafkastreams.framework:kafka-bom:0.2.14"))
+  implementation("org.apache.kafka:kafka-clients")
+
   // test
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:4.7.0")
