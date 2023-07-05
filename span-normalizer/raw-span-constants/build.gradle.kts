@@ -57,8 +57,7 @@ sourceSets {
 }
 
 dependencies {
-  api(platform("org.hypertrace.core.kafkastreams.framework:kafka-bom:0.2.14"))
-  api("com.google.protobuf:protobuf-java-util")
+  api("com.google.protobuf:protobuf-java-util:3.23.3")
   constraints {
     implementation("com.google.guava:guava:32.0.1-jre")
   }

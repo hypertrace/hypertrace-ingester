@@ -57,6 +57,10 @@ sourceSets {
 }
 dependencies {
   api("com.google.api.grpc:proto-google-common-protos:2.14.1")
-  api("org.apache.avro:avro")
-  api(platform("org.hypertrace.core.kafkastreams.framework:kafka-bom:0.2.14"))
+  api("org.apache.avro:avro:1.11.1")
+  constraints {
+    api("com.fasterxml.jackson.core:jackson-databind:2.15.2") {
+      because("cpe:/a:fasterxml:jackson-databind")
+    }
+  }
 }
