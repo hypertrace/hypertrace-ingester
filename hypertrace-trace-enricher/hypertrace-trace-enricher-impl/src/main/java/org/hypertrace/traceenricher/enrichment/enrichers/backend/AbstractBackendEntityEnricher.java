@@ -285,7 +285,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
 
       return existingEntity;
     } catch (ExecutionException ex) {
-      LOGGER.error("Error trying to load backend from cache for backend:{}", backendEntity);
+      LOGGER.error("Error trying to evaluate backend entity:{}", backendEntity);
       return null;
     }
   }
