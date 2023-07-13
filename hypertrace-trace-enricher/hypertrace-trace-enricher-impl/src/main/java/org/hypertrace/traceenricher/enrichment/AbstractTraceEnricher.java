@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
+
+import io.micrometer.core.instrument.Counter;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Edge;
@@ -36,6 +38,11 @@ public abstract class AbstractTraceEnricher implements Enricher {
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {}
+
+  @Override
+  public void enrichEvent(StructuredTrace trace, Event event, Counter errorCounter) {
+    enrichEvent(trace, event);
+  }
 
   @Override
   public void enrichTrace(StructuredTrace trace) {}

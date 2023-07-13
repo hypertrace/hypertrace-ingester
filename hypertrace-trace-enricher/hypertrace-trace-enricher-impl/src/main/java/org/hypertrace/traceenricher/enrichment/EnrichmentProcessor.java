@@ -78,6 +78,9 @@ public class EnrichmentProcessor {
       String metricKey = String.format("%s/%s", trace.getCustomerId(), entry.getKey());
       Map<String, String> metricTags =
           Map.of("tenantId", trace.getCustomerId(), "enricher", entry.getKey());
+      Counter traceErrorCounter = traceErrorsCounters
+              .computeIfAbsent(
+                      metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags));
       try {
         Instant start = Instant.now();
         applyEnricher(entry.getValue(), trace);
@@ -96,10 +99,7 @@ public class EnrichmentProcessor {
             String.format(
                 "Could not apply the enricher: %s to the trace with traceId: %s",
                 entry.getKey(), HexUtils.getHex(trace.getTraceId()));
-        traceErrorsCounters
-            .computeIfAbsent(
-                metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags))
-            .increment();
+        traceErrorCounter.increment();
         LOG.error(errorMessage, throwable);
       }
     }

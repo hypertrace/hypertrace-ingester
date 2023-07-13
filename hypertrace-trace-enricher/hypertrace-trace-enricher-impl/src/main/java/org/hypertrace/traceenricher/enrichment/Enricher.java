@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichment;
 
 import com.typesafe.config.Config;
+import io.micrometer.core.instrument.Counter;
 import org.hypertrace.core.datamodel.Edge;
 import org.hypertrace.core.datamodel.Entity;
 import org.hypertrace.core.datamodel.Event;
@@ -20,6 +21,9 @@ public interface Enricher {
 
   /** Enrich the attributes/metrics for an Event */
   void enrichEvent(StructuredTrace trace, Event event);
+
+  /** Enrich the attributes/metrics for an Event with support of counting errors*/
+  void enrichEvent(StructuredTrace trace, Event event, Counter errorCounter);
 
   /** Enrich the attributes/metrics for an Edge */
   void enrichEdge(StructuredTrace trace, Edge edge);
