@@ -179,7 +179,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
         "Trying to load or create backend entity: {}, corresponding event: {}",
         backendInfo.getEntity(),
         event);
-    Entity backend = createBackendIfMissing(backendInfo.getEntity());
+    Entity backend = evaluateBackendEntity(backendInfo.getEntity());
     if (backend == null) {
       LOGGER.warn("Failed to upsert backend entity: {}", backendInfo.getEntity());
       return;
@@ -256,20 +256,34 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return attributes;
   }
 
+
+  protected Entity mergeBackendEntities(Entity existingEntity, Entity newEntity) {
+    return existingEntity;
+  }
+
   @Nullable
-  private Entity createBackendIfMissing(Entity backendEntity) {
+  private Entity evaluateBackendEntity(Entity backendEntity) {
     RequestContext requestContext = RequestContext.forTenantId(backendEntity.getTenantId());
     try {
       Optional<Entity> backendFromCache =
           entityCache
               .getBackendIdAttrsToEntityCache()
               .get(requestContext.buildContextualKey(backendEntity.getIdentifyingAttributesMap()));
-      return backendFromCache.orElseGet(
-          () -> {
-            Entity result = this.upsertBackend(backendEntity);
-            LOGGER.info("Created backend:{}", result);
-            return result;
-          });
+      if (backendFromCache.isEmpty()) {
+        Entity result = this.upsertBackend(backendEntity);
+        LOGGER.info("Created backend:{}", result);
+        return result;
+      }
+
+      Entity existingEntity = backendFromCache.get();
+      Entity updatedEntity = mergeBackendEntities(existingEntity, backendEntity);
+      if (!updatedEntity.equals(existingEntity)) {
+        Entity result = this.upsertBackend(backendEntity);
+        LOGGER.info("Updated backend:{}", result);
+        return result;
+      }
+
+      return existingEntity;
     } catch (ExecutionException ex) {
       LOGGER.error("Error trying to load backend from cache for backend:{}", backendEntity);
       return null;
