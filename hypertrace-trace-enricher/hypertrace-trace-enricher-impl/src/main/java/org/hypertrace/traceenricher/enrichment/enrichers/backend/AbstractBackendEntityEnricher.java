@@ -278,7 +278,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       Entity existingEntity = backendFromCache.get();
       Entity updatedEntity = mergeBackendEntities(existingEntity, backendEntity);
       if (!updatedEntity.equals(existingEntity)) {
-        Entity result = this.upsertBackend(backendEntity);
+        Entity result = this.upsertBackend(updatedEntity);
         LOGGER.info("Updated backend:{}", result);
         return result;
       }
