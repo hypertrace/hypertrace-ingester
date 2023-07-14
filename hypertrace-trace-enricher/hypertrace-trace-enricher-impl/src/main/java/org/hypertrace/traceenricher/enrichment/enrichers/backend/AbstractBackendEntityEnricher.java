@@ -256,7 +256,6 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return attributes;
   }
 
-
   protected Entity mergeBackendEntities(Entity existingEntity, Entity newEntity) {
     return existingEntity;
   }
