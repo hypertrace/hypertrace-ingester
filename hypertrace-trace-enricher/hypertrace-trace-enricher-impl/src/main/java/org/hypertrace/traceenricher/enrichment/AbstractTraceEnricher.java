@@ -4,14 +4,13 @@ import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuild
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
+import io.micrometer.core.instrument.Counter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
-
-import io.micrometer.core.instrument.Counter;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Edge;

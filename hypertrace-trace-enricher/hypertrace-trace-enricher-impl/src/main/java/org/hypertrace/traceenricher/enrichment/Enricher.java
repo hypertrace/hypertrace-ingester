@@ -22,7 +22,7 @@ public interface Enricher {
   /** Enrich the attributes/metrics for an Event */
   void enrichEvent(StructuredTrace trace, Event event);
 
-  /** Enrich the attributes/metrics for an Event with support for metrics*/
+  /** Enrich the attributes/metrics for an Event with support for metrics */
   void enrichEvent(StructuredTrace trace, Event event, Counter errorCounter);
 
   /** Enrich the attributes/metrics for an Edge */
