@@ -83,7 +83,7 @@ public class EnrichmentProcessor {
                       metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags));
       try {
         Instant start = Instant.now();
-        applyEnricher(entry.getValue(), trace);
+        applyEnricher(entry.getValue(), trace, traceErrorCounter);
         long timeElapsed = Duration.between(start, Instant.now()).toMillis();
 
         traceCounters
@@ -106,7 +106,7 @@ public class EnrichmentProcessor {
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
   }
 
-  private void applyEnricher(Enricher enricher, StructuredTrace trace) {
+  private void applyEnricher(Enricher enricher, StructuredTrace trace, Counter traceErrorCounter) {
     Map<String, AttributeValue> attributeMap = trace.getAttributes().getAttributeMap();
     AttributeValue dropTraceAttrValue = attributeMap.get(DROP_TRACE_ATTRIBUTE);
     boolean shouldDropTrace = dropTraceAttrValue != null;
@@ -125,7 +125,7 @@ public class EnrichmentProcessor {
     // Enrich Events
     List<Event> eventList = trace.getEventList();
     for (Event event : eventList) {
-      enricher.enrichEvent(trace, event);
+      enricher.enrichEvent(trace, event, traceErrorCounter);
     }
 
     // Enrich Edges
