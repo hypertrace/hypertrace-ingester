@@ -32,15 +32,15 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher-impl"))
   implementation(project(":span-normalizer:span-normalizer-api"))
   implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.49")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.49")
-  implementation("org.hypertrace.entity.service:entity-service-client:0.8.5")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.54")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.54")
+  implementation("org.hypertrace.entity.service:entity-service-client:0.8.75")
 
-  implementation("com.google.guava:guava:31.1-jre")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.6")
+  implementation("com.google.guava:guava:32.0.1-jre")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.14")
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.50.0")
+  runtimeOnly("io.grpc:grpc-netty:1.56.0")
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
@@ -50,5 +50,5 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:4.7.0")
   testImplementation("org.junit-pioneer:junit-pioneer:1.7.1")
-  testImplementation("org.apache.kafka:kafka-streams-test-utils:7.2.1-ccs")
+  testImplementation("org.apache.kafka:kafka-streams-test-utils")
 }

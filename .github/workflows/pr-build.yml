@@ -1,5 +1,7 @@
 name: build and validate
 on:
+  schedule:
+    - cron: 11 11 * * 3
   push:
     branches:
       - main
@@ -35,54 +37,63 @@ jobs:
         with:
           image: hypertrace/hypertrace-ingester
           output-mode: github
+          category: hypertrace-ingester
 
       - name: Run Trivy vulnerability scanner for span-normalizer
         uses: hypertrace/github-actions/trivy-image-scan@main
         with:
           image: hypertrace/span-normalizer
           output-mode: github
+          category: span-normalizer
 
       - name: Run Trivy vulnerability scanner for raw-spans-grouper
         uses: hypertrace/github-actions/trivy-image-scan@main
         with:
           image: hypertrace/raw-spans-grouper
           output-mode: github
+          category: raw-spans-grouper
 
       - name: Run Trivy vulnerability scanner for trace-enricher
         uses: hypertrace/github-actions/trivy-image-scan@main
         with:
           image: hypertrace/hypertrace-trace-enricher
           output-mode: github
+          category: hypertrace-trace-enricher
 
       - name: Run Trivy vulnerability scanner for view creator
         uses: hypertrace/github-actions/trivy-image-scan@main
         with:
           image: hypertrace/hypertrace-view-creator
           output-mode: github
+          category: hypertrace-view-creator
 
       - name: Run Trivy vulnerability scanner for view-generator
         uses: hypertrace/github-actions/trivy-image-scan@main
         with:
           image: hypertrace/hypertrace-view-generator
           output-mode: github
+          category: hypertrace-view-generator
 
       - name: Run Trivy vulnerability scanner for metrics generator
         uses: hypertrace/github-actions/trivy-image-scan@main
         with:
           image: hypertrace/hypertrace-metrics-generator
           output-mode: github
+          category: hypertrace-metrics-generator
 
       - name: Run Trivy vulnerability scanner for metrics processor
         uses: hypertrace/github-actions/trivy-image-scan@main
         with:
           image: hypertrace/hypertrace-metrics-processor
           output-mode: github
+          category: hypertrace-metrics-processor
 
       - name: Run Trivy vulnerability scanner for metrics exporter
         uses: hypertrace/github-actions/trivy-image-scan@main
         with:
           image: hypertrace/hypertrace-metrics-exporter
           output-mode: github
+          category: hypertrace-metrics-exporter
 
   validate-helm-charts:
     runs-on: ubuntu-22.04

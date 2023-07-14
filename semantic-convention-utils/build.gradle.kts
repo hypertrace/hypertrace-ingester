@@ -13,7 +13,7 @@ dependencies {
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
   implementation("org.apache.commons:commons-lang3:3.12.0")
-  implementation("com.google.guava:guava:31.1-jre")
+  implementation("com.google.guava:guava:32.0.1-jre")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:4.7.0")
