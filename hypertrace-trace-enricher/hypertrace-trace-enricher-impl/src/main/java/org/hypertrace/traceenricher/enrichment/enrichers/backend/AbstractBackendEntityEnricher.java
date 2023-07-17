@@ -256,8 +256,12 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return attributes;
   }
 
-  protected Entity mergeBackendEntities(Entity existingEntity, Entity newEntity) {
-    return existingEntity;
+  // This function was added to enable the backend entity enricher to support updates.
+  // We can also replace this to an update flow if needed.
+  protected Entity mergeBackendEntity(Entity existingEntity, Entity newEntity) {
+    Entity.Builder updatedEntityBuilder = Entity.newBuilder(existingEntity);
+    updatedEntityBuilder.putAllAttributes(newEntity.getAttributesMap());
+    return updatedEntityBuilder.build();
   }
 
   @Nullable
@@ -275,7 +279,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       }
 
       Entity existingEntity = backendFromCache.get();
-      Entity updatedEntity = mergeBackendEntities(existingEntity, backendEntity);
+      Entity updatedEntity = mergeBackendEntity(existingEntity, backendEntity);
       if (!updatedEntity.equals(existingEntity)) {
         Entity result = this.upsertBackend(updatedEntity);
         LOGGER.info("Updated backend:{}", result);
