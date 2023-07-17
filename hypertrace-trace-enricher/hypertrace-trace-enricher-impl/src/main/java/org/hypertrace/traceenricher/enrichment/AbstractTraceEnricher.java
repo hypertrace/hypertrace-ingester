@@ -4,22 +4,15 @@ import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuild
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
-import io.micrometer.core.instrument.Counter;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import io.micrometer.core.instrument.Tag;
+import java.util.*;
 import javax.annotation.Nullable;
-import org.hypertrace.core.datamodel.AttributeValue;
-import org.hypertrace.core.datamodel.Attributes;
-import org.hypertrace.core.datamodel.Edge;
-import org.hypertrace.core.datamodel.Entity;
-import org.hypertrace.core.datamodel.Event;
-import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.datamodel.*;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
+import org.hypertrace.traceenricher.util.EnrichmentInternalErrors;
 
 public abstract class AbstractTraceEnricher implements Enricher {
 
@@ -39,12 +32,17 @@ public abstract class AbstractTraceEnricher implements Enricher {
   public void enrichEvent(StructuredTrace trace, Event event) {}
 
   @Override
-  public void enrichEvent(StructuredTrace trace, Event event, Counter errorCounter) {
-    enrichEvent(trace, event);
-  }
-
-  @Override
   public void enrichTrace(StructuredTrace trace) {}
+
+  protected void onInternalException(StructuredTrace trace, EnrichmentInternalErrors errors) {
+    PlatformMetricsRegistry.getMeterRegistry()
+        .counter(
+            "enrichment.internal.errors",
+            List.of(
+                Tag.of("name", this.getClass().getCanonicalName()),
+                Tag.of("tenantId", trace.getCustomerId()),
+                Tag.of("error", errors.getValue())));
+  }
 
   /** Wrapper to the structure graph factory for testing */
   public StructuredTraceGraph buildGraph(StructuredTrace trace) {

@@ -20,6 +20,7 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
+import org.hypertrace.traceenricher.util.EnrichmentInternalErrors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +95,7 @@ public class EndpointEnricher extends AbstractTraceEnricher {
           serviceId,
           event,
           e);
+      onInternalException(trace, EnrichmentInternalErrors.INTERNAL_ERROR);
     }
 
     if (LOGGER.isDebugEnabled()) {
