@@ -20,7 +20,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.trace.util.ApiTraceGraphBuilder;
-import org.hypertrace.traceenricher.util.EnricherInternalExceptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +46,8 @@ public class EndpointEnricher extends AbstractTraceEnricher {
   private final Map<String, OperationNameBasedEndpointDiscoverer> serviceIdToEndpointDiscoverer =
       new ConcurrentHashMap<>();
 
-  private @Override public void init(Config enricherConfig, ClientRegistry clientRegistry) {
+  @Override
+  public void init(Config enricherConfig, ClientRegistry clientRegistry) {
     this.apiEntityDao = new ApiEntityDao(clientRegistry.getEdsCacheClient());
   }
 

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.typesafe.config.ConfigFactory;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,7 +19,6 @@ import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
-import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.span.constants.v1.Http;
 import org.hypertrace.entity.constants.v1.ApiAttribute;
 import org.hypertrace.entity.constants.v1.ServiceAttribute;
@@ -32,7 +30,6 @@ import org.hypertrace.traceenricher.enrichedspan.constants.utils.EnrichedSpanUti
 import org.hypertrace.traceenricher.enrichedspan.constants.v1.Api;
 import org.hypertrace.traceenricher.enrichment.enrichers.AbstractAttributeEnricherTest;
 import org.hypertrace.traceenricher.util.Constants;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,14 +49,6 @@ class EndpointEnricherTest extends AbstractAttributeEnricherTest {
   private static final String API_DISCOVERY_STATE_VAL = "DISCOVERED";
   private EndpointEnricher endpointEnricher;
   private ApiEntityDao dao;
-
-  @BeforeAll
-  static void initializeMetricRegistry() {
-    // Initialize the metric registry.
-    PlatformMetricsRegistry.initMetricsRegistry(
-        "EndpointEnricherTest",
-        ConfigFactory.parseMap(Map.of("reporter.names", List.of("testing"))));
-  }
 
   @BeforeEach
   void setup() {
