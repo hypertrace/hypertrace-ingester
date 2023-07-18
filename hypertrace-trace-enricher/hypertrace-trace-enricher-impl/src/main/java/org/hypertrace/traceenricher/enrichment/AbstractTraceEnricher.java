@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichment;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry.registerCounter;
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -20,8 +23,13 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
+import org.hypertrace.traceenricher.util.EnricherInternalExceptionType;
 
 public abstract class AbstractTraceEnricher implements Enricher {
+
+  private static final String TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS =
+      "hypertrace.trace.enrichment.internal.exceptions";
+  private static final ConcurrentMap<String, Counter> exceptionCounters = new ConcurrentHashMap<>();
 
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {}
@@ -38,9 +46,14 @@ public abstract class AbstractTraceEnricher implements Enricher {
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {}
 
-  @Override
-  public void enrichEvent(StructuredTrace trace, Event event, Counter errorCounter) {
-    enrichEvent(trace, event);
+  protected void trackExceptions(StructuredTrace trace, EnricherInternalExceptionType exception) {
+    String enricher = this.getClass().getSimpleName();
+    String tenantId = trace.getCustomerId();
+    String metricKey = String.format("%s/%s/%s", enricher, tenantId, exception.getValue());
+    Map<String, String> metricTags =
+        Map.of("enricher", enricher, "tenantId", tenantId, "exception", exception.getValue());
+    exceptionCounters.computeIfAbsent(
+        metricKey, k -> registerCounter(TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS, metricTags));
   }
 
   @Override

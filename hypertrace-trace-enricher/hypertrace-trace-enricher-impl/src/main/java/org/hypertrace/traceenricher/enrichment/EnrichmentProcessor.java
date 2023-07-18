@@ -78,12 +78,9 @@ public class EnrichmentProcessor {
       String metricKey = String.format("%s/%s", trace.getCustomerId(), entry.getKey());
       Map<String, String> metricTags =
           Map.of("tenantId", trace.getCustomerId(), "enricher", entry.getKey());
-      Counter traceErrorCounter =
-          traceErrorsCounters.computeIfAbsent(
-              metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags));
       try {
         Instant start = Instant.now();
-        applyEnricher(entry.getValue(), trace, traceErrorCounter);
+        applyEnricher(entry.getValue(), trace);
         long timeElapsed = Duration.between(start, Instant.now()).toMillis();
 
         traceCounters
@@ -99,14 +96,17 @@ public class EnrichmentProcessor {
             String.format(
                 "Could not apply the enricher: %s to the trace with traceId: %s",
                 entry.getKey(), HexUtils.getHex(trace.getTraceId()));
-        traceErrorCounter.increment();
+        traceErrorsCounters
+            .computeIfAbsent(
+                metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags))
+            .increment();
         LOG.error(errorMessage, throwable);
       }
     }
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
   }
 
-  private void applyEnricher(Enricher enricher, StructuredTrace trace, Counter traceErrorCounter) {
+  private void applyEnricher(Enricher enricher, StructuredTrace trace) {
     Map<String, AttributeValue> attributeMap = trace.getAttributes().getAttributeMap();
     AttributeValue dropTraceAttrValue = attributeMap.get(DROP_TRACE_ATTRIBUTE);
     boolean shouldDropTrace = dropTraceAttrValue != null;
@@ -125,7 +125,7 @@ public class EnrichmentProcessor {
     // Enrich Events
     List<Event> eventList = trace.getEventList();
     for (Event event : eventList) {
-      enricher.enrichEvent(trace, event, traceErrorCounter);
+      enricher.enrichEvent(trace, event);
     }
 
     // Enrich Edges
