@@ -1,7 +1,7 @@
 package org.hypertrace.traceenricher.util;
 
 public enum EnricherInternalExceptionType {
-  INTERNAL_ERROR("enricher.internal.error");
+  PROCESS_EXCEPTION("processing.exception");
 
   private final String value;
 

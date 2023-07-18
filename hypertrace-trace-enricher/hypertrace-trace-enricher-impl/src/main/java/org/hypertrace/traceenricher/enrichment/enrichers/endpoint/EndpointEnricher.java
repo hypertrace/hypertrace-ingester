@@ -81,6 +81,7 @@ public class EndpointEnricher extends AbstractTraceEnricher {
           event);
       return;
     }
+
     Entity apiEntity = null;
     try {
       apiEntity =
