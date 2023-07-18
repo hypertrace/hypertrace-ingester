@@ -258,11 +258,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
 
   // This function was added to enable the backend entity enricher to support updates.
   // We can also replace this to an update flow if needed.
-  protected Entity mergeBackendEntity(Entity existingEntity, Entity newEntity) {
-    Entity.Builder updatedEntityBuilder = Entity.newBuilder(existingEntity);
-    updatedEntityBuilder.putAllAttributes(newEntity.getAttributesMap());
-    return updatedEntityBuilder.build();
-  }
+  protected abstract Entity mergeBackendEntity(Entity existingEntity, Entity newEntity);
 
   @Nullable
   private Entity evaluateBackendEntity(Entity backendEntity) {
