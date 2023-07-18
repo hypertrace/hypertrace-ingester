@@ -42,6 +42,7 @@ import org.hypertrace.traceenricher.util.EnricherUtil;
 import org.hypertrace.traceenricher.util.EntityAvroConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Attr;
 
 /**
  * Enricher which gets the backend entities from trace event and store backend entity into
@@ -309,6 +310,10 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return Collections.unmodifiableMap(identifyingAttributes);
   }
 
+  protected Map<String, AttributeValue> getEnrichedEntityAttributes(StructuredTrace trace,Event event,  BackendType type, String backendURI) {
+    return Collections.emptyMap();
+  }
+
   @VisibleForTesting
   public Optional<BackendInfo> resolve(
       Event event, StructuredTrace trace, StructuredTraceGraph structuredTraceGraph) {
@@ -337,6 +342,8 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
 
       final Builder entityBuilder = getEntityBuilder(trace, event, type, backendUri);
       backendProvider.getEntityAttributes(event).forEach(entityBuilder::putAttributes);
+      Map<String, AttributeValue> entityAttributes = getEnrichedEntityAttributes(trace, event, type, backendUri);
+      entityBuilder.putAllAttributes(entityAttributes);
       Map<String, org.hypertrace.core.datamodel.AttributeValue> enrichedAttributes =
           new HashMap<>();
       Optional<String> backendOperation = backendProvider.getBackendOperation(event);
