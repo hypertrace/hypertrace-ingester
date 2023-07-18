@@ -46,16 +46,6 @@ public abstract class AbstractTraceEnricher implements Enricher {
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {}
 
-  protected void trackExceptions(StructuredTrace trace, EnricherInternalExceptionType exception) {
-    String enricher = this.getClass().getSimpleName();
-    String tenantId = trace.getCustomerId();
-    String metricKey = String.format("%s/%s/%s", enricher, tenantId, exception.getValue());
-    Map<String, String> metricTags =
-        Map.of("enricher", enricher, "tenantId", tenantId, "exception", exception.getValue());
-    exceptionCounters.computeIfAbsent(
-        metricKey, k -> registerCounter(TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS, metricTags));
-  }
-
   @Override
   public void enrichTrace(StructuredTrace trace) {}
 
@@ -117,5 +107,18 @@ public abstract class AbstractTraceEnricher implements Enricher {
     if (!entityIds.contains(entity.getEntityId())) {
       trace.getEntityList().add(entity);
     }
+  }
+
+  protected void trackExceptions(StructuredTrace trace, EnricherInternalExceptionType exception) {
+    String enricher = this.getClass().getSimpleName();
+    String tenantId = trace.getCustomerId();
+    String metricKey = String.format("%s/%s/%s", enricher, tenantId, exception.getValue());
+    Map<String, String> metricTags =
+        Map.of("enricher", enricher, "tenantId", tenantId, "exception", exception.getValue());
+
+    exceptionCounters
+        .computeIfAbsent(
+            metricKey, k -> registerCounter(TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS, metricTags))
+        .increment();
   }
 }
