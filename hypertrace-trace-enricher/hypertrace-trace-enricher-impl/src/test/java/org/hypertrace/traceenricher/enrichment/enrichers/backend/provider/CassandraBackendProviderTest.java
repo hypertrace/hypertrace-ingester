@@ -302,5 +302,10 @@ public class CassandraBackendProviderTest {
     public FqnResolver getFqnResolver() {
       return new HypertraceFqnResolver();
     }
+
+    @Override
+    protected Entity mergeBackendEntity(Entity existingEntity, Entity newEntity) {
+      return null;
+    }
   }
 }

@@ -179,7 +179,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
         "Trying to load or create backend entity: {}, corresponding event: {}",
         backendInfo.getEntity(),
         event);
-    Entity backend = createBackendIfMissing(backendInfo.getEntity());
+    Entity backend = evaluateBackendEntity(backendInfo.getEntity());
     if (backend == null) {
       LOGGER.warn("Failed to upsert backend entity: {}", backendInfo.getEntity());
       return;
@@ -256,22 +256,35 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return attributes;
   }
 
+  // This function was added to enable the backend entity enricher to support updates.
+  // We can also replace this to an update flow if needed.
+  protected abstract Entity mergeBackendEntity(Entity existingEntity, Entity newEntity);
+
   @Nullable
-  private Entity createBackendIfMissing(Entity backendEntity) {
+  private Entity evaluateBackendEntity(Entity backendEntity) {
     RequestContext requestContext = RequestContext.forTenantId(backendEntity.getTenantId());
     try {
       Optional<Entity> backendFromCache =
           entityCache
               .getBackendIdAttrsToEntityCache()
               .get(requestContext.buildContextualKey(backendEntity.getIdentifyingAttributesMap()));
-      return backendFromCache.orElseGet(
-          () -> {
-            Entity result = this.upsertBackend(backendEntity);
-            LOGGER.info("Created backend:{}", result);
-            return result;
-          });
+      if (backendFromCache.isEmpty()) {
+        Entity result = this.upsertBackend(backendEntity);
+        LOGGER.info("Created backend:{}", result);
+        return result;
+      }
+
+      Entity existingEntity = backendFromCache.get();
+      Entity updatedEntity = mergeBackendEntity(existingEntity, backendEntity);
+      if (!updatedEntity.equals(existingEntity)) {
+        Entity result = this.upsertBackend(updatedEntity);
+        LOGGER.info("Updated backend:{}", result);
+        return result;
+      }
+
+      return existingEntity;
     } catch (ExecutionException ex) {
-      LOGGER.error("Error trying to load backend from cache for backend:{}", backendEntity);
+      LOGGER.error("Error trying to evaluate backend entity:{}", backendEntity);
       return null;
     }
   }
@@ -294,6 +307,11 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     identifyingAttributes.put(BACKEND_HOST_ATTR_NAME, EnricherUtil.createAttributeValue(fqn));
     identifyingAttributes.put(BACKEND_PORT_ATTR_NAME, EnricherUtil.createAttributeValue(port));
     return Collections.unmodifiableMap(identifyingAttributes);
+  }
+
+  protected Map<String, AttributeValue> getEnrichedEntityAttributes(
+      StructuredTrace trace, Event event, BackendType type, String backendURI) {
+    return Collections.emptyMap();
   }
 
   @VisibleForTesting
@@ -324,6 +342,9 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
 
       final Builder entityBuilder = getEntityBuilder(trace, event, type, backendUri);
       backendProvider.getEntityAttributes(event).forEach(entityBuilder::putAttributes);
+      Map<String, AttributeValue> entityAttributes =
+          getEnrichedEntityAttributes(trace, event, type, backendUri);
+      entityBuilder.putAllAttributes(entityAttributes);
       Map<String, org.hypertrace.core.datamodel.AttributeValue> enrichedAttributes =
           new HashMap<>();
       Optional<String> backendOperation = backendProvider.getBackendOperation(event);
