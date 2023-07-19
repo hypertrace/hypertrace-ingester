@@ -109,11 +109,10 @@ public abstract class AbstractTraceEnricher implements Enricher {
     }
   }
 
-  protected void trackInternalExceptionsMetric(StructuredTrace trace) {
+  protected void trackInternalExceptionsMetric(String customerId) {
     String enricher = this.getClass().getSimpleName();
-    String tenantId = trace.getCustomerId();
-    Map<String, String> metricTags = Map.of("enricher", enricher, "tenantId", tenantId);
-    String metricKey = String.format("%s/%s", enricher, tenantId);
+    Map<String, String> metricTags = Map.of("enricher", enricher, "tenantId", customerId);
+    String metricKey = String.format("%s/%s", enricher, customerId);
     exceptionCounters
         .computeIfAbsent(
             metricKey, k -> registerCounter(TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS, metricTags))
