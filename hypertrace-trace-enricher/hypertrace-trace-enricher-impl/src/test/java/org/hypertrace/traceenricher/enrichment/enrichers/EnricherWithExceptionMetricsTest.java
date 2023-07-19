@@ -47,9 +47,7 @@ class EnricherWithExceptionMetricsTest {
                 "enricher",
                 "TestEnricher",
                 "tenantId",
-                "testcustomer",
-                "exception",
-                "processing.exception")
+                "testcustomer")
             .count();
 
     Assertions.assertEquals(1d, processingExceptionCount);

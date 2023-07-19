@@ -24,13 +24,11 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.StructuredTraceGraph;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
-import org.hypertrace.traceenricher.util.EnricherInternalExceptionType;
 
 public abstract class AbstractTraceEnricher implements Enricher {
 
   private static final String TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS =
       "hypertrace.trace.enrichment.internal.exceptions";
-  private static final String ENRICHER_INTERNAL_EXCEPTION_TAG = "exception";
 
   private static final ConcurrentMap<String, Counter> exceptionCounters = new ConcurrentHashMap<>();
 
@@ -112,32 +110,13 @@ public abstract class AbstractTraceEnricher implements Enricher {
     }
   }
 
-  protected void trackInternalExceptionMetrics(
-      StructuredTrace trace, EnricherInternalExceptionType exception) {
-    trackInternalExceptionMetrics(
-        trace, Map.of(ENRICHER_INTERNAL_EXCEPTION_TAG, exception.getValue()));
-  }
-
   protected void trackInternalExceptionMetrics(StructuredTrace trace) {
-    trackInternalExceptionMetrics(
-        trace,
-        Map.of(
-            ENRICHER_INTERNAL_EXCEPTION_TAG,
-            EnricherInternalExceptionType.PROCESS_EXCEPTION.getValue()));
-  }
-
-  private void trackInternalExceptionMetrics(
-      StructuredTrace trace, Map<String, String> additionalTags) {
     String enricher = this.getClass().getSimpleName();
     String tenantId = trace.getCustomerId();
     Map<String, String> metricTags =
         new HashMap<>(Map.of("enricher", enricher, "tenantId", tenantId));
     String metricKey = String.format("%s/%s", enricher, tenantId);
-    if (additionalTags != null && !additionalTags.isEmpty()) {
-      metricTags.putAll(additionalTags);
-      String additionalTagsValues = String.join("/", additionalTags.values());
-      metricKey = String.join("/", metricKey, additionalTagsValues);
-    }
+
     exceptionCounters
         .computeIfAbsent(
             metricKey, k -> registerCounter(TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS, metricTags))
