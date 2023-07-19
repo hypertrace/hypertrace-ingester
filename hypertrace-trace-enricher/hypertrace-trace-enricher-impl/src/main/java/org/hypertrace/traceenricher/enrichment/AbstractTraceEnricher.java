@@ -6,7 +6,6 @@ import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegist
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import io.micrometer.core.instrument.Counter;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -113,10 +112,8 @@ public abstract class AbstractTraceEnricher implements Enricher {
   protected void trackInternalExceptionMetrics(StructuredTrace trace) {
     String enricher = this.getClass().getSimpleName();
     String tenantId = trace.getCustomerId();
-    Map<String, String> metricTags =
-        new HashMap<>(Map.of("enricher", enricher, "tenantId", tenantId));
+    Map<String, String> metricTags = Map.of("enricher", enricher, "tenantId", tenantId);
     String metricKey = String.format("%s/%s", enricher, tenantId);
-
     exceptionCounters
         .computeIfAbsent(
             metricKey, k -> registerCounter(TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS, metricTags))
