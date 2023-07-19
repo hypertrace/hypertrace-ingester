@@ -1,14 +1,18 @@
 package org.hypertrace.traceenricher.enrichment;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry.registerCounter;
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
+import io.micrometer.core.instrument.Counter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
@@ -21,6 +25,11 @@ import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.trace.util.StructuredTraceGraphBuilder;
 
 public abstract class AbstractTraceEnricher implements Enricher {
+
+  private static final String TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS =
+      "hypertrace.trace.enrichment.internal.exceptions";
+
+  private static final ConcurrentMap<String, Counter> exceptionCounters = new ConcurrentHashMap<>();
 
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {}
@@ -98,5 +107,15 @@ public abstract class AbstractTraceEnricher implements Enricher {
     if (!entityIds.contains(entity.getEntityId())) {
       trace.getEntityList().add(entity);
     }
+  }
+
+  protected void trackInternalExceptionsMetric(String tenantId) {
+    String enricher = this.getClass().getSimpleName();
+    Map<String, String> metricTags = Map.of("enricher", enricher, "tenantId", tenantId);
+    String metricKey = String.format("%s/%s", enricher, tenantId);
+    exceptionCounters
+        .computeIfAbsent(
+            metricKey, k -> registerCounter(TRACE_ENRICHMENT_INTERNAL_EXCEPTIONS, metricTags))
+        .increment();
   }
 }
