@@ -12,7 +12,6 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.traceenricher.enrichment.AbstractTraceEnricher;
-import org.hypertrace.traceenricher.util.EnricherInternalExceptionType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -61,7 +60,7 @@ class TestEnricher extends AbstractTraceEnricher {
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
     if (trace.getAttributes() == null) {
-      trackExceptions(trace, EnricherInternalExceptionType.PROCESS_EXCEPTION);
+      trackInternalExceptionMetrics(trace);
     }
   }
 }
