@@ -58,7 +58,7 @@ class TestEnricher extends AbstractTraceEnricher {
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
     if (trace.getAttributes() == null) {
-      trackInternalExceptionMetrics(trace);
+      trackInternalExceptionsMetric(trace);
     }
   }
 }
