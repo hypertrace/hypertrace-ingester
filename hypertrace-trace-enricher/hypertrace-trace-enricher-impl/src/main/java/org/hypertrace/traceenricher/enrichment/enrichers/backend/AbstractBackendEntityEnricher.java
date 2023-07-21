@@ -121,7 +121,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
    * inserted in the implementing classes.
    *
    * @param structuredTraceGraph structured trace graph
-   * @param event leaf exit span
+   * @param event                leaf exit span
    * @return true if backend resolution is allowed
    */
   protected boolean canResolveBackend(StructuredTraceGraph structuredTraceGraph, Event event) {
@@ -129,7 +129,9 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     return true;
   }
 
-  /** Checks if the candidateEntity is indeed a backend Entity */
+  /**
+   * Checks if the candidateEntity is indeed a backend Entity
+   */
   private boolean isValidBackendEntity(
       StructuredTrace trace, Event backendSpan, BackendInfo candidateInfo) {
     // Always create backend entity for RabbitMq, Mongo, Redis, Jdbc
@@ -166,7 +168,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
     String peerServiceName = SpanSemanticConventionUtils.getPeerServiceName(backendSpan);
     if (peerServiceName != null
         && checkIfServiceEntityExists(
-            trace, backendSpan, peerServiceName, candidateInfo.getEntity())) {
+        trace, backendSpan, peerServiceName, candidateInfo.getEntity())) {
       return false;
     }
 
@@ -278,6 +280,11 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
       Entity updatedEntity = mergeBackendEntity(existingEntity, backendEntity);
       if (!updatedEntity.equals(existingEntity)) {
         Entity result = this.upsertBackend(updatedEntity);
+        // update the cache to invalidate in case of upsert
+        entityCache
+            .getBackendIdAttrsToEntityCache()
+            .invalidate(
+                requestContext.buildContextualKey(backendEntity.getIdentifyingAttributesMap()));
         LOGGER.info("Updated backend:{}", result);
         return result;
       }
