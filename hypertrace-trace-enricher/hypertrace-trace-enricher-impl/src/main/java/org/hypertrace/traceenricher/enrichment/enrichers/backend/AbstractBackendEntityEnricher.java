@@ -283,7 +283,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
             .getBackendIdAttrsToEntityCache()
             .invalidate(
                 requestContext.buildContextualKey(backendEntity.getIdentifyingAttributesMap()));
-        LOGGER.info("Updated backend:{}", result);
+        LOGGER.debug("Updated backend:{}", result);
         return result;
       }
 
