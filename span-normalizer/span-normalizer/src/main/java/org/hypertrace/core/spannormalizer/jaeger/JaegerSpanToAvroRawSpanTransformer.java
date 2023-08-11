@@ -13,9 +13,11 @@ import java.util.concurrent.ConcurrentMap;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
+import org.hypertrace.semantic.convention.utils.span.SpanStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,11 +35,13 @@ public class JaegerSpanToAvroRawSpanTransformer
       new ConcurrentHashMap<>();
 
   private JaegerSpanNormalizer converter;
+  private SpanStore spanStore;
 
   @Override
   public void init(ProcessorContext context) {
     Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
     converter = JaegerSpanNormalizer.get(jobConfig);
+    spanStore = new SpanStore(jobConfig);
   }
 
   @Override
@@ -45,7 +49,8 @@ public class JaegerSpanToAvroRawSpanTransformer
     Span value = preProcessedSpan.getSpan();
     String tenantId = preProcessedSpan.getTenantId();
     try {
-      RawSpan rawSpan = converter.convert(tenantId, value, preProcessedSpan.getEvent());
+      Event trimmedEvent = spanStore.pushToSpanStoreAndTrimSpan(preProcessedSpan.getEvent());
+      RawSpan rawSpan = converter.convert(tenantId, value, trimmedEvent);
       if (null != rawSpan) {
         // these are spans per tenant that we were able to parse / convert, and had tenantId.
         tenantToSpanReceivedCount

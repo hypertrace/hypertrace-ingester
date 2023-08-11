@@ -13,12 +13,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.stream.Collectors;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
+import org.hypertrace.semantic.convention.utils.span.SpanStore;
 import org.hypertrace.traceenricher.enrichment.EnrichmentProcessor;
 import org.hypertrace.traceenricher.enrichment.EnrichmentRegistry;
 import org.hypertrace.traceenricher.enrichment.clients.DefaultClientRegistry;
@@ -29,6 +32,7 @@ public class StructuredTraceEnrichProcessor
   private static EnrichmentProcessor processor = null;
   private final GrpcChannelRegistry grpcChannelRegistry;
   private DefaultClientRegistry clientRegistry;
+  private SpanStore spanStore;
 
   public StructuredTraceEnrichProcessor(GrpcChannelRegistry grpcChannelRegistry) {
     this.grpcChannelRegistry = grpcChannelRegistry;
@@ -55,6 +59,8 @@ public class StructuredTraceEnrichProcessor
           processor =
               new EnrichmentProcessor(
                   enrichmentRegistry.getOrderedRegisteredEnrichers(), clientRegistry);
+
+          spanStore = new SpanStore(jobConfig);
         }
       }
     }
@@ -62,8 +68,14 @@ public class StructuredTraceEnrichProcessor
 
   @Override
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, StructuredTrace value) {
-    processor.process(value);
-    return new KeyValue<>(null, value);
+    List<Event> updatedEventList =
+        value.getEventList().stream()
+            .map(event -> spanStore.retrieveFromSpanStoreAndFillSpan(event))
+            .collect(Collectors.toUnmodifiableList());
+    StructuredTrace updatedValue =
+        StructuredTrace.newBuilder(value).setEventList(updatedEventList).build();
+    processor.process(updatedValue);
+    return new KeyValue<>(null, updatedValue);
   }
 
   @Override

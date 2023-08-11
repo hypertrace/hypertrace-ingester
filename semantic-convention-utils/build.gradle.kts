@@ -10,10 +10,13 @@ tasks.test {
 dependencies {
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":span-normalizer:span-normalizer-constants"))
+  implementation(project(":span-normalizer:span-normalizer-api"))
 
   implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
   implementation("org.apache.commons:commons-lang3:3.12.0")
   implementation("com.google.guava:guava:32.0.1-jre")
+  implementation("redis.clients:jedis:4.4.3")
+  implementation("com.typesafe:config:1.4.2")
 
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
   testImplementation("org.mockito:mockito-core:4.7.0")
