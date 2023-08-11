@@ -10,10 +10,13 @@ import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.Jedis;
 
 public class SpanStore {
+  private static final Logger LOGGER = LoggerFactory.getLogger(SpanStore.class);
   private static final String SPAN_STORE_ENABLED = "span.store.enabled";
   private static final String SPAN_STORE_REDIS_HOST = "span.store.redis.host";
   private static final String SPAN_STORE_REDIS_PORT = "span.store.redis.port";
@@ -81,7 +84,7 @@ public class SpanStore {
             .build();
       }
     } catch (IOException e) {
-      System.out.println(e);
+      LOGGER.error("Unable to push event to span store", e);
     }
 
     return event;
@@ -103,13 +106,12 @@ public class SpanStore {
                   .build();
           byte[] bytes = jedis.get().get(spanIdentity.toByteBuffer().array());
           if (bytes != null) {
-
             return Event.fromByteBuffer(ByteBuffer.wrap(bytes));
           }
         }
       }
     } catch (IOException e) {
-      System.out.println(e);
+      LOGGER.error("Unable to retrieve event from span store", e);
     }
     return event;
   }
