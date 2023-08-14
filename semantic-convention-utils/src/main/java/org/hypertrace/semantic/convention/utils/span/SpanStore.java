@@ -4,20 +4,24 @@ import com.typesafe.config.Config;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.DefaultJedisClientConfig;
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisSentinelPool;
 
 public class SpanStore {
   private static final Logger LOGGER = LoggerFactory.getLogger(SpanStore.class);
   private static final String SPAN_STORE_ENABLED = "span.store.enabled";
+  private static final String SPAN_STORE_REDIS_MASTER = "span.store.redis.master";
   private static final String SPAN_STORE_REDIS_HOST = "span.store.redis.host";
   private static final String SPAN_STORE_REDIS_PORT = "span.store.redis.port";
   private static final String SPAN_STORE_REDIS_USER = "span.store.redis.user";
@@ -31,35 +35,43 @@ public class SpanStore {
   private static final AttributeValue ATTRIBUTE_VALUE_TRUE =
       AttributeValue.newBuilder().setValue("true").build();
   private static final String SPAN_BYPASSED_CONFIG = "processor.bypass.key";
-  private final Optional<Jedis> jedis;
+  private Optional<JedisSentinelPool> jedisSentinelPool;
   private Optional<String> bypassKey;
 
   public SpanStore(Config config) {
     boolean enabled =
         config.hasPath(SPAN_STORE_ENABLED) ? config.getBoolean(SPAN_STORE_ENABLED) : false;
     if (enabled) {
-      DefaultJedisClientConfig defaultJedisClientConfig =
-          DefaultJedisClientConfig.builder()
-              .password(config.getString(SPAN_STORE_REDIS_PASSWORD))
-              .build();
-      jedis =
-          Optional.of(
-              new Jedis(
-                  config.getString(SPAN_STORE_REDIS_HOST),
-                  config.getInt(SPAN_STORE_REDIS_PORT),
-                  defaultJedisClientConfig));
+      Set<String> sentinels = new HashSet<>();
+      String host = config.getString(SPAN_STORE_REDIS_HOST);
+      int port = config.getInt(SPAN_STORE_REDIS_PORT);
+      String master = config.getString(SPAN_STORE_REDIS_MASTER);
+      sentinels.add(new HostAndPort(host, port).toString());
+      try {
+        JedisSentinelPool jedisSentinelPool1 = new JedisSentinelPool(master, sentinels);
+        jedisSentinelPool = Optional.of(jedisSentinelPool1);
+      } catch (Exception ex) {
+        LOGGER.error(
+            "Failed to create jedis sentinel pool with host {}, port {} and master {}",
+            host,
+            port,
+            master,
+            ex);
+        jedisSentinelPool = Optional.empty();
+      }
       bypassKey =
           config.hasPath(SPAN_BYPASSED_CONFIG)
               ? Optional.of(config.getString(SPAN_BYPASSED_CONFIG))
               : Optional.empty();
     } else {
-      jedis = Optional.empty();
+      jedisSentinelPool = Optional.empty();
     }
+    LOGGER.info("Intialized span store with redis client {}", jedisSentinelPool);
   }
 
   public Event pushToSpanStoreAndTrimSpan(Event event) {
     try {
-      if (jedis.isPresent()) {
+      if (jedisSentinelPool.isPresent()) {
         SpanIdentity spanIdentity =
             SpanIdentity.newBuilder()
                 .setTenantId(event.getCustomerId())
@@ -67,7 +79,9 @@ public class SpanStore {
                 .setSpanId(event.getEventId())
                 .build();
         Event eventCopy = Event.newBuilder(event).build();
-        jedis.get().set(spanIdentity.toByteBuffer().array(), eventCopy.toByteBuffer().array());
+        try (Jedis jedis = jedisSentinelPool.get().getResource()) {
+          jedis.set(spanIdentity.toByteBuffer().array(), eventCopy.toByteBuffer().array());
+        }
         Optional<AttributeValue> attributeValue =
             bypassKey.flatMap(
                 key -> Optional.ofNullable(event.getAttributes().getAttributeMap().get(key)));
@@ -92,7 +106,10 @@ public class SpanStore {
 
   public Event retrieveFromSpanStoreAndFillSpan(Event event) {
     try {
-      if (jedis.isPresent()) {
+      if (jedisSentinelPool.isPresent()
+          && event.getEnrichedAttributes() != null
+          && event.getEnrichedAttributes().getAttributeMap() != null
+          && !event.getEnrichedAttributes().getAttributeMap().isEmpty()) {
         if (event
             .getEnrichedAttributes()
             .getAttributeMap()
@@ -104,9 +121,15 @@ public class SpanStore {
                   .setTraceId(TRACE_ID)
                   .setSpanId(event.getEventId())
                   .build();
-          byte[] bytes = jedis.get().get(spanIdentity.toByteBuffer().array());
+          byte[] bytes;
+          try (Jedis jedis = jedisSentinelPool.get().getResource()) {
+            bytes = jedis.getDel(spanIdentity.toByteBuffer().array());
+          }
           if (bytes != null) {
             return Event.fromByteBuffer(ByteBuffer.wrap(bytes));
+          } else {
+            LOGGER.error(
+                "Null result when retrieving span with id {} from span store", spanIdentity);
           }
         }
       }
