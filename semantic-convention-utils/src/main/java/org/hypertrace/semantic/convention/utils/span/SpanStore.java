@@ -8,6 +8,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
@@ -37,6 +40,8 @@ public class SpanStore {
   private static final String SPAN_BYPASSED_CONFIG = "processor.bypass.key";
   private Optional<JedisSentinelPool> jedisSentinelPool;
   private Optional<String> bypassKey;
+  private Counter counter;
+  private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
   public SpanStore(Config config) {
     boolean enabled =
@@ -66,12 +71,17 @@ public class SpanStore {
     } else {
       jedisSentinelPool = Optional.empty();
     }
-    LOGGER.info("Intialized span store with redis client {}", jedisSentinelPool);
+    counter = new Counter();
+    scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
+    scheduledThreadPoolExecutor.scheduleAtFixedRate(this::logCounter, 1, 1, TimeUnit.MINUTES);
+    LOGGER.info("Initialized span store with redis client {}", jedisSentinelPool);
   }
 
   public Event pushToSpanStoreAndTrimSpan(Event event) {
-    try {
-      if (jedisSentinelPool.isPresent()) {
+    counter.totalPushCallCount.incrementAndGet();
+    if (jedisSentinelPool.isPresent()) {
+      try {
+        counter.totalPushCount.incrementAndGet();
         SpanIdentity spanIdentity =
             SpanIdentity.newBuilder()
                 .setTenantId(event.getCustomerId())
@@ -82,6 +92,7 @@ public class SpanStore {
         try (Jedis jedis = jedisSentinelPool.get().getResource()) {
           jedis.set(spanIdentity.toByteBuffer().array(), eventCopy.toByteBuffer().array());
         }
+        counter.totalPushSuccessCount.incrementAndGet();
         Optional<AttributeValue> attributeValue =
             bypassKey.flatMap(
                 key -> Optional.ofNullable(event.getAttributes().getAttributeMap().get(key)));
@@ -96,25 +107,27 @@ public class SpanStore {
                     .setAttributeMap(Map.of(IS_TRIM, ATTRIBUTE_VALUE_TRUE))
                     .build())
             .build();
+      } catch (IOException e) {
+        counter.totalPushErrorCount.incrementAndGet();
+        LOGGER.error("Unable to push event to span store", e);
       }
-    } catch (IOException e) {
-      LOGGER.error("Unable to push event to span store", e);
     }
-
     return event;
   }
 
   public Event retrieveFromSpanStoreAndFillSpan(Event event) {
-    try {
-      if (jedisSentinelPool.isPresent()
-          && event.getEnrichedAttributes() != null
-          && event.getEnrichedAttributes().getAttributeMap() != null
-          && !event.getEnrichedAttributes().getAttributeMap().isEmpty()) {
-        if (event
-            .getEnrichedAttributes()
-            .getAttributeMap()
-            .getOrDefault(IS_TRIM, ATTRIBUTE_VALUE_FALSE)
-            .equals(ATTRIBUTE_VALUE_TRUE)) {
+    counter.totalGetCallCount.incrementAndGet();
+    if (jedisSentinelPool.isPresent()
+        && event.getEnrichedAttributes() != null
+        && event.getEnrichedAttributes().getAttributeMap() != null
+        && !event.getEnrichedAttributes().getAttributeMap().isEmpty()) {
+      if (event
+          .getEnrichedAttributes()
+          .getAttributeMap()
+          .getOrDefault(IS_TRIM, ATTRIBUTE_VALUE_FALSE)
+          .equals(ATTRIBUTE_VALUE_TRUE)) {
+        try {
+          counter.totalGetCount.incrementAndGet();
           SpanIdentity spanIdentity =
               SpanIdentity.newBuilder()
                   .setTenantId(event.getCustomerId())
@@ -126,16 +139,62 @@ public class SpanStore {
             bytes = jedis.getDel(spanIdentity.toByteBuffer().array());
           }
           if (bytes != null) {
+            counter.totalGetSuccessCount.incrementAndGet();
             return Event.fromByteBuffer(ByteBuffer.wrap(bytes));
           } else {
+            counter.totalGetMissCount.incrementAndGet();
             LOGGER.error(
                 "Null result when retrieving span with id {} from span store", spanIdentity);
           }
+        } catch (IOException e) {
+          counter.totalGetErrorCount.incrementAndGet();
+          LOGGER.error("Unable to retrieve event from span store", e);
         }
       }
-    } catch (IOException e) {
-      LOGGER.error("Unable to retrieve event from span store", e);
     }
     return event;
+  }
+
+  private void logCounter() {
+    Counter currentCounter = counter;
+    counter = new Counter();
+    LOGGER.info(currentCounter.toString());
+  }
+
+  class Counter {
+    AtomicLong totalPushCallCount = new AtomicLong();
+    AtomicLong totalPushCount = new AtomicLong();
+    AtomicLong totalPushSuccessCount = new AtomicLong();
+    AtomicLong totalPushErrorCount = new AtomicLong();
+
+    AtomicLong totalGetCallCount = new AtomicLong();
+    AtomicLong totalGetCount = new AtomicLong();
+    AtomicLong totalGetSuccessCount = new AtomicLong();
+    AtomicLong totalGetMissCount = new AtomicLong();
+    AtomicLong totalGetErrorCount = new AtomicLong();
+
+    @Override
+    public String toString() {
+      return "Counter{"
+          + "totalPushCallCount="
+          + totalPushCallCount
+          + ", totalPushCount="
+          + totalPushCount
+          + ", totalPushSuccessCount="
+          + totalPushSuccessCount
+          + ", totalPushErrorCount="
+          + totalPushErrorCount
+          + ", totalGetCallCount="
+          + totalGetCallCount
+          + ", totalGetCount="
+          + totalGetCount
+          + ", totalGetSuccessCount="
+          + totalGetSuccessCount
+          + ", totalGetMissCount="
+          + totalGetMissCount
+          + ", totalGetErrorCount="
+          + totalGetErrorCount
+          + '}';
+    }
   }
 }
