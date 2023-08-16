@@ -3,6 +3,7 @@ package org.hypertrace.semantic.convention.utils.span;
 import com.typesafe.config.Config;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,6 +39,8 @@ public class SpanStore {
   private static final AttributeValue ATTRIBUTE_VALUE_TRUE =
       AttributeValue.newBuilder().setValue("true").build();
   private static final String SPAN_BYPASSED_CONFIG = "processor.bypass.key";
+  private static final Duration KEY_TIMEOUT = Duration.ofMinutes(5);
+
   private Optional<JedisSentinelPool> jedisSentinelPool;
   private Optional<String> bypassKey;
   private Counter counter;
@@ -90,7 +93,10 @@ public class SpanStore {
                 .build();
         Event eventCopy = Event.newBuilder(event).build();
         try (Jedis jedis = jedisSentinelPool.get().getResource()) {
-          jedis.set(spanIdentity.toByteBuffer().array(), eventCopy.toByteBuffer().array());
+          jedis.setex(
+              spanIdentity.toByteBuffer().array(),
+              KEY_TIMEOUT.getSeconds(),
+              eventCopy.toByteBuffer().array());
         }
         counter.totalPushSuccessCount.incrementAndGet();
         Optional<AttributeValue> attributeValue =
@@ -136,7 +142,7 @@ public class SpanStore {
                   .build();
           byte[] bytes;
           try (Jedis jedis = jedisSentinelPool.get().getResource()) {
-            bytes = jedis.getDel(spanIdentity.toByteBuffer().array());
+            bytes = jedis.get(spanIdentity.toByteBuffer().array());
           }
           if (bytes != null) {
             counter.totalGetSuccessCount.incrementAndGet();
