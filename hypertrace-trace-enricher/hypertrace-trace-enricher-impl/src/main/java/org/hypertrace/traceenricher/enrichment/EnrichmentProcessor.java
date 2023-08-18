@@ -1,6 +1,7 @@
 package org.hypertrace.traceenricher.enrichment;
 
 import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry.registerCounter;
+import static org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry.registerTimer;
 import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.DROP_TRACE_ATTRIBUTE;
 
 import com.google.common.util.concurrent.ExecutionError;
@@ -23,7 +24,6 @@ import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.datamodel.shared.HexUtils;
-import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.traceenricher.enrichment.clients.ClientRegistry;
 import org.hypertrace.traceenricher.util.AvroToJsonLogger;
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ public class EnrichmentProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(EnrichmentProcessor.class);
   private static final String ENRICHMENT_ARRIVAL_TIME = "enrichment.arrival.time";
   private static final Timer enrichmentArrivalTimer =
-      PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
+      registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
 
   // Must use linked hashmap
   private final Map<String, Enricher> enrichers = new LinkedHashMap<>();
@@ -76,20 +76,16 @@ public class EnrichmentProcessor {
     AvroToJsonLogger.log(LOG, "Structured Trace before all the enrichment is: {}", trace);
     for (Entry<String, Enricher> entry : enrichers.entrySet()) {
       String metricKey = String.format("%s/%s", trace.getCustomerId(), entry.getKey());
-      Map<String, String> metricTags =
-          Map.of("tenantId", trace.getCustomerId(), "enricher", entry.getKey());
       try {
         Instant start = Instant.now();
         applyEnricher(entry.getValue(), trace);
         long timeElapsed = Duration.between(start, Instant.now()).toMillis();
 
         traceCounters
-            .computeIfAbsent(metricKey, k -> registerCounter(ENRICHED_TRACES_COUNTER, metricTags))
+            .computeIfAbsent(metricKey, k -> registerCounter(ENRICHED_TRACES_COUNTER, null))
             .increment();
         traceTimers
-            .computeIfAbsent(
-                metricKey,
-                k -> PlatformMetricsRegistry.registerTimer(ENRICHED_TRACES_TIMER, metricTags))
+            .computeIfAbsent(metricKey, k -> registerTimer(ENRICHED_TRACES_TIMER, null))
             .record(timeElapsed, TimeUnit.MILLISECONDS);
       } catch (Exception | ExecutionError throwable) {
         String errorMessage =
@@ -97,8 +93,7 @@ public class EnrichmentProcessor {
                 "Could not apply the enricher: %s to the trace with traceId: %s",
                 entry.getKey(), HexUtils.getHex(trace.getTraceId()));
         traceErrorsCounters
-            .computeIfAbsent(
-                metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, metricTags))
+            .computeIfAbsent(metricKey, k -> registerCounter(TRACE_ENRICHMENT_ERRORS_COUNTER, null))
             .increment();
         LOG.error(errorMessage, throwable);
       }
