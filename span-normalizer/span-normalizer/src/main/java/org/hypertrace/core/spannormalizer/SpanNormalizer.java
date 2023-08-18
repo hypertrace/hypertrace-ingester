@@ -15,10 +15,13 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Named;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.processor.StreamPartitioner;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
+import org.hypertrace.core.kafkastreams.framework.async.AsyncProcessorConfig;
+import org.hypertrace.core.kafkastreams.framework.async.ExecutorFactory;
 import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
 import org.hypertrace.core.kafkastreams.framework.partitioner.KeyHashPartitioner;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
@@ -35,6 +38,8 @@ import org.slf4j.LoggerFactory;
 public class SpanNormalizer extends KafkaStreamsApp {
 
   private static final Logger logger = LoggerFactory.getLogger(SpanNormalizer.class);
+
+  private static final String JAEGER_TO_RAW_CONVERTER_NAME = "jaeger-to-raw-converter";
 
   public SpanNormalizer(ConfigClient configClient) {
     super(configClient);
@@ -65,7 +70,15 @@ public class SpanNormalizer extends KafkaStreamsApp {
 
     KStream<TraceIdentity, RawSpan>[] branches =
         preProcessedStream
-            .transform(JaegerSpanToAvroRawSpanTransformer::new)
+            .process(
+                () ->
+                    new JaegerSpanToAvroRawSpanTransformer(
+                        ExecutorFactory.getExecutorSupplier(
+                            jobConfig.getConfig(KAFKA_STREAMS_CONFIG_KEY)),
+                        AsyncProcessorConfig.buildWith(
+                            jobConfig.getConfig(KAFKA_STREAMS_CONFIG_KEY),
+                            JAEGER_TO_RAW_CONVERTER_NAME)),
+                Named.as(JAEGER_TO_RAW_CONVERTER_NAME))
             .branch(new ByPassPredicate(jobConfig), (key, value) -> true);
     branches[0].transform(RawSpanToStructuredTraceTransformer::new).to(bypassOutputTopic);
 

@@ -7,15 +7,18 @@ import static org.hypertrace.core.spannormalizer.jaeger.JaegerSpanPreProcessor.S
 import com.typesafe.config.Config;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import io.micrometer.core.instrument.Counter;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import java.util.function.Supplier;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.kafkastreams.framework.async.AsyncProcessor;
+import org.hypertrace.core.kafkastreams.framework.async.AsyncProcessorConfig;
+import org.hypertrace.core.kafkastreams.framework.async.RecordToForward;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.hypertrace.semantic.convention.utils.span.SpanStore;
@@ -23,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JaegerSpanToAvroRawSpanTransformer
-    implements Transformer<byte[], PreProcessedSpan, KeyValue<TraceIdentity, RawSpan>> {
+    extends AsyncProcessor<byte[], PreProcessedSpan, TraceIdentity, RawSpan> {
 
   private static final Logger LOGGER =
       LoggerFactory.getLogger(JaegerSpanToAvroRawSpanTransformer.class);
@@ -38,9 +41,14 @@ public class JaegerSpanToAvroRawSpanTransformer
   private JaegerSpanNormalizer converter;
   private static AtomicReference<SpanStore> spanStore = new AtomicReference<>();
 
+  public JaegerSpanToAvroRawSpanTransformer(
+      Supplier<Executor> executorSupplier, AsyncProcessorConfig asyncProcessorConfig) {
+    super(executorSupplier, asyncProcessorConfig);
+  }
+
   @Override
-  public void init(ProcessorContext context) {
-    Config jobConfig = (Config) context.appConfigs().get(SPAN_NORMALIZER_JOB_CONFIG);
+  protected void doInit(Map<String, Object> appConfigs) {
+    Config jobConfig = (Config) appConfigs.get(SPAN_NORMALIZER_JOB_CONFIG);
     converter = JaegerSpanNormalizer.get(jobConfig);
     if (spanStore.get() == null) {
       synchronized (JaegerSpanToAvroRawSpanTransformer.class) {
@@ -52,7 +60,8 @@ public class JaegerSpanToAvroRawSpanTransformer
   }
 
   @Override
-  public KeyValue<TraceIdentity, RawSpan> transform(byte[] key, PreProcessedSpan preProcessedSpan) {
+  public List<RecordToForward<TraceIdentity, RawSpan>> asyncProcess(
+      byte[] key, PreProcessedSpan preProcessedSpan) {
     Span value = preProcessedSpan.getSpan();
     String tenantId = preProcessedSpan.getTenantId();
     try {
@@ -74,7 +83,7 @@ public class JaegerSpanToAvroRawSpanTransformer
                 .setTenantId(tenantId)
                 .setTraceId(rawSpan.getTraceId())
                 .build();
-        return new KeyValue<>(traceIdentity, rawSpan);
+        return List.of(RecordToForward.from(null, traceIdentity, rawSpan));
       }
       statusToSpansCounter
           .computeIfAbsent(
