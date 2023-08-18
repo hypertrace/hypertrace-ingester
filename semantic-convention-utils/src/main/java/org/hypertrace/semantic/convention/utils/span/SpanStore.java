@@ -20,12 +20,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisSentinelPool;
 
 public class SpanStore {
   private static final Logger LOGGER = LoggerFactory.getLogger(SpanStore.class);
   private static final String SPAN_STORE_ENABLED = "span.store.enabled";
-  private static final String SPAN_STORE_REDIS_MASTER = "span.store.redis.master";
+  private static final String SPAN_STORE_REDIS_SENTINEL_MODE = "span.store.redis.sentinelMode";
+  private static final String SPAN_STORE_REDIS_SENTINEL_MASTER = "span.store.redis.sentinelMaster";
+  private static final String SPAN_STORE_REDIS_SENTINEL_HOST = "span.store.redis.sentinelHost";
+  private static final String SPAN_STORE_REDIS_SENTINEL_PORT = "span.store.redis.sentinelPort";
   private static final String SPAN_STORE_REDIS_HOST = "span.store.redis.host";
   private static final String SPAN_STORE_REDIS_PORT = "span.store.redis.port";
   private static final String SPAN_STORE_REDIS_USER = "span.store.redis.user";
@@ -41,7 +46,7 @@ public class SpanStore {
   private static final String SPAN_BYPASSED_CONFIG = "processor.bypass.key";
   private static final Duration KEY_TIMEOUT = Duration.ofMinutes(5);
 
-  private Optional<JedisSentinelPool> jedisSentinelPool;
+  private Optional<JedisProvider> jedisProvider;
   private Optional<String> bypassKey;
   private Counter counter;
   private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
@@ -50,39 +55,28 @@ public class SpanStore {
     boolean enabled =
         config.hasPath(SPAN_STORE_ENABLED) ? config.getBoolean(SPAN_STORE_ENABLED) : false;
     if (enabled) {
-      Set<String> sentinels = new HashSet<>();
-      String host = config.getString(SPAN_STORE_REDIS_HOST);
-      int port = config.getInt(SPAN_STORE_REDIS_PORT);
-      String master = config.getString(SPAN_STORE_REDIS_MASTER);
-      sentinels.add(new HostAndPort(host, port).toString());
       try {
-        JedisSentinelPool jedisSentinelPool1 = new JedisSentinelPool(master, sentinels);
-        jedisSentinelPool = Optional.of(jedisSentinelPool1);
+        jedisProvider = Optional.of(new JedisProviderFactory().getJedisProvider(config));
       } catch (Exception ex) {
-        LOGGER.error(
-            "Failed to create jedis sentinel pool with host {}, port {} and master {}",
-            host,
-            port,
-            master,
-            ex);
-        jedisSentinelPool = Optional.empty();
+        LOGGER.error("Failed to create jedis provider", ex);
+        jedisProvider = Optional.empty();
       }
       bypassKey =
           config.hasPath(SPAN_BYPASSED_CONFIG)
               ? Optional.of(config.getString(SPAN_BYPASSED_CONFIG))
               : Optional.empty();
     } else {
-      jedisSentinelPool = Optional.empty();
+      jedisProvider = Optional.empty();
     }
     counter = new Counter();
     scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
     scheduledThreadPoolExecutor.scheduleAtFixedRate(this::logCounter, 1, 1, TimeUnit.MINUTES);
-    LOGGER.info("Initialized span store with redis client {}", jedisSentinelPool);
+    LOGGER.info("Initialized span store with redis client {}", jedisProvider);
   }
 
   public Event pushToSpanStoreAndTrimSpan(Event event) {
     counter.totalPushCallCount.incrementAndGet();
-    if (jedisSentinelPool.isPresent()) {
+    if (jedisProvider.isPresent()) {
       try {
         counter.totalPushCount.incrementAndGet();
         SpanIdentity spanIdentity =
@@ -92,12 +86,9 @@ public class SpanStore {
                 .setSpanId(event.getEventId())
                 .build();
         Event eventCopy = Event.newBuilder(event).build();
-        try (Jedis jedis = jedisSentinelPool.get().getResource()) {
-          jedis.setex(
-              spanIdentity.toByteBuffer().array(),
-              KEY_TIMEOUT.getSeconds(),
-              eventCopy.toByteBuffer().array());
-        }
+        jedisProvider
+            .get()
+            .put(spanIdentity.toByteBuffer().array(), eventCopy.toByteBuffer().array());
         counter.totalPushSuccessCount.incrementAndGet();
         Optional<AttributeValue> attributeValue =
             bypassKey.flatMap(
@@ -123,7 +114,7 @@ public class SpanStore {
 
   public Event retrieveFromSpanStoreAndFillSpan(Event event) {
     counter.totalGetCallCount.incrementAndGet();
-    if (jedisSentinelPool.isPresent()
+    if (jedisProvider.isPresent()
         && event.getEnrichedAttributes() != null
         && event.getEnrichedAttributes().getAttributeMap() != null
         && !event.getEnrichedAttributes().getAttributeMap().isEmpty()) {
@@ -140,10 +131,7 @@ public class SpanStore {
                   .setTraceId(TRACE_ID)
                   .setSpanId(event.getEventId())
                   .build();
-          byte[] bytes;
-          try (Jedis jedis = jedisSentinelPool.get().getResource()) {
-            bytes = jedis.get(spanIdentity.toByteBuffer().array());
-          }
+          byte[] bytes = jedisProvider.get().get(spanIdentity.toByteBuffer().array());
           if (bytes != null) {
             counter.totalGetSuccessCount.incrementAndGet();
             return Event.fromByteBuffer(ByteBuffer.wrap(bytes));
@@ -151,10 +139,12 @@ public class SpanStore {
             counter.totalGetMissCount.incrementAndGet();
             LOGGER.error(
                 "Null result when retrieving span with id {} from span store", spanIdentity);
+            throw new RuntimeException("Null result when retrieving span with id");
           }
-        } catch (IOException e) {
+        } catch (Exception e) {
           counter.totalGetErrorCount.incrementAndGet();
           LOGGER.error("Unable to retrieve event from span store", e);
+          throw new RuntimeException("Unable to retrieve event from span store", e);
         }
       }
     }
@@ -201,6 +191,102 @@ public class SpanStore {
           + ", totalGetErrorCount="
           + totalGetErrorCount
           + '}';
+    }
+  }
+
+  interface JedisProvider {
+    void put(byte[] key, byte[] value);
+
+    byte[] get(byte[] key);
+  }
+
+  class JedisProviderFactory {
+    JedisProvider getJedisProvider(Config config) {
+      boolean sentinelMode = config.getBoolean(SPAN_STORE_REDIS_SENTINEL_MODE);
+      if (sentinelMode) {
+        return new JedisSentinelPoolWrapper(config);
+      } else {
+        return new JedisPoolWrapper(config);
+      }
+    }
+  }
+
+  class JedisSentinelPoolWrapper implements JedisProvider {
+    private JedisSentinelPool jedisSentinelPool;
+
+    JedisSentinelPoolWrapper(Config config) {
+      Set<String> sentinels = new HashSet<>();
+      String host = config.getString(SPAN_STORE_REDIS_SENTINEL_HOST);
+      int port = config.getInt(SPAN_STORE_REDIS_SENTINEL_PORT);
+      String master = config.getString(SPAN_STORE_REDIS_SENTINEL_MASTER);
+      sentinels.add(new HostAndPort(host, port).toString());
+      try {
+        jedisSentinelPool = new JedisSentinelPool(master, sentinels);
+      } catch (Exception ex) {
+        LOGGER.error(
+            "Failed to create jedis sentinel pool with host {}, port {} and master {}",
+            host,
+            port,
+            master,
+            ex);
+        throw ex;
+      }
+    }
+
+    @Override
+    public void put(byte[] key, byte[] value) {
+      try (Jedis jedis = jedisSentinelPool.getResource()) {
+        jedis.setex(key, KEY_TIMEOUT.getSeconds(), value);
+      }
+    }
+
+    @Override
+    public byte[] get(byte[] key) {
+      try (Jedis jedis = jedisSentinelPool.getResource()) {
+        return jedis.get(key);
+      }
+    }
+  }
+
+  class JedisPoolWrapper implements JedisProvider {
+    private JedisPool jedisPool;
+
+    JedisPoolWrapper(Config config) {
+      final JedisPoolConfig poolConfig = getJedisPoolConfig();
+      jedisPool =
+          new JedisPool(
+              poolConfig,
+              config.getString(SPAN_STORE_REDIS_HOST),
+              config.getInt(SPAN_STORE_REDIS_PORT));
+    }
+
+    private JedisPoolConfig getJedisPoolConfig() {
+      final JedisPoolConfig poolConfig = new JedisPoolConfig();
+      poolConfig.setMaxTotal(32);
+      poolConfig.setMaxIdle(16);
+      poolConfig.setMinIdle(4);
+      poolConfig.setTestOnBorrow(true);
+      poolConfig.setTestOnReturn(true);
+      poolConfig.setTestWhileIdle(true);
+      poolConfig.setMinEvictableIdleTime(Duration.ofSeconds(60));
+      poolConfig.setTimeBetweenEvictionRuns(Duration.ofSeconds(30));
+      poolConfig.setNumTestsPerEvictionRun(3);
+      poolConfig.setBlockWhenExhausted(true);
+      return poolConfig;
+    }
+
+    @Override
+    public void put(byte[] key, byte[] value) {
+      try (Jedis jedis = jedisPool.getResource()) {
+        jedis.setex(key, KEY_TIMEOUT.getSeconds(), value);
+      }
+    }
+
+    @Override
+    public byte[] get(byte[] key) {
+      try (Jedis jedis = jedisPool.getResource()) {
+        return jedis.get(key);
+      }
     }
   }
 }
