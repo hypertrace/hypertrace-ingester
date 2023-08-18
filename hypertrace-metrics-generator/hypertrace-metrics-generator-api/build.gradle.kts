@@ -22,7 +22,7 @@ sourceSets {
 
 dependencies {
   implementation("com.google.protobuf:protobuf-java:3.23.3")
-  implementation(platform("org.hypertrace.core.kafkastreams.framework:kafka-bom:0.2.14"))
+  implementation(platform("org.hypertrace.core.kafkastreams.framework:kafka-bom:0.3.2"))
   implementation("org.apache.kafka:kafka-clients")
   implementation("io.opentelemetry:opentelemetry-proto:1.7.1-alpha")
 

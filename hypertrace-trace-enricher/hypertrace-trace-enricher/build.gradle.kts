@@ -33,12 +33,12 @@ dependencies {
   implementation(project(":span-normalizer:span-normalizer-api"))
   implementation(project(":semantic-convention-utils"))
   implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.54")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.54")
+  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.58")
+  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.58")
   implementation("org.hypertrace.entity.service:entity-service-client:0.8.75")
 
   implementation("com.google.guava:guava:32.0.1-jre")
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.14")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.3.2")
 
   // Required for the GRPC clients.
   runtimeOnly("io.grpc:grpc-netty:1.56.0")
