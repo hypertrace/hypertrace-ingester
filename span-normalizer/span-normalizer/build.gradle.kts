@@ -41,12 +41,12 @@ dependencies {
   implementation("org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner:0.2.14")
   implementation("org.hypertrace.config.service:span-processing-config-service-api:0.1.52")
   implementation("org.hypertrace.config.service:span-processing-utils:0.1.52")
-  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.12.1")
-  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.12.1")
+  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.12.2")
+  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.12.2")
   implementation("com.google.guava:guava:32.0.1-jre")
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.56.0")
+  runtimeOnly("io.grpc:grpc-netty:1.57.2")
   annotationProcessor("org.projectlombok:lombok:1.18.18")
   compileOnly("org.projectlombok:lombok:1.18.18")
 
