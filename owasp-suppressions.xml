@@ -75,4 +75,33 @@
     <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
     <cve>CVE-2023-35116</cve>
   </suppress>
+  <suppress>
+    <notes><![CDATA[
+   file name: avro-partitioners-0.2.13.jar. Affects go based projects
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.hypertrace\.core\.kafkastreams\.framework/avro\-partitioners@.*$</packageUrl>
+    <cve>CVE-2023-37475</cve>
+  </suppress>
+  <suppress until="2023-08-30Z">
+    <notes><![CDATA[
+   Not yet fixed in quartz. file name: quartz-2.3.2.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.quartz\-scheduler/quartz@.*$</packageUrl>
+    <cve>CVE-2023-39017</cve>
+  </suppress>
+  <suppress until="2023-11-30Z">
+    <notes><![CDATA[
+   file name: json-20230618.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.json/json@.*$</packageUrl>
+    <cve>CVE-2022-45688</cve>
+  </suppress>
+  <suppress>
+    <notes><![CDATA[
+   file name: jackson-databind-2.15.2.jar https://github.com/FasterXML/jackson-databind/issues/3973 The maintainers
+   have rejected the CVE
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
+    <cve>CVE-2023-35116</cve>
+  </suppress>
 </suppressions>

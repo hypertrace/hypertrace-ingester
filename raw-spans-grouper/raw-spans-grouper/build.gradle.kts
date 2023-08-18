@@ -37,13 +37,13 @@ dependencies {
   implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.54")
   implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.54")
 
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.2.14")
-  implementation("org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner:0.2.14")
+  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.3.2")
+  implementation("org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner:0.3.2")
   implementation("de.javakaffee:kryo-serializers:0.45")
   implementation("com.google.guava:guava:32.0.1-jre")
 
   // Required for the GRPC clients.
-  runtimeOnly("io.grpc:grpc-netty:1.56.0")
+  runtimeOnly("io.grpc:grpc-netty:1.57.2")
 
   // Logging
   implementation("org.slf4j:slf4j-api:1.7.30")
