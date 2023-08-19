@@ -21,12 +21,12 @@ sourceSets {
 }
 
 dependencies {
-  implementation("com.google.protobuf:protobuf-java:3.23.3")
-  implementation(platform("org.hypertrace.core.kafkastreams.framework:kafka-bom:0.2.14"))
+  implementation(libs.google.protobuf.java)
+  implementation(platform(libs.hypertrace.kafka.bom))
   implementation("org.apache.kafka:kafka-clients")
-  implementation("io.opentelemetry:opentelemetry-proto:1.7.1-alpha")
+  implementation(libs.opentelemetry.proto)
 
   // Logging
-  implementation("org.slf4j:slf4j-api:1.7.30")
-  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
+  implementation(libs.slf4j.api)
+  runtimeOnly(libs.apache.log4j.slf4jImpl)
 }

@@ -16,21 +16,21 @@ dependencies {
   implementation(project(":semantic-convention-utils"))
   implementation(project(":hypertrace-trace-enricher:trace-reader"))
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
-  implementation("org.hypertrace.entity.service:entity-service-client:0.8.78")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.54")
-  implementation("org.hypertrace.core.grpcutils:grpc-client-utils:0.12.2")
+  implementation(libs.hypertrace.data.model)
+  implementation(libs.hypertrace.entityService.client)
+  implementation(libs.hypertrace.serviceFramework.metrics)
+  implementation(libs.hypertrace.grpc.client.utils)
   implementation("org.hypertrace.config.service:spaces-config-service-api:0.1.52")
-  implementation("org.hypertrace.core.grpcutils:grpc-context-utils:0.12.2")
+  implementation(libs.hypertrace.grpc.context.utils)
 
-  implementation("org.apache.commons:commons-lang3:3.12.0")
-  implementation("org.slf4j:slf4j-api:1.7.30")
-  implementation("net.sf.uadetector:uadetector-resources:2014.10")
-  implementation("io.reactivex.rxjava3:rxjava:3.0.11")
-  implementation("com.google.guava:guava:32.0.1-jre")
+  implementation(libs.apache.commons.lang3)
+  implementation(libs.slf4j.api)
+  implementation(libs.uadetector.resources)
+  implementation(libs.reactivex.rxjava3)
+  implementation(libs.google.guava)
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-  testImplementation("org.mockito:mockito-core:4.7.0")
-  testImplementation("org.mockito:mockito-junit-jupiter:4.7.0")
-  testImplementation("io.grpc:grpc-core:1.50.0")
+  testImplementation(libs.junit.jupiter)
+  testImplementation("org.mockito:mockito-core:4.7.0") // Upgrade to 5.1.0 causes tests to fail
+  testImplementation("org.mockito:mockito-junit-jupiter:4.7.0") // Upgrade to 5.1.0 causes tests to fail
+  testImplementation(libs.grpc.core)
 }
