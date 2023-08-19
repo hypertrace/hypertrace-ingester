@@ -3,12 +3,12 @@ plugins {
 }
 
 dependencies {
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
+  implementation(libs.hypertrace.data.model)
   constraints {
-    implementation("com.google.guava:guava:32.0.1-jre")
+    implementation(libs.google.guava)
   }
-  implementation("org.json:json:20230618")
-  implementation("org.apache.commons:commons-lang3:3.12.0")
+  implementation(libs.json.json)
+  implementation(libs.apache.commons.lang3)
 }
 
 description = "Trace Visualizer to help visualize a structured trace."

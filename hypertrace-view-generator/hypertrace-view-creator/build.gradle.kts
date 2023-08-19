@@ -34,8 +34,8 @@ dependencies {
   }
   // replacement for log4j-1.2
   implementation("ch.qos.reload4j:reload4j:1.2.22")
-  testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-  testImplementation("org.mockito:mockito-core:4.7.0")
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.mockito.core)
 }
 
 description = "view creator for Pinot"

@@ -12,6 +12,8 @@ plugins {
 
 rootProject.name = "hypertrace-ingester-root"
 
+enableFeaturePreview("VERSION_CATALOGS")
+
 // trace-enricher
 include("hypertrace-trace-enricher:enriched-span-constants")
 include("hypertrace-trace-enricher:hypertrace-trace-visualizer")

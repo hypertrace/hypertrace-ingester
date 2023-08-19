@@ -26,13 +26,13 @@ hypertraceDocker {
 
 dependencies {
 
-  implementation("org.hypertrace.core.kafkastreams.framework:kafka-streams-framework:0.3.2")
-  implementation("org.hypertrace.core.serviceframework:platform-service-framework:0.1.54")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.54")
+  implementation(libs.hypertrace.kafkaStreams.framework)
+  implementation(libs.hypertrace.serviceFramework.framework)
+  implementation(libs.hypertrace.serviceFramework.metrics)
 
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.4.15")
-  implementation("org.apache.commons:commons-lang3:3.12.0")
+  implementation(libs.hypertrace.data.model)
+  implementation(libs.hypertrace.viewGenerator.framework)
+  implementation(libs.apache.commons.lang3)
 
   implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":span-normalizer:raw-span-constants"))
@@ -45,10 +45,10 @@ dependencies {
   implementation(project(":hypertrace-metrics-exporter:hypertrace-metrics-exporter"))
   implementation(project(":hypertrace-metrics-generator:hypertrace-metrics-generator"))
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-  testImplementation("org.mockito:mockito-core:4.7.0")
-  testImplementation("org.junit-pioneer:junit-pioneer:1.7.1")
-  testImplementation("org.apache.kafka:kafka-streams-test-utils")
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.mockito.core)
+  testImplementation(libs.junit.pioneer)
+  testImplementation(libs.apache.kafka.kafkaStreamsTestUtils)
   testImplementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   testImplementation(project(":span-normalizer:span-normalizer-api"))
 }

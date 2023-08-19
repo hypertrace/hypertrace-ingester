@@ -30,22 +30,22 @@ dependencies {
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   implementation(project(":semantic-convention-utils"))
-  implementation("com.google.guava:guava:32.0.1-jre")
+  implementation(libs.google.guava)
 
   // TODO: migrate in core
-  implementation("org.hypertrace.core.viewgenerator:view-generator-framework:0.4.15")
-  implementation("org.hypertrace.core.datamodel:data-model:0.1.27")
-  implementation("org.hypertrace.core.serviceframework:platform-metrics:0.1.54")
+  implementation(libs.hypertrace.viewGenerator.framework)
+  implementation(libs.hypertrace.data.model)
+  implementation(libs.hypertrace.serviceFramework.metrics)
 
-  implementation("org.hypertrace.entity.service:entity-service-api:0.8.78")
+  implementation(libs.hypertrace.entityService.api)
 
   implementation("org.apache.avro:avro:1.11.1")
-  implementation("org.apache.commons:commons-lang3:3.12.0")
+  implementation(libs.apache.commons.lang3)
 
   // logging
-  runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
+  runtimeOnly(libs.apache.log4j.slf4jImpl)
 
-  testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-  testImplementation("org.mockito:mockito-core:4.7.0")
-  testImplementation("com.google.code.gson:gson:2.9.0")
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.mockito.core)
+  testImplementation(libs.google.gson)
 }
