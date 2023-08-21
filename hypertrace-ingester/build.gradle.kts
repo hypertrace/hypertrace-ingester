@@ -32,7 +32,7 @@ dependencies {
 
   implementation(libs.hypertrace.data.model)
   implementation(libs.hypertrace.viewGenerator.framework)
-  implementation(libs.apache.commons.lang3)
+  implementation(globalLibs.apache.commons.lang3)
 
   implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":span-normalizer:raw-span-constants"))
@@ -45,10 +45,10 @@ dependencies {
   implementation(project(":hypertrace-metrics-exporter:hypertrace-metrics-exporter"))
   implementation(project(":hypertrace-metrics-generator:hypertrace-metrics-generator"))
 
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.mockito.core)
-  testImplementation(libs.junit.pioneer)
-  testImplementation(libs.apache.kafka.kafkaStreamsTestUtils)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.mockito.core)
+  testImplementation(globalLibs.junit.pioneer)
+  testImplementation(globalLibs.apache.kafka.kafkaStreamsTestUtils)
   testImplementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   testImplementation(project(":span-normalizer:span-normalizer-api"))
 }

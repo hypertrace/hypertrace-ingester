@@ -36,19 +36,19 @@ dependencies {
   implementation(libs.hypertrace.serviceFramework.framework)
   implementation(libs.hypertrace.entityService.client)
 
-  implementation(libs.google.guava)
+  implementation(globalLibs.google.guava)
   implementation(libs.hypertrace.kafkaStreams.framework)
 
   // Required for the GRPC clients.
-  runtimeOnly(libs.grpc.netty)
+  runtimeOnly(globalLibs.grpc.netty)
 
   // Logging
-  implementation(libs.slf4j.api)
-  runtimeOnly(libs.apache.log4j.slf4jImpl)
+  implementation(globalLibs.slf4j.api)
+  runtimeOnly(globalLibs.apache.log4j.slf4jImpl)
 
   testImplementation(project(":hypertrace-trace-enricher:hypertrace-trace-enricher"))
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.mockito.core)
-  testImplementation(libs.junit.pioneer)
-  testImplementation(libs.apache.kafka.kafkaStreamsTestUtils)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.junit.pioneer)
+  testImplementation(globalLibs.mockito.core)
+  testImplementation(globalLibs.apache.kafka.kafkaStreamsTestUtils)
 }

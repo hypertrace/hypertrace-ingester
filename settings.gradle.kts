@@ -14,6 +14,14 @@ rootProject.name = "hypertrace-ingester-root"
 
 enableFeaturePreview("VERSION_CATALOGS")
 
+dependencyResolutionManagement {
+  versionCatalogs {
+    create("globalLibs") {
+      from(files("gradle/globalLibs.versions.toml"))
+    }
+  }
+}
+
 // trace-enricher
 include("hypertrace-trace-enricher:enriched-span-constants")
 include("hypertrace-trace-enricher:hypertrace-trace-visualizer")

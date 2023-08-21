@@ -33,12 +33,12 @@ dependencies {
   implementation(libs.hypertrace.kafkaStreams.framework)
 
   // open telemetry proto
-  implementation(libs.opentelemetry.proto)
-  implementation(libs.google.protobuf.java)
+  implementation(globalLibs.opentelemetry.proto)
+  implementation(globalLibs.google.protobuf.java)
 
   // test
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.mockito.core)
-  testImplementation(libs.junit.pioneer)
-  testImplementation(libs.apache.kafka.kafkaStreamsTestUtils)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.mockito.core)
+  testImplementation(globalLibs.junit.pioneer)
+  testImplementation(globalLibs.apache.kafka.kafkaStreamsTestUtils)
 }

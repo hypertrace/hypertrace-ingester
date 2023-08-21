@@ -12,9 +12,9 @@ dependencies {
   implementation(project(":span-normalizer:span-normalizer-constants"))
 
   implementation(libs.hypertrace.data.model)
-  implementation(libs.apache.commons.lang3)
-  implementation(libs.google.guava)
+  implementation(globalLibs.apache.commons.lang3)
+  implementation(globalLibs.google.guava)
 
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.mockito.core)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.mockito.core)
 }

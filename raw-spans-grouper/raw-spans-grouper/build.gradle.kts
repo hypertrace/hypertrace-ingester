@@ -40,17 +40,17 @@ dependencies {
   implementation(libs.hypertrace.kafkaStreams.framework)
   implementation(libs.hypertrace.kafkaStreams.weightedGroupPartitioners)
   implementation("de.javakaffee:kryo-serializers:0.45")
-  implementation(libs.google.guava)
+  implementation(globalLibs.google.guava)
 
   // Required for the GRPC clients.
-  runtimeOnly(libs.grpc.netty)
+  runtimeOnly(globalLibs.grpc.netty)
 
   // Logging
-  implementation(libs.slf4j.api)
-  runtimeOnly(libs.apache.log4j.slf4jImpl)
+  implementation(globalLibs.slf4j.api)
+  runtimeOnly(globalLibs.apache.log4j.slf4jImpl)
 
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.mockito.core)
-  testImplementation(libs.junit.pioneer)
-  testImplementation(libs.apache.kafka.kafkaStreamsTestUtils)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.mockito.core)
+  testImplementation(globalLibs.junit.pioneer)
+  testImplementation(globalLibs.apache.kafka.kafkaStreamsTestUtils)
 }
