@@ -2,6 +2,7 @@ package org.hypertrace.semantic.convention.utils.http;
 
 import static com.google.common.net.HttpHeaders.COOKIE;
 import static com.google.common.net.HttpHeaders.SET_COOKIE;
+import static java.util.Objects.nonNull;
 import static org.hypertrace.core.semantic.convention.constants.http.HttpSemanticConventions.HTTP_REQUEST_FORWARDED;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_HOST;
 import static org.hypertrace.core.semantic.convention.constants.http.OTelHttpSemanticConventions.HTTP_NET_HOST_NAME;
@@ -287,17 +288,11 @@ public class HttpSemanticConventionUtils {
       final String httpTarget = attributeValueMap.get(HTTP_TARGET.getValue()).getValue();
       final String netPeerName =
           attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_NAME.getValue()).getValue();
-
+      final AttributeValue netPeerPortAttributeValue =
+          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue());
       String url;
-      if (attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_PEER_PORT.getValue())) {
-        url =
-            buildUrl(
-                httpScheme,
-                netPeerName,
-                attributeValueMap
-                    .get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue())
-                    .getValue(),
-                httpTarget);
+      if (nonNull(netPeerPortAttributeValue)) {
+        url = buildUrl(httpScheme, netPeerName, netPeerPortAttributeValue.getValue(), httpTarget);
       } else {
         url = buildUrl(httpScheme, netPeerName, httpTarget);
       }
@@ -314,16 +309,11 @@ public class HttpSemanticConventionUtils {
                   OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue(),
                   attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_IP.getValue()))
               .getValue();
+      final AttributeValue netPeerPortAttributeValue =
+          attributeValueMap.get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue());
       String url;
-      if (attributeValueMap.containsKey(OTelSpanSemanticConventions.NET_PEER_PORT.getValue())) {
-        url =
-            buildUrl(
-                httpScheme,
-                netPeerIp,
-                attributeValueMap
-                    .get(OTelSpanSemanticConventions.NET_PEER_PORT.getValue())
-                    .getValue(),
-                httpTarget);
+      if (nonNull(netPeerPortAttributeValue)) {
+        url = buildUrl(httpScheme, netPeerIp, netPeerPortAttributeValue.getValue(), httpTarget);
       } else {
         url = buildUrl(httpScheme, netPeerIp, httpTarget);
       }
@@ -340,14 +330,12 @@ public class HttpSemanticConventionUtils {
       final String httpScheme = getHttpSchemeFromRawAttributes(attributeValueMap).get();
       final String serverName = attributeValueMap.get(HTTP_SERVER_NAME.getValue()).getValue();
       final String httpTarget = attributeValueMap.get(HTTP_TARGET.getValue()).getValue();
+      final AttributeValue httpNetHostPortAttributeValue =
+          attributeValueMap.get(HTTP_NET_HOST_PORT.getValue());
       String url;
-      if (attributeValueMap.containsKey(HTTP_NET_HOST_PORT.getValue())) {
+      if (nonNull(httpNetHostPortAttributeValue)) {
         url =
-            buildUrl(
-                httpScheme,
-                serverName,
-                attributeValueMap.get(HTTP_NET_HOST_PORT.getValue()).getValue(),
-                httpTarget);
+            buildUrl(httpScheme, serverName, httpNetHostPortAttributeValue.getValue(), httpTarget);
       } else {
         url = buildUrl(httpScheme, serverName, httpTarget);
       }
@@ -358,15 +346,12 @@ public class HttpSemanticConventionUtils {
       final String httpScheme = getHttpSchemeFromRawAttributes(attributeValueMap).get();
       final String netHostName = attributeValueMap.get(HTTP_NET_HOST_NAME.getValue()).getValue();
       final String httpTarget = attributeValueMap.get(HTTP_TARGET.getValue()).getValue();
-
+      final AttributeValue httpNetHostPortAttributeValue =
+          attributeValueMap.get(HTTP_NET_HOST_PORT.getValue());
       String url;
-      if (attributeValueMap.containsKey(HTTP_NET_HOST_PORT.getValue())) {
+      if (nonNull(httpNetHostPortAttributeValue)) {
         url =
-            buildUrl(
-                httpScheme,
-                netHostName,
-                attributeValueMap.get(HTTP_NET_HOST_PORT.getValue()).getValue(),
-                httpTarget);
+            buildUrl(httpScheme, netHostName, httpNetHostPortAttributeValue.getValue(), httpTarget);
       } else {
         url = buildUrl(httpScheme, netHostName, httpTarget);
       }

@@ -144,11 +144,8 @@ public class ExcludeSpanRuleEvaluator {
    * @return full url if available, else the url path
    */
   private Optional<String> getUrl(final Event event) {
-    Optional<String> fullUrlMaybe = HttpSemanticConventionUtils.getFullHttpUrl(event);
-    if (fullUrlMaybe.isPresent()) {
-      return fullUrlMaybe;
-    }
-    return HttpSemanticConventionUtils.getHttpPath(event);
+    return HttpSemanticConventionUtils.getFullHttpUrl(event)
+        .or(() -> HttpSemanticConventionUtils.getHttpPath(event));
   }
 
   private boolean matches(
