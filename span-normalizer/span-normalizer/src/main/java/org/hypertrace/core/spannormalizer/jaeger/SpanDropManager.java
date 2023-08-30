@@ -20,7 +20,6 @@ import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 
 @Slf4j
 public class SpanDropManager {
-  private final TenantIdHandler tenantIdHandler;
   private final SpanFilter spanFilter;
   private final ExcludeSpanRuleEvaluator excludeSpanRuleEvaluator;
   private static final String LATE_ARRIVAL_THRESHOLD_CONFIG_KEY =
@@ -34,13 +33,12 @@ public class SpanDropManager {
   // list of tenant ids to exclude
   private static final String TENANT_IDS_TO_EXCLUDE_CONFIG = "processor.excludeTenantIds";
 
-  private List<String> tenantIdsToExclude;
+  private final List<String> tenantIdsToExclude;
   private static final Duration minArrivalThreshold = Duration.of(30, ChronoUnit.SECONDS);
   private final Duration lateArrivalThresholdDuration;
-  private RateLimitingSpanFilter rateLimitingSpanFilter;
+  private final RateLimitingSpanFilter rateLimitingSpanFilter;
 
   public SpanDropManager(Config config, GrpcChannelRegistry grpcChannelRegistry) {
-    tenantIdHandler = new TenantIdHandler(config);
     spanFilter = new SpanFilter(config);
     excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator(config, grpcChannelRegistry);
     rateLimitingSpanFilter = new RateLimitingSpanFilter(config);
@@ -56,7 +54,6 @@ public class SpanDropManager {
 
   @VisibleForTesting
   SpanDropManager(Config config, ExcludeSpanRulesCache excludeSpanRulesCache) {
-    tenantIdHandler = new TenantIdHandler(config);
     spanFilter = new SpanFilter(config);
     excludeSpanRuleEvaluator = new ExcludeSpanRuleEvaluator(excludeSpanRulesCache);
     lateArrivalThresholdDuration = configureLateArrivalThreshold(config);
