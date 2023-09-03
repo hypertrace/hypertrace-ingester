@@ -43,23 +43,23 @@ dependencies {
   implementation("org.hypertrace.config.service:span-processing-utils:0.1.52")
   implementation(libs.hypertrace.grpc.client.utils)
   implementation(libs.hypertrace.grpc.context.utils)
-  implementation(libs.google.guava)
+  implementation(globalLibs.google.guava)
 
   // Required for the GRPC clients.
-  runtimeOnly(libs.grpc.netty)
-  annotationProcessor(libs.projectlombok.lombok)
-  compileOnly(libs.projectlombok.lombok)
+  runtimeOnly(globalLibs.grpc.netty)
+  annotationProcessor(globalLibs.projectlombok.lombok)
+  compileOnly(globalLibs.projectlombok.lombok)
 
   implementation("de.javakaffee:kryo-serializers:0.45")
-  implementation(libs.apache.commons.lang3)
+  implementation(globalLibs.apache.commons.lang3)
 
   // Logging
-  implementation(libs.slf4j.api)
-  runtimeOnly(libs.apache.log4j.slf4jImpl)
+  implementation(globalLibs.slf4j.api)
+  runtimeOnly(globalLibs.apache.log4j.slf4jImpl)
 
-  testImplementation(libs.junit.jupiter)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.junit.pioneer)
   testImplementation(libs.hypertrace.serviceFramework.metrics)
-  testImplementation(libs.junit.pioneer)
-  testImplementation(libs.mockito.core)
-  testImplementation(libs.apache.kafka.kafkaStreamsTestUtils)
+  testImplementation(globalLibs.mockito.core)
+  testImplementation(globalLibs.apache.kafka.kafkaStreamsTestUtils)
 }

@@ -15,16 +15,16 @@ dependencies {
   implementation(libs.hypertrace.grpc.client.rxUtils)
   implementation(libs.hypertrace.grpc.context.utils)
   implementation(libs.hypertrace.grpc.client.utils)
-  implementation(libs.reactivex.rxjava3)
-  implementation(libs.google.guava)
+  implementation(globalLibs.reactivex.rxjava3)
+  implementation(globalLibs.google.guava)
 
-  annotationProcessor(libs.projectlombok.lombok)
-  compileOnly(libs.projectlombok.lombok)
+  annotationProcessor(globalLibs.projectlombok.lombok)
+  compileOnly(globalLibs.projectlombok.lombok)
 
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.mockito.core)
-  testImplementation(libs.mockito.junit.jupiter)
-  testRuntimeOnly(libs.apache.log4j.slf4jImpl)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.mockito.core)
+  testImplementation(globalLibs.mockito.junit.jupiter)
+  testRuntimeOnly(globalLibs.apache.log4j.slf4jImpl)
 
   tasks.test {
     useJUnitPlatform()

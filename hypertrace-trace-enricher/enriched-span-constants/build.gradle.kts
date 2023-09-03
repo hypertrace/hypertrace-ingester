@@ -63,15 +63,15 @@ sourceSets {
 }
 
 dependencies {
-  api(libs.google.protobuf.java)
+  api(globalLibs.google.protobuf.java)
 
   implementation(libs.hypertrace.data.model)
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":span-normalizer:span-normalizer-constants"))
   implementation(project(":semantic-convention-utils"))
   implementation(libs.hypertrace.entityService.api)
-  implementation(libs.google.guava)
+  implementation(globalLibs.google.guava)
 
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.mockito.core)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.mockito.core)
 }

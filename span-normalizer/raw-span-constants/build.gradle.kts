@@ -59,7 +59,7 @@ sourceSets {
 dependencies {
   api("com.google.protobuf:protobuf-java-util:3.23.3")
   constraints {
-    implementation(libs.google.guava)
+    implementation(globalLibs.google.guava)
   }
-  implementation(libs.slf4j.api)
+  implementation(globalLibs.slf4j.api)
 }

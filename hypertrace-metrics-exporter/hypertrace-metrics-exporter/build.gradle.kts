@@ -30,23 +30,23 @@ dependencies {
   implementation(libs.hypertrace.serviceFramework.metrics)
 
   // open telemetry
-  implementation(libs.opentelemetry.sdk.metrics)
+  implementation(globalLibs.opentelemetry.sdk.metrics)
   // TODO: Upgrade opentelemetry-exporter-prometheus to 1.8.0 release when available
   // to include time stamp related changes
   // https://github.com/open-telemetry/opentelemetry-java/pull/3700
   // For now, the exported time stamp will be the current time stamp.
-  implementation(libs.opentelemetry.exporter.prometheus)
-  implementation(libs.google.protobuf.java)
+  implementation(globalLibs.opentelemetry.exporter.prometheus)
+  implementation(globalLibs.google.protobuf.java)
 
   // open telemetry proto
-  implementation(libs.opentelemetry.proto)
+  implementation(globalLibs.opentelemetry.proto)
 
   // kafka
   implementation(platform(libs.hypertrace.kafka.bom))
   implementation("org.apache.kafka:kafka-clients")
 
   // test
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.mockito.core)
-  testImplementation(libs.google.gson)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.mockito.core)
+  testImplementation(globalLibs.google.gson)
 }

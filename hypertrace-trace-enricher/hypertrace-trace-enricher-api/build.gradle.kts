@@ -11,11 +11,11 @@ dependencies {
   implementation(project(":hypertrace-trace-enricher:enriched-span-constants"))
   implementation(libs.hypertrace.data.model)
 
-  implementation(libs.slf4j.api)
-  implementation(libs.apache.commons.lang3)
-  implementation(libs.google.guava)
+  implementation(globalLibs.slf4j.api)
+  implementation(globalLibs.apache.commons.lang3)
+  implementation(globalLibs.google.guava)
 
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.junit.pioneer)
-  testImplementation(libs.mockito.core)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.junit.pioneer)
+  testImplementation(globalLibs.mockito.core)
 }

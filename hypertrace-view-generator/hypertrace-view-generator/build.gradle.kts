@@ -30,7 +30,7 @@ dependencies {
   implementation(project(":span-normalizer:raw-span-constants"))
   implementation(project(":hypertrace-view-generator:hypertrace-view-generator-api"))
   implementation(project(":semantic-convention-utils"))
-  implementation(libs.google.guava)
+  implementation(globalLibs.google.guava)
 
   // TODO: migrate in core
   implementation(libs.hypertrace.viewGenerator.framework)
@@ -40,12 +40,12 @@ dependencies {
   implementation(libs.hypertrace.entityService.api)
 
   implementation("org.apache.avro:avro:1.11.1")
-  implementation(libs.apache.commons.lang3)
+  implementation(globalLibs.apache.commons.lang3)
 
   // logging
-  runtimeOnly(libs.apache.log4j.slf4jImpl)
+  runtimeOnly(globalLibs.apache.log4j.slf4jImpl)
 
-  testImplementation(libs.junit.jupiter)
-  testImplementation(libs.mockito.core)
-  testImplementation(libs.google.gson)
+  testImplementation(globalLibs.junit.jupiter)
+  testImplementation(globalLibs.mockito.core)
+  testImplementation(globalLibs.google.gson)
 }
