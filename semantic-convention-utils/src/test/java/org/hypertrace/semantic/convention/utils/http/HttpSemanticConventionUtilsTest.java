@@ -154,6 +154,18 @@ public class HttpSemanticConventionUtilsTest {
     url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
     assertEquals("https://172.0.8.11:1211/webshop/articles/4?s=1", url);
 
+    // client span, span.kind present, port absent
+    map.clear();
+    map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
+    map.put(
+        OTelSpanSemanticConventions.NET_PEER_NAME.getValue(), buildAttributeValue("example.com"));
+    map.put(HTTP_TARGET.getValue(), buildAttributeValue("/webshop/articles/4?s=1"));
+    map.put(
+        RawSpanConstants.getValue(OCAttribute.OC_ATTRIBUTE_SPAN_KIND),
+        buildAttributeValue(RawSpanConstants.getValue(OCSpanKind.OC_SPAN_KIND_CLIENT)));
+    url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
+    assertEquals("https://example.com/webshop/articles/4?s=1", url);
+
     // server span, span_kind present
     map.clear();
     map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
@@ -195,6 +207,15 @@ public class HttpSemanticConventionUtilsTest {
         buildAttributeValue(RawSpanConstants.getValue(OCSpanKind.OC_SPAN_KIND_SERVER)));
     url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
     assertEquals("https://example.com:1211/webshop/articles/4?s=1", url);
+
+    // server span, span_kind present, port absent
+    map.clear();
+    map.put(HTTP_SCHEME.getValue(), buildAttributeValue("https"));
+    map.put(HTTP_NET_HOST_NAME.getValue(), buildAttributeValue("example.com"));
+    map.put(HTTP_TARGET.getValue(), buildAttributeValue("/webshop/articles/4?s=1"));
+    map.put(SPAN_KIND.getValue(), buildAttributeValue(SPAN_KIND_SERVER_VALUE.getValue()));
+    url = HttpSemanticConventionUtils.getHttpUrlForOTelFormat(map).get();
+    assertEquals("https://example.com/webshop/articles/4?s=1", url);
   }
 
   @Test
