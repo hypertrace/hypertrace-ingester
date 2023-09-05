@@ -20,7 +20,7 @@ dependencies {
   implementation(libs.hypertrace.entityService.client)
   implementation(libs.hypertrace.serviceFramework.metrics)
   implementation(libs.hypertrace.grpc.client.utils)
-  implementation("org.hypertrace.config.service:spaces-config-service-api:0.1.52")
+  implementation(libs.hypertrace.spacesConfigServiceApi)
   implementation(libs.hypertrace.grpc.context.utils)
 
   implementation(libs.apache.commons.lang3)

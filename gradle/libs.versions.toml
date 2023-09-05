@@ -1,5 +1,6 @@
 [versions]
 hypertrace-entity-service = "0.8.78"
+hypertrace-config-service = "0.1.54"
 hypertrace-grpc-utils = "0.12.4"
 hypertrace-serviceFramework = "0.1.58"
 hypertrace-kafkaStreams = "0.3.2"
@@ -21,8 +22,9 @@ hypertrace-kafkaStreams-avroPartitioners = { module = "org.hypertrace.core.kafka
 hypertrace-kafkaStreams-weightedGroupPartitioners = { module = "org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-kafka-bom = { module = "org.hypertrace.core.kafkastreams.framework:kafka-bom", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-viewGenerator-framework = { module="org.hypertrace.core.viewgenerator:view-generator-framework", version.ref="hypertrace-view-generator" }
-
-
+hypertrace-spacesConfigServiceApi = { module = "org.hypertrace.config.service:spaces-config-service-api", version.ref = "hypertrace-config-service" }
+hypertrace-spanProcessingConfigServiceApi = { module = "org.hypertrace.config.service:span-processing-config-service-api", version.ref = "hypertrace-config-service" }
+hypertrace-spanProcessingUtils = { module = "org.hypertrace.config.service:span-processing-utils", version.ref = "hypertrace-config-service" }
 
 slf4j-api = { module = "org.slf4j:slf4j-api", version = "1.7.30" }
 apache-log4j-slf4jImpl = { module = "org.apache.logging.log4j:log4j-slf4j-impl", version = "2.17.1" }
