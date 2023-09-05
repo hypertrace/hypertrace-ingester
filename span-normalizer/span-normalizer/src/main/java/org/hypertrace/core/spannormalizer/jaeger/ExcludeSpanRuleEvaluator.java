@@ -112,27 +112,40 @@ public class ExcludeSpanRuleEvaluator {
         case FIELD_ENVIRONMENT_NAME:
           Optional<String> environmentMaybe =
               HttpSemanticConventionUtils.getEnvironmentForSpan(event);
-          if (environmentMaybe.isEmpty()) {
-            return false;
-          }
-          return spanFilterMatcher.matches(
-              environmentMaybe.get(),
-              relationalSpanFilterExpression.getRightOperand(),
-              relationalSpanFilterExpression.getOperator());
+          return environmentMaybe
+              .filter(
+                  environment ->
+                      spanFilterMatcher.matches(
+                          environment,
+                          relationalSpanFilterExpression.getRightOperand(),
+                          relationalSpanFilterExpression.getOperator()))
+              .isPresent();
         case FIELD_URL:
-          Optional<String> fullHttpUrlMaybe = HttpSemanticConventionUtils.getFullHttpUrl(event);
-          if (fullHttpUrlMaybe.isEmpty()) {
-            return false;
-          }
-          return spanFilterMatcher.matches(
-              fullHttpUrlMaybe.get(),
-              relationalSpanFilterExpression.getRightOperand(),
-              relationalSpanFilterExpression.getOperator());
+          Optional<String> urlMaybe = getUrl(event);
+          return urlMaybe
+              .filter(
+                  url ->
+                      spanFilterMatcher.matches(
+                          url,
+                          relationalSpanFilterExpression.getRightOperand(),
+                          relationalSpanFilterExpression.getOperator()))
+              .isPresent();
         default:
           log.error("Unknown filter field: {}", field);
           return false;
       }
     }
+  }
+
+  /**
+   * Build the full url if possible, else fall back on the url path
+   *
+   * @param event Event
+   * @return full url if available, else the url path
+   */
+  private Optional<String> getUrl(final Event event) {
+    return HttpSemanticConventionUtils.getFullHttpUrl(event)
+        .or(() -> HttpSemanticConventionUtils.getHttpPath(event));
   }
 
   private boolean matches(
