@@ -1,7 +1,8 @@
 package org.hypertrace.trace.accessor.entities;
 
+import static java.util.Collections.emptySet;
+
 import java.time.Duration;
-import java.util.HashSet;
 import java.util.Set;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
@@ -13,7 +14,7 @@ public class TraceEntityAccessorBuilder {
   private final EntityDataClient entityDataClient;
   private final CachingAttributeClient attributeClient;
   private Duration entityWriteThrottleDuration = Duration.ofSeconds(15);
-  private Set<String> excludedEntityTypes = new HashSet<>();
+  private Set<String> excludedEntityTypes = emptySet();
 
   public TraceEntityAccessorBuilder(
       EntityTypeClient entityTypeClient,

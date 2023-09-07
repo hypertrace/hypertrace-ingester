@@ -6,7 +6,7 @@ import com.typesafe.config.Config;
 import io.grpc.Channel;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.datamodel.Event;
@@ -93,7 +93,7 @@ public class DefaultClientRegistry implements ClientRegistry {
                     : Duration.ofSeconds(15))
             .withExcludeEntityTypes(
                 config.hasPath(TRACE_ENTITY_WRITE_EXCLUDED_ENTITY_TYPES)
-                    ? new HashSet<>(config.getStringList(TRACE_ENTITY_WRITE_EXCLUDED_ENTITY_TYPES))
+                    ? Set.copyOf(config.getStringList(TRACE_ENTITY_WRITE_EXCLUDED_ENTITY_TYPES))
                     : emptySet())
             .build();
     this.userAgentParser = new UserAgentParser(config.getConfig(USER_AGENT_PARSER_CONFIG_KEY));
