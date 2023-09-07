@@ -115,8 +115,7 @@ class DefaultTraceEntityAccessorTest {
           arg.buildContextualKey()
               .equals(RequestContext.forTenantId(TENANT_ID).buildContextualKey());
   private static final Duration DEFAULT_DURATION = Duration.ofSeconds(15);
-  private static final Set<String> ENTITY_TYPES_TO_BE_EXCLUDED =
-      Set.of(TEST_EXCLUDE_ENTITY_TYPE_NAME);
+  private static final Set<String> EXCLUDE_ENTITY_TYPES = Set.of(TEST_EXCLUDE_ENTITY_TYPE_NAME);
 
   @Mock EntityTypeClient mockTypeClient;
   @Mock EntityDataClient mockDataClient;
@@ -153,7 +152,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
+        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
 
     verify(mockDataClient, times(1))
         .createOrUpdateEntityEventually(
@@ -172,7 +171,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
     this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
+        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
     verifyNoInteractions(mockDataClient);
   }
 
@@ -185,7 +184,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
     this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
+        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
     verifyNoInteractions(mockDataClient);
   }
 
@@ -198,7 +197,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_EXCLUDE_ENTITY_TYPE_NAME));
 
     this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
+        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
     verifyNoInteractions(mockDataClient);
   }
 
@@ -217,7 +216,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_TIMESTAMP_ATTRIBUTE, longLiteral(30));
 
     this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
+        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
 
     UpsertCondition expectedCondition =
         UpsertCondition.newBuilder()
@@ -259,14 +258,14 @@ class DefaultTraceEntityAccessorTest {
     // No "other" attribute, should not form entity
 
     this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
+        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
     verifyNoInteractions(mockDataClient);
 
     // Now add "other"
     mockAttributeRead(otherAttribute, stringLiteral("other-value"));
 
     this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
+        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
 
     verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any(), any());
   }
@@ -284,7 +283,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
     this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
+        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
 
     verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any(), any());
   }

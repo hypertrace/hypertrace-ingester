@@ -56,19 +56,18 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
 
   @Override
   public void writeAssociatedEntitiesForSpanEventually(
-      StructuredTrace trace, Event span, Set<String> entityTypesToBeExcluded) {
+      StructuredTrace trace, Event span, Set<String> excludeEntityTypes) {
     this.spanTenantContext(span)
         .wrapSingle(() -> this.entityTypeClient.getAll().toList())
         .blockingGet()
         .stream()
-        .filter(
-            not(entityType -> isEntityTypeExcluded(entityType.getName(), entityTypesToBeExcluded)))
+        .filter(not(entityType -> isEntityTypeExcluded(entityType.getName(), excludeEntityTypes)))
         .forEach(entityType -> this.writeEntityIfExists(entityType, trace, span));
   }
 
   private boolean isEntityTypeExcluded(
-      final String entityTypeName, final Set<String> entityTypesToBeExcluded) {
-    return entityTypesToBeExcluded.contains(entityTypeName);
+      final String entityTypeName, final Set<String> excludeEntityTypes) {
+    return excludeEntityTypes.contains(entityTypeName);
   }
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
