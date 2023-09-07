@@ -40,34 +40,35 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   private final CachingAttributeClient attributeClient;
   private final TraceAttributeReader<StructuredTrace, Event> traceAttributeReader;
   private final Duration writeThrottleDuration;
+  private final Set<String> excludedEntityTypes;
 
   DefaultTraceEntityAccessor(
       EntityTypeClient entityTypeClient,
       EntityDataClient entityDataClient,
       CachingAttributeClient attributeClient,
       TraceAttributeReader<StructuredTrace, Event> traceAttributeReader,
-      Duration writeThrottleDuration) {
+      Duration writeThrottleDuration,
+      Set<String> excludedEntityTypes) {
     this.entityTypeClient = entityTypeClient;
     this.entityDataClient = entityDataClient;
     this.attributeClient = attributeClient;
     this.traceAttributeReader = traceAttributeReader;
     this.writeThrottleDuration = writeThrottleDuration;
+    this.excludedEntityTypes = excludedEntityTypes;
   }
 
   @Override
-  public void writeAssociatedEntitiesForSpanEventually(
-      StructuredTrace trace, Event span, Set<String> excludeEntityTypes) {
+  public void writeAssociatedEntitiesForSpanEventually(StructuredTrace trace, Event span) {
     this.spanTenantContext(span)
         .wrapSingle(() -> this.entityTypeClient.getAll().toList())
         .blockingGet()
         .stream()
-        .filter(not(entityType -> isEntityTypeExcluded(entityType.getName(), excludeEntityTypes)))
+        .filter(not(entityType -> isEntityTypeExcluded(entityType.getName())))
         .forEach(entityType -> this.writeEntityIfExists(entityType, trace, span));
   }
 
-  private boolean isEntityTypeExcluded(
-      final String entityTypeName, final Set<String> excludeEntityTypes) {
-    return excludeEntityTypes.contains(entityTypeName);
+  private boolean isEntityTypeExcluded(final String entityTypeName) {
+    return excludedEntityTypes.contains(entityTypeName);
   }
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {

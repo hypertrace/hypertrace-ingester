@@ -134,7 +134,8 @@ class DefaultTraceEntityAccessorTest {
             this.mockDataClient,
             this.mockAttributeClient,
             this.mockAttributeReader,
-            DEFAULT_DURATION);
+            DEFAULT_DURATION,
+            EXCLUDE_ENTITY_TYPES);
     mockSchedulers = Mockito.mockStatic(Schedulers.class);
     mockSchedulers.when(Schedulers::io).thenReturn(trampoline);
   }
@@ -151,8 +152,7 @@ class DefaultTraceEntityAccessorTest {
     mockTenantId();
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
 
     verify(mockDataClient, times(1))
         .createOrUpdateEntityEventually(
@@ -170,8 +170,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, LiteralValue.getDefaultInstance());
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
     verifyNoInteractions(mockDataClient);
   }
 
@@ -183,8 +182,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(""));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
     verifyNoInteractions(mockDataClient);
   }
 
@@ -196,8 +194,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(""));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_EXCLUDE_ENTITY_TYPE_NAME));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
     verifyNoInteractions(mockDataClient);
   }
 
@@ -215,8 +212,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_TIMESTAMP_ATTRIBUTE, longLiteral(30));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
 
     UpsertCondition expectedCondition =
         UpsertCondition.newBuilder()
@@ -257,15 +253,13 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeReadError(otherAttribute);
     // No "other" attribute, should not form entity
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
     verifyNoInteractions(mockDataClient);
 
     // Now add "other"
     mockAttributeRead(otherAttribute, stringLiteral("other-value"));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
 
     verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any(), any());
   }
@@ -282,8 +276,7 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
-        TEST_TRACE, TEST_SPAN, EXCLUDE_ENTITY_TYPES);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
 
     verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any(), any());
   }
