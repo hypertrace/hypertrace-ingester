@@ -1,6 +1,8 @@
 package org.hypertrace.traceenricher.enrichment.enrichers;
 
 import com.typesafe.config.Config;
+import java.util.HashSet;
+import java.util.Set;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.trace.accessor.entities.TraceEntityAccessor;
@@ -11,12 +13,16 @@ import org.slf4j.LoggerFactory;
 
 public class EntitySpanEnricher extends AbstractTraceEnricher {
   private static final Logger LOG = LoggerFactory.getLogger(EntitySpanEnricher.class);
+
+  private static final String ENTITY_TYPES_TO_BE_EXCLUDED_CONFIG_PATH = "entityTypesToBeExcluded";
+  private static Set<String> entityTypesToBeExcluded;
   private TraceEntityAccessor entityAccessor;
 
   @Override
   public void enrichEvent(StructuredTrace trace, Event event) {
     try {
-      this.entityAccessor.writeAssociatedEntitiesForSpanEventually(trace, event);
+      this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
+          trace, event, entityTypesToBeExcluded);
     } catch (Exception exception) {
       LOG.error("Failed to enrich entities on span", exception);
     }
@@ -25,5 +31,7 @@ public class EntitySpanEnricher extends AbstractTraceEnricher {
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {
     this.entityAccessor = clientRegistry.getTraceEntityAccessor();
+    entityTypesToBeExcluded =
+        new HashSet<>(enricherConfig.getStringList(ENTITY_TYPES_TO_BE_EXCLUDED_CONFIG_PATH));
   }
 }

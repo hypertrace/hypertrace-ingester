@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
@@ -54,14 +55,26 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   }
 
   @Override
-  public void writeAssociatedEntitiesForSpanEventually(StructuredTrace trace, Event span) {
+  public void writeAssociatedEntitiesForSpanEventually(
+      StructuredTrace trace, Event span, Set<String> entityTypesToBeExcluded) {
     this.spanTenantContext(span)
         .wrapSingle(() -> this.entityTypeClient.getAll().toList())
         .blockingGet()
+        .stream()
+        .filter(
+            not(entityType -> isEntityTypeExcluded(entityType.getName(), entityTypesToBeExcluded)))
         .forEach(entityType -> this.writeEntityIfExists(entityType, trace, span));
   }
 
+  private boolean isEntityTypeExcluded(
+      final String entityTypeName, final Set<String> entityTypesToBeExcluded) {
+    System.out.println(entityTypeName);
+    System.out.println(entityTypesToBeExcluded);
+    return entityTypesToBeExcluded.contains(entityTypeName);
+  }
+
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
+    System.out.println(entityType);
     this.buildEntity(entityType, trace, span)
         .subscribeOn(Schedulers.io())
         .subscribe(

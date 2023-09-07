@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
@@ -58,6 +59,7 @@ class DefaultTraceEntityAccessorTest {
   private static final String TEST_ENTITY_NAME_ATTRIBUTE_KEY = "name";
   private static final String TEST_ENTITY_NAME_ATTRIBUTE_VALUE = "name-value";
   private static final String TEST_ENTITY_TIMESTAMP_ATTRIBUTE_KEY = "timestamp";
+  private static final String TEST_EXCLUDE_ENTITY_TYPE_NAME = "EXCLUDE_ENTITY_TYPE";
   private static final AttributeMetadata TEST_ENTITY_ID_ATTRIBUTE =
       AttributeMetadata.newBuilder()
           .setScopeString(TEST_ENTITY_TYPE_NAME)
@@ -87,6 +89,14 @@ class DefaultTraceEntityAccessorTest {
           .setNameAttributeKey(TEST_ENTITY_NAME_ATTRIBUTE_KEY)
           .build();
 
+  private static final EntityType TEST_EXCLUDE_ENTITY_TYPE =
+      EntityType.newBuilder()
+          .setAttributeScope(TEST_ENTITY_TYPE_NAME)
+          .setName(TEST_ENTITY_TYPE_NAME)
+          .setIdAttributeKey(TEST_ENTITY_ID_ATTRIBUTE_KEY)
+          .setNameAttributeKey(TEST_ENTITY_NAME_ATTRIBUTE_KEY)
+          .build();
+
   private static final StructuredTrace TEST_TRACE = defaultedStructuredTraceBuilder().build();
   private static final Event TEST_SPAN = defaultedEventBuilder().setCustomerId(TENANT_ID).build();
   private static final Entity EXPECTED_ENTITY =
@@ -105,6 +115,8 @@ class DefaultTraceEntityAccessorTest {
           arg.buildContextualKey()
               .equals(RequestContext.forTenantId(TENANT_ID).buildContextualKey());
   private static final Duration DEFAULT_DURATION = Duration.ofSeconds(15);
+  private static final Set<String> ENTITY_TYPES_TO_BE_EXCLUDED =
+      Set.of(TEST_EXCLUDE_ENTITY_TYPE_NAME);
 
   @Mock EntityTypeClient mockTypeClient;
   @Mock EntityDataClient mockDataClient;
@@ -140,7 +152,8 @@ class DefaultTraceEntityAccessorTest {
     mockTenantId();
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
+        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
 
     verify(mockDataClient, times(1))
         .createOrUpdateEntityEventually(
@@ -158,7 +171,8 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, LiteralValue.getDefaultInstance());
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
+        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
     verifyNoInteractions(mockDataClient);
   }
 
@@ -170,7 +184,21 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(""));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
+        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
+    verifyNoInteractions(mockDataClient);
+  }
+
+  @Test
+  void omitsEntityBasedOnEntityType() {
+    mockAllEntityTypes(TEST_EXCLUDE_ENTITY_TYPE);
+    mockGetAllAttributes(TEST_ENTITY_ID_ATTRIBUTE, TEST_ENTITY_NAME_ATTRIBUTE);
+    mockTenantId();
+    mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(""));
+    mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_EXCLUDE_ENTITY_TYPE_NAME));
+
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
+        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
     verifyNoInteractions(mockDataClient);
   }
 
@@ -188,7 +216,8 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_TIMESTAMP_ATTRIBUTE, longLiteral(30));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
+        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
 
     UpsertCondition expectedCondition =
         UpsertCondition.newBuilder()
@@ -229,13 +258,15 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeReadError(otherAttribute);
     // No "other" attribute, should not form entity
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
+        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
     verifyNoInteractions(mockDataClient);
 
     // Now add "other"
     mockAttributeRead(otherAttribute, stringLiteral("other-value"));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
+        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
 
     verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any(), any());
   }
@@ -252,7 +283,8 @@ class DefaultTraceEntityAccessorTest {
     mockAttributeRead(TEST_ENTITY_ID_ATTRIBUTE, stringLiteral(TEST_ENTITY_ID_ATTRIBUTE_VALUE));
     mockAttributeRead(TEST_ENTITY_NAME_ATTRIBUTE, stringLiteral(TEST_ENTITY_NAME_ATTRIBUTE_VALUE));
 
-    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(TEST_TRACE, TEST_SPAN);
+    this.entityAccessor.writeAssociatedEntitiesForSpanEventually(
+        TEST_TRACE, TEST_SPAN, ENTITY_TYPES_TO_BE_EXCLUDED);
 
     verify(mockDataClient, times(1)).createOrUpdateEntityEventually(any(), any(), any(), any());
   }
