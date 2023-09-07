@@ -68,13 +68,10 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
 
   private boolean isEntityTypeExcluded(
       final String entityTypeName, final Set<String> entityTypesToBeExcluded) {
-    System.out.println(entityTypeName);
-    System.out.println(entityTypesToBeExcluded);
     return entityTypesToBeExcluded.contains(entityTypeName);
   }
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
-    System.out.println(entityType);
     this.buildEntity(entityType, trace, span)
         .subscribeOn(Schedulers.io())
         .subscribe(
