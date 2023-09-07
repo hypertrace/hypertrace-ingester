@@ -63,12 +63,12 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
         .wrapSingle(() -> this.entityTypeClient.getAll().toList())
         .blockingGet()
         .stream()
-        .filter(not(entityType -> isEntityTypeExcluded(entityType.getName())))
+        .filter(not(this::isExcludedEntityType))
         .forEach(entityType -> this.writeEntityIfExists(entityType, trace, span));
   }
 
-  private boolean isEntityTypeExcluded(final String entityTypeName) {
-    return excludedEntityTypes.contains(entityTypeName);
+  private boolean isExcludedEntityType(final EntityType entityType) {
+    return excludedEntityTypes.contains(entityType.getName());
   }
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {

@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 public class EntitySpanEnricher extends AbstractTraceEnricher {
   private static final Logger LOG = LoggerFactory.getLogger(EntitySpanEnricher.class);
-
   private TraceEntityAccessor entityAccessor;
 
   @Override
