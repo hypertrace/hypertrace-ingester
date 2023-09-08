@@ -41,7 +41,8 @@ class DefaultValueResolver implements ValueResolver {
   public Single<LiteralValue> resolve(
       ValueSource valueSource, AttributeMetadata attributeMetadata) {
     if (!attributeMetadata.hasDefinition()) {
-      return this.buildAndLogErrorLazily("Attribute definition not set");
+      return this.buildAndLogErrorLazily(
+          "Attribute definition not set for attribute: " + attributeMetadata.getId());
     }
 
     return this.resolveDefinition(
