@@ -42,7 +42,7 @@ class DefaultValueResolver implements ValueResolver {
       ValueSource valueSource, AttributeMetadata attributeMetadata) {
     if (!attributeMetadata.hasDefinition()) {
       return this.buildAndLogErrorLazily(
-          "Attribute definition not set for attribute: " + attributeMetadata.getDisplayName());
+          "Attribute definition not set for attribute: " + attributeMetadata.getId());
     }
 
     return this.resolveDefinition(
