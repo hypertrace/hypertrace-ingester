@@ -1,10 +1,13 @@
 package org.hypertrace.traceenricher.enrichment.clients;
 
+import static java.util.Collections.emptySet;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.typesafe.config.Config;
 import io.grpc.Channel;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -37,6 +40,9 @@ public class DefaultClientRegistry implements ClientRegistry {
   private static final String ENTITY_SERVICE_PORT_KEY = "entity.service.config.port";
   private static final String TRACE_ENTITY_WRITE_THROTTLE_DURATION =
       "trace.entity.write.throttle.duration";
+  private static final String TRACE_ENTITY_WRITE_EXCLUDED_ENTITY_TYPES =
+      "trace.entity.write.excluded.entity.types";
+
   private static final String USER_AGENT_PARSER_CONFIG_KEY = "useragent.parser";
   private static final String RXJAVA_MAX_IO_THREADS_PROPERTY = "rxjava.threads.io.max";
   private static final int DEFAULT_RXJAVA_MAX_IO_THREADS = 10;
@@ -90,6 +96,10 @@ public class DefaultClientRegistry implements ClientRegistry {
                 config.hasPath(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
                     ? config.getDuration(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
                     : Duration.ofSeconds(15))
+            .withExcludeEntityTypes(
+                config.hasPath(TRACE_ENTITY_WRITE_EXCLUDED_ENTITY_TYPES)
+                    ? Set.copyOf(config.getStringList(TRACE_ENTITY_WRITE_EXCLUDED_ENTITY_TYPES))
+                    : emptySet())
             .withExecutor(buildExecutor(config))
             .build();
     this.userAgentParser = new UserAgentParser(config.getConfig(USER_AGENT_PARSER_CONFIG_KEY));

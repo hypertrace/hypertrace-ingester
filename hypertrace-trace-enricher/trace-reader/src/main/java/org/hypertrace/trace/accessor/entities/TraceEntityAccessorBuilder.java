@@ -1,7 +1,10 @@
 package org.hypertrace.trace.accessor.entities;
 
+import static java.util.Collections.emptySet;
+
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.time.Duration;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
@@ -13,6 +16,7 @@ public class TraceEntityAccessorBuilder {
   private final EntityDataClient entityDataClient;
   private final CachingAttributeClient attributeClient;
   private Duration entityWriteThrottleDuration = Duration.ofSeconds(15);
+  private Set<String> excludedEntityTypes = emptySet();
   private Executor executor;
 
   public TraceEntityAccessorBuilder(
@@ -29,6 +33,11 @@ public class TraceEntityAccessorBuilder {
     return this;
   }
 
+  public TraceEntityAccessorBuilder withExcludeEntityTypes(Set<String> excludedEntityTypes) {
+    this.excludedEntityTypes = excludedEntityTypes;
+    return this;
+  }
+
   public TraceEntityAccessorBuilder withExecutor(Executor executor) {
     this.executor = executor;
     return this;
@@ -41,6 +50,7 @@ public class TraceEntityAccessorBuilder {
         this.attributeClient,
         TraceAttributeReaderFactory.build(this.attributeClient),
         entityWriteThrottleDuration,
+        excludedEntityTypes,
         Schedulers.from(executor));
   }
 }
