@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
@@ -39,18 +40,21 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   private final CachingAttributeClient attributeClient;
   private final TraceAttributeReader<StructuredTrace, Event> traceAttributeReader;
   private final Duration writeThrottleDuration;
+  private final Executor executor;
 
   DefaultTraceEntityAccessor(
       EntityTypeClient entityTypeClient,
       EntityDataClient entityDataClient,
       CachingAttributeClient attributeClient,
       TraceAttributeReader<StructuredTrace, Event> traceAttributeReader,
-      Duration writeThrottleDuration) {
+      Duration writeThrottleDuration,
+      Executor executor) {
     this.entityTypeClient = entityTypeClient;
     this.entityDataClient = entityDataClient;
     this.attributeClient = attributeClient;
     this.traceAttributeReader = traceAttributeReader;
     this.writeThrottleDuration = writeThrottleDuration;
+    this.executor = executor;
   }
 
   @Override
@@ -63,7 +67,7 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
     this.buildEntity(entityType, trace, span)
-        .subscribeOn(Schedulers.io())
+        .subscribeOn(Schedulers.from(executor))
         .subscribe(
             entity -> {
               UpsertCondition upsertCondition =

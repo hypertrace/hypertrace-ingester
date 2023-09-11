@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.Executors;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
@@ -123,7 +124,8 @@ class DefaultTraceEntityAccessorTest {
             this.mockDataClient,
             this.mockAttributeClient,
             this.mockAttributeReader,
-            DEFAULT_DURATION);
+            DEFAULT_DURATION,
+            Executors.newFixedThreadPool(10));
     mockSchedulers = Mockito.mockStatic(Schedulers.class);
     mockSchedulers.when(Schedulers::io).thenReturn(trampoline);
   }

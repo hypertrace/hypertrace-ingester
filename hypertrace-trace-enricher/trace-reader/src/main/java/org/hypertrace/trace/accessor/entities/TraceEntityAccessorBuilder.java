@@ -1,6 +1,7 @@
 package org.hypertrace.trace.accessor.entities;
 
 import java.time.Duration;
+import java.util.concurrent.Executor;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
@@ -11,6 +12,7 @@ public class TraceEntityAccessorBuilder {
   private final EntityDataClient entityDataClient;
   private final CachingAttributeClient attributeClient;
   private Duration entityWriteThrottleDuration = Duration.ofSeconds(15);
+  private Executor executor;
 
   public TraceEntityAccessorBuilder(
       EntityTypeClient entityTypeClient,
@@ -26,12 +28,18 @@ public class TraceEntityAccessorBuilder {
     return this;
   }
 
+  public TraceEntityAccessorBuilder withExecutor(Executor executor) {
+    this.executor = executor;
+    return this;
+  }
+
   public TraceEntityAccessor build() {
     return new DefaultTraceEntityAccessor(
         this.entityTypeClient,
         this.entityDataClient,
         this.attributeClient,
         TraceAttributeReaderFactory.build(this.attributeClient),
-        entityWriteThrottleDuration);
+        entityWriteThrottleDuration,
+        executor);
   }
 }

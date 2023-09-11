@@ -1,10 +1,13 @@
 package org.hypertrace.traceenricher.enrichment.clients;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.typesafe.config.Config;
 import io.grpc.Channel;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -34,8 +37,9 @@ public class DefaultClientRegistry implements ClientRegistry {
   private static final String ENTITY_SERVICE_PORT_KEY = "entity.service.config.port";
   private static final String TRACE_ENTITY_WRITE_THROTTLE_DURATION =
       "trace.entity.write.throttle.duration";
-
   private static final String USER_AGENT_PARSER_CONFIG_KEY = "useragent.parser";
+  private static final String RXJAVA_MAX_IO_THREADS_PROPERTY = "rxjava.threads.io.max";
+  private static final int DEFAULT_RXJAVA_MAX_IO_THREADS = 10;
   private final Channel attributeServiceChannel;
   private final Channel configServiceChannel;
   private final Channel entityServiceChannel;
@@ -86,6 +90,7 @@ public class DefaultClientRegistry implements ClientRegistry {
                 config.hasPath(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
                     ? config.getDuration(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
                     : Duration.ofSeconds(15))
+            .withExecutor(buildExecutor(config))
             .build();
     this.userAgentParser = new UserAgentParser(config.getConfig(USER_AGENT_PARSER_CONFIG_KEY));
   }
@@ -162,5 +167,20 @@ public class DefaultClientRegistry implements ClientRegistry {
 
   protected Channel buildChannel(String host, int port, GrpcChannelConfig grpcChannelConfig) {
     return this.grpcChannelRegistry.forPlaintextAddress(host, port, grpcChannelConfig);
+  }
+
+  private Executor buildExecutor(Config config) {
+    int maxThreads =
+        config.hasPath(RXJAVA_MAX_IO_THREADS_PROPERTY)
+            ? config.getInt(RXJAVA_MAX_IO_THREADS_PROPERTY)
+            : DEFAULT_RXJAVA_MAX_IO_THREADS;
+    return Executors.newFixedThreadPool(maxThreads, this.buildThreadFactory());
+  }
+
+  private ThreadFactory buildThreadFactory() {
+    return new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("rx-bounded-io-scheduler-%d")
+        .build();
   }
 }
