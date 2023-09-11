@@ -15,14 +15,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Executors;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
@@ -40,14 +38,11 @@ import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.entity.type.service.v2.EntityType;
 import org.hypertrace.entity.type.service.v2.EntityType.EntityFormationCondition;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -111,13 +106,11 @@ class DefaultTraceEntityAccessorTest {
   @Mock EntityDataClient mockDataClient;
   @Mock CachingAttributeClient mockAttributeClient;
   @Mock TraceAttributeReader<StructuredTrace, Event> mockAttributeReader;
-  MockedStatic<Schedulers> mockSchedulers;
 
   private DefaultTraceEntityAccessor entityAccessor;
 
   @BeforeEach
   void beforeEach() {
-    Scheduler trampoline = Schedulers.trampoline();
     this.entityAccessor =
         new DefaultTraceEntityAccessor(
             this.mockTypeClient,
@@ -125,14 +118,7 @@ class DefaultTraceEntityAccessorTest {
             this.mockAttributeClient,
             this.mockAttributeReader,
             DEFAULT_DURATION,
-            Executors.newFixedThreadPool(10));
-    mockSchedulers = Mockito.mockStatic(Schedulers.class);
-    mockSchedulers.when(Schedulers::io).thenReturn(trampoline);
-  }
-
-  @AfterEach
-  void afterEach() {
-    mockSchedulers.close();
+            Schedulers.trampoline());
   }
 
   @Test

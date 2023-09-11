@@ -4,12 +4,11 @@ import static io.reactivex.rxjava3.core.Maybe.zip;
 import static java.util.function.Predicate.not;
 
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Scheduler;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
@@ -40,7 +39,7 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   private final CachingAttributeClient attributeClient;
   private final TraceAttributeReader<StructuredTrace, Event> traceAttributeReader;
   private final Duration writeThrottleDuration;
-  private final Executor executor;
+  private final Scheduler scheduler;
 
   DefaultTraceEntityAccessor(
       EntityTypeClient entityTypeClient,
@@ -48,13 +47,13 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
       CachingAttributeClient attributeClient,
       TraceAttributeReader<StructuredTrace, Event> traceAttributeReader,
       Duration writeThrottleDuration,
-      Executor executor) {
+      Scheduler scheduler) {
     this.entityTypeClient = entityTypeClient;
     this.entityDataClient = entityDataClient;
     this.attributeClient = attributeClient;
     this.traceAttributeReader = traceAttributeReader;
     this.writeThrottleDuration = writeThrottleDuration;
-    this.executor = executor;
+    this.scheduler = scheduler;
   }
 
   @Override
@@ -67,7 +66,7 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
     this.buildEntity(entityType, trace, span)
-        .subscribeOn(Schedulers.from(executor))
+        .subscribeOn(scheduler)
         .subscribe(
             entity -> {
               UpsertCondition upsertCondition =

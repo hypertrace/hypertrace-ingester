@@ -1,5 +1,6 @@
 package org.hypertrace.trace.accessor.entities;
 
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
@@ -40,6 +41,6 @@ public class TraceEntityAccessorBuilder {
         this.attributeClient,
         TraceAttributeReaderFactory.build(this.attributeClient),
         entityWriteThrottleDuration,
-        executor);
+        Schedulers.from(executor));
   }
 }
