@@ -81,7 +81,7 @@ traceEnricherConfig:
     producerAcks: all # default: 1
     producerBatchSize: 524288 # default = 16384
     producerLingerMs: 1000 # default = 100 (kafka streams default)
-    producerCompressionType: "gzip" # default = none
+    producerCompressionType: "zstd" # default = none
     producerMaxRequestSize: 10485760 # default = 1048576
     producerBufferMemory: 134217728 # default = 33554432
     # Consumer configs
