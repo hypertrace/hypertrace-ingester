@@ -18,7 +18,7 @@ public class StructuredTraceGraphBuilder {
   public static StructuredTraceGraph buildGraph(StructuredTrace trace) {
     StructuredTrace cachedTrace = cachedTraceThreadLocal.get();
     StructuredTraceGraph cachedGraph = cachedGraphThreadLocal.get();
-    if (null == cachedGraph) {
+    if (null == cachedGraph || GraphBuilderUtil.isDifferentTrace(cachedTrace, trace)) {
       Instant start = Instant.now();
       StructuredTraceGraph graph = new StructuredTraceGraph(trace);
       if (LOG.isDebugEnabled()) {
@@ -60,7 +60,8 @@ public class StructuredTraceGraphBuilder {
         && (null == graph.getTraceEntitiesGraph() || null == graph.getTraceEventsGraph())) {
       LOG.info(
           logPrefix
-              + "StructuredTraceGraph is not built correctly, trace {}, Is events graph non-null: {}."
+              + "StructuredTraceGraph is not built correctly, trace {}, Is events graph non-null:"
+              + " {}."
               + " Is entities graph non-null: {}",
           trace,
           (null != graph.getTraceEventsGraph()),
