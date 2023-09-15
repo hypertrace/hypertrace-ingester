@@ -62,7 +62,9 @@ public class EnrichedSpanUtils {
   private static final String NAMESPACE_NAME_ATTR =
       EntityConstants.getValue(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_NAMESPACE_NAME);
   private static final String CLUSTER_NAME_ATTR =
-      EntityConstants.getValue(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME);
+          EntityConstants.getValue(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_CLUSTER_NAME);
+  private static final String DEPLOYMENT_NAME_ATTR =
+          EntityConstants.getValue(K8sEntityAttribute.K8S_ENTITY_ATTRIBUTE_DEPLOYMENT_NAME);
 
   private static final String BACKEND_ID_ATTR =
       EntityConstants.getValue(BackendAttribute.BACKEND_ATTRIBUTE_ID);
@@ -305,6 +307,9 @@ public class EnrichedSpanUtils {
 
   public static String getClusterName(Event span) {
     return getStringAttribute(span, CLUSTER_NAME_ATTR);
+  }
+  public static String getDeploymentName(Event span) {
+    return getStringAttribute(span, DEPLOYMENT_NAME_ATTR);
   }
 
   public static String getHostHeader(Event span) {
