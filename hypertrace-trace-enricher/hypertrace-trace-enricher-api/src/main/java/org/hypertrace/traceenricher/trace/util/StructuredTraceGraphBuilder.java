@@ -18,8 +18,6 @@ public class StructuredTraceGraphBuilder {
   public static StructuredTraceGraph buildGraph(StructuredTrace trace) {
     StructuredTrace cachedTrace = cachedTraceThreadLocal.get();
     StructuredTraceGraph cachedGraph = cachedGraphThreadLocal.get();
-    boolean shouldRebuildTraceEventsGraph =
-        GraphBuilderUtil.isTraceEventsChanged(cachedTrace, trace);
     if (null == cachedGraph) {
       Instant start = Instant.now();
       StructuredTraceGraph graph = new StructuredTraceGraph(trace);
@@ -35,6 +33,8 @@ public class StructuredTraceGraphBuilder {
       return graph;
     }
 
+    boolean shouldRebuildTraceEventsGraph =
+        GraphBuilderUtil.isTraceEventsChanged(cachedTrace, trace);
     if (shouldRebuildTraceEventsGraph) {
       Instant start = Instant.now();
       cachedGraph.reCreateTraceEventsGraph(trace);
