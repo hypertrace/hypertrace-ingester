@@ -23,9 +23,7 @@ public class GraphBuilderUtil {
   }
 
   static boolean isStructuredTraceChanged(StructuredTrace cachedTrace, StructuredTrace trace) {
-    return isDifferentTrace(cachedTrace, trace)
-        || isTraceEventsChanged(cachedTrace, trace)
-        || isTraceEntitiesChanged(cachedTrace, trace);
+    return isDifferentTrace(cachedTrace, trace) || isTraceEventsChanged(cachedTrace, trace);
   }
 
   /** Check if the events or theirs edges has changed */
@@ -37,21 +35,6 @@ public class GraphBuilderUtil {
         || cachedTrace.getEventEdgeList().size() != trace.getEventEdgeList().size()) {
       LOG.debug(
           "Cached and Input trace are not same. Reason: they are having different size either for event");
-      return true;
-    }
-    return false;
-  }
-
-  /** Check if the entities or theirs edges has changed */
-  static boolean isTraceEntitiesChanged(StructuredTrace cachedTrace, StructuredTrace trace) {
-
-    // trace entities internally changed (full trace comparison is costly, so we are doing only with
-    // required fields)
-    if (isDifferentTrace(cachedTrace, trace)
-        || cachedTrace.getEntityList().size() != trace.getEntityList().size()
-        || cachedTrace.getEntityEdgeList().size() != trace.getEntityEdgeList().size()) {
-      LOG.debug(
-          "Cached and Input trace are not same. Reason: they are having different size either for entities");
       return true;
     }
     return false;

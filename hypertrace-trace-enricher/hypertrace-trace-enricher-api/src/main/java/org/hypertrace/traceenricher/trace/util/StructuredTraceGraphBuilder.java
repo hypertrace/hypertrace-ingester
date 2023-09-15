@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class StructuredTraceGraphBuilder {
+
   private static final Logger LOG = LoggerFactory.getLogger(StructuredTraceGraphBuilder.class);
 
   private static final ThreadLocal<StructuredTraceGraph> cachedGraphThreadLocal =
@@ -19,12 +20,7 @@ public class StructuredTraceGraphBuilder {
     StructuredTraceGraph cachedGraph = cachedGraphThreadLocal.get();
     boolean shouldRebuildTraceEventsGraph =
         GraphBuilderUtil.isTraceEventsChanged(cachedTrace, trace);
-    boolean shouldRebuildTraceEntitiesGraph =
-        GraphBuilderUtil.isTraceEntitiesChanged(cachedTrace, trace);
-
-    if (null == cachedGraph
-        || GraphBuilderUtil.isDifferentTrace(cachedTrace, trace)
-        || (shouldRebuildTraceEventsGraph && shouldRebuildTraceEntitiesGraph)) {
+    if (null == cachedGraph) {
       Instant start = Instant.now();
       StructuredTraceGraph graph = new StructuredTraceGraph(trace);
       if (LOG.isDebugEnabled()) {
@@ -39,13 +35,9 @@ public class StructuredTraceGraphBuilder {
       return graph;
     }
 
-    if (shouldRebuildTraceEventsGraph || shouldRebuildTraceEntitiesGraph) {
+    if (shouldRebuildTraceEventsGraph) {
       Instant start = Instant.now();
-      if (shouldRebuildTraceEventsGraph) {
-        cachedGraph.reCreateTraceEventsGraph(trace);
-      } else {
-        cachedGraph.reCreateTraceEntitiesGraph(trace);
-      }
+      cachedGraph.reCreateTraceEventsGraph(trace);
       if (LOG.isDebugEnabled()) {
         LOG.debug(
             "Time taken in building TraceEventsGraph, duration_millis:{} for tenantId:{}",
