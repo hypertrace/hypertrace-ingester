@@ -57,7 +57,9 @@ public class MigrationTestHttp {
 
   @BeforeEach
   public void setup()
-      throws SecurityException, NoSuchFieldException, IllegalArgumentException,
+      throws SecurityException,
+          NoSuchFieldException,
+          IllegalArgumentException,
           IllegalAccessException {
     // Since JaegerToRawSpanConverter is a singleton, we need to reset it for unit tests to
     // recreate the instance.
