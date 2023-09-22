@@ -69,44 +69,44 @@ tasks.register<Copy>("copyServiceConfigs") {
       "span-normalizer",
       "span-normalizer",
       "main",
-      "common"
+      "common",
     ),
     createCopySpec(
       "raw-spans-grouper",
       "raw-spans-grouper",
       "main",
-      "common"
+      "common",
     ),
     createCopySpec(
       "hypertrace-trace-enricher",
       "hypertrace-trace-enricher",
       "main",
-      "common"
+      "common",
     ),
     createCopySpec(
       "hypertrace-view-generator",
       "hypertrace-view-generator",
       "main",
-      "common"
+      "common",
     ),
     createCopySpec(
       "hypertrace-metrics-processor",
       "hypertrace-metrics-processor",
       "main",
-      "common"
+      "common",
     ),
     createCopySpec(
       "hypertrace-metrics-exporter",
       "hypertrace-metrics-exporter",
       "main",
-      "common"
+      "common",
     ),
     createCopySpec(
       "hypertrace-metrics-generator",
       "hypertrace-metrics-generator",
       "main",
-      "common"
-    )
+      "common",
+    ),
   ).into("./build/resources/main/configs/")
 }
 
@@ -121,7 +121,7 @@ fun createCopySpec(projectName: String, serviceName: String, srcFolder: String, 
 
 tasks.register<Copy>("createCopySpecForSubJob") {
   with(
-    createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator", "main")
+    createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator", "main"),
   ).into("./build/resources/main/configs/")
 }
 
@@ -147,49 +147,49 @@ tasks.register<Copy>("copyServiceConfigsTest") {
       "span-normalizer",
       "span-normalizer",
       "test",
-      "span-normalizer"
+      "span-normalizer",
     ),
     createCopySpec(
       "raw-spans-grouper",
       "raw-spans-grouper",
       "test",
-      "raw-spans-grouper"
+      "raw-spans-grouper",
     ),
     createCopySpec(
       "hypertrace-trace-enricher",
       "hypertrace-trace-enricher",
       "test",
-      "hypertrace-trace-enricher"
+      "hypertrace-trace-enricher",
     ),
     createCopySpec(
       "hypertrace-view-generator",
       "hypertrace-view-generator",
       "test",
-      "hypertrace-view-generator"
+      "hypertrace-view-generator",
     ),
     createCopySpec(
       "hypertrace-metrics-processor",
       "hypertrace-metrics-processor",
       "test",
-      "hypertrace-metrics-processor"
+      "hypertrace-metrics-processor",
     ),
     createCopySpec(
       "hypertrace-metrics-exporter",
       "hypertrace-metrics-exporter",
       "test",
-      "hypertrace-metrics-exporter"
+      "hypertrace-metrics-exporter",
     ),
     createCopySpec(
       "hypertrace-metrics-generator",
       "hypertrace-metrics-generator",
       "test",
-      "hypertrace-metrics-generator"
-    )
+      "hypertrace-metrics-generator",
+    ),
   ).into("./build/resources/test/configs/")
 }
 
 tasks.register<Copy>("createCopySpecForSubJobTest") {
   with(
-    createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator", "test")
+    createCopySpecForSubJob("hypertrace-view-generator", "hypertrace-view-generator", "test"),
   ).into("./build/resources/test/configs/")
 }
