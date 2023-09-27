@@ -56,41 +56,24 @@ public class StructuredTraceGraphBuilder {
 
   private static void debugGraph(
       String logPrefix, StructuredTraceGraph graph, StructuredTrace trace) {
-    if (null != graph
-        && (null == graph.getTraceEntitiesGraph() || null == graph.getTraceEventsGraph())) {
+    if (null != graph && null == graph.getTraceEventsGraph()) {
       LOG.info(
           logPrefix
               + "StructuredTraceGraph is not built correctly, trace {}, Is events graph non-null:"
-              + " {}."
-              + " Is entities graph non-null: {}",
+              + " {}.",
           trace,
-          (null != graph.getTraceEventsGraph()),
-          (null != graph.getTraceEntitiesGraph()));
+          (null != graph.getTraceEventsGraph()));
 
       // build the graph again and check
       StructuredTraceGraph tempGraph = new StructuredTraceGraph(trace);
       LOG.info(
-          logPrefix
-              + "Recreating StructuredTraceGraph. Is events graph non-null: {}."
-              + " Is entities graph non-null: {}",
-          (null != tempGraph.getTraceEventsGraph()),
-          (null != tempGraph.getTraceEntitiesGraph()));
+          logPrefix + "Recreating StructuredTraceGraph. Is events graph non-null: {}.",
+          (null != tempGraph.getTraceEventsGraph()));
 
       tempGraph.reCreateTraceEventsGraph(trace);
       LOG.info(
-          logPrefix
-              + "Recreating events graph. Is events graph non-null: {}."
-              + " Is entities graph non-null: {}",
-          (null != tempGraph.getTraceEventsGraph()),
-          (null != tempGraph.getTraceEntitiesGraph()));
-
-      tempGraph.reCreateTraceEntitiesGraph(trace);
-      LOG.info(
-          logPrefix
-              + "Recreating entities graph. Is events graph non-null: {}."
-              + " Is entities graph non-null: {}",
-          (null != tempGraph.getTraceEventsGraph()),
-          (null != tempGraph.getTraceEntitiesGraph()));
+          logPrefix + "Recreating events graph. Is events graph non-null: {}.",
+          (null != tempGraph.getTraceEventsGraph()));
     }
   }
 }
