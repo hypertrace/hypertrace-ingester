@@ -33,13 +33,13 @@ dependencies {
   implementation(libs.google.guava)
 
   // TODO: migrate in core
-  implementation(libs.hypertrace.viewGenerator.framework)
+  implementation(libs.hypertrace.viewCreator.framework)
   implementation(libs.hypertrace.data.model)
   implementation(libs.hypertrace.serviceFramework.metrics)
 
   implementation(libs.hypertrace.entityService.api)
 
-  implementation("org.apache.avro:avro:1.11.1")
+  implementation("org.apache.avro:avro:1.11.3")
   implementation(libs.apache.commons.lang3)
 
   // logging
