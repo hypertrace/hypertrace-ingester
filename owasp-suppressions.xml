@@ -82,7 +82,7 @@
     <packageUrl regex="true">^pkg:maven/org\.hypertrace\.core\.kafkastreams\.framework/avro\-partitioners@.*$</packageUrl>
     <cve>CVE-2023-37475</cve>
   </suppress>
-  <suppress until="2023-09-30Z">
+  <suppress until="2023-10-31Z">
     <notes><![CDATA[
    Not yet fixed in quartz. file name: quartz-2.3.2.jar
    ]]></notes>
