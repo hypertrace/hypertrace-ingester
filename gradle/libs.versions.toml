@@ -22,7 +22,7 @@ hypertrace-kafkaStreams-avroPartitioners = { module = "org.hypertrace.core.kafka
 hypertrace-kafkaStreams-weightedGroupPartitioners = { module = "org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-kafka-bom = { module = "org.hypertrace.core.kafkastreams.framework:kafka-bom", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-viewGenerator-framework = { module="org.hypertrace.core.viewgenerator:view-generator-framework", version.ref="hypertrace-view-generator" }
-hypertrace-viewCreator-framework = { module="org.hypertrace.core.viewgenerator:view-creator-framework", version.ref="hypertrace-view-generator" }
+hypertrace-viewCreator-framework = { module="org.hypertrace.core.viewcreator:view-creator-framework", version.ref="hypertrace-view-generator" }
 hypertrace-spacesConfigServiceApi = { module = "org.hypertrace.config.service:spaces-config-service-api", version.ref = "hypertrace-config-service" }
 hypertrace-spanProcessingConfigServiceApi = { module = "org.hypertrace.config.service:span-processing-config-service-api", version.ref = "hypertrace-config-service" }
 hypertrace-spanProcessingUtils = { module = "org.hypertrace.config.service:span-processing-utils", version.ref = "hypertrace-config-service" }
