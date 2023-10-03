@@ -39,7 +39,7 @@ dependencies {
 
   implementation(libs.hypertrace.entityService.api)
 
-  implementation("org.apache.avro:avro:1.11.1")
+  implementation("org.apache.avro:avro:1.11.3")
   implementation(libs.apache.commons.lang3)
 
   // logging

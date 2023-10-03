@@ -57,10 +57,13 @@ sourceSets {
 }
 dependencies {
   api("com.google.api.grpc:proto-google-common-protos:2.14.1")
-  api("org.apache.avro:avro:1.11.1")
+  api("org.apache.avro:avro:1.11.3")
   constraints {
     api("com.fasterxml.jackson.core:jackson-databind:2.15.2") {
       because("cpe:/a:fasterxml:jackson-databind")
+    }
+    api("org.apache.commons:commons-compress:1.24.0") {
+      because("https://nvd.nist.gov/vuln/detail/CVE-2023-42503")
     }
   }
 }
