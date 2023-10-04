@@ -81,3 +81,11 @@ data:
       }
     }
     {{- end }}
+    
+    {{- if hasKey .Values.rawSpansGrouperConfig "traceEmitCallbackRegistry" }}
+    trace.emit.callback.registry {
+      frequency = {{ .Values.rawSpansGrouperConfig.traceEmitCallbackRegistry.frequency }}
+      yield = {{ .Values.rawSpansGrouperConfig.traceEmitCallbackRegistry.yield }}
+      window = {{ .Values.rawSpansGrouperConfig.traceEmitCallbackRegistry.window }}
+    }
+    {{- end }}
