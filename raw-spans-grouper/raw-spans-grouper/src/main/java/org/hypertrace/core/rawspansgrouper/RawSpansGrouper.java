@@ -5,12 +5,15 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 
 import com.typesafe.config.Config;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
@@ -72,8 +75,16 @@ public class RawSpansGrouper extends KafkaStreamsApp {
                 Stores.persistentKeyValueStore(SPAN_STATE_STORE_NAME), keySerde, valueSerde)
             .withCachingEnabled();
 
+    StoreBuilder<KeyValueStore<Long, TraceIdentity>> traceEmitCallbackRegistryStoreBuilder =
+        Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME),
+                Serdes.Long(),
+                Serdes.ListSerde(ArrayList.class, valueSerde))
+            .withCachingEnabled();
+
     streamsBuilder.addStateStore(spanStoreBuilder);
     streamsBuilder.addStateStore(traceStateStoreBuilder);
+    streamsBuilder.addStateStore(traceEmitCallbackRegistryStoreBuilder);
 
     StreamPartitioner<TraceIdentity, StructuredTrace> groupPartitioner =
         new GroupPartitionerBuilder<TraceIdentity, StructuredTrace>()
@@ -93,7 +104,8 @@ public class RawSpansGrouper extends KafkaStreamsApp {
             RawSpansProcessor::new,
             Named.as(RawSpansProcessor.class.getSimpleName()),
             SPAN_STATE_STORE_NAME,
-            TRACE_STATE_STORE)
+            TRACE_STATE_STORE,
+            TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME)
         .to(outputTopic, outputTopicProducer);
 
     return streamsBuilder;

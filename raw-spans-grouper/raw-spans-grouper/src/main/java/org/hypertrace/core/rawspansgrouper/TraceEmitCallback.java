@@ -9,8 +9,6 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import java.nio.ByteBuffer;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,10 +18,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.PunctuationType;
-import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.RawSpan;
@@ -33,6 +28,9 @@ import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
+import org.hypertrace.core.kafkastreams.framework.callbacks.action.CallbackAction;
+import org.hypertrace.core.kafkastreams.framework.callbacks.action.DropCallbackAction;
+import org.hypertrace.core.kafkastreams.framework.callbacks.action.RescheduleCallbackAction;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -41,12 +39,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Checks if a trace can be finalized and emitted based on inactivity period of {@link
+ * Callback to check if a trace can be finalized and emitted based on inactivity period of {@link
  * RawSpansProcessor#groupingWindowTimeoutMs}
  */
-class TraceEmitPunctuator implements Punctuator {
+class TraceEmitCallback {
 
-  private static final Logger logger = LoggerFactory.getLogger(TraceEmitPunctuator.class);
+  private static final Logger logger = LoggerFactory.getLogger(TraceEmitCallback.class);
   private static final Object mutex = new Object();
 
   private static final Timer spansGrouperArrivalLagTimer =
@@ -70,24 +68,21 @@ class TraceEmitPunctuator implements Punctuator {
   private static final ConcurrentMap<String, Counter> tenantToTraceWithDuplicateSpansCounter =
       new ConcurrentHashMap<>();
 
+  private static final DropCallbackAction DROP_CALLBACK_ACTION = new DropCallbackAction();
   private final double dataflowSamplingPercent;
-  private final TraceIdentity key;
   private final ProcessorContext context;
   private final KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
-  private Cancellable cancellable;
 
-  TraceEmitPunctuator(
-      TraceIdentity key,
+  TraceEmitCallback(
       ProcessorContext context,
       KeyValueStore<SpanIdentity, RawSpan> spanStore,
       KeyValueStore<TraceIdentity, TraceState> traceStateStore,
       To outputTopicProducer,
       long groupingWindowTimeoutMs,
       double dataflowSamplingPercent) {
-    this.key = key;
     this.context = context;
     this.spanStore = spanStore;
     this.traceStateStore = traceStateStore;
@@ -96,143 +91,107 @@ class TraceEmitPunctuator implements Punctuator {
     this.dataflowSamplingPercent = dataflowSamplingPercent;
   }
 
-  public void setCancellable(Cancellable cancellable) {
-    this.cancellable = cancellable;
-  }
-
-  /**
-   * @param timestamp correspond to current system time
-   */
-  @Override
-  public void punctuate(long timestamp) {
-    Instant startTime = Instant.now();
-    // always cancel the punctuator else it will get re-scheduled automatically
-    cancellable.cancel();
-
+  CallbackAction callback(long punctuateTimestamp, TraceIdentity key) {
     TraceState traceState = traceStateStore.get(key);
     if (null == traceState
         || null == traceState.getSpanIds()
         || traceState.getSpanIds().isEmpty()) {
-      /*
-       todo - debug why this happens .
-       Typically seen when punctuators are created via {@link RawSpansGroupingTransformer.restorePunctuators}
-      */
       logger.warn(
           "TraceState for tenant_id=[{}], trace_id=[{}] is missing.",
           key.getTenantId(),
           HexUtils.getHex(key.getTraceId()));
-      return;
+      return DROP_CALLBACK_ACTION;
     }
-
-    long emitTs = traceState.getEmitTs();
-    if (emitTs <= timestamp) {
-      // we can emit this trace so just delete the entry for this 'key'
+    if (punctuateTimestamp - traceState.getTraceEndTimestamp() >= groupingWindowTimeoutMs) {
       // Implies that no new spans for the trace have arrived within the last
       // 'groupingWindowTimeoutMs' interval
       // so the trace can be finalized and emitted
-      traceStateStore.delete(key);
+      emitTrace(key, traceState);
+      // no need of running again for this
+      return DROP_CALLBACK_ACTION;
+    }
+    return new RescheduleCallbackAction(
+        traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs);
+  }
 
-      ByteBuffer traceId = traceState.getTraceId();
-      String tenantId = traceState.getTenantId();
-      List<RawSpan> rawSpanList = new ArrayList<>();
+  private void emitTrace(TraceIdentity key, TraceState traceState) {
+    traceStateStore.delete(key);
 
-      Set<ByteBuffer> spanIds = new HashSet<>(traceState.getSpanIds());
-      spanIds.forEach(
-          v -> {
-            SpanIdentity spanIdentity = new SpanIdentity(tenantId, traceId, v);
-            RawSpan rawSpan = spanStore.delete(spanIdentity);
-            // ideally this shouldn't happen
-            if (rawSpan != null) {
-              rawSpanList.add(rawSpan);
-            }
-          });
+    ByteBuffer traceId = traceState.getTraceId();
+    String tenantId = traceState.getTenantId();
+    List<RawSpan> rawSpanList = new ArrayList<>();
 
-      if (traceState.getSpanIds().size() != spanIds.size()) {
-        tenantToTraceWithDuplicateSpansCounter
-            .computeIfAbsent(
-                tenantId,
-                k ->
-                    PlatformMetricsRegistry.registerCounter(
-                        TRACE_WITH_DUPLICATE_SPANS, Map.of("tenantId", k)))
-            .increment();
-        if (logger.isDebugEnabled()) {
-          logger.debug(
-              "Duplicate spanIds: [{}], unique spanIds count: [{}] for tenant: [{}] trace: [{}]",
-              traceState.getSpanIds().size(),
-              spanIds.size(),
-              tenantId,
-              HexUtils.getHex(traceId));
-        }
-      }
+    Set<ByteBuffer> spanIds = new HashSet<>(traceState.getSpanIds());
+    spanIds.forEach(
+        v -> {
+          SpanIdentity spanIdentity = new SpanIdentity(tenantId, traceId, v);
+          RawSpan rawSpan = spanStore.delete(spanIdentity);
+          // ideally this shouldn't happen
+          if (rawSpan != null) {
+            rawSpanList.add(rawSpan);
+          }
+        });
 
-      recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
-      Timestamps timestamps =
-          trackEndToEndLatencyTimestamps(timestamp, traceState.getTraceStartTimestamp());
-      StructuredTrace trace =
-          StructuredTraceBuilder.buildStructuredTraceFromRawSpans(
-              rawSpanList, traceId, tenantId, timestamps);
-
-      if (logger.isDebugEnabled()) {
-        logger.debug(
-            "Emit tenant_id=[{}], trace_id=[{}], spans_count=[{}]",
-            tenantId,
-            HexUtils.getHex(traceId),
-            rawSpanList.size());
-      }
-
-      // report entries in spanStore
-      if (spanStoreCountRateLimiter.tryAcquire()) {
-        tenantToSpanStoreCountCounter
-            .computeIfAbsent(
-                tenantId,
-                k ->
-                    PlatformMetricsRegistry.registerCounter(
-                        SPAN_STORE_COUNT, Map.of("tenantId", k)))
-            .increment(spanStore.approximateNumEntries() * 1.0);
-      }
-
-      // report count of spanIds per trace
-      tenantToSpanPerTraceCounter
-          .computeIfAbsent(
-              tenantId,
-              k -> PlatformMetricsRegistry.registerCounter(SPANS_PER_TRACE, Map.of("tenantId", k)))
-          .increment(spanIds.size() * 1.0);
-
-      // report trace emitted count
-      tenantToTraceEmittedCounter
+    if (traceState.getSpanIds().size() != spanIds.size()) {
+      tenantToTraceWithDuplicateSpansCounter
           .computeIfAbsent(
               tenantId,
               k ->
                   PlatformMetricsRegistry.registerCounter(
-                      TRACES_EMITTER_COUNTER, Map.of("tenantId", k)))
+                      TRACE_WITH_DUPLICATE_SPANS, Map.of("tenantId", k)))
           .increment();
-
-      // report punctuate latency
-      tenantToPunctuateLatencyTimer
-          .computeIfAbsent(
-              tenantId,
-              k ->
-                  PlatformMetricsRegistry.registerTimer(
-                      PUNCTUATE_LATENCY_TIMER, Map.of("tenantId", k)))
-          .record(Duration.between(startTime, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
-
-      context.forward(key, trace, outputTopicProducer);
-    } else {
-      // implies spans for the trace have arrived within the last 'sessionTimeoutMs' interval
-      // so the session inactivity window is extended from the last timestamp
       if (logger.isDebugEnabled()) {
         logger.debug(
-            "Re-scheduling emit trigger for tenant_id=[{}], trace_id=[{}] to [{}]",
-            key.getTenantId(),
-            HexUtils.getHex(key.getTraceId()),
-            Instant.ofEpochMilli(emitTs + groupingWindowTimeoutMs));
+            "Duplicate spanIds: [{}], unique spanIds count: [{}] for tenant: [{}] trace: [{}]",
+            traceState.getSpanIds().size(),
+            spanIds.size(),
+            tenantId,
+            HexUtils.getHex(traceId));
       }
-      long newEmitTs = emitTs + groupingWindowTimeoutMs;
-      // if current timestamp is ahead of newEmitTs then just add a grace of 100ms and fire it
-      long duration = Math.max(100, newEmitTs - timestamp);
-      cancellable =
-          context.schedule(Duration.ofMillis(duration), PunctuationType.WALL_CLOCK_TIME, this);
     }
+
+    recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
+    Timestamps timestamps =
+        trackEndToEndLatencyTimestamps(
+            System.currentTimeMillis(), traceState.getTraceStartTimestamp());
+    StructuredTrace trace =
+        StructuredTraceBuilder.buildStructuredTraceFromRawSpans(
+            rawSpanList, traceId, tenantId, timestamps);
+
+    if (logger.isDebugEnabled()) {
+      logger.debug(
+          "Emit tenant_id=[{}], trace_id=[{}], spans_count=[{}]",
+          tenantId,
+          HexUtils.getHex(traceId),
+          rawSpanList.size());
+    }
+
+    // report entries in spanStore
+    if (spanStoreCountRateLimiter.tryAcquire()) {
+      tenantToSpanStoreCountCounter
+          .computeIfAbsent(
+              tenantId,
+              k -> PlatformMetricsRegistry.registerCounter(SPAN_STORE_COUNT, Map.of("tenantId", k)))
+          .increment(spanStore.approximateNumEntries() * 1.0);
+    }
+
+    // report count of spanIds per trace
+    tenantToSpanPerTraceCounter
+        .computeIfAbsent(
+            tenantId,
+            k -> PlatformMetricsRegistry.registerCounter(SPANS_PER_TRACE, Map.of("tenantId", k)))
+        .increment(spanIds.size() * 1.0);
+
+    // report trace emitted count
+    tenantToTraceEmittedCounter
+        .computeIfAbsent(
+            tenantId,
+            k ->
+                PlatformMetricsRegistry.registerCounter(
+                    TRACES_EMITTER_COUNTER, Map.of("tenantId", k)))
+        .increment();
+
+    context.forward(key, trace, outputTopicProducer);
   }
 
   private Timestamps trackEndToEndLatencyTimestamps(

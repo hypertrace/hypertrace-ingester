@@ -205,12 +205,12 @@ public class RawSpansGrouperTest {
     td.advanceWallClockTime(Duration.ofSeconds(1));
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span2);
 
-    // select a value < 30s (groupingWindowTimeoutInMs)
-    // this shouldn't trigger a punctuate call
+    // select a value < 5s (test config for groupingWindowTimeoutInMs)
+    // this shouldn't trigger a span emit
     td.advanceWallClockTime(Duration.ofMillis(200));
     assertTrue(outputTopic.isEmpty());
 
-    // the next advance should trigger a punctuate call and emit a trace with 2 spans
+    // the next advance should and emit a trace with 2 spans
     td.advanceWallClockTime(Duration.ofSeconds(32));
 
     // trace1 should have 2 span span1, span2
@@ -231,7 +231,7 @@ public class RawSpansGrouperTest {
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span3);
     td.advanceWallClockTime(Duration.ofSeconds(45));
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span5);
-    // the next advance should trigger a punctuate call and emit a trace with 2 spans
+    // the next advance should emit a trace with 2 spans
     td.advanceWallClockTime(Duration.ofSeconds(35));
 
     // trace1 should have 1 span i.e. span3

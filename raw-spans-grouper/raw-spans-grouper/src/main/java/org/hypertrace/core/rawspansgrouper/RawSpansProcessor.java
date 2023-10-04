@@ -9,6 +9,10 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_FREQUENCY_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_WINDOW_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_YIELD_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
 
@@ -31,11 +35,12 @@ import org.apache.kafka.streams.processor.Cancellable;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.To;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
+import org.hypertrace.core.kafkastreams.framework.callbacks.CallbackRegistryPunctuator;
+import org.hypertrace.core.kafkastreams.framework.callbacks.CallbackRegistryPunctuatorConfig;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -44,11 +49,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Receives spans keyed by trace_id and stores them. A {@link TraceEmitPunctuator} is scheduled to
- * run after the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval to emit the trace. If
- * any spans for the trace arrive within the {@link RawSpansProcessor#groupingWindowTimeoutMs}
- * interval then the {@link RawSpansProcessor#groupingWindowTimeoutMs} will get reset and the trace
- * will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs} time to accept spans.
+ * Receives spans keyed by trace_id and stores them. A {@link TraceEmitCallback} is scheduled to run
+ * after the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval to emit the trace. If any
+ * spans for the trace arrive within the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval
+ * then the trace will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs} time to
+ * accept spans.
  */
 public class RawSpansProcessor
     implements Transformer<TraceIdentity, RawSpan, KeyValue<TraceIdentity, StructuredTrace>> {
@@ -58,6 +63,13 @@ public class RawSpansProcessor
       "hypertrace.rawspansgrouper.processing.latency";
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
       new ConcurrentHashMap<>();
+  // counter for number of spans dropped per tenant
+  private static final ConcurrentMap<String, Counter> droppedSpansCounter =
+      new ConcurrentHashMap<>();
+
+  // counter for number of truncated traces per tenant
+  private static final ConcurrentMap<String, Counter> truncatedTracesCounter =
+      new ConcurrentHashMap<>();
   private ProcessorContext context;
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
@@ -66,14 +78,8 @@ public class RawSpansProcessor
   private double dataflowSamplingPercent = -1;
   private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
   private long defaultMaxSpanCountLimit = Long.MAX_VALUE;
-
-  // counter for number of spans dropped per tenant
-  private static final ConcurrentMap<String, Counter> droppedSpansCounter =
-      new ConcurrentHashMap<>();
-
-  // counter for number of truncated traces per tenant
-  private static final ConcurrentMap<String, Counter> truncatedTracesCounter =
-      new ConcurrentHashMap<>();
+  private CallbackRegistryPunctuator<TraceIdentity> traceEmitCallbackRegistry;
+  private Cancellable traceEmitCallbackRegistryCancellable;
 
   @Override
   public void init(ProcessorContext context) {
@@ -106,7 +112,29 @@ public class RawSpansProcessor
     }
 
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
-    restorePunctuators();
+
+    TraceEmitCallback traceEmitCallback =
+        new TraceEmitCallback(
+            context,
+            spanStore,
+            traceStateStore,
+            outputTopic,
+            groupingWindowTimeoutMs,
+            dataflowSamplingPercent);
+    KeyValueStore<Long, List<TraceIdentity>> traceEmitCallbackRegistryStore =
+        context.getStateStore(TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME);
+    traceEmitCallbackRegistry =
+        new CallbackRegistryPunctuator<>(
+            new CallbackRegistryPunctuatorConfig(
+                jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_YIELD_CONFIG_KEY).toMillis(),
+                jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_WINDOW_CONFIG_KEY).toMillis()),
+            traceEmitCallbackRegistryStore,
+            traceEmitCallback::callback);
+    traceEmitCallbackRegistryCancellable =
+        context.schedule(
+            jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_FREQUENCY_CONFIG_KEY),
+            PunctuationType.WALL_CLOCK_TIME,
+            traceEmitCallbackRegistry);
   }
 
   public KeyValue<TraceIdentity, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
@@ -125,35 +153,20 @@ public class RawSpansProcessor
     ByteBuffer spanId = value.getEvent().getEventId();
     spanStore.put(new SpanIdentity(tenantId, traceId, spanId), value);
 
-    /*
-     the trace emit ts is essentially currentTs + groupingWindowTimeoutMs
-     i.e. if there is no span added in the next 'groupingWindowTimeoutMs' interval
-     then the trace can be finalized and emitted
-    */
-    long traceEmitTs = currentTimeMs + groupingWindowTimeoutMs;
-    if (logger.isDebugEnabled()) {
-      logger.debug(
-          "Updating trigger_ts=[{}] for for tenant_id=[{}], trace_id=[{}]",
-          Instant.ofEpochMilli(traceEmitTs),
-          key.getTenantId(),
-          HexUtils.getHex(traceId));
-    }
-
     if (firstEntry) {
       traceState =
           fastNewBuilder(TraceState.Builder.class)
               .setTraceStartTimestamp(currentTimeMs)
               .setTraceEndTimestamp(currentTimeMs)
-              .setEmitTs(traceEmitTs)
+              .setEmitTs(-1) // deprecated, not used anymore
               .setTenantId(tenantId)
               .setTraceId(traceId)
               .setSpanIds(List.of(spanId))
               .build();
-      schedulePunctuator(key);
+      traceEmitCallbackRegistry.add(currentTimeMs, key);
     } else {
       traceState.getSpanIds().add(spanId);
       traceState.setTraceEndTimestamp(currentTimeMs);
-      traceState.setEmitTs(traceEmitTs);
     }
 
     traceStateStore.put(key, traceState);
@@ -213,47 +226,8 @@ public class RawSpansProcessor
     return false;
   }
 
-  private void schedulePunctuator(TraceIdentity key) {
-    TraceEmitPunctuator punctuator =
-        new TraceEmitPunctuator(
-            key,
-            context,
-            spanStore,
-            traceStateStore,
-            outputTopic,
-            groupingWindowTimeoutMs,
-            dataflowSamplingPercent);
-    Cancellable cancellable =
-        context.schedule(
-            Duration.ofMillis(groupingWindowTimeoutMs),
-            PunctuationType.WALL_CLOCK_TIME,
-            punctuator);
-    punctuator.setCancellable(cancellable);
-    logger.debug(
-        "Scheduled a punctuator to emit trace for key=[{}] to run after [{}] ms",
-        key,
-        groupingWindowTimeoutMs);
-  }
-
   @Override
-  public void close() {}
-
-  /**
-   * Punctuators are not persisted - so on restart we recover punctuators and schedule them to run
-   * after {@link RawSpansProcessor#groupingWindowTimeoutMs}
-   */
-  void restorePunctuators() {
-    long count = 0;
-    Instant start = Instant.now();
-    try (KeyValueIterator<TraceIdentity, TraceState> it = traceStateStore.all()) {
-      while (it.hasNext()) {
-        schedulePunctuator(it.next().key);
-        count++;
-      }
-      logger.info(
-          "Restored=[{}] punctuators, Duration=[{}]",
-          count,
-          Duration.between(start, Instant.now()));
-    }
+  public void close() {
+    traceEmitCallbackRegistryCancellable.cancel();
   }
 }
