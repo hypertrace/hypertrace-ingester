@@ -38,6 +38,7 @@ dependencies {
 
   implementation(libs.google.guava)
   implementation(libs.hypertrace.kafkaStreams.framework)
+  implementation(platform(libs.hypertrace.kafka.bom))
 
   // Required for the GRPC clients.
   runtimeOnly(libs.grpc.netty)

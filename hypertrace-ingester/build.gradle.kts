@@ -27,6 +27,7 @@ hypertraceDocker {
 dependencies {
 
   implementation(libs.hypertrace.kafkaStreams.framework)
+  implementation(platform(libs.hypertrace.kafka.bom))
   implementation(libs.hypertrace.serviceFramework.framework)
   implementation(libs.hypertrace.serviceFramework.metrics)
 

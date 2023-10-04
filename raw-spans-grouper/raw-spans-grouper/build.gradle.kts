@@ -38,6 +38,7 @@ dependencies {
   implementation(libs.hypertrace.serviceFramework.metrics)
 
   implementation(libs.hypertrace.kafkaStreams.framework)
+  implementation(platform(libs.hypertrace.kafka.bom))
   implementation(libs.hypertrace.kafkaStreams.weightedGroupPartitioners)
   implementation("de.javakaffee:kryo-serializers:0.45")
   implementation(libs.google.guava)

@@ -31,6 +31,7 @@ dependencies {
   implementation(libs.hypertrace.serviceFramework.framework)
   implementation(libs.hypertrace.serviceFramework.metrics)
   implementation(libs.hypertrace.kafkaStreams.framework)
+  implementation(platform(libs.hypertrace.kafka.bom))
 
   // open telemetry proto
   implementation(libs.opentelemetry.proto)
