@@ -205,7 +205,7 @@ public class RawSpansGrouperTest {
     td.advanceWallClockTime(Duration.ofSeconds(1));
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span2);
 
-    // select a value < 5s (test config for groupingWindowTimeoutInMs)
+    // select a value 30s (groupingWindowTimeoutInMs)
     // this shouldn't trigger a span emit
     td.advanceWallClockTime(Duration.ofMillis(200));
     assertTrue(outputTopic.isEmpty());
