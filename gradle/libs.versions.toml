@@ -27,8 +27,8 @@ hypertrace-spacesConfigServiceApi = { module = "org.hypertrace.config.service:sp
 hypertrace-spanProcessingConfigServiceApi = { module = "org.hypertrace.config.service:span-processing-config-service-api", version.ref = "hypertrace-config-service" }
 hypertrace-spanProcessingUtils = { module = "org.hypertrace.config.service:span-processing-utils", version.ref = "hypertrace-config-service" }
 
-slf4j-api = { module = "org.slf4j:slf4j-api", version = "1.7.30" }
-apache-log4j-slf4jImpl = { module = "org.apache.logging.log4j:log4j-slf4j-impl", version = "2.17.1" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.5" }
+apache-log4j-slf4jImpl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version = "2.20.0" }
 apache-commons-lang3 = { module = "org.apache.commons:commons-lang3", version = "3.12.0" }
 apache-kafka-kafkaStreamsTestUtils = { module = "org.apache.kafka:kafka-streams-test-utils", version = "7.2.1-ccs" }
 
