@@ -590,8 +590,7 @@ public class RpcSemanticConventionUtils {
     } else if (SpanAttributeUtils.containsAttributeKey(
         event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY))) {
       return getSanitizedAuthorityValue(
-          getStringAttribute(
-              event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY)));
+          getStringAttribute(event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY)));
     }
     return Optional.empty();
   }
