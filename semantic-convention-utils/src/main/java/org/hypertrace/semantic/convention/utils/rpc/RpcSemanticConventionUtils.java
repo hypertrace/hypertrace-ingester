@@ -1,6 +1,7 @@
 package org.hypertrace.semantic.convention.utils.rpc;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+import static org.hypertrace.core.datamodel.shared.SpanAttributeUtils.getStringAttribute;
 import static org.hypertrace.core.span.constants.v1.CensusResponse.CENSUS_RESPONSE_STATUS_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_GRPC_STATUS_MESSAGE;
 import static org.hypertrace.core.span.constants.v1.Envoy.ENVOY_REQUEST_SIZE;
@@ -131,7 +132,7 @@ public class RpcSemanticConventionUtils {
    */
   public static Optional<String> getGrpcURL(Event event) {
     if (SpanAttributeUtils.containsAttributeKey(event, OTHER_GRPC_HOST_PORT)) {
-      return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_GRPC_HOST_PORT));
+      return Optional.of(getStringAttribute(event, OTHER_GRPC_HOST_PORT));
     }
     // look for grpc authority
     Optional<String> grpcAuthority = getSanitizedGrpcAuthority(event);
@@ -218,7 +219,7 @@ public class RpcSemanticConventionUtils {
    */
   public static Optional<String> getGrpcURI(Event event) {
     if (SpanAttributeUtils.containsAttributeKey(event, OTHER_GRPC_HOST_PORT)) {
-      return Optional.of(SpanAttributeUtils.getStringAttribute(event, OTHER_GRPC_HOST_PORT));
+      return Optional.of(getStringAttribute(event, OTHER_GRPC_HOST_PORT));
     } else if (isRpcTypeGrpcForOTelFormat(event)) {
       return SpanSemanticConventionUtils.getURIForOtelFormat(event);
     }
@@ -530,10 +531,9 @@ public class RpcSemanticConventionUtils {
       return sanitizePath(attributeValue.get().getValue());
     }
 
-    attributeValue =
-        Optional.ofNullable(attributeValueMap.get(RawSpanConstants.getValue(GRPC_PATH)));
-    if (attributeValue.isPresent() && StringUtils.isNotBlank(attributeValue.get().getValue())) {
-      return sanitizePath(attributeValue.get().getValue());
+    Optional<String> maybeGrpcPath = getGrpcPath(event);
+    if (maybeGrpcPath.isPresent()) {
+      return sanitizePath(maybeGrpcPath.get());
     }
 
     return Optional.ofNullable(event.getEventName());
@@ -573,6 +573,15 @@ public class RpcSemanticConventionUtils {
     return Optional.empty();
   }
 
+  public static Optional<String> getGrpcPath(Event event) {
+    String grpcPath = getStringAttribute(event, RawSpanConstants.getValue(GRPC_PATH));
+    if (grpcPath != null && !grpcPath.isBlank()) {
+      return Optional.of(grpcPath);
+    }
+
+    return Optional.empty();
+  }
+
   static Optional<String> getSanitizedGrpcAuthority(Event event) {
 
     Optional<String> grpcAuthority = getGrpcAuthority(event);
@@ -581,8 +590,7 @@ public class RpcSemanticConventionUtils {
     } else if (SpanAttributeUtils.containsAttributeKey(
         event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY))) {
       return getSanitizedAuthorityValue(
-          SpanAttributeUtils.getStringAttribute(
-              event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY)));
+          getStringAttribute(event, RawSpanConstants.getValue(Envoy.ENVOY_GRPC_AUTHORITY)));
     }
     return Optional.empty();
   }
