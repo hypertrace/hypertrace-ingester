@@ -30,6 +30,7 @@ public class SpanFilter {
   private static final String SPAN_KIND_TAG =
       RawSpanConstants.getValue(SpanAttribute.SPAN_ATTRIBUTE_SPAN_KIND);
   private static final String SPAN_KIND_CLIENT = "client";
+
   /**
    * Config key using which a list of criterion can be specified to drop the matching spans. Any
    * span matching any one of the criterion is dropped. Each criteria is a comma separated list of

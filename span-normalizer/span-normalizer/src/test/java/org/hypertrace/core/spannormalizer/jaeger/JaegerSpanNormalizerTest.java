@@ -43,7 +43,9 @@ public class JaegerSpanNormalizerTest {
 
   @BeforeEach
   public void resetSingleton()
-      throws SecurityException, NoSuchFieldException, IllegalArgumentException,
+      throws SecurityException,
+          NoSuchFieldException,
+          IllegalArgumentException,
           IllegalAccessException {
     // Since JaegerToRawSpanConverter is a singleton, we need to reset it for unit tests to
     // recreate the instance.

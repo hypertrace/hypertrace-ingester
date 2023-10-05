@@ -31,6 +31,7 @@ public class EntityCache {
    * over.
    */
   private final LoadingCache<Pair<String, String>, Optional<Entity>> fqnToServiceEntityCache;
+
   /**
    * Cache to cache the service name to a list of services mapping so that we don't look it up over
    * and over.

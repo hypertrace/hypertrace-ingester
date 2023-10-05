@@ -4,11 +4,11 @@ import static io.reactivex.rxjava3.core.Maybe.zip;
 import static java.util.function.Predicate.not;
 
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
@@ -39,18 +39,21 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   private final CachingAttributeClient attributeClient;
   private final TraceAttributeReader<StructuredTrace, Event> traceAttributeReader;
   private final Duration writeThrottleDuration;
+  private final Set<String> excludedEntityTypes;
 
   DefaultTraceEntityAccessor(
       EntityTypeClient entityTypeClient,
       EntityDataClient entityDataClient,
       CachingAttributeClient attributeClient,
       TraceAttributeReader<StructuredTrace, Event> traceAttributeReader,
-      Duration writeThrottleDuration) {
+      Duration writeThrottleDuration,
+      Set<String> excludedEntityTypes) {
     this.entityTypeClient = entityTypeClient;
     this.entityDataClient = entityDataClient;
     this.attributeClient = attributeClient;
     this.traceAttributeReader = traceAttributeReader;
     this.writeThrottleDuration = writeThrottleDuration;
+    this.excludedEntityTypes = excludedEntityTypes;
   }
 
   @Override
@@ -58,12 +61,17 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
     this.spanTenantContext(span)
         .wrapSingle(() -> this.entityTypeClient.getAll().toList())
         .blockingGet()
+        .stream()
+        .filter(not(this::isExcludedEntityType))
         .forEach(entityType -> this.writeEntityIfExists(entityType, trace, span));
+  }
+
+  private boolean isExcludedEntityType(final EntityType entityType) {
+    return excludedEntityTypes.contains(entityType.getName());
   }
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
     this.buildEntity(entityType, trace, span)
-        .subscribeOn(Schedulers.io())
         .subscribe(
             entity -> {
               UpsertCondition upsertCondition =
