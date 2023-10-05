@@ -98,11 +98,10 @@ class TraceEmitCallbackRegistry extends AbstractCallbackRegistryPunctuator<Trace
     if (null == traceState
         || null == traceState.getSpanIds()
         || traceState.getSpanIds().isEmpty()) {
-      // TODO: uncomment, commented for debugging purpose
-      //      logger.warn(
-      //          "TraceState for tenant_id=[{}], trace_id=[{}] is missing.",
-      //          key.getTenantId(),
-      //          HexUtils.getHex(key.getTraceId()));
+      logger.warn(
+          "TraceState for tenant_id=[{}], trace_id=[{}] is missing.",
+          key.getTenantId(),
+          HexUtils.getHex(key.getTraceId()));
       return DROP_CALLBACK_ACTION;
     }
     if (punctuateTimestamp - traceState.getTraceEndTimestamp() >= groupingWindowTimeoutMs) {
