@@ -28,6 +28,8 @@ import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
+import org.hypertrace.core.kafkastreams.framework.callbacks.AbstractCallbackRegistryPunctuator;
+import org.hypertrace.core.kafkastreams.framework.callbacks.CallbackRegistryPunctuatorConfig;
 import org.hypertrace.core.kafkastreams.framework.callbacks.action.CallbackAction;
 import org.hypertrace.core.kafkastreams.framework.callbacks.action.DropCallbackAction;
 import org.hypertrace.core.kafkastreams.framework.callbacks.action.RescheduleCallbackAction;
@@ -39,22 +41,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Callback to check if a trace can be finalized and emitted based on inactivity period of {@link
+ * Callbacks to check if a trace can be finalized and emitted based on inactivity period of {@link
  * RawSpansProcessor#groupingWindowTimeoutMs}
  */
-class TraceEmitCallback {
+class TraceEmitCallbackRegistry extends AbstractCallbackRegistryPunctuator<TraceIdentity> {
 
-  private static final Logger logger = LoggerFactory.getLogger(TraceEmitCallback.class);
+  private static final Logger logger = LoggerFactory.getLogger(TraceEmitCallbackRegistry.class);
   private static final Object mutex = new Object();
 
   private static final Timer spansGrouperArrivalLagTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
   private static final String TRACES_EMITTER_COUNTER = "hypertrace.emitted.traces";
   private static final ConcurrentMap<String, Counter> tenantToTraceEmittedCounter =
-      new ConcurrentHashMap<>();
-  private static final String PUNCTUATE_LATENCY_TIMER =
-      "hypertrace.rawspansgrouper.punctuate.latency";
-  private static final ConcurrentMap<String, Timer> tenantToPunctuateLatencyTimer =
       new ConcurrentHashMap<>();
   private static final String SPANS_PER_TRACE = "hypertrace.rawspansgrouper.spans.per.trace";
   private static final ConcurrentMap<String, Counter> tenantToSpanPerTraceCounter =
@@ -76,13 +74,16 @@ class TraceEmitCallback {
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
 
-  TraceEmitCallback(
+  TraceEmitCallbackRegistry(
+      CallbackRegistryPunctuatorConfig callbackRegistryPunctuatorConfig,
+      KeyValueStore<Long, List<TraceIdentity>> callbackRegistryStore,
       ProcessorContext context,
       KeyValueStore<SpanIdentity, RawSpan> spanStore,
       KeyValueStore<TraceIdentity, TraceState> traceStateStore,
       To outputTopicProducer,
       long groupingWindowTimeoutMs,
       double dataflowSamplingPercent) {
+    super(callbackRegistryPunctuatorConfig, callbackRegistryStore);
     this.context = context;
     this.spanStore = spanStore;
     this.traceStateStore = traceStateStore;
@@ -91,7 +92,7 @@ class TraceEmitCallback {
     this.dataflowSamplingPercent = dataflowSamplingPercent;
   }
 
-  CallbackAction callback(long punctuateTimestamp, TraceIdentity key) {
+  protected CallbackAction callback(long punctuateTimestamp, TraceIdentity key) {
     TraceState traceState = traceStateStore.get(key);
     if (null == traceState
         || null == traceState.getSpanIds()

@@ -39,7 +39,6 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
-import org.hypertrace.core.kafkastreams.framework.callbacks.CallbackRegistryPunctuator;
 import org.hypertrace.core.kafkastreams.framework.callbacks.CallbackRegistryPunctuatorConfig;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
@@ -49,11 +48,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Receives spans keyed by trace_id and stores them. A {@link TraceEmitCallback} is scheduled to run
- * after the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval to emit the trace. If any
- * spans for the trace arrive within the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval
- * then the trace will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs} time to
- * accept spans.
+ * Receives spans keyed by trace_id and stores them. A {@link TraceEmitCallbackRegistry} is
+ * scheduled to run after the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval to emit the
+ * trace. If any spans for the trace arrive within the {@link
+ * RawSpansProcessor#groupingWindowTimeoutMs} interval then the trace will get an additional {@link
+ * RawSpansProcessor#groupingWindowTimeoutMs} time to accept spans.
  */
 public class RawSpansProcessor
     implements Transformer<TraceIdentity, RawSpan, KeyValue<TraceIdentity, StructuredTrace>> {
@@ -78,7 +77,7 @@ public class RawSpansProcessor
   private double dataflowSamplingPercent = -1;
   private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
   private long defaultMaxSpanCountLimit = Long.MAX_VALUE;
-  private CallbackRegistryPunctuator<TraceIdentity> traceEmitCallbackRegistry;
+  private TraceEmitCallbackRegistry traceEmitCallbackRegistry;
   private Cancellable traceEmitCallbackRegistryCancellable;
 
   @Override
@@ -113,23 +112,20 @@ public class RawSpansProcessor
 
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
 
-    TraceEmitCallback traceEmitCallback =
-        new TraceEmitCallback(
+    KeyValueStore<Long, List<TraceIdentity>> traceEmitCallbackRegistryStore =
+        context.getStateStore(TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME);
+    traceEmitCallbackRegistry =
+        new TraceEmitCallbackRegistry(
+            new CallbackRegistryPunctuatorConfig(
+                jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_YIELD_CONFIG_KEY).toMillis(),
+                jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_WINDOW_CONFIG_KEY).toMillis()),
+            traceEmitCallbackRegistryStore,
             context,
             spanStore,
             traceStateStore,
             outputTopic,
             groupingWindowTimeoutMs,
             dataflowSamplingPercent);
-    KeyValueStore<Long, List<TraceIdentity>> traceEmitCallbackRegistryStore =
-        context.getStateStore(TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME);
-    traceEmitCallbackRegistry =
-        new CallbackRegistryPunctuator<>(
-            new CallbackRegistryPunctuatorConfig(
-                jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_YIELD_CONFIG_KEY).toMillis(),
-                jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_WINDOW_CONFIG_KEY).toMillis()),
-            traceEmitCallbackRegistryStore,
-            traceEmitCallback::callback);
     traceEmitCallbackRegistryCancellable =
         context.schedule(
             jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_FREQUENCY_CONFIG_KEY),
@@ -163,7 +159,7 @@ public class RawSpansProcessor
               .setTraceId(traceId)
               .setSpanIds(List.of(spanId))
               .build();
-      traceEmitCallbackRegistry.add(currentTimeMs, key);
+      traceEmitCallbackRegistry.invoke(currentTimeMs, key);
     } else {
       traceState.getSpanIds().add(spanId);
       traceState.setTraceEndTimestamp(currentTimeMs);

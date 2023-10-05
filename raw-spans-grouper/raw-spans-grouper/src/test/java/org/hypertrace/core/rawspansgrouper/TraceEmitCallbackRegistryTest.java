@@ -16,6 +16,7 @@ import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.kafkastreams.framework.callbacks.CallbackRegistryPunctuatorConfig;
 import org.hypertrace.core.kafkastreams.framework.callbacks.action.CallbackAction;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
@@ -24,14 +25,14 @@ import org.hypertrace.core.spannormalizer.TraceState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class TraceEmitCallbackTest {
+class TraceEmitCallbackRegistryTest {
   private static final long groupingWindowTimeoutMs = 300;
   private static final TraceIdentity traceIdentity =
       TraceIdentity.newBuilder()
           .setTenantId("__default")
           .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
           .build();
-  private TraceEmitCallback emitCallback;
+  private TraceEmitCallbackRegistry emitCallback;
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
 
@@ -44,8 +45,15 @@ class TraceEmitCallbackTest {
     traceStateStore = mock(KeyValueStore.class);
     To outputTopicProducer = mock(To.class);
     emitCallback =
-        new TraceEmitCallback(
-            context, spanStore, traceStateStore, outputTopicProducer, groupingWindowTimeoutMs, -1);
+        new TraceEmitCallbackRegistry(
+            mock(CallbackRegistryPunctuatorConfig.class),
+            mock(KeyValueStore.class),
+            context,
+            spanStore,
+            traceStateStore,
+            outputTopicProducer,
+            groupingWindowTimeoutMs,
+            -1);
   }
 
   @Test
