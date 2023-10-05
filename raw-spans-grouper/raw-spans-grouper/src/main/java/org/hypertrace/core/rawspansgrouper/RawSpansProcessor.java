@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Timer;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +70,6 @@ public class RawSpansProcessor
   // counter for number of truncated traces per tenant
   private static final ConcurrentMap<String, Counter> truncatedTracesCounter =
       new ConcurrentHashMap<>();
-  private ProcessorContext context;
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private long groupingWindowTimeoutMs;
@@ -82,11 +82,8 @@ public class RawSpansProcessor
 
   @Override
   public void init(ProcessorContext context) {
-    this.context = context;
-    this.spanStore =
-        (KeyValueStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_STATE_STORE_NAME);
-    this.traceStateStore =
-        (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_STATE_STORE);
+    this.spanStore = context.getStateStore(SPAN_STATE_STORE_NAME);
+    this.traceStateStore = context.getStateStore(TRACE_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
     this.groupingWindowTimeoutMs =
         jobConfig.getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
@@ -99,7 +96,8 @@ public class RawSpansProcessor
 
     if (jobConfig.hasPath(INFLIGHT_TRACE_MAX_SPAN_COUNT)) {
       Config subConfig = jobConfig.getConfig(INFLIGHT_TRACE_MAX_SPAN_COUNT);
-      subConfig.entrySet().stream()
+      subConfig
+          .entrySet()
           .forEach(
               (entry) -> {
                 maxSpanCountMap.put(entry.getKey(), subConfig.getLong(entry.getKey()));
@@ -112,7 +110,7 @@ public class RawSpansProcessor
 
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
 
-    KeyValueStore<Long, List<TraceIdentity>> traceEmitCallbackRegistryStore =
+    KeyValueStore<Long, ArrayList<TraceIdentity>> traceEmitCallbackRegistryStore =
         context.getStateStore(TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME);
     traceEmitCallbackRegistry =
         new TraceEmitCallbackRegistry(

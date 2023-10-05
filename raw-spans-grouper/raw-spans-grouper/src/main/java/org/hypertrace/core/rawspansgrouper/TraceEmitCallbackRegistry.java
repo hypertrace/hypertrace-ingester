@@ -9,6 +9,7 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import java.nio.ByteBuffer;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,14 +77,14 @@ class TraceEmitCallbackRegistry extends AbstractCallbackRegistryPunctuator<Trace
 
   TraceEmitCallbackRegistry(
       CallbackRegistryPunctuatorConfig callbackRegistryPunctuatorConfig,
-      KeyValueStore<Long, List<TraceIdentity>> callbackRegistryStore,
+      KeyValueStore<Long, ArrayList<TraceIdentity>> callbackRegistryStore,
       ProcessorContext context,
       KeyValueStore<SpanIdentity, RawSpan> spanStore,
       KeyValueStore<TraceIdentity, TraceState> traceStateStore,
       To outputTopicProducer,
       long groupingWindowTimeoutMs,
       double dataflowSamplingPercent) {
-    super(callbackRegistryPunctuatorConfig, callbackRegistryStore);
+    super(Clock.systemUTC(), callbackRegistryPunctuatorConfig, callbackRegistryStore);
     this.context = context;
     this.spanStore = spanStore;
     this.traceStateStore = traceStateStore;
@@ -97,10 +98,11 @@ class TraceEmitCallbackRegistry extends AbstractCallbackRegistryPunctuator<Trace
     if (null == traceState
         || null == traceState.getSpanIds()
         || traceState.getSpanIds().isEmpty()) {
-      logger.warn(
-          "TraceState for tenant_id=[{}], trace_id=[{}] is missing.",
-          key.getTenantId(),
-          HexUtils.getHex(key.getTraceId()));
+      // TODO: uncomment, commented for debugging purpose
+      //      logger.warn(
+      //          "TraceState for tenant_id=[{}], trace_id=[{}] is missing.",
+      //          key.getTenantId(),
+      //          HexUtils.getHex(key.getTraceId()));
       return DROP_CALLBACK_ACTION;
     }
     if (punctuateTimestamp - traceState.getTraceEndTimestamp() >= groupingWindowTimeoutMs) {
