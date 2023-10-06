@@ -127,7 +127,7 @@ public class RawSpansProcessor
     traceEmitCallbackRegistryCancellable =
         context.schedule(
             jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_FREQUENCY_CONFIG_KEY),
-            PunctuationType.WALL_CLOCK_TIME,
+            PunctuationType.STREAM_TIME,
             traceEmitCallbackRegistry);
   }
 
