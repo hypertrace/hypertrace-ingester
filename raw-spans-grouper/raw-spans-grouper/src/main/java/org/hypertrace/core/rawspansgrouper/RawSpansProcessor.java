@@ -225,9 +225,7 @@ public class RawSpansProcessor
             dataflowSamplingPercent);
     Cancellable cancellable =
         context.schedule(
-            Duration.ofMillis(groupingWindowTimeoutMs),
-            PunctuationType.WALL_CLOCK_TIME,
-            punctuator);
+            Duration.ofMillis(groupingWindowTimeoutMs), PunctuationType.STREAM_TIME, punctuator);
     punctuator.setCancellable(cancellable);
     logger.debug(
         "Scheduled a punctuator to emit trace for key=[{}] to run after [{}] ms",

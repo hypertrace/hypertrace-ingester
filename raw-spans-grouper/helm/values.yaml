@@ -109,7 +109,7 @@ rawSpansGrouperConfig:
     producerBufferMemory: 134217728 # default = 33554432
     # Consumer configs
     consumerMaxPartitionFetchBytes: 8388608 # default = 1048576
-    consumerMaxPollRecords: 1000 # default = 1000 (kafka streams default)
+    consumerMaxPollRecords: 10000 # default = 1000 (kafka streams default)
     consumerSessionTimeoutMs: 300000 # default = 10000
     # Changelog topic configs
     replicationFactor: 3
