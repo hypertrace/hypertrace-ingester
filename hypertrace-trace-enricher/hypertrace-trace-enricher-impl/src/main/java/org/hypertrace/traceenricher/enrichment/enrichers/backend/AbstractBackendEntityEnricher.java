@@ -74,7 +74,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
 
   @Override
   public void init(Config enricherConfig, ClientRegistry clientRegistry) {
-    LOGGER.info("Initialize BackendEntityEnricher with Config: {}", enricherConfig.toString());
+    LOGGER.debug("Initialize BackendEntityEnricher with Config: {}", enricherConfig.toString());
     this.edsClient = clientRegistry.getEdsCacheClient();
     this.entityCache = clientRegistry.getEntityCache();
     setup(enricherConfig, clientRegistry);
@@ -270,7 +270,7 @@ public abstract class AbstractBackendEntityEnricher extends AbstractTraceEnriche
               .get(requestContext.buildContextualKey(backendEntity.getIdentifyingAttributesMap()));
       if (backendFromCache.isEmpty()) {
         Entity result = this.upsertBackend(backendEntity);
-        LOGGER.info("Created backend:{}", result);
+        LOGGER.debug("Created backend:{}", result);
         return result;
       }
 
