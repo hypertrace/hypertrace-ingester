@@ -151,12 +151,6 @@ public class RawSpansGrouperTest {
             .setCustomerId("tenant1")
             .setEvent(createEvent("event-11", "tenant1"))
             .build();
-    RawSpan span20 =
-      RawSpan.newBuilder()
-        .setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
-        .setCustomerId("tenant1")
-        .setEvent(createEvent("event-20", "tenant1"))
-        .build();
 
     // create 8 spans for tenant-2 for trace-4
     String tenant2 = "tenant2";
@@ -209,19 +203,31 @@ public class RawSpansGrouperTest {
             .setEvent(createEvent("event-19", tenant2))
             .build();
 
+    // dummyTenant is used to advance stream time as required, all spans will be dropped
+    // because of setting max span count to 0, no traces for this tenant will be emitted
+    String dummyTenant = "dummyTenant";
+    TraceIdentity dummyTraceIdentity = createTraceIdentity(dummyTenant, "dummyTrace");
+    RawSpan dummySpan =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("dummyTrace".getBytes()))
+            .setCustomerId(tenant2)
+            .setEvent(createEvent("dummyEvent", dummyTenant))
+            .build();
+
     long messageTime = advanceAndSyncClockMock(0, clock, 0);
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span1, messageTime);
-    advanceAndSyncClockMock(messageTime, clock, 1000);
+    messageTime = advanceAndSyncClockMock(messageTime, clock, 1000);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span2, messageTime);
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span4, messageTime);
 
     // select a value < 30s (groupingWindowTimeoutInMs)
     // this shouldn't trigger a span emit
     assertTrue(outputTopic.isEmpty());
 
     // the next advance should and emit a trace1 with 2 spans, trace2 with one span
-    advanceAndSyncClockMock(messageTime, clock, 35_000);
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span4, messageTime);
+    messageTime = advanceAndSyncClockMock(messageTime, clock, 35_000);
+    inputTopic.pipeInput(dummyTraceIdentity, dummySpan, messageTime);
 
     // trace2 should have 1 span span3
     StructuredTrace trace = outputTopic.readValue();
@@ -239,11 +245,11 @@ public class RawSpansGrouperTest {
     assertTrue(traceEventIds.contains("event-2"));
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span3, messageTime);
-    advanceAndSyncClockMock(messageTime, clock, 45_000);
+    messageTime = advanceAndSyncClockMock(messageTime, clock, 45_000);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span5, messageTime);
     // the next advance should emit a trace1, trace2 with one span
-    advanceAndSyncClockMock(messageTime, clock, 35_000);
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span6, messageTime);
+    messageTime = advanceAndSyncClockMock(messageTime, clock, 35_000);
+    inputTopic.pipeInput(dummyTraceIdentity, dummySpan, messageTime);
 
     // trace1 should have 1 span i.e. span3
     trace = outputTopic.readValue();
@@ -255,20 +261,22 @@ public class RawSpansGrouperTest {
     assertEquals(1, trace.getEventList().size());
     assertEquals("event-5", new String(trace.getEventList().get(0).getEventId().array()));
 
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span6, messageTime);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span7, messageTime);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span8, messageTime);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span9, messageTime);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span10, messageTime);
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span11, messageTime);
     // the next advance should emit trace3
-    advanceAndSyncClockMock(messageTime, clock, 35_000);
-    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span20, messageTime);
+    messageTime = advanceAndSyncClockMock(messageTime, clock, 35_000);
+    inputTopic.pipeInput(dummyTraceIdentity, dummySpan, messageTime);
 
     // trace3 should be truncated with 5 spans because of tenant limit
     trace = outputTopic.readValue();
     assertEquals(5, trace.getEventList().size());
 
-    // input 8 spans of trace-4 for tenant2, as there is global upper limit apply, it will emit only 6
+    // input 8 spans of trace-4 for tenant2, as there is global upper limit apply, it will emit only
+    // 6
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span12, messageTime);
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span13, messageTime);
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span14, messageTime);
@@ -276,9 +284,10 @@ public class RawSpansGrouperTest {
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span16, messageTime);
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span17, messageTime);
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span18, messageTime);
-    // the next advance should emit trace 4
-    advanceAndSyncClockMock(messageTime, clock, 35_000);
     inputTopic.pipeInput(createTraceIdentity(tenant2, "trace-4"), span19, messageTime);
+    // the next advance should emit trace 4
+    messageTime = advanceAndSyncClockMock(messageTime, clock, 35_000);
+    inputTopic.pipeInput(dummyTraceIdentity, dummySpan, messageTime);
 
     TestRecord<TraceIdentity, StructuredTrace> testRecord = outputTopic.readRecord();
 

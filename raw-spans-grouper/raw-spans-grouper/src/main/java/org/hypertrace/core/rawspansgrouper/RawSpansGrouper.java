@@ -10,7 +10,6 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_
 
 import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
-
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +46,10 @@ public class RawSpansGrouper extends KafkaStreamsApp {
   }
 
   public StreamsBuilder buildTopology(
-    Map<String, Object> properties,
-    StreamsBuilder streamsBuilder,
-    Map<String, KStream<?, ?>> inputStreams) {
-   return buildTopologyWithClock(Clock.systemUTC(), properties, streamsBuilder, inputStreams);
+      Map<String, Object> properties,
+      StreamsBuilder streamsBuilder,
+      Map<String, KStream<?, ?>> inputStreams) {
+    return buildTopologyWithClock(Clock.systemUTC(), properties, streamsBuilder, inputStreams);
   }
 
   @VisibleForTesting

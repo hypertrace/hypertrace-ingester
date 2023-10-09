@@ -50,11 +50,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Receives spans keyed by trace_id and stores them. A {@link TraceEmitTasksPunctuator} is
- * scheduled to run after the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval to emit the
- * trace. If any spans for the trace arrive within the {@link
- * RawSpansProcessor#groupingWindowTimeoutMs} interval then the trace will get an additional {@link
- * RawSpansProcessor#groupingWindowTimeoutMs} time to accept spans.
+ * Receives spans keyed by trace_id and stores them. A {@link TraceEmitTasksPunctuator} is scheduled
+ * to run after the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval to emit the trace. If
+ * any spans for the trace arrive within the {@link RawSpansProcessor#groupingWindowTimeoutMs}
+ * interval then the trace will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs}
+ * time to accept spans.
  */
 public class RawSpansProcessor
     implements Transformer<TraceIdentity, RawSpan, KeyValue<TraceIdentity, StructuredTrace>> {
@@ -133,18 +133,25 @@ public class RawSpansProcessor
     // Punctuator scheduled on stream time => no input messages => no emits will happen
     // We will almost never have input down to 0, i.e., there are no spans coming to platform,
     // While using wall clock time handles that case, there is a issue with using wall clock time...
-    // In cases of lag being burnt, we are processing message produced at different time stamp intervals
-    // probably faster than at rate which they were produced, now not doing punctuation often will increase the
-    // amounts of work for punctuator in next iterations and will keep on piling up until lag is burnt completely
-    // and only then the punctuator will catch up back to normal input rate. This is undesirable, here the outputs
-    // are only emitted from punctuator, if we burn lag from inputs, we want to push it down to downstream as soon
-    // as possible, if we hog it more and more it will delay cascading lag to downstream. Given grouper stays at start
-    // of pipeline it is better to use stream time as using wall clock time can have more undesirable effects
+    // In cases of lag being burnt, we are processing message produced at different time stamp
+    // intervals
+    // probably faster than at rate which they were produced, now not doing punctuation often will
+    // increase the
+    // amounts of work for punctuator in next iterations and will keep on piling up until lag is
+    // burnt completely
+    // and only then the punctuator will catch up back to normal input rate. This is undesirable,
+    // here the outputs
+    // are only emitted from punctuator, if we burn lag from inputs, we want to push it down to
+    // downstream as soon
+    // as possible, if we hog it more and more it will delay cascading lag to downstream. Given
+    // grouper stays at start
+    // of pipeline it is better to use stream time as using wall clock time can have more
+    // undesirable effects
     traceEmitTasksPunctuatorCancellable =
         context.schedule(
             jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_FREQUENCY_CONFIG_KEY),
             PunctuationType.STREAM_TIME,
-          traceEmitTasksPunctuator);
+            traceEmitTasksPunctuator);
   }
 
   public KeyValue<TraceIdentity, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
@@ -179,9 +186,11 @@ public class RawSpansProcessor
       traceState.getSpanIds().add(spanId);
       long prevScheduleTimestamp = traceState.getTraceEndTimestamp();
       traceState.setTraceEndTimestamp(currentTimeMs);
-      if(!traceEmitTasksPunctuator.rescheduleTask(
-                prevScheduleTimestamp, currentTimeMs + groupingWindowTimeoutMs, key)) {
-        logger.debug("Failed to reschedule task on getting span for trace key {}, schedule already dropped!", key);
+      if (!traceEmitTasksPunctuator.rescheduleTask(
+          prevScheduleTimestamp, currentTimeMs + groupingWindowTimeoutMs, key)) {
+        logger.debug(
+            "Failed to reschedule task on getting span for trace key {}, schedule already dropped!",
+            key);
       }
     }
 
@@ -199,8 +208,7 @@ public class RawSpansProcessor
   }
 
   private boolean shouldDropSpan(TraceIdentity key, TraceState traceState) {
-    int inFlightSpansPerTrace =
-        traceState != null ? traceState.getSpanIds().size() : Integer.MIN_VALUE;
+    int inFlightSpansPerTrace = traceState != null ? traceState.getSpanIds().size() : 0;
     long maxSpanCountTenantLimit =
         maxSpanCountMap.containsKey(key.getTenantId())
             ? maxSpanCountMap.get(key.getTenantId())
