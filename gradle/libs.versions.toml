@@ -2,9 +2,9 @@
 hypertrace-entity-service = "0.8.78"
 hypertrace-config-service = "0.1.54"
 hypertrace-grpc-utils = "0.12.4"
-hypertrace-serviceFramework = "0.1.58"
-hypertrace-kafkaStreams = "0.3.2"
-hypertrace-view-generator = "0.4.16"
+hypertrace-serviceFramework = "0.1.60"
+hypertrace-kafkaStreams = "0.3.8"
+hypertrace-view-generator = "0.4.19"
 grpc = "1.57.2"
 
 [libraries]
@@ -16,22 +16,23 @@ hypertrace-grpc-client-utils ={ module = "org.hypertrace.core.grpcutils:grpc-cli
 hypertrace-grpc-client-rxUtils = { module = "org.hypertrace.core.grpcutils:grpc-client-rx-utils", version.ref = "hypertrace-grpc-utils"}
 hypertrace-serviceFramework-metrics = { module = "org.hypertrace.core.serviceframework:platform-metrics", version.ref = "hypertrace-serviceFramework" }
 hypertrace-serviceFramework-framework = { module = "org.hypertrace.core.serviceframework:platform-service-framework", version.ref = "hypertrace-serviceFramework" }
-hypertrace-data-model = { module ="org.hypertrace.core.datamodel:data-model", version = "0.1.28" }
+hypertrace-data-model = { module ="org.hypertrace.core.datamodel:data-model", version = "0.1.30" }
 hypertrace-kafkaStreams-framework = { module = "org.hypertrace.core.kafkastreams.framework:kafka-streams-framework", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-kafkaStreams-avroPartitioners = { module = "org.hypertrace.core.kafkastreams.framework:avro-partitioners", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-kafkaStreams-weightedGroupPartitioners = { module = "org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-kafka-bom = { module = "org.hypertrace.core.kafkastreams.framework:kafka-bom", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-viewGenerator-framework = { module="org.hypertrace.core.viewgenerator:view-generator-framework", version.ref="hypertrace-view-generator" }
+hypertrace-viewCreator-framework = { module="org.hypertrace.core.viewcreator:view-creator-framework", version.ref="hypertrace-view-generator" }
 hypertrace-spacesConfigServiceApi = { module = "org.hypertrace.config.service:spaces-config-service-api", version.ref = "hypertrace-config-service" }
 hypertrace-spanProcessingConfigServiceApi = { module = "org.hypertrace.config.service:span-processing-config-service-api", version.ref = "hypertrace-config-service" }
 hypertrace-spanProcessingUtils = { module = "org.hypertrace.config.service:span-processing-utils", version.ref = "hypertrace-config-service" }
 
-slf4j-api = { module = "org.slf4j:slf4j-api", version = "1.7.30" }
-apache-log4j-slf4jImpl = { module = "org.apache.logging.log4j:log4j-slf4j-impl", version = "2.17.1" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.5" }
+apache-log4j-slf4jImpl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version = "2.20.0" }
 apache-commons-lang3 = { module = "org.apache.commons:commons-lang3", version = "3.12.0" }
 apache-kafka-kafkaStreamsTestUtils = { module = "org.apache.kafka:kafka-streams-test-utils", version = "7.2.1-ccs" }
 
-google-guava = { module = "com.google.guava:guava", version = "32.0.1-jre" }
+google-guava = { module = "com.google.guava:guava", version = "32.1.2-jre" }
 google-protobuf-java = { module = "com.google.protobuf:protobuf-java", version = "3.23.3"}
 google-gson = { module = "com.google.code.gson:gson", version = "2.8.9"}
 

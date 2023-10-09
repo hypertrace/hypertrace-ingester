@@ -109,7 +109,7 @@ rawSpansGrouperConfig:
     producerBufferMemory: 134217728 # default = 33554432
     # Consumer configs
     consumerMaxPartitionFetchBytes: 8388608 # default = 1048576
-    consumerMaxPollRecords: 1000 # default = 1000 (kafka streams default)
+    consumerMaxPollRecords: 10000 # default = 1000 (kafka streams default)
     consumerSessionTimeoutMs: 300000 # default = 10000
     # Changelog topic configs
     replicationFactor: 3
@@ -124,7 +124,7 @@ rawSpansGrouperConfig:
     defaultProductionExceptionHandler: "org.hypertrace.core.kafkastreams.framework.exceptionhandlers.IgnoreProductionExceptionHandler"
     ignoreProductionExceptionClasses: "org.apache.kafka.common.errors.RecordTooLargeException"
     # Others
-    metricsRecordingLevel: INFO # default = INFO
+    metricsRecordingLevel: DEBUG # default = INFO
   # All other streams config goes here.
   # Remove the flower braces and add key: value pair here.
   extraKafkaStreamsConfig: {}
