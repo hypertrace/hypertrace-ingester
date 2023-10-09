@@ -31,9 +31,9 @@ import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.kafkastreams.framework.punctuators.AbstractThrottledPunctuator;
 import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
-import org.hypertrace.core.kafkastreams.framework.punctuators.action.DropScheduleAction;
-import org.hypertrace.core.kafkastreams.framework.punctuators.action.RescheduleAction;
-import org.hypertrace.core.kafkastreams.framework.punctuators.action.ScheduleAction;
+import org.hypertrace.core.kafkastreams.framework.punctuators.action.DropTask;
+import org.hypertrace.core.kafkastreams.framework.punctuators.action.ReschduleTask;
+import org.hypertrace.core.kafkastreams.framework.punctuators.action.TaskResult;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -67,7 +67,7 @@ class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity
   private static final ConcurrentMap<String, Counter> tenantToTraceWithDuplicateSpansCounter =
       new ConcurrentHashMap<>();
 
-  private static final DropScheduleAction DROP_SCHEDULE_ACTION = new DropScheduleAction();
+  private static final DropTask DROP_TASK = new DropTask();
   private final double dataflowSamplingPercent;
   private final ProcessorContext context;
   private final KeyValueStore<SpanIdentity, RawSpan> spanStore;
@@ -93,7 +93,7 @@ class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity
     this.dataflowSamplingPercent = dataflowSamplingPercent;
   }
 
-  protected ScheduleAction callback(long punctuateTimestamp, TraceIdentity key) {
+  protected TaskResult executeTask(long punctuateTimestamp, TraceIdentity key) {
     TraceState traceState = traceStateStore.get(key);
     if (null == traceState
         || null == traceState.getSpanIds()
@@ -102,7 +102,7 @@ class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity
       //          "TraceState for tenant_id=[{}], trace_id=[{}] is missing.",
       //          key.getTenantId(),
       //          HexUtils.getHex(key.getTraceId()));
-      return DROP_SCHEDULE_ACTION;
+      return DROP_TASK;
     }
     if (punctuateTimestamp - traceState.getTraceEndTimestamp() >= groupingWindowTimeoutMs) {
       // Implies that no new spans for the trace have arrived within the last
@@ -110,9 +110,9 @@ class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity
       // so the trace can be finalized and emitted
       emitTrace(key, traceState);
       // no need of running again for this
-      return DROP_SCHEDULE_ACTION;
+      return DROP_TASK;
     }
-    return new RescheduleAction(traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs);
+    return new ReschduleTask(traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs);
   }
 
   private void emitTrace(TraceIdentity key, TraceState traceState) {

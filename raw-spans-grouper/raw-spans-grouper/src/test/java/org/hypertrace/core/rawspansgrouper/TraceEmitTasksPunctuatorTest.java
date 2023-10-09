@@ -17,7 +17,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
-import org.hypertrace.core.kafkastreams.framework.punctuators.action.ScheduleAction;
+import org.hypertrace.core.kafkastreams.framework.punctuators.action.TaskResult;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -69,7 +69,7 @@ class TraceEmitTasksPunctuatorTest {
             .build();
     when(traceStateStore.get(eq(traceIdentity))).thenReturn(traceState);
 
-    ScheduleAction callbackAction = emitCallback.callback(300, traceIdentity);
+    TaskResult callbackAction = emitCallback.executeTask(300, traceIdentity);
     assertEquals(
         traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs,
         callbackAction.getRescheduleTimestamp().get());
@@ -102,7 +102,7 @@ class TraceEmitTasksPunctuatorTest {
             .build();
     when(spanStore.delete(any())).thenReturn(rawSpan);
 
-    assertTrue(emitCallback.callback(450, traceIdentity).getRescheduleTimestamp().isEmpty());
+    assertTrue(emitCallback.executeTask(450, traceIdentity).getRescheduleTimestamp().isEmpty());
 
     verify(traceStateStore, times(1)).get(traceIdentity);
     verify(spanStore, times(1)).delete(any());
