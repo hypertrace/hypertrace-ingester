@@ -205,7 +205,7 @@ public class RawSpansGrouperTest {
     td.advanceWallClockTime(Duration.ofSeconds(1));
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span2);
 
-    // select a value 30s (groupingWindowTimeoutInMs)
+    // select a value < 30s (groupingWindowTimeoutInMs)
     // this shouldn't trigger a span emit
     td.advanceWallClockTime(Duration.ofMillis(200));
     assertTrue(outputTopic.isEmpty());
@@ -213,8 +213,13 @@ public class RawSpansGrouperTest {
     // the next advance should and emit a trace with 2 spans
     td.advanceWallClockTime(Duration.ofSeconds(32));
 
-    // trace1 should have 2 span span1, span2
+    // trace2 should have 1 span span3
     StructuredTrace trace = outputTopic.readValue();
+    assertEquals(1, trace.getEventList().size());
+    assertEquals("event-4", new String(trace.getEventList().get(0).getEventId().array()));
+
+    // trace1 should have 2 span span1, span2
+    trace = outputTopic.readValue();
     assertEquals(2, trace.getEventList().size());
     Set<String> traceEventIds =
         trace.getEventList().stream()
@@ -222,11 +227,6 @@ public class RawSpansGrouperTest {
             .collect(Collectors.toSet());
     assertTrue(traceEventIds.contains("event-1"));
     assertTrue(traceEventIds.contains("event-2"));
-
-    // trace2 should have 1 span span3
-    trace = outputTopic.readValue();
-    assertEquals(1, trace.getEventList().size());
-    assertEquals("event-4", new String(trace.getEventList().get(0).getEventId().array()));
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span3);
     td.advanceWallClockTime(Duration.ofSeconds(45));
@@ -252,7 +252,7 @@ public class RawSpansGrouperTest {
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span11);
     td.advanceWallClockTime(Duration.ofSeconds(35));
 
-    // trace should be truncated with 5 spans
+    // trace3 should be truncated with 5 spans
     trace = outputTopic.readValue();
     assertEquals(5, trace.getEventList().size());
 

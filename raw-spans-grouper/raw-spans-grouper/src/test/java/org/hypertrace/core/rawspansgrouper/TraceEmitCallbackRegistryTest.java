@@ -16,8 +16,8 @@ import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
-import org.hypertrace.core.kafkastreams.framework.callbacks.CallbackRegistryPunctuatorConfig;
-import org.hypertrace.core.kafkastreams.framework.callbacks.action.CallbackAction;
+import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
+import org.hypertrace.core.kafkastreams.framework.punctuators.action.ScheduleAction;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -46,7 +46,7 @@ class TraceEmitCallbackRegistryTest {
     To outputTopicProducer = mock(To.class);
     emitCallback =
         new TraceEmitCallbackRegistry(
-            mock(CallbackRegistryPunctuatorConfig.class),
+            mock(ThrottledPunctuatorConfig.class),
             mock(KeyValueStore.class),
             context,
             spanStore,
@@ -69,7 +69,7 @@ class TraceEmitCallbackRegistryTest {
             .build();
     when(traceStateStore.get(eq(traceIdentity))).thenReturn(traceState);
 
-    CallbackAction callbackAction = emitCallback.callback(300, traceIdentity);
+    ScheduleAction callbackAction = emitCallback.callback(300, traceIdentity);
     assertEquals(
         traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs,
         callbackAction.getRescheduleTimestamp().get());

@@ -40,7 +40,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.HexUtils;
-import org.hypertrace.core.kafkastreams.framework.callbacks.CallbackRegistryPunctuatorConfig;
+import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -114,7 +114,7 @@ public class RawSpansProcessor
         context.getStateStore(TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME);
     traceEmitCallbackRegistry =
         new TraceEmitCallbackRegistry(
-            new CallbackRegistryPunctuatorConfig(
+            new ThrottledPunctuatorConfig(
                 jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_YIELD_CONFIG_KEY).toMillis(),
                 jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_WINDOW_CONFIG_KEY).toMillis()),
             traceEmitCallbackRegistryStore,
@@ -127,7 +127,7 @@ public class RawSpansProcessor
     traceEmitCallbackRegistryCancellable =
         context.schedule(
             jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_FREQUENCY_CONFIG_KEY),
-            PunctuationType.STREAM_TIME,
+            PunctuationType.WALL_CLOCK_TIME,
             traceEmitCallbackRegistry);
   }
 
@@ -157,10 +157,15 @@ public class RawSpansProcessor
               .setTraceId(traceId)
               .setSpanIds(List.of(spanId))
               .build();
-      traceEmitCallbackRegistry.invoke(currentTimeMs, key);
+      traceEmitCallbackRegistry.scheduleTask(currentTimeMs, key);
     } else {
       traceState.getSpanIds().add(spanId);
+      long prevScheduleTimestamp = traceState.getTraceEndTimestamp();
       traceState.setTraceEndTimestamp(currentTimeMs);
+      if(!traceEmitCallbackRegistry.rescheduleTask(
+                prevScheduleTimestamp, currentTimeMs + groupingWindowTimeoutMs, key)) {
+        logger.debug("Failed to reschedule task for trace key {}, schedule already dropped!", key);
+      }
     }
 
     traceStateStore.put(key, traceState);
