@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Callbacks to check if a trace can be finalized and emitted based on inactivity period of {@link
- * RawSpansProcessor#groupingWindowTimeoutMs}
+ * RawSpansTransformer#groupingWindowTimeoutMs}
  */
 class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
 

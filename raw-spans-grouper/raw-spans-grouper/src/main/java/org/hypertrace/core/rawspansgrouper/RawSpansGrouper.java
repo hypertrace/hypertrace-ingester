@@ -112,8 +112,8 @@ public class RawSpansGrouper extends KafkaStreamsApp {
 
     inputStream
         .transform(
-            () -> new RawSpansProcessor(clock),
-            Named.as(RawSpansProcessor.class.getSimpleName()),
+            () -> new RawSpansTransformer(clock),
+            Named.as(RawSpansTransformer.class.getSimpleName()),
             SPAN_STATE_STORE_NAME,
             TRACE_STATE_STORE,
             TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME)

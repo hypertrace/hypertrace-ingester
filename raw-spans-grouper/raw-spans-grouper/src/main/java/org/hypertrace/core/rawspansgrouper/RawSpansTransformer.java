@@ -51,15 +51,15 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Receives spans keyed by trace_id and stores them. A {@link TraceEmitTasksPunctuator} is scheduled
- * to run after the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval to emit the trace. If
- * any spans for the trace arrive within the {@link RawSpansProcessor#groupingWindowTimeoutMs}
- * interval then the trace will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs}
- * time to accept spans.
+ * to run after the {@link RawSpansTransformer#groupingWindowTimeoutMs} interval to emit the trace.
+ * If any spans for the trace arrive within the {@link RawSpansTransformer#groupingWindowTimeoutMs}
+ * interval then the trace will get an additional {@link
+ * RawSpansTransformer#groupingWindowTimeoutMs} time to accept spans.
  */
-public class RawSpansProcessor
+public class RawSpansTransformer
     implements Transformer<TraceIdentity, RawSpan, KeyValue<TraceIdentity, StructuredTrace>> {
 
-  private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
+  private static final Logger logger = LoggerFactory.getLogger(RawSpansTransformer.class);
   private static final String PROCESSING_LATENCY_TIMER =
       "hypertrace.rawspansgrouper.processing.latency";
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
@@ -82,7 +82,7 @@ public class RawSpansProcessor
   private TraceEmitTasksPunctuator traceEmitTasksPunctuator;
   private Cancellable traceEmitTasksPunctuatorCancellable;
 
-  public RawSpansProcessor(Clock clock) {
+  public RawSpansTransformer(Clock clock) {
     this.clock = clock;
   }
 
@@ -132,21 +132,16 @@ public class RawSpansProcessor
             dataflowSamplingPercent);
     // Punctuator scheduled on stream time => no input messages => no emits will happen
     // We will almost never have input down to 0, i.e., there are no spans coming to platform,
-    // While using wall clock time handles that case, there is a issue with using wall clock time...
+    // While using wall clock time handles that case, there is an issue with using wall clock.
     // In cases of lag being burnt, we are processing message produced at different time stamp
-    // intervals
-    // probably faster than at rate which they were produced, now not doing punctuation often will
-    // increase the
-    // amounts of work for punctuator in next iterations and will keep on piling up until lag is
-    // burnt completely
-    // and only then the punctuator will catch up back to normal input rate. This is undesirable,
-    // here the outputs
-    // are only emitted from punctuator, if we burn lag from inputs, we want to push it down to
-    // downstream as soon
+    // intervals, probably at higher rate than which they were produced, now not doing punctuation
+    // often will increase the amount of work yielding punctuator in next iterations and will keep
+    // on piling up until lag is burnt completely and only then the punctuator will catch up back to
+    // normal input rate. This is undesirable, here the outputs are only emitted from punctuator.
+    // If we burn lag from input topic, we want to push it down to output & downstream as soon
     // as possible, if we hog it more and more it will delay cascading lag to downstream. Given
-    // grouper stays at start
-    // of pipeline it is better to use stream time as using wall clock time can have more
-    // undesirable effects
+    // grouper stays at start of pipeline and also that input dying down almost never happens
+    // it is better to use stream time over wall clock time for yielding trace emit tasks punctuator
     traceEmitTasksPunctuatorCancellable =
         context.schedule(
             jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_FREQUENCY_CONFIG_KEY),

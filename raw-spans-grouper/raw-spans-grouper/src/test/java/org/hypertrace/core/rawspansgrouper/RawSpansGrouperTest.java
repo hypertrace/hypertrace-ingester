@@ -223,6 +223,8 @@ public class RawSpansGrouperTest {
 
     // select a value < 30s (groupingWindowTimeoutInMs)
     // this shouldn't trigger a span emit
+    messageTime = advanceAndSyncClockMock(messageTime, clock, 200);
+    inputTopic.pipeInput(dummyTraceIdentity, dummySpan, messageTime);
     assertTrue(outputTopic.isEmpty());
 
     // the next advance should and emit a trace1 with 2 spans, trace2 with one span
