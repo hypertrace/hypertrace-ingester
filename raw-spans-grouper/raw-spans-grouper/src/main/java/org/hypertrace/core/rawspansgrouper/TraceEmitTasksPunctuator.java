@@ -45,9 +45,9 @@ import org.slf4j.LoggerFactory;
  * Callbacks to check if a trace can be finalized and emitted based on inactivity period of {@link
  * RawSpansProcessor#groupingWindowTimeoutMs}
  */
-class TraceEmitCallbackRegistry extends AbstractThrottledPunctuator<TraceIdentity> {
+class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
 
-  private static final Logger logger = LoggerFactory.getLogger(TraceEmitCallbackRegistry.class);
+  private static final Logger logger = LoggerFactory.getLogger(TraceEmitTasksPunctuator.class);
   private static final Object mutex = new Object();
 
   private static final Timer spansGrouperArrivalLagTimer =
@@ -75,7 +75,7 @@ class TraceEmitCallbackRegistry extends AbstractThrottledPunctuator<TraceIdentit
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
 
-  TraceEmitCallbackRegistry(
+  TraceEmitTasksPunctuator(
       ThrottledPunctuatorConfig throttledPunctuatorConfig,
       KeyValueStore<Long, ArrayList<TraceIdentity>> callbackRegistryStore,
       ProcessorContext context,

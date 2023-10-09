@@ -8,7 +8,10 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_S
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
+
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +47,15 @@ public class RawSpansGrouper extends KafkaStreamsApp {
   }
 
   public StreamsBuilder buildTopology(
+    Map<String, Object> properties,
+    StreamsBuilder streamsBuilder,
+    Map<String, KStream<?, ?>> inputStreams) {
+   return buildTopologyWithClock(Clock.systemUTC(), properties, streamsBuilder, inputStreams);
+  }
+
+  @VisibleForTesting
+  StreamsBuilder buildTopologyWithClock(
+      Clock clock,
       Map<String, Object> properties,
       StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> inputStreams) {
@@ -101,7 +113,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
 
     inputStream
         .transform(
-            RawSpansProcessor::new,
+            () -> new RawSpansProcessor(clock),
             Named.as(RawSpansProcessor.class.getSimpleName()),
             SPAN_STATE_STORE_NAME,
             TRACE_STATE_STORE,

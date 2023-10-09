@@ -25,14 +25,14 @@ import org.hypertrace.core.spannormalizer.TraceState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class TraceEmitCallbackRegistryTest {
+class TraceEmitTasksPunctuatorTest {
   private static final long groupingWindowTimeoutMs = 300;
   private static final TraceIdentity traceIdentity =
       TraceIdentity.newBuilder()
           .setTenantId("__default")
           .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
           .build();
-  private TraceEmitCallbackRegistry emitCallback;
+  private TraceEmitTasksPunctuator emitCallback;
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
 
@@ -45,7 +45,7 @@ class TraceEmitCallbackRegistryTest {
     traceStateStore = mock(KeyValueStore.class);
     To outputTopicProducer = mock(To.class);
     emitCallback =
-        new TraceEmitCallbackRegistry(
+        new TraceEmitTasksPunctuator(
             mock(ThrottledPunctuatorConfig.class),
             mock(KeyValueStore.class),
             context,
