@@ -5,7 +5,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_PUNCTUATOR_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -88,7 +88,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
 
     StoreBuilder<KeyValueStore<Long, TraceIdentity>> traceEmitCallbackRegistryStoreBuilder =
         Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME),
+                Stores.persistentKeyValueStore(TRACE_EMIT_PUNCTUATOR_STORE_NAME),
                 Serdes.Long(),
                 Serdes.ListSerde(ArrayList.class, valueSerde))
             .withCachingEnabled();
@@ -116,7 +116,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
             Named.as(RawSpansTransformer.class.getSimpleName()),
             SPAN_STATE_STORE_NAME,
             TRACE_STATE_STORE,
-            TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME)
+            TRACE_EMIT_PUNCTUATOR_STORE_NAME)
         .to(outputTopic, outputTopicProducer);
 
     return streamsBuilder;

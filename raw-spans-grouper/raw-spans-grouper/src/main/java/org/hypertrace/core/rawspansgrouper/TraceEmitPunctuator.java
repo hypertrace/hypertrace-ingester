@@ -31,8 +31,8 @@ import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.kafkastreams.framework.punctuators.AbstractThrottledPunctuator;
 import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
-import org.hypertrace.core.kafkastreams.framework.punctuators.action.CompletedTask;
-import org.hypertrace.core.kafkastreams.framework.punctuators.action.RescheduleTask;
+import org.hypertrace.core.kafkastreams.framework.punctuators.action.CompletedTaskResult;
+import org.hypertrace.core.kafkastreams.framework.punctuators.action.RescheduleTaskResult;
 import org.hypertrace.core.kafkastreams.framework.punctuators.action.TaskResult;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
@@ -45,9 +45,9 @@ import org.slf4j.LoggerFactory;
  * Callbacks to check if a trace can be finalized and emitted based on inactivity period of {@link
  * RawSpansTransformer#groupingWindowTimeoutMs}
  */
-class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
+class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
 
-  private static final Logger logger = LoggerFactory.getLogger(TraceEmitTasksPunctuator.class);
+  private static final Logger logger = LoggerFactory.getLogger(TraceEmitPunctuator.class);
   private static final Object mutex = new Object();
 
   private static final Timer spansGrouperArrivalLagTimer =
@@ -67,7 +67,7 @@ class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity
   private static final ConcurrentMap<String, Counter> tenantToTraceWithDuplicateSpansCounter =
       new ConcurrentHashMap<>();
 
-  private static final CompletedTask COMPLETED_TASK = new CompletedTask();
+  private static final CompletedTaskResult COMPLETED_TASK_RESULT = new CompletedTaskResult();
   private final double dataflowSamplingPercent;
   private final ProcessorContext context;
   private final KeyValueStore<SpanIdentity, RawSpan> spanStore;
@@ -75,7 +75,7 @@ class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
 
-  TraceEmitTasksPunctuator(
+  TraceEmitPunctuator(
       ThrottledPunctuatorConfig throttledPunctuatorConfig,
       KeyValueStore<Long, ArrayList<TraceIdentity>> callbackRegistryStore,
       ProcessorContext context,
@@ -98,11 +98,11 @@ class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity
     if (null == traceState
         || null == traceState.getSpanIds()
         || traceState.getSpanIds().isEmpty()) {
-      //      logger.warn(
-      //          "TraceState for tenant_id=[{}], trace_id=[{}] is missing.",
-      //          key.getTenantId(),
-      //          HexUtils.getHex(key.getTraceId()));
-      return COMPLETED_TASK;
+      logger.warn(
+          "TraceState for tenant_id=[{}], trace_id=[{}] is missing.",
+          key.getTenantId(),
+          HexUtils.getHex(key.getTraceId()));
+      return COMPLETED_TASK_RESULT;
     }
     if (punctuateTimestamp - traceState.getTraceEndTimestamp() >= groupingWindowTimeoutMs) {
       // Implies that no new spans for the trace have arrived within the last
@@ -110,9 +110,9 @@ class TraceEmitTasksPunctuator extends AbstractThrottledPunctuator<TraceIdentity
       // so the trace can be finalized and emitted
       emitTrace(key, traceState);
       // no need of running again for this
-      return COMPLETED_TASK;
+      return COMPLETED_TASK_RESULT;
     }
-    return new RescheduleTask(traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs);
+    return new RescheduleTaskResult(traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs);
   }
 
   private void emitTrace(TraceIdentity key, TraceState traceState) {

@@ -1,6 +1,7 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+import static org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp.KAFKA_STREAMS_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
@@ -9,10 +10,9 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_FREQUENCY_CONFIG_KEY;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_WINDOW_CONFIG_KEY;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_CALLBACK_REGISTRY_YIELD_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_PUNCTUATOR;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_PUNCTUATOR_FREQUENCY_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_PUNCTUATOR_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
 
@@ -50,9 +50,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Receives spans keyed by trace_id and stores them. A {@link TraceEmitTasksPunctuator} is scheduled
- * to run after the {@link RawSpansTransformer#groupingWindowTimeoutMs} interval to emit the trace.
- * If any spans for the trace arrive within the {@link RawSpansTransformer#groupingWindowTimeoutMs}
+ * Receives spans keyed by trace_id and stores them. A {@link TraceEmitPunctuator} is scheduled to
+ * run after the {@link RawSpansTransformer#groupingWindowTimeoutMs} interval to emit the trace. If
+ * any spans for the trace arrive within the {@link RawSpansTransformer#groupingWindowTimeoutMs}
  * interval then the trace will get an additional {@link
  * RawSpansTransformer#groupingWindowTimeoutMs} time to accept spans.
  */
@@ -79,7 +79,7 @@ public class RawSpansTransformer
   private double dataflowSamplingPercent = -1;
   private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
   private long defaultMaxSpanCountLimit = Long.MAX_VALUE;
-  private TraceEmitTasksPunctuator traceEmitTasksPunctuator;
+  private TraceEmitPunctuator traceEmitPunctuator;
   private Cancellable traceEmitTasksPunctuatorCancellable;
 
   public RawSpansTransformer(Clock clock) {
@@ -117,12 +117,11 @@ public class RawSpansTransformer
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
 
     KeyValueStore<Long, ArrayList<TraceIdentity>> traceEmitCallbackRegistryStore =
-        context.getStateStore(TRACE_EMIT_CALLBACK_REGISTRY_STORE_NAME);
-    traceEmitTasksPunctuator =
-        new TraceEmitTasksPunctuator(
+        context.getStateStore(TRACE_EMIT_PUNCTUATOR_STORE_NAME);
+    traceEmitPunctuator =
+        new TraceEmitPunctuator(
             new ThrottledPunctuatorConfig(
-                jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_YIELD_CONFIG_KEY).toMillis(),
-                jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_WINDOW_CONFIG_KEY).toMillis()),
+                jobConfig.getConfig(KAFKA_STREAMS_CONFIG_KEY), TRACE_EMIT_PUNCTUATOR),
             traceEmitCallbackRegistryStore,
             context,
             spanStore,
@@ -144,9 +143,9 @@ public class RawSpansTransformer
     // it is better to use stream time over wall clock time for yielding trace emit tasks punctuator
     traceEmitTasksPunctuatorCancellable =
         context.schedule(
-            jobConfig.getDuration(TRACE_EMIT_CALLBACK_REGISTRY_FREQUENCY_CONFIG_KEY),
+            jobConfig.getDuration(TRACE_EMIT_PUNCTUATOR_FREQUENCY_CONFIG_KEY),
             PunctuationType.STREAM_TIME,
-            traceEmitTasksPunctuator);
+            traceEmitPunctuator);
   }
 
   public KeyValue<TraceIdentity, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
@@ -176,12 +175,12 @@ public class RawSpansTransformer
               .setTraceId(traceId)
               .setSpanIds(List.of(spanId))
               .build();
-      traceEmitTasksPunctuator.scheduleTask(currentTimeMs, key);
+      traceEmitPunctuator.scheduleTask(currentTimeMs, key);
     } else {
       traceState.getSpanIds().add(spanId);
       long prevScheduleTimestamp = traceState.getTraceEndTimestamp();
       traceState.setTraceEndTimestamp(currentTimeMs);
-      if (!traceEmitTasksPunctuator.rescheduleTask(
+      if (!traceEmitPunctuator.rescheduleTask(
           prevScheduleTimestamp, currentTimeMs + groupingWindowTimeoutMs, key)) {
         logger.debug(
             "Failed to reschedule task on getting span for trace key {}, schedule already dropped!",
