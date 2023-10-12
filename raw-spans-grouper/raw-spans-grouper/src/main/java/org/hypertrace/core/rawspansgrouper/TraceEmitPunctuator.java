@@ -1,7 +1,6 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPANS_PER_TRACE_METRIC;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_CREATION_TIME;
 
 import com.google.common.util.concurrent.RateLimiter;
 import io.micrometer.core.instrument.Counter;
@@ -28,11 +27,11 @@ import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.TimestampRecord;
 import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
+import org.hypertrace.core.rawspansgrouper.utils.RawSpansGrouperUtils;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -69,14 +68,13 @@ class TraceEmitPunctuator implements Punctuator {
       "hypertrace.rawspansgrouper.trace.with.duplicate.spans";
   private static final ConcurrentMap<String, Counter> tenantToTraceWithDuplicateSpansCounter =
       new ConcurrentHashMap<>();
-
-  private final double dataflowSamplingPercent;
   private final TraceIdentity key;
   private final ProcessorContext context;
   private final KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private final To outputTopicProducer;
   private final long groupingWindowTimeoutMs;
+  private final RawSpansGrouperUtils rawSpansGrouperUtils;
   private Cancellable cancellable;
 
   TraceEmitPunctuator(
@@ -93,7 +91,7 @@ class TraceEmitPunctuator implements Punctuator {
     this.traceStateStore = traceStateStore;
     this.outputTopicProducer = outputTopicProducer;
     this.groupingWindowTimeoutMs = groupingWindowTimeoutMs;
-    this.dataflowSamplingPercent = dataflowSamplingPercent;
+    this.rawSpansGrouperUtils = new RawSpansGrouperUtils(dataflowSamplingPercent);
   }
 
   public void setCancellable(Cancellable cancellable) {
@@ -167,7 +165,8 @@ class TraceEmitPunctuator implements Punctuator {
 
       recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
       Timestamps timestamps =
-          trackEndToEndLatencyTimestamps(timestamp, traceState.getTraceStartTimestamp());
+          rawSpansGrouperUtils.trackEndToEndLatencyTimestamps(
+              timestamp, traceState.getTraceStartTimestamp());
       StructuredTrace trace =
           StructuredTraceBuilder.buildStructuredTraceFromRawSpans(
               rawSpanList, traceId, tenantId, timestamps);
@@ -233,22 +232,6 @@ class TraceEmitPunctuator implements Punctuator {
       cancellable =
           context.schedule(Duration.ofMillis(duration), PunctuationType.WALL_CLOCK_TIME, this);
     }
-  }
-
-  private Timestamps trackEndToEndLatencyTimestamps(
-      long currentTimestamp, long firstSpanTimestamp) {
-    Timestamps timestamps = null;
-    if (!(Math.random() * 100 <= dataflowSamplingPercent)) {
-      spansGrouperArrivalLagTimer.record(
-          currentTimestamp - firstSpanTimestamp, TimeUnit.MILLISECONDS);
-      Map<String, TimestampRecord> records = new HashMap<>();
-      records.put(
-          DataflowMetricUtils.SPAN_ARRIVAL_TIME,
-          new TimestampRecord(DataflowMetricUtils.SPAN_ARRIVAL_TIME, firstSpanTimestamp));
-      records.put(TRACE_CREATION_TIME, new TimestampRecord(TRACE_CREATION_TIME, currentTimestamp));
-      timestamps = new Timestamps(records);
-    }
-    return timestamps;
   }
 
   private void recordSpansPerTrace(double count, Iterable<Tag> tags) {

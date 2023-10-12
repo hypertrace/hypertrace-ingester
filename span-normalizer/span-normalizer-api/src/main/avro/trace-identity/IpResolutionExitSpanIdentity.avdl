@@ -1,0 +1,10 @@
+@namespace("org.hypertrace.core.spannormalizer")
+protocol IpResolutionExitSpanIdentityProtocol {
+  record IpResolutionExitSpanIdentity {
+    string tenant_id;
+    string environment;
+    string host_addr;
+    string peer_addr;
+    string peer_port;
+  }
+}

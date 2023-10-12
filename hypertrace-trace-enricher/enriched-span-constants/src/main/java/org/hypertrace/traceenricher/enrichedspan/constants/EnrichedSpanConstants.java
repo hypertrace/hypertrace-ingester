@@ -18,6 +18,8 @@ public class EnrichedSpanConstants {
   public static final String GRPC_REQUEST_URL = "grpc.request.url";
   public static final String GRPC_REQUEST_ENDPOINT = "grpc.request.endpoint";
   public static final String DROP_TRACE_ATTRIBUTE = "drop.trace";
+  public static final String CALLER_SERVICE_ID = "CALLER_SERVICE_ID";
+  public static final String CALLER_SERVICE_NAME = "CALLER_SERVICE_NAME";
 
   /**
    * Returns the constant value for the given Enum.

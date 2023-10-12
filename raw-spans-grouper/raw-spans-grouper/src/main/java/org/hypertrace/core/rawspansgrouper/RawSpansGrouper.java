@@ -1,6 +1,7 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INPUT_TOPIC_CONFIG_KEY;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.MIRRORING_EXIT_SPANS_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
@@ -26,6 +27,8 @@ import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
 import org.hypertrace.core.kafkastreams.framework.partitioner.KeyHashPartitioner;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
+import org.hypertrace.core.spannormalizer.IpResolutionExitSpanIdentity;
+import org.hypertrace.core.spannormalizer.IpResolutionStateStoreValue;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.hypertrace.core.spannormalizer.TraceState;
@@ -72,8 +75,17 @@ public class RawSpansGrouper extends KafkaStreamsApp {
                 Stores.persistentKeyValueStore(SPAN_STATE_STORE_NAME), keySerde, valueSerde)
             .withCachingEnabled();
 
+    StoreBuilder<KeyValueStore<IpResolutionExitSpanIdentity, IpResolutionStateStoreValue>>
+        mirroringExitSpansStoreBuilder =
+            Stores.keyValueStoreBuilder(
+                    Stores.persistentKeyValueStore(MIRRORING_EXIT_SPANS_STATE_STORE),
+                    keySerde,
+                    valueSerde)
+                .withCachingEnabled();
+
     streamsBuilder.addStateStore(spanStoreBuilder);
     streamsBuilder.addStateStore(traceStateStoreBuilder);
+    streamsBuilder.addStateStore(mirroringExitSpansStoreBuilder);
 
     StreamPartitioner<TraceIdentity, StructuredTrace> groupPartitioner =
         new GroupPartitionerBuilder<TraceIdentity, StructuredTrace>()
@@ -93,7 +105,8 @@ public class RawSpansGrouper extends KafkaStreamsApp {
             RawSpansProcessor::new,
             Named.as(RawSpansProcessor.class.getSimpleName()),
             SPAN_STATE_STORE_NAME,
-            TRACE_STATE_STORE)
+            TRACE_STATE_STORE,
+            MIRRORING_EXIT_SPANS_STATE_STORE)
         .to(outputTopic, outputTopicProducer);
 
     return streamsBuilder;

@@ -350,7 +350,7 @@ public class EnrichedSpanUtils {
   }
 
   public static Optional<String> getDestinationIpAddress(Event event) {
-    return HttpSemanticConventionUtils.getDestinationIpAddress(event);
+    return HttpSemanticConventionUtils.getPeerIpAddress(event);
   }
 
   public static Optional<String> getPath(Event event) {
