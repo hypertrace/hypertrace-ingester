@@ -43,7 +43,7 @@ services:
         condition: service_healthy
 
   sut:
-    image: hypertrace/hypertrace-ingester:test
+    image: hypertrace/hypertrace-ingester:main
     container_name: sut
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
