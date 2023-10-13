@@ -18,9 +18,7 @@ public class RawSpanGrouperConstants {
   public static final String DROPPED_SPANS_COUNTER = "hypertrace.dropped.spans";
   public static final String TRUNCATED_TRACES_COUNTER = "hypertrace.truncated.traces";
   static final String TRACE_EMIT_PUNCTUATOR = "trace-emit-punctuator";
-  static final String TRACE_EMIT_PUNCTUATOR_STORE_NAME =
-      "test-kishan-trace-emit-callback-registry-store"; // TODO: remove test after done with it, and
-  // rename without callback registry
+  static final String TRACE_EMIT_PUNCTUATOR_STORE_NAME = "trace-emit-punctuator-store";
   static final String TRACE_EMIT_PUNCTUATOR_FREQUENCY_CONFIG_KEY =
       "trace.emit.punctuator.frequency";
 }

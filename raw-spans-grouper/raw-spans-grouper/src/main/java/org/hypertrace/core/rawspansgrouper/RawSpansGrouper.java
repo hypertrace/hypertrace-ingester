@@ -86,7 +86,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
                 Stores.persistentKeyValueStore(SPAN_STATE_STORE_NAME), keySerde, valueSerde)
             .withCachingEnabled();
 
-    StoreBuilder<KeyValueStore<Long, TraceIdentity>> traceEmitCallbackRegistryStoreBuilder =
+    StoreBuilder<KeyValueStore<Long, TraceIdentity>> traceEmitPunctuatorStoreBuilder =
         Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(TRACE_EMIT_PUNCTUATOR_STORE_NAME),
                 Serdes.Long(),
@@ -95,7 +95,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
 
     streamsBuilder.addStateStore(spanStoreBuilder);
     streamsBuilder.addStateStore(traceStateStoreBuilder);
-    streamsBuilder.addStateStore(traceEmitCallbackRegistryStoreBuilder);
+    streamsBuilder.addStateStore(traceEmitPunctuatorStoreBuilder);
 
     StreamPartitioner<TraceIdentity, StructuredTrace> groupPartitioner =
         new GroupPartitionerBuilder<TraceIdentity, StructuredTrace>()

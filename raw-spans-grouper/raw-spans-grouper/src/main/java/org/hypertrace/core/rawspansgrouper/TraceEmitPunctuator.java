@@ -42,7 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Callbacks to check if a trace can be finalized and emitted based on inactivity period of {@link
+ * Check if a trace can be finalized and emitted based on inactivity period of {@link
  * RawSpansTransformer#groupingWindowTimeoutMs}
  */
 class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
@@ -77,14 +77,14 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
 
   TraceEmitPunctuator(
       ThrottledPunctuatorConfig throttledPunctuatorConfig,
-      KeyValueStore<Long, ArrayList<TraceIdentity>> callbackRegistryStore,
+      KeyValueStore<Long, ArrayList<TraceIdentity>> throttledPunctuatorStore,
       ProcessorContext context,
       KeyValueStore<SpanIdentity, RawSpan> spanStore,
       KeyValueStore<TraceIdentity, TraceState> traceStateStore,
       To outputTopicProducer,
       long groupingWindowTimeoutMs,
       double dataflowSamplingPercent) {
-    super(Clock.systemUTC(), throttledPunctuatorConfig, callbackRegistryStore);
+    super(Clock.systemUTC(), throttledPunctuatorConfig, throttledPunctuatorStore);
     this.context = context;
     this.spanStore = spanStore;
     this.traceStateStore = traceStateStore;

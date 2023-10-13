@@ -132,10 +132,7 @@ rawSpansGrouperConfig:
   groupPartitionerEnabled: false
   groupPartitionerConfigServiceHost: config-service
   groupPartitionerConfigServicePort: 50104
-  traceEmitCallbackRegistry:
-    frequency: 1s
-    yield: 10s
-    window: 5ms
+  traceEmitPunctuatorFrequency: 5s
 
   span:
     groupby:

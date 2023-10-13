@@ -116,13 +116,13 @@ public class RawSpansTransformer
 
     this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
 
-    KeyValueStore<Long, ArrayList<TraceIdentity>> traceEmitCallbackRegistryStore =
+    KeyValueStore<Long, ArrayList<TraceIdentity>> traceEmitPunctuatorStore =
         context.getStateStore(TRACE_EMIT_PUNCTUATOR_STORE_NAME);
     traceEmitPunctuator =
         new TraceEmitPunctuator(
             new ThrottledPunctuatorConfig(
                 jobConfig.getConfig(KAFKA_STREAMS_CONFIG_KEY), TRACE_EMIT_PUNCTUATOR),
-            traceEmitCallbackRegistryStore,
+            traceEmitPunctuatorStore,
             context,
             spanStore,
             traceStateStore,
