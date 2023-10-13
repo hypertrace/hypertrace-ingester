@@ -381,15 +381,8 @@ public class RawSpansGrouperTest {
     Event event = span3.getEvent();
     Map<String, AttributeValue> attributeMap =
         new HashMap<>(event.getAttributes().getAttributeMap());
-    attributeMap.put(RawSpanGrouperConstants.CALLER_SERVICE_NAME, createAttribute(service1));
+    attributeMap.put(RawSpanGrouperConstants.PEER_SERVICE_NAME, createAttribute(service1));
     event.setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build());
-    assertTrue(
-        trace
-            .getEventList()
-            .get(0)
-            .getAttributes()
-            .getAttributeMap()
-            .containsKey(RawSpanGrouperConstants.CALLER_SERVICE_NAME));
     assertEquals(event, trace.getEventList().get(0));
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-4"), span4);
@@ -402,7 +395,7 @@ public class RawSpansGrouperTest {
     assertEquals(1, trace.getEventList().size());
     event = span2.getEvent();
     attributeMap = new HashMap<>(event.getAttributes().getAttributeMap());
-    attributeMap.put(RawSpanGrouperConstants.CALLER_SERVICE_NAME, createAttribute(service2));
+    attributeMap.put(RawSpanGrouperConstants.PEER_SERVICE_NAME, createAttribute(service2));
     event.setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build());
     assertEquals(event, trace.getEventList().get(0));
   }

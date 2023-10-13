@@ -1,13 +1,13 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.CALLER_SERVICE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.MIRRORING_EXIT_SPANS_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_SERVICE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
@@ -254,7 +254,7 @@ public class RawSpansProcessor
               .getAttributes()
               .getAttributeMap()
               .put(
-                  CALLER_SERVICE_NAME,
+                  PEER_SERVICE_NAME,
                   AttributeValueCreator.create(ipResolutionStateStoreValue.getServiceName()));
         }
       }
