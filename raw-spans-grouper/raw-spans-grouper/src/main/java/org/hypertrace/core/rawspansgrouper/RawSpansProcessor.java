@@ -31,12 +31,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.Cancellable;
-import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
-import org.apache.kafka.streams.processor.To;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -51,15 +50,15 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Receives spans keyed by trace_id and stores them. A {@link TraceEmitPunctuator} is scheduled to
- * run after the {@link RawSpansTransformer#groupingWindowTimeoutMs} interval to emit the trace. If
- * any spans for the trace arrive within the {@link RawSpansTransformer#groupingWindowTimeoutMs}
- * interval then the trace will get an additional {@link
- * RawSpansTransformer#groupingWindowTimeoutMs} time to accept spans.
+ * run after the {@link RawSpansProcessor#groupingWindowTimeoutMs} interval to emit the trace. If
+ * any spans for the trace arrive within the {@link RawSpansProcessor#groupingWindowTimeoutMs}
+ * interval then the trace will get an additional {@link RawSpansProcessor#groupingWindowTimeoutMs}
+ * time to accept spans.
  */
-public class RawSpansTransformer
-    implements Transformer<TraceIdentity, RawSpan, KeyValue<TraceIdentity, StructuredTrace>> {
+public class RawSpansProcessor
+    implements Processor<TraceIdentity, RawSpan, TraceIdentity, StructuredTrace> {
 
-  private static final Logger logger = LoggerFactory.getLogger(RawSpansTransformer.class);
+  private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
   private static final String PROCESSING_LATENCY_TIMER =
       "hypertrace.rawspansgrouper.processing.latency";
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
@@ -75,19 +74,18 @@ public class RawSpansTransformer
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private long groupingWindowTimeoutMs;
-  private To outputTopic;
   private double dataflowSamplingPercent = -1;
   private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
   private long defaultMaxSpanCountLimit = Long.MAX_VALUE;
   private TraceEmitPunctuator traceEmitPunctuator;
   private Cancellable traceEmitTasksPunctuatorCancellable;
 
-  public RawSpansTransformer(Clock clock) {
+  public RawSpansProcessor(Clock clock) {
     this.clock = clock;
   }
 
   @Override
-  public void init(ProcessorContext context) {
+  public void init(ProcessorContext<TraceIdentity, StructuredTrace> context) {
     this.spanStore = context.getStateStore(SPAN_STATE_STORE_NAME);
     this.traceStateStore = context.getStateStore(TRACE_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
@@ -114,8 +112,6 @@ public class RawSpansTransformer
       defaultMaxSpanCountLimit = jobConfig.getLong(DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT);
     }
 
-    this.outputTopic = To.child(OUTPUT_TOPIC_PRODUCER);
-
     KeyValueStore<Long, ArrayList<TraceIdentity>> traceEmitPunctuatorStore =
         context.getStateStore(TRACE_EMIT_PUNCTUATOR_STORE_NAME);
     traceEmitPunctuator =
@@ -126,7 +122,7 @@ public class RawSpansTransformer
             context,
             spanStore,
             traceStateStore,
-            outputTopic,
+            OUTPUT_TOPIC_PRODUCER,
             groupingWindowTimeoutMs,
             dataflowSamplingPercent);
     // Punctuator scheduled on stream time => no input messages => no emits will happen
@@ -148,16 +144,18 @@ public class RawSpansTransformer
             traceEmitPunctuator);
   }
 
-  public KeyValue<TraceIdentity, StructuredTrace> transform(TraceIdentity key, RawSpan value) {
+  @Override
+  public void process(Record<TraceIdentity, RawSpan> record) {
     Instant start = Instant.now();
     long currentTimeMs = clock.millis();
 
+    TraceIdentity key = record.key();
+    RawSpan value = record.value();
     TraceState traceState = traceStateStore.get(key);
     boolean firstEntry = (traceState == null);
-    ByteBuffer debugSpanId = value.getEvent().getEventId();
 
     if (shouldDropSpan(key, traceState)) {
-      return null;
+      return;
     }
 
     String tenantId = key.getTenantId();
@@ -197,8 +195,9 @@ public class RawSpansTransformer
                 PlatformMetricsRegistry.registerTimer(
                     PROCESSING_LATENCY_TIMER, Map.of("tenantId", k)))
         .record(Duration.between(start, Instant.now()).toMillis(), TimeUnit.MILLISECONDS);
-    // the punctuator will emit the trace
-    return null;
+    // no need to do context.forward. the punctuator will emit the trace once it's eligible to be
+    // emitted
+    return;
   }
 
   private boolean shouldDropSpan(TraceIdentity key, TraceState traceState) {

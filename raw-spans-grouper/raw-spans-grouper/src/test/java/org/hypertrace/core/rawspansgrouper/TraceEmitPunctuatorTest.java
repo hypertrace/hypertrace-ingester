@@ -11,11 +11,12 @@ import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.To;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
 import org.hypertrace.core.kafkastreams.framework.punctuators.action.TaskResult;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
@@ -39,7 +40,7 @@ class TraceEmitPunctuatorTest {
   @BeforeEach
   public void setUp() {
     AvroSerde avroSerde = new AvroSerde();
-    ProcessorContext context = mock(ProcessorContext.class);
+    ProcessorContext<TraceIdentity, StructuredTrace> context = mock(ProcessorContext.class);
     when(context.keySerde()).thenReturn(avroSerde);
     spanStore = mock(KeyValueStore.class);
     traceStateStore = mock(KeyValueStore.class);
@@ -51,7 +52,7 @@ class TraceEmitPunctuatorTest {
             context,
             spanStore,
             traceStateStore,
-            outputTopicProducer,
+            RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER,
             groupingWindowTimeoutMs,
             -1);
   }

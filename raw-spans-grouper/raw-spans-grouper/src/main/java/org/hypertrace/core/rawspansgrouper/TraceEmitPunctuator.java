@@ -19,8 +19,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import org.apache.kafka.streams.processor.ProcessorContext;
-import org.apache.kafka.streams.processor.To;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Check if a trace can be finalized and emitted based on inactivity period of {@link
- * RawSpansTransformer#groupingWindowTimeoutMs}
+ * RawSpansProcessor#groupingWindowTimeoutMs}
  */
 class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
 
@@ -69,19 +69,19 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
 
   private static final CompletedTaskResult COMPLETED_TASK_RESULT = new CompletedTaskResult();
   private final double dataflowSamplingPercent;
-  private final ProcessorContext context;
+  private final ProcessorContext<TraceIdentity, StructuredTrace> context;
   private final KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
-  private final To outputTopicProducer;
+  private final String outputTopicProducer;
   private final long groupingWindowTimeoutMs;
 
   TraceEmitPunctuator(
       ThrottledPunctuatorConfig throttledPunctuatorConfig,
       KeyValueStore<Long, ArrayList<TraceIdentity>> throttledPunctuatorStore,
-      ProcessorContext context,
+      ProcessorContext<TraceIdentity, StructuredTrace> context,
       KeyValueStore<SpanIdentity, RawSpan> spanStore,
       KeyValueStore<TraceIdentity, TraceState> traceStateStore,
-      To outputTopicProducer,
+      String outputTopicProducer,
       long groupingWindowTimeoutMs,
       double dataflowSamplingPercent) {
     super(Clock.systemUTC(), throttledPunctuatorConfig, throttledPunctuatorStore);
@@ -192,7 +192,9 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
                     TRACES_EMITTER_COUNTER, Map.of("tenantId", k)))
         .increment();
 
-    context.forward(key, trace, outputTopicProducer);
+    context.forward(
+        new Record<TraceIdentity, StructuredTrace>(key, trace, System.currentTimeMillis()),
+        outputTopicProducer);
   }
 
   private Timestamps trackEndToEndLatencyTimestamps(
