@@ -91,16 +91,14 @@
   </suppress>
   <suppress until="2023-12-30Z">
     <notes><![CDATA[
-   file name: netty-handler-4.1.94.Final.jar
+  This vulnerability is disputed, with the argument that SSL configuration is the responsibility of the client rather
+  than the transport. The change in default is under consideration for the next major Netty release, revisit then.
+  Regardless, our client (which is what brings in this dependency) enables the concerned feature, hostname verification
+  Ref:
+  https://github.com/grpc/grpc-java/issues/10033
+  https://github.com/netty/netty/issues/8537#issuecomment-1527896917
    ]]></notes>
-    <packageUrl regex="true">^pkg:maven/io\.netty/netty\-handler@.*$</packageUrl>
-    <vulnerabilityName>CVE-2023-4586</vulnerabilityName>
-  </suppress>
-  <suppress>
-    <notes><![CDATA[
-   file name: netty-handler-4.1.94.Final.jar
-   ]]></notes>
-    <packageUrl regex="true">^pkg:maven/io\.netty/netty\-handler@.*$</packageUrl>
+    <packageUrl regex="true">^pkg:maven/io\.netty/netty.*@.*$</packageUrl>
     <vulnerabilityName>CVE-2023-4586</vulnerabilityName>
   </suppress>
 </suppressions>
