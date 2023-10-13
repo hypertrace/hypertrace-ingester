@@ -16,8 +16,8 @@ import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
-import org.hypertrace.core.kafkastreams.framework.callbacks.CallbackRegistryPunctuatorConfig;
-import org.hypertrace.core.kafkastreams.framework.callbacks.action.CallbackAction;
+import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
+import org.hypertrace.core.kafkastreams.framework.punctuators.action.TaskResult;
 import org.hypertrace.core.kafkastreams.framework.serdes.AvroSerde;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -25,14 +25,14 @@ import org.hypertrace.core.spannormalizer.TraceState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class TraceEmitCallbackRegistryTest {
+class TraceEmitPunctuatorTest {
   private static final long groupingWindowTimeoutMs = 300;
   private static final TraceIdentity traceIdentity =
       TraceIdentity.newBuilder()
           .setTenantId("__default")
           .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
           .build();
-  private TraceEmitCallbackRegistry emitCallback;
+  private TraceEmitPunctuator emitCallback;
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
 
@@ -45,8 +45,8 @@ class TraceEmitCallbackRegistryTest {
     traceStateStore = mock(KeyValueStore.class);
     To outputTopicProducer = mock(To.class);
     emitCallback =
-        new TraceEmitCallbackRegistry(
-            mock(CallbackRegistryPunctuatorConfig.class),
+        new TraceEmitPunctuator(
+            mock(ThrottledPunctuatorConfig.class),
             mock(KeyValueStore.class),
             context,
             spanStore,
@@ -69,7 +69,7 @@ class TraceEmitCallbackRegistryTest {
             .build();
     when(traceStateStore.get(eq(traceIdentity))).thenReturn(traceState);
 
-    CallbackAction callbackAction = emitCallback.callback(300, traceIdentity);
+    TaskResult callbackAction = emitCallback.executeTask(300, traceIdentity);
     assertEquals(
         traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs,
         callbackAction.getRescheduleTimestamp().get());
@@ -102,7 +102,7 @@ class TraceEmitCallbackRegistryTest {
             .build();
     when(spanStore.delete(any())).thenReturn(rawSpan);
 
-    assertTrue(emitCallback.callback(450, traceIdentity).getRescheduleTimestamp().isEmpty());
+    assertTrue(emitCallback.executeTask(450, traceIdentity).getRescheduleTimestamp().isEmpty());
 
     verify(traceStateStore, times(1)).get(traceIdentity);
     verify(spanStore, times(1)).delete(any());
