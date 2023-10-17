@@ -5,9 +5,10 @@ on:
       - main
     paths-ignore:
       - '**/*.md'
-  pull_request_target:
-    branches:
-      - main
+    # TODO: commented for purpose of testing wf changes, undo
+#  pull_request_target:
+#    branches:
+#      - main
   # workflow_dispatch will let us manually trigger the workflow from GitHub actions dashboard.
   # See https://docs.github.com/en/free-pro-team@latest/actions/managing-workflow-runs/manually-running-a-workflow 
   workflow_dispatch:
