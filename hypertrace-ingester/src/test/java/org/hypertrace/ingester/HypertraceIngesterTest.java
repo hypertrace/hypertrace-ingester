@@ -9,7 +9,6 @@ import com.typesafe.config.ConfigFactory;
 import io.jaegertracing.api_v2.JaegerSpanInternalModel.Span;
 import java.io.File;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -86,6 +85,9 @@ public class HypertraceIngesterTest {
             new JaegerSpanSerde().serializer());
 
     spanNormalizerInputTopic.pipeInput(span);
+    // we use stream time for emit in grouper hence this additional pipe of a span after grouping
+    // window
+    spanNormalizerInputTopic.pipeInput(null, span, System.currentTimeMillis() + 30_001);
 
     // create output topic for span-normalizer topology
     TestOutputTopic spanNormalizerOutputTopic =
@@ -95,8 +97,6 @@ public class HypertraceIngesterTest {
             Serdes.String().deserializer(),
             new AvroSerde<>().deserializer());
     assertNotNull(spanNormalizerOutputTopic.readKeyValue());
-
-    topologyTestDriver.advanceWallClockTime(Duration.ofSeconds(32));
 
     // create output topic for span-grouper topology
     TestOutputTopic spanGrouperOutputTopic =

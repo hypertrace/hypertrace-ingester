@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# This script displays the state and logs for the containers in the docker-compose.
+echo "Inspecting compose containers from $1 and $2"
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-DOCKER_COMPOSE_FILE_DIR="$(dirname $SCRIPT_DIR)/docker"
-
-containers=$(docker-compose -f ${DOCKER_COMPOSE_FILE_DIR}/docker-compose.yml -f ${DOCKER_COMPOSE_FILE_DIR}/docker-compose-zipkin-example.yml ps -q -a)
+containers=$(docker-compose -f $1 -f $2 ps -q -a)
 while IFS= read -r container; do
     name=$(docker inspect $container | jq -r '.[0].Name')
     echo "=================="
