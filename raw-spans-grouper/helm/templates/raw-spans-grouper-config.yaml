@@ -81,3 +81,7 @@ data:
       }
     }
     {{- end }}
+    
+    {{- if hasKey .Values.rawSpansGrouperConfig "traceEmitPunctuatorFrequency" }}
+    trace.emit.punctuator.frequency = {{ .Values.rawSpansGrouperConfig.traceEmitPunctuatorFrequency }}
+    {{- end }}
