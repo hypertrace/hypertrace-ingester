@@ -18,7 +18,8 @@ public class StructuredTraceGraphBuilder {
   public static StructuredTraceGraph buildGraph(StructuredTrace trace) {
     StructuredTrace cachedTrace = cachedTraceThreadLocal.get();
     StructuredTraceGraph cachedGraph = cachedGraphThreadLocal.get();
-    if (null == cachedGraph || GraphBuilderUtil.isDifferentTrace(cachedTrace, trace)) {
+    if (null == cachedGraph || GraphBuilderUtil.isDifferentTrace(cachedTrace, trace)
+        || GraphBuilderUtil.isTraceEventsChanged(cachedTrace, trace)) {
       Instant start = Instant.now();
       StructuredTraceGraph graph = new StructuredTraceGraph(trace);
       if (LOG.isDebugEnabled()) {
@@ -31,23 +32,6 @@ public class StructuredTraceGraphBuilder {
       cachedGraphThreadLocal.set(graph);
       debugGraph("Case: Rebuilding the graph.", graph, trace);
       return graph;
-    }
-
-    boolean shouldRebuildTraceEventsGraph =
-        GraphBuilderUtil.isTraceEventsChanged(cachedTrace, trace);
-    if (shouldRebuildTraceEventsGraph) {
-      Instant start = Instant.now();
-      cachedGraph.reCreateTraceEventsGraph(trace);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(
-            "Time taken in building TraceEventsGraph, duration_millis:{} for tenantId:{}",
-            Duration.between(start, Instant.now()).toMillis(),
-            trace.getCustomerId());
-      }
-      cachedTraceThreadLocal.set(StructuredTrace.newBuilder(trace).build());
-      cachedGraphThreadLocal.set(cachedGraph);
-      debugGraph("Case: Partially building the graph.", cachedGraph, trace);
-      return cachedGraph;
     }
 
     debugGraph("Case: Not building the graph.", cachedGraphThreadLocal.get(), trace);
