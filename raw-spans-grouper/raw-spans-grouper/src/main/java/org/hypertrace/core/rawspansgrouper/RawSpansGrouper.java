@@ -5,12 +5,17 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_PUNCTUATOR_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
+import java.time.Clock;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serde;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
@@ -44,6 +49,15 @@ public class RawSpansGrouper extends KafkaStreamsApp {
       Map<String, Object> properties,
       StreamsBuilder streamsBuilder,
       Map<String, KStream<?, ?>> inputStreams) {
+    return buildTopologyWithClock(Clock.systemUTC(), properties, streamsBuilder, inputStreams);
+  }
+
+  @VisibleForTesting
+  StreamsBuilder buildTopologyWithClock(
+      Clock clock,
+      Map<String, Object> properties,
+      StreamsBuilder streamsBuilder,
+      Map<String, KStream<?, ?>> inputStreams) {
     Config jobConfig = getJobConfig(properties);
     String inputTopic = jobConfig.getString(INPUT_TOPIC_CONFIG_KEY);
     String outputTopic = jobConfig.getString(OUTPUT_TOPIC_CONFIG_KEY);
@@ -72,8 +86,16 @@ public class RawSpansGrouper extends KafkaStreamsApp {
                 Stores.persistentKeyValueStore(SPAN_STATE_STORE_NAME), keySerde, valueSerde)
             .withCachingEnabled();
 
+    StoreBuilder<KeyValueStore<Long, List<TraceIdentity>>> traceEmitPunctuatorStoreBuilder =
+        Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(TRACE_EMIT_PUNCTUATOR_STORE_NAME),
+                Serdes.Long(),
+                Serdes.ListSerde(ArrayList.class, valueSerde))
+            .withCachingEnabled();
+
     streamsBuilder.addStateStore(spanStoreBuilder);
     streamsBuilder.addStateStore(traceStateStoreBuilder);
+    streamsBuilder.addStateStore(traceEmitPunctuatorStoreBuilder);
 
     StreamPartitioner<TraceIdentity, StructuredTrace> groupPartitioner =
         new GroupPartitionerBuilder<TraceIdentity, StructuredTrace>()
@@ -89,11 +111,12 @@ public class RawSpansGrouper extends KafkaStreamsApp {
     outputTopicProducer = outputTopicProducer.withName(OUTPUT_TOPIC_PRODUCER);
 
     inputStream
-        .transform(
-            RawSpansProcessor::new,
+        .process(
+            () -> new RawSpansProcessor(clock),
             Named.as(RawSpansProcessor.class.getSimpleName()),
             SPAN_STATE_STORE_NAME,
-            TRACE_STATE_STORE)
+            TRACE_STATE_STORE,
+            TRACE_EMIT_PUNCTUATOR_STORE_NAME)
         .to(outputTopic, outputTopicProducer);
 
     return streamsBuilder;

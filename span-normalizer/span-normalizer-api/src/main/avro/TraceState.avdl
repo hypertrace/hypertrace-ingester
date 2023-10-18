@@ -3,7 +3,7 @@ protocol TraceStateProtocol {
   record TraceState {
     long trace_start_timestamp;
     long trace_end_timestamp;
-    long emit_ts;
+    /** @deprecated unused */ long emit_ts;
     string tenant_id;
     bytes trace_id;
     array<bytes> span_ids;

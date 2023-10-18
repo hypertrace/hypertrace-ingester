@@ -34,13 +34,14 @@ jobs:
         working-directory: ./.github/workflows/hypertrace-ingester
         # Below tests a docker-compose.yml service named 'sut' with a valid HEALTHCHECK instruction:
         run: |
-          docker-compose -f docker-compose.yml -f docker-compose-zipkin-example.yml up -d || { ../scripts/inspect.sh ; exit 1 ; }
+          docker-compose -f docker-compose.yml -f docker-compose-zipkin-example.yml up -d || { ./scripts/inspect.sh docker-compose.yml docker-compose-zipkin-example.yml ; exit 1 ; }
 
       - name: Waits for some stability
         working-directory: ./.github/workflows/hypertrace-ingester
         run: |
           sleep 60 # you can decrease it but never increase it
           docker-compose -f docker-compose.yml ps
+          ./scripts/inspect.sh docker-compose.yml docker-compose-zipkin-example.yml
           
       - name: Runs tests
         working-directory: ./.github/workflows/hypertrace-ingester/scripts
@@ -67,13 +68,14 @@ jobs:
         working-directory: ./.github/workflows/hypertrace-ingester
         # Below tests a docker-compose.yml service named 'sut' with a valid HEALTHCHECK instruction:
         run: |
-          docker-compose -f postgres/docker-compose.yml -f docker-compose-zipkin-example.yml up -d || { ../scripts/inspect.sh ; exit 1 ; }
+          docker-compose -f postgres/docker-compose.yml -f docker-compose-zipkin-example.yml up -d || { ./scripts/inspect.sh postgres/docker-compose.yml docker-compose-zipkin-example.yml ; exit 1 ; }
 
       - name: Waits for some stability
         working-directory: ./.github/workflows/hypertrace-ingester
         run: |
           sleep 60 # you can decrease it but never increase it
           docker-compose -f postgres/docker-compose.yml ps
+          ./scripts/inspect.sh postgres/docker-compose.yml docker-compose-zipkin-example.yml
           
       - name: Runs tests
         working-directory: ./.github/workflows/hypertrace-ingester/scripts
