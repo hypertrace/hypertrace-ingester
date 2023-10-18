@@ -54,11 +54,6 @@ public class StructuredTraceGraphBuilder {
       LOG.info(
           logPrefix + "Recreating StructuredTraceGraph. Is events graph non-null: {}.",
           (null != tempGraph.getTraceEventsGraph()));
-
-      tempGraph.reCreateTraceEventsGraph(trace);
-      LOG.info(
-          logPrefix + "Recreating events graph. Is events graph non-null: {}.",
-          (null != tempGraph.getTraceEventsGraph()));
     }
   }
 }
