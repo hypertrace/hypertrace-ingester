@@ -3,7 +3,7 @@ hypertrace-entity-service = "0.8.78"
 hypertrace-config-service = "0.1.54"
 hypertrace-grpc-utils = "0.12.4"
 hypertrace-serviceFramework = "0.1.60"
-hypertrace-kafkaStreams = "0.4.1"
+hypertrace-kafkaStreams = "0.4.2"
 hypertrace-view-generator = "0.4.19"
 grpc = "1.57.2"
 
