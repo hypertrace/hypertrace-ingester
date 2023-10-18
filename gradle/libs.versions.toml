@@ -52,7 +52,7 @@ uadetector-resources = { module = "net.sf.uadetector:uadetector-resources",versi
 
 reactivex-rxjava3 = { module = "io.reactivex.rxjava3:rxjava", version = "3.0.11" }
 
-json-json = { module = "org.json:json", version = "20230618" }
+json-json = { module = "org.json:json", version = "20231013" }
 
 #grpc dependency
 grpc-netty = { module = "io.grpc:grpc-netty", version.ref = "grpc" }
