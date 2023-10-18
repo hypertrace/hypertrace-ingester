@@ -18,7 +18,8 @@ public class StructuredTraceGraphBuilder {
   public static StructuredTraceGraph buildGraph(StructuredTrace trace) {
     StructuredTrace cachedTrace = cachedTraceThreadLocal.get();
     StructuredTraceGraph cachedGraph = cachedGraphThreadLocal.get();
-    if (null == cachedGraph || GraphBuilderUtil.isDifferentTrace(cachedTrace, trace)
+    if (null == cachedGraph
+        || GraphBuilderUtil.isDifferentTrace(cachedTrace, trace)
         || GraphBuilderUtil.isTraceEventsChanged(cachedTrace, trace)) {
       Instant start = Instant.now();
       StructuredTraceGraph graph = new StructuredTraceGraph(trace);
