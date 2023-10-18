@@ -231,13 +231,8 @@ public class RawSpansGrouperTest {
     messageTime = advanceAndSyncClockMock(messageTime, clock, 35_000);
     inputTopic.pipeInput(dummyTraceIdentity, dummySpan, messageTime);
 
-    // trace2 should have 1 span span3
-    StructuredTrace trace = outputTopic.readValue();
-    assertEquals(1, trace.getEventList().size());
-    assertEquals("event-4", new String(trace.getEventList().get(0).getEventId().array()));
-
     // trace1 should have 2 span span1, span2
-    trace = outputTopic.readValue();
+    StructuredTrace trace = outputTopic.readValue();
     assertEquals(2, trace.getEventList().size());
     Set<String> traceEventIds =
         trace.getEventList().stream()
@@ -245,6 +240,11 @@ public class RawSpansGrouperTest {
             .collect(Collectors.toSet());
     assertTrue(traceEventIds.contains("event-1"));
     assertTrue(traceEventIds.contains("event-2"));
+
+    // trace2 should have 1 span span3
+    trace = outputTopic.readValue();
+    assertEquals(1, trace.getEventList().size());
+    assertEquals("event-4", new String(trace.getEventList().get(0).getEventId().array()));
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span3, messageTime);
     messageTime = advanceAndSyncClockMock(messageTime, clock, 45_000);
