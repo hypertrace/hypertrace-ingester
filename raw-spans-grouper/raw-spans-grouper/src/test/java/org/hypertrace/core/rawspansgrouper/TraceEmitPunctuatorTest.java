@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import org.apache.kafka.streams.processor.To;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.Event;
@@ -44,7 +43,6 @@ class TraceEmitPunctuatorTest {
     when(context.keySerde()).thenReturn(avroSerde);
     spanStore = mock(KeyValueStore.class);
     traceStateStore = mock(KeyValueStore.class);
-    To outputTopicProducer = mock(To.class);
     emitCallback =
         new TraceEmitPunctuator(
             mock(ThrottledPunctuatorConfig.class),

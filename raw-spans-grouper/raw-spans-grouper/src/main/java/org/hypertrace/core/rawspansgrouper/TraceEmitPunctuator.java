@@ -77,7 +77,7 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
 
   TraceEmitPunctuator(
       ThrottledPunctuatorConfig throttledPunctuatorConfig,
-      KeyValueStore<Long, ArrayList<TraceIdentity>> throttledPunctuatorStore,
+      KeyValueStore<Long, List<TraceIdentity>> throttledPunctuatorStore,
       ProcessorContext<TraceIdentity, StructuredTrace> context,
       KeyValueStore<SpanIdentity, RawSpan> spanStore,
       KeyValueStore<TraceIdentity, TraceState> traceStateStore,

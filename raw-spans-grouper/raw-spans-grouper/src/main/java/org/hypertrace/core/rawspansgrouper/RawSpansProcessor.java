@@ -23,7 +23,6 @@ import java.nio.ByteBuffer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +111,7 @@ public class RawSpansProcessor
       defaultMaxSpanCountLimit = jobConfig.getLong(DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT);
     }
 
-    KeyValueStore<Long, ArrayList<TraceIdentity>> traceEmitPunctuatorStore =
+    KeyValueStore<Long, List<TraceIdentity>> traceEmitPunctuatorStore =
         context.getStateStore(TRACE_EMIT_PUNCTUATOR_STORE_NAME);
     traceEmitPunctuator =
         new TraceEmitPunctuator(
