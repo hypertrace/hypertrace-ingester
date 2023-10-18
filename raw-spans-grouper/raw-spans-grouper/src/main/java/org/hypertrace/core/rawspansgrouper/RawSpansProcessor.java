@@ -175,12 +175,12 @@ public class RawSpansProcessor
       traceEmitPunctuator.scheduleTask(currentTimeMs, key);
     } else {
       traceState.getSpanIds().add(spanId);
-      long prevScheduleTimestamp = traceState.getTraceEndTimestamp();
+      long prevScheduleTimestamp = traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs;
       traceState.setTraceEndTimestamp(currentTimeMs);
       if (!traceEmitPunctuator.rescheduleTask(
           prevScheduleTimestamp, currentTimeMs + groupingWindowTimeoutMs, key)) {
         logger.debug(
-            "Failed to reschedule task on getting span for trace key {}, schedule already dropped!",
+            "Failed to proactively reschedule task on getting span for trace key {}, schedule already dropped!",
             key);
       }
     }
