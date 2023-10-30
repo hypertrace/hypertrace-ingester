@@ -1,6 +1,0 @@
-@namespace("org.hypertrace.core.spannormalizer")
-protocol IpResolutionStateStoreValueProtocol {
-  record IpResolutionStateStoreValue {
-    string service_name;
-  }
-}

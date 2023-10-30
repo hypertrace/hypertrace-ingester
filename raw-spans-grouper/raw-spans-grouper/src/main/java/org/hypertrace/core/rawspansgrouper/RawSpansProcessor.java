@@ -1,11 +1,12 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.AGENT_ENABLED_ATTRIBUTE_NAME_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.MIRRORING_EXIT_SPANS_STATE_STORE;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.IPS_TO_SPAN_METADATA_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_SERVICE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
@@ -48,9 +49,9 @@ import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.rawspansgrouper.utils.RawSpansGrouperUtils;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
-import org.hypertrace.core.spannormalizer.IpResolutionExitSpanIdentity;
-import org.hypertrace.core.spannormalizer.IpResolutionStateStoreValue;
+import org.hypertrace.core.spannormalizer.IpIdentity;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
+import org.hypertrace.core.spannormalizer.SpanMetadata;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
 import org.hypertrace.core.spannormalizer.TraceState;
 import org.hypertrace.semantic.convention.utils.http.HttpSemanticConventionUtils;
@@ -71,15 +72,12 @@ public class RawSpansProcessor
   private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
   private static final String PROCESSING_LATENCY_TIMER =
       "hypertrace.rawspansgrouper.processing.latency";
-  private static final String MIRRORING_SPAN_ATTRIBUTE_NAME_CONFIG =
-      "mirroring.span.attribute.name";
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
       new ConcurrentHashMap<>();
   private ProcessorContext context;
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
-  private KeyValueStore<IpResolutionExitSpanIdentity, IpResolutionStateStoreValue>
-      mirroringExitSpansStateStore;
+  private KeyValueStore<IpIdentity, SpanMetadata> ipsToSpanMetadataStateStore;
   private long groupingWindowTimeoutMs;
   private To outputTopic;
   private double dataflowSamplingPercent = -1;
@@ -93,7 +91,7 @@ public class RawSpansProcessor
   // counter for number of truncated traces per tenant
   private static final ConcurrentMap<String, Counter> truncatedTracesCounter =
       new ConcurrentHashMap<>();
-  private String mirroringSpanAttributeName;
+  private String agentEnabledAttributeName;
   private RawSpansGrouperUtils rawSpansGrouperUtils;
 
   @Override
@@ -103,13 +101,13 @@ public class RawSpansProcessor
         (KeyValueStore<SpanIdentity, RawSpan>) context.getStateStore(SPAN_STATE_STORE_NAME);
     this.traceStateStore =
         (KeyValueStore<TraceIdentity, TraceState>) context.getStateStore(TRACE_STATE_STORE);
-    this.mirroringExitSpansStateStore =
-        (KeyValueStore<IpResolutionExitSpanIdentity, IpResolutionStateStoreValue>)
-            context.getStateStore(MIRRORING_EXIT_SPANS_STATE_STORE);
+    this.ipsToSpanMetadataStateStore =
+        (KeyValueStore<IpIdentity, SpanMetadata>)
+            context.getStateStore(IPS_TO_SPAN_METADATA_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
-    this.mirroringSpanAttributeName =
-        jobConfig.hasPath(MIRRORING_SPAN_ATTRIBUTE_NAME_CONFIG)
-            ? jobConfig.getString(MIRRORING_SPAN_ATTRIBUTE_NAME_CONFIG)
+    this.agentEnabledAttributeName =
+        jobConfig.hasPath(AGENT_ENABLED_ATTRIBUTE_NAME_CONFIG)
+            ? jobConfig.getString(AGENT_ENABLED_ATTRIBUTE_NAME_CONFIG)
             : null;
     this.groupingWindowTimeoutMs =
         jobConfig.getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
@@ -147,7 +145,7 @@ public class RawSpansProcessor
     }
 
     Event event = value.getEvent();
-    if (isMirroringSpan(event)) {
+    if (isPeerServiceNameIdentificationRequired(event)) {
       processMirroringSpan(key, value, traceState, currentTimeMs);
       return null;
     }
@@ -210,52 +208,43 @@ public class RawSpansProcessor
     boolean firstEntry = (traceState == null);
     final Optional<String> maybeEnvironment =
         HttpSemanticConventionUtils.getEnvironmentForSpan(event);
-
     if (SpanSemanticConventionUtils.isClientSpanForOCFormat(
         event.getAttributes().getAttributeMap())) {
       final Optional<String> maybeHostAddr = HttpSemanticConventionUtils.getHostIpAddress(event);
       final Optional<String> maybePeerAddr = HttpSemanticConventionUtils.getPeerIpAddress(event);
       final Optional<String> maybePeerPort = HttpSemanticConventionUtils.getPeerPort(event);
-      if (maybeEnvironment.isPresent()
-          && maybeHostAddr.isPresent()
-          && maybePeerAddr.isPresent()
-          && maybePeerPort.isPresent()) {
-        final String serviceName = event.getServiceName();
-        mirroringExitSpansStateStore.put(
-            IpResolutionExitSpanIdentity.newBuilder()
-                .setTenantId(tenantId)
-                .setEnvironment(maybeEnvironment.get())
-                .setHostAddr(maybeHostAddr.get())
-                .setPeerAddr(maybePeerAddr.get())
-                .setPeerPort(maybePeerPort.get())
-                .build(),
-            IpResolutionStateStoreValue.newBuilder().setServiceName(serviceName).build());
+      final String serviceName = event.getServiceName();
+      final IpIdentity ipIdentity =
+          IpIdentity.newBuilder()
+              .setTenantId(tenantId)
+              .setEnvironment(maybeEnvironment.orElse(null))
+              .setHostAddr(maybeHostAddr.orElse(null))
+              .setPeerAddr(maybePeerAddr.orElse(null))
+              .setPeerPort(maybePeerPort.orElse(null))
+              .build();
+      if (IpIdentityValidator.isValid(ipIdentity)) {
+        ipsToSpanMetadataStateStore.put(
+            ipIdentity, SpanMetadata.newBuilder().setServiceName(serviceName).build());
       }
     } else {
       final Optional<String> maybePeerAddr = HttpSemanticConventionUtils.getPeerIpAddress(event);
       final Optional<String> maybeHostAddr = HttpSemanticConventionUtils.getHostIpAddress(event);
       final Optional<String> maybeHostPort = HttpSemanticConventionUtils.getHostPort(event);
-      if (maybeEnvironment.isPresent()
-          && maybePeerAddr.isPresent()
-          && maybeHostAddr.isPresent()
-          && maybeHostPort.isPresent()) {
-        final IpResolutionExitSpanIdentity ipResolutionIdentity =
-            IpResolutionExitSpanIdentity.newBuilder()
-                .setTenantId(tenantId)
-                .setEnvironment(maybeEnvironment.get())
-                .setHostAddr(maybePeerAddr.get())
-                .setPeerAddr(maybeHostAddr.get())
-                .setPeerPort(maybeHostPort.get())
-                .build();
-        final IpResolutionStateStoreValue ipResolutionStateStoreValue =
-            mirroringExitSpansStateStore.get(ipResolutionIdentity);
-        if (Objects.nonNull(ipResolutionStateStoreValue)) {
+      final IpIdentity ipIdentity =
+          IpIdentity.newBuilder()
+              .setTenantId(tenantId)
+              .setEnvironment(maybeEnvironment.orElse(null))
+              .setHostAddr(maybePeerAddr.orElse(null))
+              .setPeerAddr(maybeHostAddr.orElse(null))
+              .setPeerPort(maybeHostPort.orElse(null))
+              .build();
+      if (IpIdentityValidator.isValid(ipIdentity)) {
+        final SpanMetadata spanMetadata = ipsToSpanMetadataStateStore.get(ipIdentity);
+        if (Objects.nonNull(spanMetadata)) {
           event
               .getAttributes()
               .getAttributeMap()
-              .put(
-                  PEER_SERVICE_NAME,
-                  AttributeValueCreator.create(ipResolutionStateStoreValue.getServiceName()));
+              .put(PEER_SERVICE_NAME, AttributeValueCreator.create(spanMetadata.getServiceName()));
         }
       }
     }
@@ -269,7 +258,7 @@ public class RawSpansProcessor
     context.forward(key, trace, outputTopic);
   }
 
-  private boolean isMirroringSpan(Event event) {
+  private boolean isPeerServiceNameIdentificationRequired(Event event) {
     final Attributes attributes = event.getAttributes();
     if (Objects.isNull(attributes)) {
       return false;
@@ -282,7 +271,7 @@ public class RawSpansProcessor
 
     final String value =
         attributeMap
-            .getOrDefault(this.mirroringSpanAttributeName, AttributeValue.newBuilder().build())
+            .getOrDefault(this.agentEnabledAttributeName, AttributeValue.newBuilder().build())
             .getValue();
     return Objects.nonNull(value) && Boolean.parseBoolean(value);
   }
