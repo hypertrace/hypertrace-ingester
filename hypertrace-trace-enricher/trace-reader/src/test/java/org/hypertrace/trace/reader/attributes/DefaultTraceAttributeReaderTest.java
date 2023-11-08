@@ -9,28 +9,31 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.reactivex.rxjava3.core.Single;
-import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.trace.provider.AttributeProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 class DefaultTraceAttributeReaderTest {
 
-  @Mock CachingAttributeClient mockAttributeClient;
+  @Mock
+  AttributeProvider mockAttributeProvider;
   private TraceAttributeReader<StructuredTrace, Event> traceAttributeReader;
 
   @BeforeEach
   void beforeEach() {
-    this.traceAttributeReader = TraceAttributeReaderFactory.build(this.mockAttributeClient);
+    this.traceAttributeReader = TraceAttributeReaderFactory.build(this.mockAttributeProvider);
   }
 
   @Test
@@ -42,7 +45,7 @@ class DefaultTraceAttributeReaderTest {
             .setValueKind(AttributeKind.TYPE_STRING)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("attrPath").build())
             .build();
-    when(this.mockAttributeClient.get("TEST_SCOPE", "key")).thenReturn(Single.just(metadata));
+    when(this.mockAttributeProvider.get("defaultCustomerId","TEST_SCOPE", "key")).thenReturn(Optional.of(metadata));
 
     Event span =
         defaultedEventBuilder()
@@ -53,7 +56,7 @@ class DefaultTraceAttributeReaderTest {
         stringLiteral("attrValue"),
         this.traceAttributeReader
             .getSpanValue(mock(StructuredTrace.class), span, "TEST_SCOPE", "key")
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -65,7 +68,7 @@ class DefaultTraceAttributeReaderTest {
             .setValueKind(AttributeKind.TYPE_STRING)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("attrPath").build())
             .build();
-    when(this.mockAttributeClient.get("TRACE", "key")).thenReturn(Single.just(metadata));
+    when(this.mockAttributeProvider.get("defaultCustomerId","TRACE", "key")).thenReturn(Optional.of(metadata));
 
     StructuredTrace trace =
         defaultedStructuredTraceBuilder()
@@ -74,6 +77,6 @@ class DefaultTraceAttributeReaderTest {
 
     assertEquals(
         stringLiteral("attrValue"),
-        this.traceAttributeReader.getTraceValue(trace, "key").blockingGet());
+        this.traceAttributeReader.getTraceValue(trace, "key").get());
   }
 }

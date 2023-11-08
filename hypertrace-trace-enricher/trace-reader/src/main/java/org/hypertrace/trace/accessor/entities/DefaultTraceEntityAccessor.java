@@ -87,7 +87,7 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
             });
   }
 
-  private Maybe<UpsertCondition> buildUpsertCondition(
+  private Optional<UpsertCondition> buildUpsertCondition(
       EntityType entityType, StructuredTrace trace, Event span) {
     if (entityType.getTimestampAttributeKey().isEmpty()) {
       return Maybe.empty();
@@ -105,13 +105,12 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
                     attribute, PredicateOperator.PREDICATE_OPERATOR_LESS_THAN, trace, span));
   }
 
-  private Maybe<UpsertCondition> buildUpsertCondition(
+  private Optional<UpsertCondition> buildUpsertCondition(
       AttributeMetadata attribute, PredicateOperator operator, StructuredTrace trace, Event span) {
 
     return this.traceAttributeReader
         .getSpanValue(trace, span, attribute.getScopeString(), attribute.getKey())
-        .onErrorComplete()
-        .flatMap(value -> this.buildUpsertCondition(attribute, operator, value));
+        .map(value -> this.buildUpsertCondition(attribute, operator, value));
   }
 
   private Maybe<UpsertCondition> buildUpsertCondition(

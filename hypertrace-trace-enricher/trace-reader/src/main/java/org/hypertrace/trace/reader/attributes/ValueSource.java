@@ -17,5 +17,7 @@ public interface ValueSource {
 
   GrpcRxExecutionContext executionContext();
 
+  String tenantId();
+
   String TRACE_SCOPE = "TRACE";
 }

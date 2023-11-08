@@ -5,12 +5,15 @@ import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClien
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
+import org.hypertrace.trace.provider.AttributeProvider;
+
+import java.util.Optional;
 
 public interface ValueResolver {
 
-  Single<LiteralValue> resolve(ValueSource valueSource, AttributeMetadata attributeMetadata);
+  Optional<LiteralValue> resolve(ValueSource valueSource, AttributeMetadata attributeMetadata);
 
-  static ValueResolver build(CachingAttributeClient attributeClient) {
-    return new DefaultValueResolver(attributeClient, new AttributeProjectionRegistry());
+  static ValueResolver build(AttributeProvider attributeProvider) {
+    return new DefaultValueResolver(attributeProvider, new AttributeProjectionRegistry());
   }
 }

@@ -54,6 +54,11 @@ class TraceValueSource extends AvroBackedValueSource {
   }
 
   @Override
+  public String tenantId() {
+    return this.trace.getCustomerId();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

@@ -13,7 +13,8 @@ import static org.mockito.Mockito.when;
 
 import io.reactivex.rxjava3.core.Single;
 import java.util.Map;
-import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
+import java.util.Optional;
+
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition.AttributeDefinitions;
@@ -27,6 +28,7 @@ import org.hypertrace.core.attribute.service.v1.ProjectionExpression;
 import org.hypertrace.core.attribute.service.v1.ProjectionOperator;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.trace.provider.AttributeProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +38,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DefaultValueResolverTest {
 
-  @Mock CachingAttributeClient mockAttributeClient;
+  @Mock
+  AttributeProvider mockAttributeProvider;
   @Mock StructuredTrace mockStructuredTrace;
 
   private DefaultValueResolver resolver;
@@ -44,7 +47,7 @@ class DefaultValueResolverTest {
   @BeforeEach
   void beforeEach() {
     this.resolver =
-        new DefaultValueResolver(this.mockAttributeClient, new AttributeProjectionRegistry());
+        new DefaultValueResolver(this.mockAttributeProvider, new AttributeProjectionRegistry());
   }
 
   @Test
@@ -66,7 +69,7 @@ class DefaultValueResolverTest {
         stringLiteral("attrValue"),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -86,7 +89,7 @@ class DefaultValueResolverTest {
         longLiteral(42),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -103,7 +106,7 @@ class DefaultValueResolverTest {
         this.resolver
             .resolve(
                 ValueSourceFactory.forSpan(this.mockStructuredTrace, mock(Event.class)), metadata)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -122,7 +125,7 @@ class DefaultValueResolverTest {
             .setValueKind(AttributeKind.TYPE_INT64)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("metricPath").build())
             .build();
-    when(this.mockAttributeClient.get("TEST_SCOPE.other")).thenReturn(Single.just(otherMetadata));
+    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.other")).thenReturn(Optional.of((otherMetadata)));
 
     Event span =
         defaultedEventBuilder().setMetrics(buildMetricsWithKeyValue("metricPath", 42)).build();
@@ -131,7 +134,7 @@ class DefaultValueResolverTest {
         longLiteral(42),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), projectionMetadata)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -166,8 +169,8 @@ class DefaultValueResolverTest {
             .setValueKind(AttributeKind.TYPE_STRING)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("attrPath").build())
             .build();
-    when(this.mockAttributeClient.get("TEST_SCOPE.first")).thenReturn(Single.just(firstMetadata));
-    when(this.mockAttributeClient.get("TEST_SCOPE.second")).thenReturn(Single.just(secondMetadata));
+    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.first")).thenReturn(Optional.of(firstMetadata));
+    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.second")).thenReturn(Optional.of(secondMetadata));
 
     Event span =
         defaultedEventBuilder()
@@ -179,7 +182,7 @@ class DefaultValueResolverTest {
         stringLiteral("42coolString"),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), projectionMetadata)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -198,7 +201,7 @@ class DefaultValueResolverTest {
             .setValueKind(AttributeKind.TYPE_INT64)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("metricPath").build())
             .build();
-    when(this.mockAttributeClient.get("TRACE.other")).thenReturn(Single.just(otherMetadata));
+    when(this.mockAttributeProvider.getById("defaultCustomerId", "TRACE.other")).thenReturn(Optional.of(otherMetadata));
 
     StructuredTrace trace =
         defaultedStructuredTraceBuilder()
@@ -209,7 +212,7 @@ class DefaultValueResolverTest {
         longLiteral(42),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(trace, mock(Event.class)), projectionMetadata)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -239,12 +242,12 @@ class DefaultValueResolverTest {
         longLiteral(123),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadataStartTime)
-            .blockingGet());
+            .get());
     assertEquals(
         longLiteral(234),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadataEndTime)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -279,7 +282,7 @@ class DefaultValueResolverTest {
         longLiteral(14),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -309,7 +312,7 @@ class DefaultValueResolverTest {
         LiteralValue.getDefaultInstance(),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -340,7 +343,7 @@ class DefaultValueResolverTest {
         stringLiteral("expected-value"),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
-            .blockingGet());
+            .get());
   }
 
   @Test
@@ -375,6 +378,6 @@ class DefaultValueResolverTest {
         longLiteral(13),
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
-            .blockingGet());
+            .get());
   }
 }
