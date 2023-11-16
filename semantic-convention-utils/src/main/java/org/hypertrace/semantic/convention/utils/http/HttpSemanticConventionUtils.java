@@ -457,7 +457,7 @@ public class HttpSemanticConventionUtils {
     Optional<String> url = getHttpUrlFromRawAttributes(event);
     if (url.isPresent() && isAbsoluteUrl(url.get())) {
       try {
-        return Optional.of(getNormalizedUrl(url.get()).getAuthority());
+        return Optional.ofNullable(getNormalizedUrl(url.get()).getAuthority());
       } catch (MalformedURLException | URISyntaxException e) {
         LOGGER.warn(
             "On extracting httpHost, received an invalid URL: {}, {}", url.get(), e.getMessage());

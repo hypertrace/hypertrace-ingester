@@ -172,16 +172,16 @@ public class RawSpansProcessor
               .setTraceId(traceId)
               .setSpanIds(List.of(spanId))
               .build();
-      traceEmitPunctuator.scheduleTask(currentTimeMs, key);
+      traceEmitPunctuator.scheduleTask(currentTimeMs + groupingWindowTimeoutMs, key);
     } else {
       traceState.getSpanIds().add(spanId);
-      long prevScheduleTimestamp = traceState.getTraceEndTimestamp();
+      long prevScheduleTimestamp = traceState.getTraceEndTimestamp() + groupingWindowTimeoutMs;
       traceState.setTraceEndTimestamp(currentTimeMs);
       if (!traceEmitPunctuator.rescheduleTask(
           prevScheduleTimestamp, currentTimeMs + groupingWindowTimeoutMs, key)) {
-        logger.debug(
-            "Failed to reschedule task on getting span for trace key {}, schedule already dropped!",
-            key);
+        logger.warn(
+            "Failed to proactively reschedule task on getting span for trace id {}, schedule already dropped!",
+            HexUtils.getHex(traceState.getTraceId()));
       }
     }
 
