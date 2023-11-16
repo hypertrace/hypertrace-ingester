@@ -74,16 +74,13 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
     if (entityOptional.isEmpty()) {
       return;
     }
-    Optional<UpsertCondition> upsertConditionOptional =
-        this.buildUpsertCondition(entityType, trace, span);
     // TODO: in follow up PR batch eventual entity writes for single tenant
-    upsertConditionOptional.ifPresent(
-        upsertCondition ->
-            this.entityDataClient.createOrUpdateEntityEventually(
-                RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
-                entityOptional.get(),
-                upsertCondition,
-                this.writeThrottleDuration));
+    this.entityDataClient.createOrUpdateEntityEventually(
+        RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
+        entityOptional.get(),
+        this.buildUpsertCondition(entityType, trace, span)
+            .orElse(UpsertCondition.getDefaultInstance()),
+        this.writeThrottleDuration);
   }
 
   private Optional<UpsertCondition> buildUpsertCondition(

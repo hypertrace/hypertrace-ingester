@@ -8,6 +8,8 @@ import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.typesafe.config.Config;
+import io.grpc.Channel;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +18,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
+import org.hypertrace.core.attribute.service.v1.AttributeServiceGrpc;
 import org.hypertrace.core.attribute.service.v1.AttributeServiceGrpc.AttributeServiceBlockingStub;
 import org.hypertrace.core.attribute.service.v1.GetAttributesRequest;
 import org.hypertrace.core.grpcutils.context.RequestContext;
@@ -24,6 +27,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AttributeServiceCachedClient implements AttributeProvider {
+  private static final String DEADLINE_CONFIG_KEY = "deadline";
+  private static final String CACHE_MAX_SIZE_CONFIG_KEY = "maxSize";
+  private static final String CACHE_REFRESH_AFTER_WRITE_CONFIG_KEY = "refreshAfterWriteDuration";
+  private static final String CACHE_EXPIRE_AFTER_WRITE_CONFIG_KEY = "expireAfterWriteDuration";
+  private static final String CACHE_EXECUTOR_THREADS_CONFIG_KEY = "executorThreads";
   private static final RateLimiter LOG_LIMITER = RateLimiter.create(1 / 60d);
   private static final Logger LOGGER = LoggerFactory.getLogger(AttributeServiceCachedClient.class);
   private final LoadingCache<String, Table<String, String, AttributeMetadata>> cache;
@@ -31,24 +39,35 @@ public class AttributeServiceCachedClient implements AttributeProvider {
   private final AttributeServiceBlockingStub attributeServiceBlockingStub;
   private final long deadlineMs;
 
-  AttributeServiceCachedClient(
-      AttributeServiceBlockingStub attributeServiceBlockingStub,
-      int cacheMaxSize,
-      Duration expireAfterWriteDuration,
-      Duration refreshAfterWriteDuration,
-      Duration deadline,
-      int executorThreads) {
-    deadlineMs = deadline.toMillis();
-    this.attributeServiceBlockingStub = attributeServiceBlockingStub;
+  AttributeServiceCachedClient(Channel channel, Config attributeServiceConfig) {
+    deadlineMs =
+        attributeServiceConfig.hasPath(DEADLINE_CONFIG_KEY)
+            ? attributeServiceConfig.getDuration(DEADLINE_CONFIG_KEY).toMillis()
+            : Duration.ofMinutes(1).toMillis();
+    this.attributeServiceBlockingStub = AttributeServiceGrpc.newBlockingStub(channel);
+    Duration expireAfterWriteDuration =
+        attributeServiceConfig.hasPath(CACHE_EXPIRE_AFTER_WRITE_CONFIG_KEY)
+            ? attributeServiceConfig.getDuration(CACHE_EXPIRE_AFTER_WRITE_CONFIG_KEY)
+            : Duration.ofHours(1);
     cache =
         CacheBuilder.newBuilder()
-            .maximumSize(cacheMaxSize)
+            .maximumSize(
+                attributeServiceConfig.hasPath(CACHE_MAX_SIZE_CONFIG_KEY)
+                    ? attributeServiceConfig.getLong(CACHE_MAX_SIZE_CONFIG_KEY)
+                    : 100)
             .expireAfterWrite(expireAfterWriteDuration)
-            .refreshAfterWrite(refreshAfterWriteDuration)
+            .refreshAfterWrite(
+                attributeServiceConfig.hasPath(CACHE_REFRESH_AFTER_WRITE_CONFIG_KEY)
+                    ? attributeServiceConfig.getDuration(CACHE_REFRESH_AFTER_WRITE_CONFIG_KEY)
+                    : Duration.ofMinutes(15))
             .build(
                 CacheLoader.asyncReloading(
                     CacheLoader.from(this::loadTable),
-                    Executors.newFixedThreadPool(executorThreads, this.buildThreadFactory())));
+                    Executors.newFixedThreadPool(
+                        attributeServiceConfig.hasPath(CACHE_EXECUTOR_THREADS_CONFIG_KEY)
+                            ? attributeServiceConfig.getInt(CACHE_EXECUTOR_THREADS_CONFIG_KEY)
+                            : 4,
+                        this.buildThreadFactory())));
     scopeAndKeyLookup =
         CacheBuilder.newBuilder().expireAfterWrite(expireAfterWriteDuration).build();
   }

@@ -8,6 +8,7 @@ import static org.hypertrace.trace.reader.attributes.AvroUtil.defaultedStructure
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.longLiteral;
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -209,11 +210,12 @@ class DefaultValueResolverTest {
             .setMetrics(buildMetricsWithKeyValue("metricPath", 42))
             .build();
 
+    Event span = mock(Event.class);
+    when(span.getCustomerId()).thenReturn(trace.getCustomerId());
+
     assertEquals(
         longLiteral(42),
-        this.resolver
-            .resolve(ValueSourceFactory.forSpan(trace, mock(Event.class)), projectionMetadata)
-            .get());
+        this.resolver.resolve(ValueSourceFactory.forSpan(trace, span), projectionMetadata).get());
   }
 
   @Test
@@ -309,11 +311,10 @@ class DefaultValueResolverTest {
                 buildAttributesWithKeyValues(Map.of("path.to.string", "foo", "path.to.int", "14")))
             .build();
 
-    assertEquals(
-        LiteralValue.getDefaultInstance(),
+    assertTrue(
         this.resolver
             .resolve(ValueSourceFactory.forSpan(this.mockStructuredTrace, span), metadata)
-            .get());
+            .isEmpty());
   }
 
   @Test
