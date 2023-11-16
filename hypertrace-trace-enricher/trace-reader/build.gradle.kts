@@ -7,7 +7,6 @@ plugins {
 
 dependencies {
   api("org.hypertrace.core.attribute.service:attribute-service-api:0.14.26")
-  api("org.hypertrace.core.attribute.service:caching-attribute-service-client:0.14.26")
   api("org.hypertrace.entity.service:entity-type-service-rx-client:0.8.75")
   api("org.hypertrace.entity.service:entity-data-service-rx-client:0.8.75")
   api(libs.hypertrace.data.model)
