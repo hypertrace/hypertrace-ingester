@@ -22,8 +22,9 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
-import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
+
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
@@ -39,6 +40,7 @@ import org.hypertrace.entity.data.service.v1.MergeAndUpsertEntityRequest.UpsertC
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.entity.type.service.v2.EntityType;
 import org.hypertrace.entity.type.service.v2.EntityType.EntityFormationCondition;
+import org.hypertrace.trace.provider.AttributeProvider;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,7 +121,8 @@ class DefaultTraceEntityAccessorTest {
 
   @Mock EntityTypeClient mockTypeClient;
   @Mock EntityDataClient mockDataClient;
-  @Mock CachingAttributeClient mockAttributeClient;
+  @Mock
+  AttributeProvider mockAttributeProvider;
   @Mock TraceAttributeReader<StructuredTrace, Event> mockAttributeReader;
   MockedStatic<Schedulers> mockSchedulers;
 
@@ -132,7 +135,7 @@ class DefaultTraceEntityAccessorTest {
         new DefaultTraceEntityAccessor(
             this.mockTypeClient,
             this.mockDataClient,
-            this.mockAttributeClient,
+            this.mockAttributeProvider,
             this.mockAttributeReader,
             DEFAULT_DURATION,
             EXCLUDE_ENTITY_TYPES);
@@ -288,24 +291,24 @@ class DefaultTraceEntityAccessorTest {
   private void mockAttributeRead(AttributeMetadata attributeMetadata, LiteralValue value) {
     when(this.mockAttributeReader.getSpanValue(
             TEST_TRACE, TEST_SPAN, attributeMetadata.getScopeString(), attributeMetadata.getKey()))
-        .thenReturn(Single.just(value));
+        .thenReturn(Optional.of(value));
   }
 
   private void mockAttributeReadError(AttributeMetadata attributeMetadata) {
     when(this.mockAttributeReader.getSpanValue(
             TEST_TRACE, TEST_SPAN, attributeMetadata.getScopeString(), attributeMetadata.getKey()))
-        .thenReturn(Single.error(new NoSuchElementException()));
+        .thenReturn(Optional.empty());
   }
 
   private void mockGetAllAttributes(AttributeMetadata... attributeMetadata) {
-    when(this.mockAttributeClient.getAllInScope(TEST_ENTITY_TYPE_NAME))
-        .thenReturn(Single.just(Arrays.asList(attributeMetadata)));
+    when(this.mockAttributeProvider.getAllInScope(TENANT_ID, TEST_ENTITY_TYPE_NAME))
+        .thenReturn(Optional.of(Arrays.asList(attributeMetadata)));
   }
 
   private void mockGetSingleAttribute(AttributeMetadata attributeMetadata) {
-    when(this.mockAttributeClient.get(
-            attributeMetadata.getScopeString(), attributeMetadata.getKey()))
-        .thenReturn(Single.just(attributeMetadata));
+    when(this.mockAttributeProvider.get(
+            TENANT_ID, attributeMetadata.getScopeString(), attributeMetadata.getKey()))
+        .thenReturn(Optional.of(attributeMetadata));
   }
 
   private void mockAllEntityTypes(EntityType entityType) {

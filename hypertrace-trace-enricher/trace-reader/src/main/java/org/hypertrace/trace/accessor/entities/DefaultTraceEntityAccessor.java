@@ -74,20 +74,17 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   }
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
-    this.buildEntity(entityType, trace, span)
-        .subscribe(
-            entity -> {
-              UpsertCondition upsertCondition =
-                  this.buildUpsertCondition(entityType, trace, span)
-                      .defaultIfEmpty(UpsertCondition.getDefaultInstance())
-                      .blockingGet();
-
-              this.entityDataClient.createOrUpdateEntityEventually(
-                  RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
-                  entity,
-                  upsertCondition,
-                  this.writeThrottleDuration);
-            });
+    Optional<Entity> entityOptional = this.buildEntity(entityType, trace, span);
+    if (entityOptional.isEmpty()) {
+      return;
+    }
+    Optional<UpsertCondition> upsertConditionOptional = this.buildUpsertCondition(entityType, trace, span);
+    // TODO: in follow up PR batch eventual entity writes for single tenant
+    upsertConditionOptional.ifPresent(upsertCondition -> this.entityDataClient.createOrUpdateEntityEventually(
+      RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
+      entityOptional.get(),
+      upsertCondition,
+      this.writeThrottleDuration));
   }
 
   private Optional<UpsertCondition> buildUpsertCondition(

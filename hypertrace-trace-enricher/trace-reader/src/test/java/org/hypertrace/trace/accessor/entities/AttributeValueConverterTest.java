@@ -20,35 +20,35 @@ class AttributeValueConverterTest {
   @Test
   void convertsStringValue() {
     assertEquals(
-        stringAttributeValue("foo"), convertToAttributeValue(stringLiteral("foo")).blockingGet());
+        stringAttributeValue("foo"), convertToAttributeValue(stringLiteral("foo")).get());
     assertEquals(
-        stringAttributeValue(""), convertToAttributeValue(stringLiteral("")).blockingGet());
+        stringAttributeValue(""), convertToAttributeValue(stringLiteral("")).get());
   }
 
   @Test
   void convertsBooleanValue() {
     assertEquals(
-        booleanAttributeValue(true), convertToAttributeValue(booleanLiteral(true)).blockingGet());
+        booleanAttributeValue(true), convertToAttributeValue(booleanLiteral(true)).get());
     assertEquals(
-        booleanAttributeValue(false), convertToAttributeValue(booleanLiteral(false)).blockingGet());
+        booleanAttributeValue(false), convertToAttributeValue(booleanLiteral(false)).get());
   }
 
   @Test
   void convertsIntValue() {
-    assertEquals(longAttributeValue(0), convertToAttributeValue(longLiteral(0)).blockingGet());
-    assertEquals(longAttributeValue(100), convertToAttributeValue(longLiteral(100)).blockingGet());
+    assertEquals(longAttributeValue(0), convertToAttributeValue(longLiteral(0)).get());
+    assertEquals(longAttributeValue(100), convertToAttributeValue(longLiteral(100)).get());
   }
 
   @Test
   void convertsFloatValue() {
     assertEquals(
-        doubleAttributeValue(10.4), convertToAttributeValue(doubleLiteral(10.4)).blockingGet());
+        doubleAttributeValue(10.4), convertToAttributeValue(doubleLiteral(10.4)).get());
     assertEquals(
-        doubleAttributeValue(-3.5), convertToAttributeValue(doubleLiteral(-3.5)).blockingGet());
+        doubleAttributeValue(-3.5), convertToAttributeValue(doubleLiteral(-3.5)).get());
   }
 
   @Test
   void emptyOnUnknownValue() {
-    assertTrue(convertToAttributeValue(LiteralValue.getDefaultInstance()).isEmpty().blockingGet());
+    assertTrue(convertToAttributeValue(LiteralValue.getDefaultInstance()).isEmpty());
   }
 }
