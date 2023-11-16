@@ -11,10 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import io.reactivex.rxjava3.core.Single;
 import java.util.Map;
 import java.util.Optional;
-
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition.AttributeDefinitions;
@@ -38,8 +36,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DefaultValueResolverTest {
 
-  @Mock
-  AttributeProvider mockAttributeProvider;
+  @Mock AttributeProvider mockAttributeProvider;
   @Mock StructuredTrace mockStructuredTrace;
 
   private DefaultValueResolver resolver;
@@ -125,7 +122,8 @@ class DefaultValueResolverTest {
             .setValueKind(AttributeKind.TYPE_INT64)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("metricPath").build())
             .build();
-    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.other")).thenReturn(Optional.of((otherMetadata)));
+    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.other"))
+        .thenReturn(Optional.of((otherMetadata)));
 
     Event span =
         defaultedEventBuilder().setMetrics(buildMetricsWithKeyValue("metricPath", 42)).build();
@@ -169,8 +167,10 @@ class DefaultValueResolverTest {
             .setValueKind(AttributeKind.TYPE_STRING)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("attrPath").build())
             .build();
-    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.first")).thenReturn(Optional.of(firstMetadata));
-    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.second")).thenReturn(Optional.of(secondMetadata));
+    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.first"))
+        .thenReturn(Optional.of(firstMetadata));
+    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.second"))
+        .thenReturn(Optional.of(secondMetadata));
 
     Event span =
         defaultedEventBuilder()
@@ -201,7 +201,8 @@ class DefaultValueResolverTest {
             .setValueKind(AttributeKind.TYPE_INT64)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("metricPath").build())
             .build();
-    when(this.mockAttributeProvider.getById("defaultCustomerId", "TRACE.other")).thenReturn(Optional.of(otherMetadata));
+    when(this.mockAttributeProvider.getById("defaultCustomerId", "TRACE.other"))
+        .thenReturn(Optional.of(otherMetadata));
 
     StructuredTrace trace =
         defaultedStructuredTraceBuilder()

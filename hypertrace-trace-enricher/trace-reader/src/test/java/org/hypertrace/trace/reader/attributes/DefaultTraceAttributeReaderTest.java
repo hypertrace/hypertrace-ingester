@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import io.reactivex.rxjava3.core.Single;
+import java.util.Optional;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
@@ -22,13 +22,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-
 @ExtendWith(MockitoExtension.class)
 class DefaultTraceAttributeReaderTest {
 
-  @Mock
-  AttributeProvider mockAttributeProvider;
+  @Mock AttributeProvider mockAttributeProvider;
   private TraceAttributeReader<StructuredTrace, Event> traceAttributeReader;
 
   @BeforeEach
@@ -45,7 +42,8 @@ class DefaultTraceAttributeReaderTest {
             .setValueKind(AttributeKind.TYPE_STRING)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("attrPath").build())
             .build();
-    when(this.mockAttributeProvider.get("defaultCustomerId","TEST_SCOPE", "key")).thenReturn(Optional.of(metadata));
+    when(this.mockAttributeProvider.get("defaultCustomerId", "TEST_SCOPE", "key"))
+        .thenReturn(Optional.of(metadata));
 
     Event span =
         defaultedEventBuilder()
@@ -68,7 +66,8 @@ class DefaultTraceAttributeReaderTest {
             .setValueKind(AttributeKind.TYPE_STRING)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("attrPath").build())
             .build();
-    when(this.mockAttributeProvider.get("defaultCustomerId","TRACE", "key")).thenReturn(Optional.of(metadata));
+    when(this.mockAttributeProvider.get("defaultCustomerId", "TRACE", "key"))
+        .thenReturn(Optional.of(metadata));
 
     StructuredTrace trace =
         defaultedStructuredTraceBuilder()
@@ -76,7 +75,6 @@ class DefaultTraceAttributeReaderTest {
             .build();
 
     assertEquals(
-        stringLiteral("attrValue"),
-        this.traceAttributeReader.getTraceValue(trace, "key").get());
+        stringLiteral("attrValue"), this.traceAttributeReader.getTraceValue(trace, "key").get());
   }
 }

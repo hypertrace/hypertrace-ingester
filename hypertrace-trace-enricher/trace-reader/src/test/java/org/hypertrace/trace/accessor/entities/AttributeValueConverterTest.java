@@ -19,16 +19,13 @@ class AttributeValueConverterTest {
 
   @Test
   void convertsStringValue() {
-    assertEquals(
-        stringAttributeValue("foo"), convertToAttributeValue(stringLiteral("foo")).get());
-    assertEquals(
-        stringAttributeValue(""), convertToAttributeValue(stringLiteral("")).get());
+    assertEquals(stringAttributeValue("foo"), convertToAttributeValue(stringLiteral("foo")).get());
+    assertEquals(stringAttributeValue(""), convertToAttributeValue(stringLiteral("")).get());
   }
 
   @Test
   void convertsBooleanValue() {
-    assertEquals(
-        booleanAttributeValue(true), convertToAttributeValue(booleanLiteral(true)).get());
+    assertEquals(booleanAttributeValue(true), convertToAttributeValue(booleanLiteral(true)).get());
     assertEquals(
         booleanAttributeValue(false), convertToAttributeValue(booleanLiteral(false)).get());
   }
@@ -41,10 +38,8 @@ class AttributeValueConverterTest {
 
   @Test
   void convertsFloatValue() {
-    assertEquals(
-        doubleAttributeValue(10.4), convertToAttributeValue(doubleLiteral(10.4)).get());
-    assertEquals(
-        doubleAttributeValue(-3.5), convertToAttributeValue(doubleLiteral(-3.5)).get());
+    assertEquals(doubleAttributeValue(10.4), convertToAttributeValue(doubleLiteral(10.4)).get());
+    assertEquals(doubleAttributeValue(-3.5), convertToAttributeValue(doubleLiteral(-3.5)).get());
   }
 
   @Test

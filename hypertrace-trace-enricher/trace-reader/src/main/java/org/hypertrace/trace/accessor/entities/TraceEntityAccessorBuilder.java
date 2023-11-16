@@ -4,7 +4,6 @@ import static java.util.Collections.emptySet;
 
 import java.time.Duration;
 import java.util.Set;
-
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.trace.provider.AttributeProvider;

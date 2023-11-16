@@ -16,15 +16,12 @@ import static org.mockito.Mockito.when;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Scheduler;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
-
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
@@ -121,8 +118,7 @@ class DefaultTraceEntityAccessorTest {
 
   @Mock EntityTypeClient mockTypeClient;
   @Mock EntityDataClient mockDataClient;
-  @Mock
-  AttributeProvider mockAttributeProvider;
+  @Mock AttributeProvider mockAttributeProvider;
   @Mock TraceAttributeReader<StructuredTrace, Event> mockAttributeReader;
   MockedStatic<Schedulers> mockSchedulers;
 

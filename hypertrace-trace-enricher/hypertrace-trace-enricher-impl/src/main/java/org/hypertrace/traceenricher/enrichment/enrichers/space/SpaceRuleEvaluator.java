@@ -38,6 +38,7 @@ class SpaceRuleEvaluator {
             attributeValueRuleData.getAttributeKey())
         .flatMap(ValueCoercer::convertToString)
         .filter(string -> !string.isEmpty())
-        .map(List::of).orElse(Collections.emptyList());
+        .map(List::of)
+        .orElse(Collections.emptyList());
   }
 }

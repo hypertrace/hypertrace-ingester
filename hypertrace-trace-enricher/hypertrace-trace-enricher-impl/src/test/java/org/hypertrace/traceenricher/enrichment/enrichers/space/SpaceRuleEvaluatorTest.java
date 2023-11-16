@@ -3,11 +3,8 @@ package org.hypertrace.traceenricher.enrichment.enrichers.space;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-import io.reactivex.rxjava3.core.Single;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
-
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;

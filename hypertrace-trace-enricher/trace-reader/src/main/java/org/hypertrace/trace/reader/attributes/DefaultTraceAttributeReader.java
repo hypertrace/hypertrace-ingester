@@ -2,14 +2,12 @@ package org.hypertrace.trace.reader.attributes;
 
 import static org.hypertrace.trace.reader.attributes.ValueSource.TRACE_SCOPE;
 
-import io.reactivex.rxjava3.core.Single;
+import java.util.Optional;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.trace.provider.AttributeProvider;
-
-import java.util.Optional;
 
 class DefaultTraceAttributeReader implements TraceAttributeReader<StructuredTrace, Event> {
 

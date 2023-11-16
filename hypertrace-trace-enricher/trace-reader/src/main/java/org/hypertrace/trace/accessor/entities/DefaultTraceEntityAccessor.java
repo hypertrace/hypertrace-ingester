@@ -1,11 +1,8 @@
 package org.hypertrace.trace.accessor.entities;
 
-import static io.reactivex.rxjava3.core.Maybe.zip;
 import static java.util.function.Predicate.not;
 
-import io.reactivex.rxjava3.core.Maybe;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -13,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
@@ -78,13 +74,16 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
     if (entityOptional.isEmpty()) {
       return;
     }
-    Optional<UpsertCondition> upsertConditionOptional = this.buildUpsertCondition(entityType, trace, span);
+    Optional<UpsertCondition> upsertConditionOptional =
+        this.buildUpsertCondition(entityType, trace, span);
     // TODO: in follow up PR batch eventual entity writes for single tenant
-    upsertConditionOptional.ifPresent(upsertCondition -> this.entityDataClient.createOrUpdateEntityEventually(
-      RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
-      entityOptional.get(),
-      upsertCondition,
-      this.writeThrottleDuration));
+    upsertConditionOptional.ifPresent(
+        upsertCondition ->
+            this.entityDataClient.createOrUpdateEntityEventually(
+                RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
+                entityOptional.get(),
+                upsertCondition,
+                this.writeThrottleDuration));
   }
 
   private Optional<UpsertCondition> buildUpsertCondition(
@@ -92,7 +91,11 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
     if (entityType.getTimestampAttributeKey().isEmpty()) {
       return Optional.empty();
     }
-    return this.attributeProvider.get(this.traceAttributeReader.getTenantId(span), entityType.getAttributeScope(), entityType.getTimestampAttributeKey())
+    return this.attributeProvider
+        .get(
+            this.traceAttributeReader.getTenantId(span),
+            entityType.getAttributeScope(),
+            entityType.getTimestampAttributeKey())
         .filter(this::isEntitySourced)
         .flatMap(
             attribute ->
@@ -125,20 +128,21 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
     Optional<Map<String, AttributeValue>> attributes =
         this.resolveAllAttributes(entityType.getAttributeScope(), trace, span);
     Optional<String> id =
-        attributes.flatMap(
-            map -> this.extractNonEmptyString(map, entityType.getIdAttributeKey()));
+        attributes.flatMap(map -> this.extractNonEmptyString(map, entityType.getIdAttributeKey()));
     Optional<String> name =
         attributes.flatMap(
             map -> this.extractNonEmptyString(map, entityType.getNameAttributeKey()));
     if (id.isEmpty() || name.isEmpty()) {
       return Optional.empty();
     }
-    return Optional.of(Entity.newBuilder()
-      .setEntityId(id.get())
-      .setEntityType(entityType.getName())
-      .setEntityName(name.get())
-      .putAllAttributes(attributes.get())
-      .build()).filter(entity -> this.canCreateEntity(entityType, entity));
+    return Optional.of(
+            Entity.newBuilder()
+                .setEntityId(id.get())
+                .setEntityType(entityType.getName())
+                .setEntityName(name.get())
+                .putAllAttributes(attributes.get())
+                .build())
+        .filter(entity -> this.canCreateEntity(entityType, entity));
   }
 
   private boolean canCreateEntity(EntityType entityType, Entity entity) {
@@ -160,11 +164,18 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
 
   private Optional<Map<String, AttributeValue>> resolveAllAttributes(
       String scope, StructuredTrace trace, Event span) {
-    Optional<List<AttributeMetadata>> mayBeAttributeMetadataList = this.attributeProvider.getAllInScope(this.traceAttributeReader.getTenantId(span), scope);
+    Optional<List<AttributeMetadata>> mayBeAttributeMetadataList =
+        this.attributeProvider.getAllInScope(this.traceAttributeReader.getTenantId(span), scope);
     if (mayBeAttributeMetadataList.isEmpty()) {
       return Optional.empty();
     }
-    Map<String, AttributeValue> resolvedAttributes = mayBeAttributeMetadataList.get().stream().filter(this::isEntitySourced).map(attributeMetadata -> this.resolveAttribute(attributeMetadata, trace, span)).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    Map<String, AttributeValue> resolvedAttributes =
+        mayBeAttributeMetadataList.get().stream()
+            .filter(this::isEntitySourced)
+            .map(attributeMetadata -> this.resolveAttribute(attributeMetadata, trace, span))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     if (resolvedAttributes.isEmpty()) {
       return Optional.empty();
     }
