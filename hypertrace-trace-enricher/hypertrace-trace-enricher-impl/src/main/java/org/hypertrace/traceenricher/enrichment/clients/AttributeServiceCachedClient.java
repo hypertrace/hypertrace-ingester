@@ -11,6 +11,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.typesafe.config.Config;
 import io.grpc.Channel;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -22,6 +23,7 @@ import org.hypertrace.core.attribute.service.v1.AttributeServiceGrpc;
 import org.hypertrace.core.attribute.service.v1.AttributeServiceGrpc.AttributeServiceBlockingStub;
 import org.hypertrace.core.attribute.service.v1.GetAttributesRequest;
 import org.hypertrace.core.grpcutils.context.RequestContext;
+import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.trace.provider.AttributeProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +70,8 @@ public class AttributeServiceCachedClient implements AttributeProvider {
                             ? attributeServiceConfig.getInt(CACHE_EXECUTOR_THREADS_CONFIG_KEY)
                             : 4,
                         this.buildThreadFactory())));
+    PlatformMetricsRegistry.registerCache(
+        "attribute-service-client-cache", cache, Collections.emptyMap());
     scopeAndKeyLookup =
         CacheBuilder.newBuilder().expireAfterWrite(expireAfterWriteDuration).build();
   }
