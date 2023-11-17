@@ -70,8 +70,7 @@ public class AttributeServiceCachedClient implements AttributeProvider {
                             ? attributeServiceConfig.getInt(CACHE_EXECUTOR_THREADS_CONFIG_KEY)
                             : 4,
                         this.buildThreadFactory())));
-    PlatformMetricsRegistry.registerCache(
-        "attribute-service-client-cache", cache, Collections.emptyMap());
+    PlatformMetricsRegistry.registerCache(AttributeServiceCachedClient.class.getName(), cache, Collections.emptyMap());
     scopeAndKeyLookup =
         CacheBuilder.newBuilder().expireAfterWrite(expireAfterWriteDuration).build();
   }
@@ -141,7 +140,7 @@ public class AttributeServiceCachedClient implements AttributeProvider {
   private ThreadFactory buildThreadFactory() {
     return new ThreadFactoryBuilder()
         .setDaemon(true)
-        .setNameFormat("attribute-service-cache-%d")
+        .setNameFormat("attribute-service-cached-client-%d")
         .build();
   }
 
