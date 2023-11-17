@@ -22,6 +22,7 @@ import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeServiceGrpc;
 import org.hypertrace.core.attribute.service.v1.AttributeServiceGrpc.AttributeServiceBlockingStub;
 import org.hypertrace.core.attribute.service.v1.GetAttributesRequest;
+import org.hypertrace.core.grpcutils.client.RequestContextClientCallCredsProviderFactory;
 import org.hypertrace.core.grpcutils.context.RequestContext;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.trace.provider.AttributeProvider;
@@ -123,6 +124,7 @@ public class AttributeServiceCachedClient implements AttributeProvider {
                 () ->
                     attributeServiceBlockingStub
                         .withDeadlineAfter(deadlineMs, TimeUnit.MILLISECONDS)
+                        .withCallCredentials(RequestContextClientCallCredsProviderFactory.getClientCallCredsProvider().get())
                         .getAttributes(GetAttributesRequest.getDefaultInstance()))
             .getAttributesList();
     attributeMetadataList.forEach(
