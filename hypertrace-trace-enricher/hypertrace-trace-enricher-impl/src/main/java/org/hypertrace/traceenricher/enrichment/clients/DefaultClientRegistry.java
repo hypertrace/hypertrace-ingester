@@ -50,6 +50,7 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
   private final GrpcChannelRegistry grpcChannelRegistry;
   private final UserAgentParser userAgentParser;
+  private final AttributeProvider attributeProvider;
 
   public DefaultClientRegistry(
       Config config, GrpcChannelRegistry grpcChannelRegistry, Executor cacheLoaderExecutor) {
@@ -66,7 +67,7 @@ public class DefaultClientRegistry implements ClientRegistry {
         this.buildChannel(
             config.getString(ENTITY_SERVICE_HOST_KEY), config.getInt(ENTITY_SERVICE_PORT_KEY));
 
-    AttributeProvider attributeProvider =
+    this.attributeProvider =
         new AttributeServiceCachedClient(
             attributeServiceChannel, config.getConfig(ATTRIBUTE_SERVICE_CONFIG_KEY));
     this.attributeReader = TraceAttributeReaderFactory.build(attributeProvider);
@@ -144,6 +145,11 @@ public class DefaultClientRegistry implements ClientRegistry {
   @Override
   public UserAgentParser getUserAgentParser() {
     return this.userAgentParser;
+  }
+
+  @Override
+  public AttributeProvider getAttributeProvider() {
+    return attributeProvider;
   }
 
   public void shutdown() {
