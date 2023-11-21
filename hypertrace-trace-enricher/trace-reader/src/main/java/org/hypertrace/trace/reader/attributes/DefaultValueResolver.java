@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjection;
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
@@ -19,17 +20,17 @@ import org.hypertrace.core.attribute.service.v1.AttributeType;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.attribute.service.v1.Projection;
 import org.hypertrace.core.attribute.service.v1.ProjectionExpression;
-import org.hypertrace.trace.provider.AttributeProvider;
 
 @Slf4j
 class DefaultValueResolver implements ValueResolver {
   // One log a minute
   private static final RateLimiter LOGGING_LIMITER = RateLimiter.create(1 / 60d);
-  private final AttributeProvider attributeClient;
+  private final AttributeServiceCachedClient attributeClient;
   private final AttributeProjectionRegistry attributeProjectionRegistry;
 
   DefaultValueResolver(
-      AttributeProvider attributeClient, AttributeProjectionRegistry attributeProjectionRegistry) {
+      AttributeServiceCachedClient attributeClient,
+      AttributeProjectionRegistry attributeProjectionRegistry) {
     this.attributeClient = attributeClient;
     this.attributeProjectionRegistry = attributeProjectionRegistry;
   }
@@ -106,7 +107,7 @@ class DefaultValueResolver implements ValueResolver {
     switch (projection.getValueCase()) {
       case ATTRIBUTE_ID:
         return this.attributeClient
-            .getById(valueSource.tenantId(), projection.getAttributeId())
+            .getById(valueSource.requestContext(), projection.getAttributeId())
             .flatMap(attributeMetadata -> this.resolve(valueSource, attributeMetadata));
       case LITERAL:
         return Optional.of(projection.getLiteral());

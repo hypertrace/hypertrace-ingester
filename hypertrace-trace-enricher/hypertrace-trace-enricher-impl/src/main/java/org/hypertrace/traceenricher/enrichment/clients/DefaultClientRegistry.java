@@ -7,6 +7,8 @@ import io.grpc.Channel;
 import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
+import org.hypertrace.core.attribute.service.client.config.AttributeServiceCachedClientConfig;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.GrpcChannelConfig;
@@ -21,7 +23,6 @@ import org.hypertrace.entity.service.client.config.EntityServiceClientConfig;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.trace.accessor.entities.TraceEntityAccessor;
 import org.hypertrace.trace.accessor.entities.TraceEntityAccessorBuilder;
-import org.hypertrace.trace.provider.AttributeProvider;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReaderFactory;
 import org.hypertrace.traceenricher.enrichment.enrichers.cache.EntityCache;
@@ -50,7 +51,7 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final TraceAttributeReader<StructuredTrace, Event> attributeReader;
   private final GrpcChannelRegistry grpcChannelRegistry;
   private final UserAgentParser userAgentParser;
-  private final AttributeProvider attributeProvider;
+  private final AttributeServiceCachedClient attributeClient;
 
   public DefaultClientRegistry(
       Config config, GrpcChannelRegistry grpcChannelRegistry, Executor cacheLoaderExecutor) {
@@ -67,10 +68,12 @@ public class DefaultClientRegistry implements ClientRegistry {
         this.buildChannel(
             config.getString(ENTITY_SERVICE_HOST_KEY), config.getInt(ENTITY_SERVICE_PORT_KEY));
 
-    this.attributeProvider =
+    this.attributeClient =
         new AttributeServiceCachedClient(
-            attributeServiceChannel, config.getConfig(ATTRIBUTE_SERVICE_CONFIG_KEY));
-    this.attributeReader = TraceAttributeReaderFactory.build(attributeProvider);
+            attributeServiceChannel,
+            AttributeServiceCachedClientConfig.from(
+                config.getConfig(ATTRIBUTE_SERVICE_CONFIG_KEY)));
+    this.attributeReader = TraceAttributeReaderFactory.build(attributeClient);
     this.edsCacheClient =
         new EdsCacheClient(
             new EntityDataServiceClient(this.entityServiceChannel),
@@ -82,7 +85,7 @@ public class DefaultClientRegistry implements ClientRegistry {
         new TraceEntityAccessorBuilder(
                 EntityTypeClient.builder(this.entityServiceChannel).build(),
                 this.entityDataClient,
-                attributeProvider)
+                attributeClient)
             .withEntityWriteThrottleDuration(
                 config.hasPath(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
                     ? config.getDuration(TRACE_ENTITY_WRITE_THROTTLE_DURATION)
@@ -148,8 +151,8 @@ public class DefaultClientRegistry implements ClientRegistry {
   }
 
   @Override
-  public AttributeProvider getAttributeProvider() {
-    return attributeProvider;
+  public AttributeServiceCachedClient getAttributeClient() {
+    return attributeClient;
   }
 
   public void shutdown() {

@@ -9,11 +9,14 @@ import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.longLitera
 import static org.hypertrace.trace.reader.attributes.LiteralValueUtil.stringLiteral;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.Optional;
+import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition.AttributeDefinitions;
@@ -27,7 +30,6 @@ import org.hypertrace.core.attribute.service.v1.ProjectionExpression;
 import org.hypertrace.core.attribute.service.v1.ProjectionOperator;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.trace.provider.AttributeProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DefaultValueResolverTest {
 
-  @Mock AttributeProvider mockAttributeProvider;
+  @Mock AttributeServiceCachedClient mockAttributeServiceCachedClient;
   @Mock StructuredTrace mockStructuredTrace;
 
   private DefaultValueResolver resolver;
@@ -45,7 +47,8 @@ class DefaultValueResolverTest {
   @BeforeEach
   void beforeEach() {
     this.resolver =
-        new DefaultValueResolver(this.mockAttributeProvider, new AttributeProjectionRegistry());
+        new DefaultValueResolver(
+            this.mockAttributeServiceCachedClient, new AttributeProjectionRegistry());
   }
 
   @Test
@@ -123,7 +126,7 @@ class DefaultValueResolverTest {
             .setValueKind(AttributeKind.TYPE_INT64)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("metricPath").build())
             .build();
-    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.other"))
+    when(this.mockAttributeServiceCachedClient.getById(any(), eq("TEST_SCOPE.other")))
         .thenReturn(Optional.of((otherMetadata)));
 
     Event span =
@@ -168,9 +171,9 @@ class DefaultValueResolverTest {
             .setValueKind(AttributeKind.TYPE_STRING)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("attrPath").build())
             .build();
-    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.first"))
+    when(this.mockAttributeServiceCachedClient.getById(any(), eq("TEST_SCOPE.first")))
         .thenReturn(Optional.of(firstMetadata));
-    when(this.mockAttributeProvider.getById("defaultCustomerId", "TEST_SCOPE.second"))
+    when(this.mockAttributeServiceCachedClient.getById(any(), eq("TEST_SCOPE.second")))
         .thenReturn(Optional.of(secondMetadata));
 
     Event span =
@@ -202,7 +205,7 @@ class DefaultValueResolverTest {
             .setValueKind(AttributeKind.TYPE_INT64)
             .setDefinition(AttributeDefinition.newBuilder().setSourcePath("metricPath").build())
             .build();
-    when(this.mockAttributeProvider.getById("defaultCustomerId", "TRACE.other"))
+    when(this.mockAttributeServiceCachedClient.getById(any(), eq("TRACE.other")))
         .thenReturn(Optional.of(otherMetadata));
 
     StructuredTrace trace =

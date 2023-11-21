@@ -1,5 +1,6 @@
 [versions]
 hypertrace-entity-service = "0.8.78"
+hypertrace-attribute-service = "0.14.38"
 hypertrace-config-service = "0.1.54"
 hypertrace-grpc-utils = "0.12.4"
 hypertrace-serviceFramework = "0.1.62"
@@ -10,7 +11,12 @@ grpc = "1.57.2"
 [libraries]
 
 hypertrace-entityService-client = { module = "org.hypertrace.entity.service:entity-service-client", version.ref = "hypertrace-entity-service" }
+hypertrace-entityTypeService-rxClient = { module = "org.hypertrace.entity.service:entity-type-service-rx-client", version.ref = "hypertrace-entity-service" }
+hypertrace-entityDataService-rxClient = { module = "org.hypertrace.entity.service:entity-data-service-rx-client", version.ref = "hypertrace-entity-service" }
 hypertrace-entityService-api = { module = "org.hypertrace.entity.service:entity-service-api", version.ref = "hypertrace-entity-service" }
+hypertrace-attributeService-client = { module = "org.hypertrace.core.attribute.service:attribute-service-client", version.ref = "hypertrace-attribute-service" }
+hypertrace-attributeService-attributeProjectionRegistry = { module = "org.hypertrace.core.attribute.service:attribute-projection-registry", version.ref = "hypertrace-attribute-service" }
+hypertrace-attributeService-api = { module = "org.hypertrace.core.attribute.service:attribute-service-api", version.ref = "hypertrace-attribute-service" }
 hypertrace-grpc-context-utils = { module = "org.hypertrace.core.grpcutils:grpc-context-utils", version.ref = "hypertrace-grpc-utils" }
 hypertrace-grpc-client-utils ={ module = "org.hypertrace.core.grpcutils:grpc-client-utils", version.ref = "hypertrace-grpc-utils" }
 hypertrace-grpc-client-rxUtils = { module = "org.hypertrace.core.grpcutils:grpc-client-rx-utils", version.ref = "hypertrace-grpc-utils"}

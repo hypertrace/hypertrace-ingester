@@ -3,20 +3,21 @@ package org.hypertrace.trace.reader.attributes;
 import static org.hypertrace.trace.reader.attributes.ValueSource.TRACE_SCOPE;
 
 import java.util.Optional;
+import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.trace.provider.AttributeProvider;
+import org.hypertrace.core.grpcutils.context.RequestContext;
 
 class DefaultTraceAttributeReader implements TraceAttributeReader<StructuredTrace, Event> {
 
-  private final AttributeProvider attributeProvider;
+  private final AttributeServiceCachedClient attributeClient;
   private final ValueResolver valueResolver;
 
-  DefaultTraceAttributeReader(AttributeProvider attributeProvider) {
-    this.attributeProvider = attributeProvider;
-    this.valueResolver = ValueResolver.build(this.attributeProvider);
+  DefaultTraceAttributeReader(AttributeServiceCachedClient attributeClient) {
+    this.attributeClient = attributeClient;
+    this.valueResolver = ValueResolver.build(this.attributeClient);
   }
 
   @Override
@@ -39,8 +40,13 @@ class DefaultTraceAttributeReader implements TraceAttributeReader<StructuredTrac
     return span.getCustomerId();
   }
 
+  @Override
+  public RequestContext getRequestContext(Event span) {
+    return RequestContext.forTenantId(span.getCustomerId());
+  }
+
   private Optional<AttributeMetadata> getAttribute(
       ValueSource valueSource, String attributeScope, String attributeKey) {
-    return this.attributeProvider.get(valueSource.tenantId(), attributeScope, attributeKey);
+    return this.attributeClient.get(valueSource.requestContext(), attributeScope, attributeKey);
   }
 }

@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
@@ -37,7 +38,6 @@ import org.hypertrace.entity.data.service.v1.MergeAndUpsertEntityRequest.UpsertC
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.entity.type.service.v2.EntityType;
 import org.hypertrace.entity.type.service.v2.EntityType.EntityFormationCondition;
-import org.hypertrace.trace.provider.AttributeProvider;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -118,7 +118,7 @@ class DefaultTraceEntityAccessorTest {
 
   @Mock EntityTypeClient mockTypeClient;
   @Mock EntityDataClient mockDataClient;
-  @Mock AttributeProvider mockAttributeProvider;
+  @Mock AttributeServiceCachedClient mockAttributeClient;
   @Mock TraceAttributeReader<StructuredTrace, Event> mockAttributeReader;
   MockedStatic<Schedulers> mockSchedulers;
 
@@ -131,7 +131,7 @@ class DefaultTraceEntityAccessorTest {
         new DefaultTraceEntityAccessor(
             this.mockTypeClient,
             this.mockDataClient,
-            this.mockAttributeProvider,
+            this.mockAttributeClient,
             this.mockAttributeReader,
             DEFAULT_DURATION,
             EXCLUDE_ENTITY_TYPES);
@@ -297,13 +297,13 @@ class DefaultTraceEntityAccessorTest {
   }
 
   private void mockGetAllAttributes(AttributeMetadata... attributeMetadata) {
-    when(this.mockAttributeProvider.getAllInScope(TENANT_ID, TEST_ENTITY_TYPE_NAME))
-        .thenReturn(Optional.of(Arrays.asList(attributeMetadata)));
+    when(this.mockAttributeClient.getAllInScope(any(), eq(TEST_ENTITY_TYPE_NAME)))
+        .thenReturn(Arrays.asList(attributeMetadata));
   }
 
   private void mockGetSingleAttribute(AttributeMetadata attributeMetadata) {
-    when(this.mockAttributeProvider.get(
-            TENANT_ID, attributeMetadata.getScopeString(), attributeMetadata.getKey()))
+    when(this.mockAttributeClient.get(
+            any(), eq(attributeMetadata.getScopeString()), eq(attributeMetadata.getKey())))
         .thenReturn(Optional.of(attributeMetadata));
   }
 

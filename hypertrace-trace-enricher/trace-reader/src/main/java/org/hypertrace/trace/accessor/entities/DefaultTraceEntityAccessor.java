@@ -10,13 +10,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
-import org.hypertrace.core.grpcutils.context.RequestContext;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
 import org.hypertrace.entity.data.service.v1.AttributeValue;
 import org.hypertrace.entity.data.service.v1.AttributeValue.TypeCase;
@@ -28,14 +28,13 @@ import org.hypertrace.entity.data.service.v1.Value;
 import org.hypertrace.entity.type.service.rxclient.EntityTypeClient;
 import org.hypertrace.entity.type.service.v2.EntityType;
 import org.hypertrace.entity.type.service.v2.EntityType.EntityFormationCondition;
-import org.hypertrace.trace.provider.AttributeProvider;
 import org.hypertrace.trace.reader.attributes.TraceAttributeReader;
 
 @Slf4j
 class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   private final EntityTypeClient entityTypeClient;
   private final EntityDataClient entityDataClient;
-  private final AttributeProvider attributeProvider;
+  private final AttributeServiceCachedClient attributeClient;
   private final TraceAttributeReader<StructuredTrace, Event> traceAttributeReader;
   private final Duration writeThrottleDuration;
   private final Set<String> excludedEntityTypes;
@@ -43,13 +42,13 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   DefaultTraceEntityAccessor(
       EntityTypeClient entityTypeClient,
       EntityDataClient entityDataClient,
-      AttributeProvider attributeProvider,
+      AttributeServiceCachedClient attributeClient,
       TraceAttributeReader<StructuredTrace, Event> traceAttributeReader,
       Duration writeThrottleDuration,
       Set<String> excludedEntityTypes) {
     this.entityTypeClient = entityTypeClient;
     this.entityDataClient = entityDataClient;
-    this.attributeProvider = attributeProvider;
+    this.attributeClient = attributeClient;
     this.traceAttributeReader = traceAttributeReader;
     this.writeThrottleDuration = writeThrottleDuration;
     this.excludedEntityTypes = excludedEntityTypes;
@@ -74,9 +73,8 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
     if (entityOptional.isEmpty()) {
       return;
     }
-    // TODO: in follow up PR batch eventual entity writes for single tenant
     this.entityDataClient.createOrUpdateEntityEventually(
-        RequestContext.forTenantId(this.traceAttributeReader.getTenantId(span)),
+        this.traceAttributeReader.getRequestContext(span),
         entityOptional.get(),
         this.buildUpsertCondition(entityType, trace, span)
             .orElse(UpsertCondition.getDefaultInstance()),
@@ -88,9 +86,9 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
     if (entityType.getTimestampAttributeKey().isEmpty()) {
       return Optional.empty();
     }
-    return this.attributeProvider
+    return this.attributeClient
         .get(
-            this.traceAttributeReader.getTenantId(span),
+            traceAttributeReader.getRequestContext(span),
             entityType.getAttributeScope(),
             entityType.getTimestampAttributeKey())
         .filter(this::isEntitySourced)
@@ -161,13 +159,14 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
 
   private Optional<Map<String, AttributeValue>> resolveAllAttributes(
       String scope, StructuredTrace trace, Event span) {
-    Optional<List<AttributeMetadata>> mayBeAttributeMetadataList =
-        this.attributeProvider.getAllInScope(this.traceAttributeReader.getTenantId(span), scope);
-    if (mayBeAttributeMetadataList.isEmpty()) {
+    List<AttributeMetadata> attributeMetadataList =
+        this.attributeClient.getAllInScope(
+            this.traceAttributeReader.getRequestContext(span), scope);
+    if (attributeMetadataList.isEmpty()) {
       return Optional.empty();
     }
     Map<String, AttributeValue> resolvedAttributes =
-        mayBeAttributeMetadataList.get().stream()
+        attributeMetadataList.stream()
             .filter(this::isEntitySourced)
             .map(attributeMetadata -> this.resolveAttribute(attributeMetadata, trace, span))
             .filter(Optional::isPresent)
