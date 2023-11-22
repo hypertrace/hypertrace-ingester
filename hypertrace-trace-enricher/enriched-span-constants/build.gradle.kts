@@ -8,7 +8,6 @@ plugins {
   id("org.hypertrace.publish-plugin")
 }
 
-
 protobuf {
   protoc {
     artifact = "com.google.protobuf:protoc:3.21.12"
@@ -39,7 +38,6 @@ sourceSets {
 tasks.test {
   useJUnitPlatform()
 }
-
 
 dependencies {
   api(libs.google.protobuf.java)
