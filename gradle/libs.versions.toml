@@ -2,10 +2,10 @@
 hypertrace-entity-service = "0.8.78"
 hypertrace-attribute-service = "0.14.38"
 hypertrace-config-service = "0.1.54"
-hypertrace-grpc-utils = "0.12.4"
+hypertrace-grpc-utils = "0.12.6"
 hypertrace-serviceFramework = "0.1.62"
 hypertrace-kafkaStreams = "0.4.3"
-hypertrace-view-generator = "0.4.20"
+hypertrace-view-generator = "0.4.21"
 grpc = "1.57.2"
 
 [libraries]
