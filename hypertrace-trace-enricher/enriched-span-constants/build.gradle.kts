@@ -12,25 +12,12 @@ protobuf {
   protoc {
     artifact = "com.google.protobuf:protoc:3.21.12"
   }
-  plugins {
-    id("grpc") {
-      artifact = "io.grpc:protoc-gen-grpc-java:1.57.2"
-    }
-  }
-  generateProtoTasks {
-    ofSourceSet("main").configureEach {
-      plugins {
-        // Apply the "grpc" plugin whose spec is defined above, without options.
-        id("grpc")
-      }
-    }
-  }
 }
 
 sourceSets {
   main {
     java {
-      srcDirs("build/generated/source/proto/main/java", "build/generated/source/proto/main/grpc_java")
+      srcDirs("build/generated/source/proto/main/java")
     }
   }
 }
