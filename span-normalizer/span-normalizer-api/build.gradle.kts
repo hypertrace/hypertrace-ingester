@@ -4,6 +4,7 @@ plugins {
   `java-library`
   id("com.google.protobuf") version "0.9.2"
   id("org.hypertrace.publish-plugin")
+  id("org.hypertrace.avro-plugin")
 }
 
 protobuf {
