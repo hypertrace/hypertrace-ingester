@@ -1,6 +1,7 @@
 package org.hypertrace.trace.reader.attributes;
 
 import com.google.common.util.concurrent.RateLimiter;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -149,22 +150,29 @@ class DefaultValueResolver implements ValueResolver {
       }
       return Optional.empty();
     }
-    Optional<List<LiteralValue>> maybeArguments =
+    List<LiteralValue> argumentList =
         this.resolveArgumentList(valueSource, expression.getArgumentsList());
 
-    return maybeArguments.map(arguments -> maybeProjection.get().project(arguments));
+    if (argumentList.isEmpty()) {
+      if (LOGGING_LIMITER.tryAcquire()) {
+        log.error(
+            "Failed to resolve argument list for expression with operator: {}",
+            expression.getOperator());
+      }
+      return Optional.empty();
+    }
+    return Optional.of(maybeProjection.get().project(argumentList));
   }
 
-  private Optional<List<LiteralValue>> resolveArgumentList(
+  private List<LiteralValue> resolveArgumentList(
       ValueSource valueSource, List<Projection> arguments) {
     Stream<Optional<LiteralValue>> resolvedArguments =
         arguments.stream().map(argument -> this.resolveProjection(valueSource, argument));
     try {
-      return Optional.of(
-          resolvedArguments.map(Optional::orElseThrow).collect(Collectors.toUnmodifiableList()));
+      return resolvedArguments.map(Optional::orElseThrow).collect(Collectors.toUnmodifiableList());
     } catch (NoSuchElementException elementException) {
-      // if any of the arguments don't resolve, fail argument resolution
-      return Optional.empty();
+      // if any of the arguments don't resolve partial, fail argument resolution
+      return Collections.emptyList();
     }
   }
 }
