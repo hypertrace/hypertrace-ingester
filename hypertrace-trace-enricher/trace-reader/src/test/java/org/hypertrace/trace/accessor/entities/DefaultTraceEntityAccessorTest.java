@@ -303,13 +303,16 @@ class DefaultTraceEntityAccessorTest {
   }
 
   private void mockGetAllAttributes(AttributeMetadata... attributeMetadata) {
-    when(this.mockAttributeClient.getAllInScope(any(), eq(TEST_ENTITY_TYPE_NAME)))
+    when(this.mockAttributeClient.getAllInScope(
+            argThat(MATCHING_TENANT_REQUEST_CONTEXT), eq(TEST_ENTITY_TYPE_NAME)))
         .thenReturn(Arrays.asList(attributeMetadata));
   }
 
   private void mockGetSingleAttribute(AttributeMetadata attributeMetadata) {
     when(this.mockAttributeClient.get(
-            any(), eq(attributeMetadata.getScopeString()), eq(attributeMetadata.getKey())))
+            argThat(MATCHING_TENANT_REQUEST_CONTEXT),
+            eq(attributeMetadata.getScopeString()),
+            eq(attributeMetadata.getKey())))
         .thenReturn(Optional.of(attributeMetadata));
   }
 
