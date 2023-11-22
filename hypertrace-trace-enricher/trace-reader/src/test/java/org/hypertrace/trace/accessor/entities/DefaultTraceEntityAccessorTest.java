@@ -135,6 +135,12 @@ class DefaultTraceEntityAccessorTest {
             this.mockAttributeReader,
             DEFAULT_DURATION,
             EXCLUDE_ENTITY_TYPES);
+    when(mockAttributeReader.getRequestContext(any()))
+        .thenAnswer(
+            inv -> {
+              Event event = inv.getArgument(0);
+              return RequestContext.forTenantId(event.getCustomerId());
+            });
     mockSchedulers = Mockito.mockStatic(Schedulers.class);
     mockSchedulers.when(Schedulers::io).thenReturn(trampoline);
   }
