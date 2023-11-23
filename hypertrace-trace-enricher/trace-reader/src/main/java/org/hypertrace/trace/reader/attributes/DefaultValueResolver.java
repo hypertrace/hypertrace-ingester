@@ -109,7 +109,7 @@ class DefaultValueResolver implements ValueResolver {
         return this.resolveExpression(valueSource, projection.getExpression());
       case VALUE_NOT_SET:
       default:
-        logError("Unrecognized projection type");
+        logError("Unrecognized projection type {}", projection.getValueCase());
         return Optional.empty();
     }
   }
