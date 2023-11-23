@@ -69,16 +69,17 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
   }
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
-    Optional<Entity> entityOptional = this.buildEntity(entityType, trace, span);
-    if (entityOptional.isEmpty()) {
-      return;
-    }
-    this.entityDataClient.createOrUpdateEntityEventually(
-        this.traceAttributeReader.getRequestContext(span),
-        entityOptional.get(),
-        this.buildUpsertCondition(entityType, trace, span)
-            .orElse(UpsertCondition.getDefaultInstance()),
-        this.writeThrottleDuration);
+    this.buildEntity(entityType, trace, span)
+        .map(
+            entity -> {
+              this.entityDataClient.createOrUpdateEntityEventually(
+                  this.traceAttributeReader.getRequestContext(span),
+                  entity,
+                  this.buildUpsertCondition(entityType, trace, span)
+                      .orElse(UpsertCondition.getDefaultInstance()),
+                  this.writeThrottleDuration);
+              return null;
+            });
   }
 
   private Optional<UpsertCondition> buildUpsertCondition(
@@ -162,16 +163,12 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
     List<AttributeMetadata> attributeMetadataList =
         this.attributeClient.getAllInScope(
             this.traceAttributeReader.getRequestContext(span), scope);
-    if (attributeMetadataList.isEmpty()) {
-      return Optional.empty();
-    }
     Map<String, AttributeValue> resolvedAttributes =
         attributeMetadataList.stream()
             .filter(this::isEntitySourced)
             .map(attributeMetadata -> this.resolveAttribute(attributeMetadata, trace, span))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+            .flatMap(Optional::stream)
+            .collect(Collectors.toUnmodifiableMap(Entry::getKey, Entry::getValue));
     if (resolvedAttributes.isEmpty()) {
       return Optional.empty();
     }

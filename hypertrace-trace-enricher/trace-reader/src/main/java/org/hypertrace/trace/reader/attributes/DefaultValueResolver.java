@@ -3,11 +3,8 @@ package org.hypertrace.trace.reader.attributes;
 import com.google.common.util.concurrent.RateLimiter;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjection;
@@ -40,9 +37,7 @@ class DefaultValueResolver implements ValueResolver {
   public Optional<LiteralValue> resolve(
       ValueSource valueSource, AttributeMetadata attributeMetadata) {
     if (!attributeMetadata.hasDefinition()) {
-      if (LOGGING_LIMITER.tryAcquire()) {
-        log.error("Attribute definition not set for attribute: " + attributeMetadata.getId());
-      }
+      logError("Attribute definition not set for attribute: {}", attributeMetadata.getId());
       return Optional.empty();
     }
 
@@ -85,9 +80,7 @@ class DefaultValueResolver implements ValueResolver {
       String path) {
     Optional<ValueSource> matchingValueSource = contextValueSource.sourceForScope(attributeScope);
     if (matchingValueSource.isEmpty()) {
-      if (LOGGING_LIMITER.tryAcquire()) {
-        log.error("No value source available supporting scope %s", attributeScope);
-      }
+      logError("No value source available supporting scope {}", attributeScope);
       return Optional.empty();
     }
     switch (attributeType) {
@@ -116,9 +109,7 @@ class DefaultValueResolver implements ValueResolver {
         return this.resolveExpression(valueSource, projection.getExpression());
       case VALUE_NOT_SET:
       default:
-        if (LOGGING_LIMITER.tryAcquire()) {
-          log.error("Unrecognized projection type");
-        }
+        logError("Unrecognized projection type");
         return Optional.empty();
     }
   }
@@ -135,9 +126,8 @@ class DefaultValueResolver implements ValueResolver {
 
     return definitions.getDefinitionsList().stream()
         .map(definition -> this.resolveDefinition(valueSource, attributeMetadata, definition))
-        .filter(Optional::isPresent)
-        .findFirst()
-        .flatMap(Function.identity());
+        .flatMap(Optional::stream)
+        .findFirst();
   }
 
   private Optional<LiteralValue> resolveExpression(
@@ -145,34 +135,37 @@ class DefaultValueResolver implements ValueResolver {
     Optional<AttributeProjection> maybeProjection =
         this.attributeProjectionRegistry.getProjection(expression.getOperator());
     if (maybeProjection.isEmpty()) {
-      if (LOGGING_LIMITER.tryAcquire()) {
-        log.error("Unregistered projection operator: {}", expression.getOperator());
-      }
+      logError("Unregistered projection operator: {}", expression.getOperator());
       return Optional.empty();
     }
     List<LiteralValue> argumentList =
         this.resolveArgumentList(valueSource, expression.getArgumentsList());
 
     if (argumentList.isEmpty()) {
-      if (LOGGING_LIMITER.tryAcquire()) {
-        log.error(
-            "Failed to resolve argument list for expression with operator: {}",
-            expression.getOperator());
-      }
+      logError("Failed to resolve argument list for expression with operator: {}", expression);
       return Optional.empty();
     }
-    return Optional.of(maybeProjection.get().project(argumentList));
+    return maybeProjection.map(projection -> projection.project(argumentList));
+  }
+
+  private void logError(String format, Object... args) {
+    if (LOGGING_LIMITER.tryAcquire()) {
+      log.error(format, args);
+    }
   }
 
   private List<LiteralValue> resolveArgumentList(
       ValueSource valueSource, List<Projection> arguments) {
-    Stream<Optional<LiteralValue>> resolvedArguments =
-        arguments.stream().map(argument -> this.resolveProjection(valueSource, argument));
-    try {
-      return resolvedArguments.map(Optional::orElseThrow).collect(Collectors.toUnmodifiableList());
-    } catch (NoSuchElementException elementException) {
-      // if any of the arguments don't resolve partial, fail argument resolution
+    List<LiteralValue> resolvedArguments =
+        arguments.stream()
+            .map(argument -> this.resolveProjection(valueSource, argument))
+            .flatMap(Optional::stream)
+            .collect(Collectors.toUnmodifiableList());
+    if (resolvedArguments.size() != arguments.size()) {
+      // if any of the arguments don't resolve, return empty list to don't support partial
+      // resolution
       return Collections.emptyList();
     }
+    return resolvedArguments;
   }
 }
