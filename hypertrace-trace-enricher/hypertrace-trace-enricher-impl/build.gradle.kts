@@ -18,6 +18,7 @@ dependencies {
 
   implementation(libs.hypertrace.data.model)
   implementation(libs.hypertrace.entityService.client)
+  implementation(libs.hypertrace.attributeService.client)
   implementation(libs.hypertrace.serviceFramework.metrics)
   implementation(libs.hypertrace.grpc.client.utils)
   implementation(libs.hypertrace.spacesConfigServiceApi)

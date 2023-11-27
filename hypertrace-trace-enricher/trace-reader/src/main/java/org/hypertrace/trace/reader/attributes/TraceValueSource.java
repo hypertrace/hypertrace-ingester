@@ -6,7 +6,7 @@ import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
+import org.hypertrace.core.grpcutils.context.RequestContext;
 
 class TraceValueSource extends AvroBackedValueSource {
 
@@ -49,8 +49,8 @@ class TraceValueSource extends AvroBackedValueSource {
   }
 
   @Override
-  public GrpcRxExecutionContext executionContext() {
-    return GrpcRxExecutionContext.forTenantContext(this.trace.getCustomerId());
+  public RequestContext requestContext() {
+    return RequestContext.forTenantId(trace.getCustomerId());
   }
 
   @Override

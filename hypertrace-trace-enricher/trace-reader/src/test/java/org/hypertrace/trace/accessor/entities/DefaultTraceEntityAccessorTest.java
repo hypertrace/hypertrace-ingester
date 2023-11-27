@@ -16,14 +16,13 @@ import static org.mockito.Mockito.when;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Scheduler;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
-import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
+import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeSource;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
@@ -119,7 +118,7 @@ class DefaultTraceEntityAccessorTest {
 
   @Mock EntityTypeClient mockTypeClient;
   @Mock EntityDataClient mockDataClient;
-  @Mock CachingAttributeClient mockAttributeClient;
+  @Mock AttributeServiceCachedClient mockAttributeClient;
   @Mock TraceAttributeReader<StructuredTrace, Event> mockAttributeReader;
   MockedStatic<Schedulers> mockSchedulers;
 
@@ -136,6 +135,12 @@ class DefaultTraceEntityAccessorTest {
             this.mockAttributeReader,
             DEFAULT_DURATION,
             EXCLUDE_ENTITY_TYPES);
+    when(mockAttributeReader.getRequestContext(any()))
+        .thenAnswer(
+            inv -> {
+              Event event = inv.getArgument(0);
+              return RequestContext.forTenantId(event.getCustomerId());
+            });
     mockSchedulers = Mockito.mockStatic(Schedulers.class);
     mockSchedulers.when(Schedulers::io).thenReturn(trampoline);
   }
@@ -288,24 +293,27 @@ class DefaultTraceEntityAccessorTest {
   private void mockAttributeRead(AttributeMetadata attributeMetadata, LiteralValue value) {
     when(this.mockAttributeReader.getSpanValue(
             TEST_TRACE, TEST_SPAN, attributeMetadata.getScopeString(), attributeMetadata.getKey()))
-        .thenReturn(Single.just(value));
+        .thenReturn(Optional.of(value));
   }
 
   private void mockAttributeReadError(AttributeMetadata attributeMetadata) {
     when(this.mockAttributeReader.getSpanValue(
             TEST_TRACE, TEST_SPAN, attributeMetadata.getScopeString(), attributeMetadata.getKey()))
-        .thenReturn(Single.error(new NoSuchElementException()));
+        .thenReturn(Optional.empty());
   }
 
   private void mockGetAllAttributes(AttributeMetadata... attributeMetadata) {
-    when(this.mockAttributeClient.getAllInScope(TEST_ENTITY_TYPE_NAME))
-        .thenReturn(Single.just(Arrays.asList(attributeMetadata)));
+    when(this.mockAttributeClient.getAllInScope(
+            argThat(MATCHING_TENANT_REQUEST_CONTEXT), eq(TEST_ENTITY_TYPE_NAME)))
+        .thenReturn(Arrays.asList(attributeMetadata));
   }
 
   private void mockGetSingleAttribute(AttributeMetadata attributeMetadata) {
     when(this.mockAttributeClient.get(
-            attributeMetadata.getScopeString(), attributeMetadata.getKey()))
-        .thenReturn(Single.just(attributeMetadata));
+            argThat(MATCHING_TENANT_REQUEST_CONTEXT),
+            eq(attributeMetadata.getScopeString()),
+            eq(attributeMetadata.getKey())))
+        .thenReturn(Optional.of(attributeMetadata));
   }
 
   private void mockAllEntityTypes(EntityType entityType) {

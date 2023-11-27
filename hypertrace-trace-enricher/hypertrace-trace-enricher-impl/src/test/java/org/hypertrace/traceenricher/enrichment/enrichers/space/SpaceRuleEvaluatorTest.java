@@ -3,9 +3,8 @@ package org.hypertrace.traceenricher.enrichment.enrichers.space;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-import io.reactivex.rxjava3.core.Single;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -48,7 +47,7 @@ class SpaceRuleEvaluatorTest {
   @Test
   void testConvertsStringValue() {
     when(this.mockAttributeReader.getSpanValue(this.mockTrace, this.mockSpan, MOCK_SCOPE, MOCK_KEY))
-        .thenReturn(Single.just(LiteralValue.newBuilder().setStringValue("attr-value").build()));
+        .thenReturn(Optional.of(LiteralValue.newBuilder().setStringValue("attr-value").build()));
     assertEquals(
         List.of("attr-value"),
         this.ruleEvaluator.calculateSpacesForRule(this.mockTrace, this.mockSpan, this.rule));
@@ -57,7 +56,7 @@ class SpaceRuleEvaluatorTest {
   @Test
   void testConvertsIntValue() {
     when(this.mockAttributeReader.getSpanValue(this.mockTrace, this.mockSpan, MOCK_SCOPE, MOCK_KEY))
-        .thenReturn(Single.just(LiteralValue.newBuilder().setIntValue(12).build()));
+        .thenReturn(Optional.of(LiteralValue.newBuilder().setIntValue(12).build()));
     assertEquals(
         List.of("12"),
         this.ruleEvaluator.calculateSpacesForRule(this.mockTrace, this.mockSpan, this.rule));
@@ -66,7 +65,7 @@ class SpaceRuleEvaluatorTest {
   @Test
   void testConvertsNoValue() {
     when(this.mockAttributeReader.getSpanValue(this.mockTrace, this.mockSpan, MOCK_SCOPE, MOCK_KEY))
-        .thenReturn(Single.error(new NoSuchElementException("no value")));
+        .thenReturn(Optional.empty());
     assertEquals(
         List.of(),
         this.ruleEvaluator.calculateSpacesForRule(this.mockTrace, this.mockSpan, this.rule));
