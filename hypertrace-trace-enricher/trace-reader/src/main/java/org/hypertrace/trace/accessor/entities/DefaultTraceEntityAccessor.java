@@ -70,16 +70,14 @@ class DefaultTraceEntityAccessor implements TraceEntityAccessor {
 
   private void writeEntityIfExists(EntityType entityType, StructuredTrace trace, Event span) {
     this.buildEntity(entityType, trace, span)
-        .map(
-            entity -> {
-              this.entityDataClient.createOrUpdateEntityEventually(
-                  this.traceAttributeReader.getRequestContext(span),
-                  entity,
-                  this.buildUpsertCondition(entityType, trace, span)
-                      .orElse(UpsertCondition.getDefaultInstance()),
-                  this.writeThrottleDuration);
-              return null;
-            });
+        .ifPresent(
+            entity ->
+                this.entityDataClient.createOrUpdateEntityEventually(
+                    this.traceAttributeReader.getRequestContext(span),
+                    entity,
+                    this.buildUpsertCondition(entityType, trace, span)
+                        .orElse(UpsertCondition.getDefaultInstance()),
+                    this.writeThrottleDuration));
   }
 
   private Optional<UpsertCondition> buildUpsertCondition(

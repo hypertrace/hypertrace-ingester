@@ -41,7 +41,6 @@ public class DefaultClientRegistry implements ClientRegistry {
   private static final String TRACE_ENTITY_WRITE_EXCLUDED_ENTITY_TYPES =
       "trace.entity.write.excluded.entity.types";
   private static final String USER_AGENT_PARSER_CONFIG_KEY = "useragent.parser";
-  private final Channel attributeServiceChannel;
   private final Channel configServiceChannel;
   private final Channel entityServiceChannel;
   private final EdsCacheClient edsCacheClient;
@@ -57,7 +56,7 @@ public class DefaultClientRegistry implements ClientRegistry {
       Config config, GrpcChannelRegistry grpcChannelRegistry, Executor cacheLoaderExecutor) {
     this.grpcChannelRegistry = grpcChannelRegistry;
 
-    this.attributeServiceChannel =
+    Channel attributeServiceChannel =
         this.buildChannel(
             config.getString(ATTRIBUTE_SERVICE_HOST_KEY),
             config.getInt(ATTRIBUTE_SERVICE_PORT_KEY));
