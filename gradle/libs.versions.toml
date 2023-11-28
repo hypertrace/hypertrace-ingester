@@ -7,7 +7,6 @@ hypertrace-serviceFramework = "0.1.62"
 hypertrace-kafkaStreams = "0.4.4"
 hypertrace-view-generator = "0.4.21"
 grpc = "1.57.2"
-confluent-platform = "7.2.1"
 
 [libraries]
 
@@ -40,7 +39,7 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.5" }
 apache-log4j-slf4jImpl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version = "2.20.0" }
 apache-commons-lang3 = { module = "org.apache.commons:commons-lang3", version = "3.12.0" }
 apache-kafka-kafkaStreamsTestUtils = { module = "org.apache.kafka:kafka-streams-test-utils", version = "7.2.1-ccs" }
-kafka-protobufserde = { module = "io.confluent:kafka-streams-protobuf-serde", version.ref = "confluent-platform" }
+kafka-protobufserde = { module = "io.confluent:kafka-streams-protobuf-serde"}
 
 google-guava = { module = "com.google.guava:guava", version = "32.1.2-jre" }
 google-protobuf-java = { module = "com.google.protobuf:protobuf-java", version = "3.23.3"}

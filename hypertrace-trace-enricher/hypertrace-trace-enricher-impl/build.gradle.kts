@@ -16,6 +16,7 @@ dependencies {
   implementation(project(":semantic-convention-utils"))
   implementation(project(":hypertrace-trace-enricher:trace-reader"))
 
+  api(platform(libs.hypertrace.kafka.bom))
   implementation(libs.hypertrace.data.model)
   implementation(libs.hypertrace.entityService.client)
   implementation(libs.hypertrace.entityService.changeEventApi)

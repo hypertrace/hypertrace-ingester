@@ -202,7 +202,7 @@ public class DefaultClientRegistry implements ClientRegistry {
     if (clientsConfig.hasPath(ENTITY_CHANGE_EVENTS_CONSUMER_ENABLED_KEY)
         && clientsConfig.getBoolean(ENTITY_CHANGE_EVENTS_CONSUMER_ENABLED_KEY)) {
       String consumerName = clientsConfig.getString(ENTITY_CHANGE_EVENTS_CONSUMER_NAME_KEY);
-      Map<String, Object> serdeConfig =
+      Map<String, Object> deserConfig =
           Collections.singletonMap(
               "schema.registry.url",
               clientsConfig.getString(ENTITY_CHANGE_EVENTS_SCHEMA_REGISTRY_URL_KEY));
@@ -212,26 +212,26 @@ public class DefaultClientRegistry implements ClientRegistry {
               .build(
                   consumerName,
                   clientsConfig.getConfig(ENTITY_CHANGE_EVENTS_CONFIG_KEY),
-                  getEntityChangeEventKeySerde(serdeConfig),
-                  getEntityChangeEventValueSerde(serdeConfig)));
+                  getEntityChangeEventKeySerde(deserConfig),
+                  getEntityChangeEventValueSerde(deserConfig)));
     }
     return Optional.empty();
   }
 
   private static Deserializer<EntityChangeEventKey> getEntityChangeEventKeySerde(
-      Map<String, Object> serdeConfig) {
+      Map<String, Object> deserConfig) {
     try (KafkaProtobufSerde<EntityChangeEventKey> entityChangeEventKeySerde =
         new KafkaProtobufSerde<>(EntityChangeEventKey.class)) {
-      entityChangeEventKeySerde.configure(serdeConfig, true);
+      entityChangeEventKeySerde.configure(deserConfig, true);
       return entityChangeEventKeySerde.deserializer();
     }
   }
 
   private static Deserializer<EntityChangeEventValue> getEntityChangeEventValueSerde(
-      Map<String, Object> serdeConfig) {
+      Map<String, Object> deserConfig) {
     try (Serde<EntityChangeEventValue> entityChangeEventValueSerde =
         new KafkaProtobufSerde<>(EntityChangeEventValue.class)) {
-      entityChangeEventValueSerde.configure(serdeConfig, false);
+      entityChangeEventValueSerde.configure(deserConfig, false);
       return entityChangeEventValueSerde.deserializer();
     }
   }
