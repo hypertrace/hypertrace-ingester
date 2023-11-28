@@ -212,13 +212,13 @@ public class DefaultClientRegistry implements ClientRegistry {
               .build(
                   consumerName,
                   clientsConfig.getConfig(ENTITY_CHANGE_EVENTS_CONFIG_KEY),
-                  getEntityChangeEventKeySerde(deserConfig),
-                  getEntityChangeEventValueSerde(deserConfig)));
+                  getEntityChangeEventKeyDeser(deserConfig),
+                  getEntityChangeEventValueDeser(deserConfig)));
     }
     return Optional.empty();
   }
 
-  private static Deserializer<EntityChangeEventKey> getEntityChangeEventKeySerde(
+  private static Deserializer<EntityChangeEventKey> getEntityChangeEventKeyDeser(
       Map<String, Object> deserConfig) {
     try (KafkaProtobufSerde<EntityChangeEventKey> entityChangeEventKeySerde =
         new KafkaProtobufSerde<>(EntityChangeEventKey.class)) {
@@ -227,7 +227,7 @@ public class DefaultClientRegistry implements ClientRegistry {
     }
   }
 
-  private static Deserializer<EntityChangeEventValue> getEntityChangeEventValueSerde(
+  private static Deserializer<EntityChangeEventValue> getEntityChangeEventValueDeser(
       Map<String, Object> deserConfig) {
     try (Serde<EntityChangeEventValue> entityChangeEventValueSerde =
         new KafkaProtobufSerde<>(EntityChangeEventValue.class)) {
