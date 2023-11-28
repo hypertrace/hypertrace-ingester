@@ -3,10 +3,17 @@ package org.hypertrace.traceenricher.enrichment.clients;
 import static java.util.Collections.emptySet;
 
 import com.typesafe.config.Config;
+import io.confluent.kafka.streams.serdes.protobuf.KafkaProtobufSerde;
 import io.grpc.Channel;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serde;
 import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.client.config.AttributeServiceCachedClientConfig;
 import org.hypertrace.core.datamodel.Event;
@@ -14,6 +21,9 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.GrpcChannelConfig;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.grpcutils.client.RequestContextClientCallCredsProviderFactory;
+import org.hypertrace.core.kafka.event.listener.KafkaLiveEventListener;
+import org.hypertrace.entity.change.event.v1.EntityChangeEventKey;
+import org.hypertrace.entity.change.event.v1.EntityChangeEventValue;
 import org.hypertrace.entity.data.service.client.EdsCacheClient;
 import org.hypertrace.entity.data.service.client.EntityDataServiceClient;
 import org.hypertrace.entity.data.service.rxclient.EntityDataClient;
@@ -36,6 +46,14 @@ public class DefaultClientRegistry implements ClientRegistry {
   private static final String CONFIG_SERVICE_PORT_KEY = "config.service.config.port";
   private static final String ENTITY_SERVICE_HOST_KEY = "entity.service.config.host";
   private static final String ENTITY_SERVICE_PORT_KEY = "entity.service.config.port";
+  private static final String ENTITY_CHANGE_EVENTS_CONFIG_KEY =
+      "entity.service.config.change.events.config";
+  private static final String ENTITY_CHANGE_EVENTS_CONSUMER_NAME_KEY =
+      "entity.service.config.change.events.config.consumer.name";
+  private static final String ENTITY_CHANGE_EVENTS_CONSUMER_ENABLED_KEY =
+      "entity.service.config.change.events.config.enabled";
+  private static final String ENTITY_CHANGE_EVENTS_SCHEMA_REGISTRY_URL_KEY =
+      "entity.service.config.change.events.config.schema.registry.url";
   private static final String TRACE_ENTITY_WRITE_THROTTLE_DURATION =
       "trace.entity.write.throttle.duration";
   private static final String TRACE_ENTITY_WRITE_EXCLUDED_ENTITY_TYPES =
@@ -51,6 +69,8 @@ public class DefaultClientRegistry implements ClientRegistry {
   private final GrpcChannelRegistry grpcChannelRegistry;
   private final UserAgentParser userAgentParser;
   private final AttributeServiceCachedClient attributeClient;
+  private final Optional<KafkaLiveEventListener<EntityChangeEventKey, EntityChangeEventValue>>
+      entityChangeEventListener;
 
   public DefaultClientRegistry(
       Config config, GrpcChannelRegistry grpcChannelRegistry, Executor cacheLoaderExecutor) {
@@ -78,6 +98,8 @@ public class DefaultClientRegistry implements ClientRegistry {
             new EntityDataServiceClient(this.entityServiceChannel),
             EntityServiceClientConfig.from(config).getCacheConfig(),
             cacheLoaderExecutor);
+    this.entityChangeEventListener =
+        getEntityChangeEventConsumer(config, edsCacheClient::updateBasedOnChangeEvent);
     this.entityDataClient = EntityDataClient.builder(this.entityServiceChannel).build();
     this.entityCache = new EntityCache(this.edsCacheClient, cacheLoaderExecutor);
     this.entityAccessor =
@@ -156,6 +178,14 @@ public class DefaultClientRegistry implements ClientRegistry {
 
   public void shutdown() {
     this.grpcChannelRegistry.shutdown();
+    this.entityChangeEventListener.ifPresent(
+        listener -> {
+          try {
+            listener.close();
+          } catch (Exception e) {
+
+          }
+        });
   }
 
   protected Channel buildChannel(String host, int port) {
@@ -164,5 +194,45 @@ public class DefaultClientRegistry implements ClientRegistry {
 
   protected Channel buildChannel(String host, int port, GrpcChannelConfig grpcChannelConfig) {
     return this.grpcChannelRegistry.forPlaintextAddress(host, port, grpcChannelConfig);
+  }
+
+  private static Optional<KafkaLiveEventListener<EntityChangeEventKey, EntityChangeEventValue>>
+      getEntityChangeEventConsumer(
+          Config clientsConfig, BiConsumer<EntityChangeEventKey, EntityChangeEventValue> callback) {
+    if (clientsConfig.hasPath(ENTITY_CHANGE_EVENTS_CONSUMER_ENABLED_KEY)
+        && clientsConfig.getBoolean(ENTITY_CHANGE_EVENTS_CONSUMER_ENABLED_KEY)) {
+      String consumerName = clientsConfig.getString(ENTITY_CHANGE_EVENTS_CONSUMER_NAME_KEY);
+      Map<String, Object> serdeConfig =
+          Collections.singletonMap(
+              "schema.registry.url",
+              clientsConfig.getString(ENTITY_CHANGE_EVENTS_SCHEMA_REGISTRY_URL_KEY));
+      return Optional.of(
+          new KafkaLiveEventListener.Builder<EntityChangeEventKey, EntityChangeEventValue>()
+              .registerCallback(callback)
+              .build(
+                  consumerName,
+                  clientsConfig.getConfig(ENTITY_CHANGE_EVENTS_CONFIG_KEY),
+                  getEntityChangeEventKeySerde(serdeConfig),
+                  getEntityChangeEventValueSerde(serdeConfig)));
+    }
+    return Optional.empty();
+  }
+
+  private static Deserializer<EntityChangeEventKey> getEntityChangeEventKeySerde(
+      Map<String, Object> serdeConfig) {
+    try (KafkaProtobufSerde<EntityChangeEventKey> entityChangeEventKeySerde =
+        new KafkaProtobufSerde<>(EntityChangeEventKey.class)) {
+      entityChangeEventKeySerde.configure(serdeConfig, true);
+      return entityChangeEventKeySerde.deserializer();
+    }
+  }
+
+  private static Deserializer<EntityChangeEventValue> getEntityChangeEventValueSerde(
+      Map<String, Object> serdeConfig) {
+    try (Serde<EntityChangeEventValue> entityChangeEventValueSerde =
+        new KafkaProtobufSerde<>(EntityChangeEventValue.class)) {
+      entityChangeEventValueSerde.configure(serdeConfig, false);
+      return entityChangeEventValueSerde.deserializer();
+    }
   }
 }

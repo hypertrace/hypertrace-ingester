@@ -18,17 +18,20 @@ dependencies {
 
   implementation(libs.hypertrace.data.model)
   implementation(libs.hypertrace.entityService.client)
+  implementation(libs.hypertrace.entityService.changeEventApi)
   implementation(libs.hypertrace.attributeService.client)
   implementation(libs.hypertrace.serviceFramework.metrics)
   implementation(libs.hypertrace.grpc.client.utils)
   implementation(libs.hypertrace.spacesConfigServiceApi)
   implementation(libs.hypertrace.grpc.context.utils)
+  implementation(libs.hypertrace.kafkaStreams.eventListener)
 
   implementation(libs.apache.commons.lang3)
   implementation(libs.slf4j.api)
   implementation(libs.uadetector.resources)
   implementation(libs.reactivex.rxjava3)
   implementation(libs.google.guava)
+  implementation(libs.kafka.protobufserde)
 
   testImplementation(libs.junit.jupiter)
   testImplementation("org.mockito:mockito-core:4.7.0") // Upgrade to 5.1.0 causes tests to fail
