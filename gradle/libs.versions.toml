@@ -1,16 +1,17 @@
 [versions]
-hypertrace-entity-service = "0.8.78"
+hypertrace-entity-service = "0.8.89"
 hypertrace-attribute-service = "0.14.38"
 hypertrace-config-service = "0.1.54"
 hypertrace-grpc-utils = "0.12.6"
 hypertrace-serviceFramework = "0.1.62"
-hypertrace-kafkaStreams = "0.4.3"
+hypertrace-kafkaStreams = "0.4.4"
 hypertrace-view-generator = "0.4.21"
 grpc = "1.57.2"
 
 [libraries]
 
 hypertrace-entityService-client = { module = "org.hypertrace.entity.service:entity-service-client", version.ref = "hypertrace-entity-service" }
+hypertrace-entityService-changeEventApi = { module = "org.hypertrace.entity.service:entity-service-change-event-api", version.ref = "hypertrace-entity-service" }
 hypertrace-entityTypeService-rxClient = { module = "org.hypertrace.entity.service:entity-type-service-rx-client", version.ref = "hypertrace-entity-service" }
 hypertrace-entityDataService-rxClient = { module = "org.hypertrace.entity.service:entity-data-service-rx-client", version.ref = "hypertrace-entity-service" }
 hypertrace-entityService-api = { module = "org.hypertrace.entity.service:entity-service-api", version.ref = "hypertrace-entity-service" }
@@ -26,6 +27,7 @@ hypertrace-data-model = { module ="org.hypertrace.core.datamodel:data-model", ve
 hypertrace-kafkaStreams-framework = { module = "org.hypertrace.core.kafkastreams.framework:kafka-streams-framework", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-kafkaStreams-avroPartitioners = { module = "org.hypertrace.core.kafkastreams.framework:avro-partitioners", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-kafkaStreams-weightedGroupPartitioners = { module = "org.hypertrace.core.kafkastreams.framework:weighted-group-partitioner", version.ref = "hypertrace-kafkaStreams" }
+hypertrace-kafkaStreams-eventListener = { module = "org.hypertrace.core.kafkastreams.framework:kafka-event-listener", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-kafka-bom = { module = "org.hypertrace.core.kafkastreams.framework:kafka-bom", version.ref = "hypertrace-kafkaStreams" }
 hypertrace-viewGenerator-framework = { module="org.hypertrace.core.viewgenerator:view-generator-framework", version.ref="hypertrace-view-generator" }
 hypertrace-viewCreator-framework = { module="org.hypertrace.core.viewcreator:view-creator-framework", version.ref="hypertrace-view-generator" }
@@ -37,6 +39,7 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.5" }
 apache-log4j-slf4jImpl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version = "2.20.0" }
 apache-commons-lang3 = { module = "org.apache.commons:commons-lang3", version = "3.12.0" }
 apache-kafka-kafkaStreamsTestUtils = { module = "org.apache.kafka:kafka-streams-test-utils", version = "7.2.1-ccs" }
+kafka-protobufserde = { module = "io.confluent:kafka-streams-protobuf-serde"}
 
 google-guava = { module = "com.google.guava:guava", version = "32.1.2-jre" }
 google-protobuf-java = { module = "com.google.protobuf:protobuf-java", version = "3.23.3"}
