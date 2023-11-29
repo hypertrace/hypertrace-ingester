@@ -1,5 +1,5 @@
 [versions]
-hypertrace-entity-service = "0.8.89"
+hypertrace-entity-service = "0.8.90"
 hypertrace-attribute-service = "0.14.38"
 hypertrace-config-service = "0.1.54"
 hypertrace-grpc-utils = "0.12.6"
