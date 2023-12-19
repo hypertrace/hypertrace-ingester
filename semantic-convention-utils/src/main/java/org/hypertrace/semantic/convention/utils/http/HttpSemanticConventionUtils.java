@@ -459,7 +459,7 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.ofNullable(getNormalizedUrl(url.get()).getAuthority());
       } catch (MalformedURLException | URISyntaxException e) {
-        LOGGER.warn(
+        LOGGER.debug(
             "On extracting httpHost, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
@@ -478,7 +478,7 @@ public class HttpSemanticConventionUtils {
         }
         return Optional.of(removeTrailingSlash(pathVal));
       } catch (MalformedURLException | URISyntaxException e) {
-        LOGGER.warn(
+        LOGGER.debug(
             "On extracting httpPath, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
@@ -528,7 +528,7 @@ public class HttpSemanticConventionUtils {
       try {
         scheme = Optional.of(getNormalizedUrl(url.get()).getProtocol());
       } catch (MalformedURLException | URISyntaxException e) {
-        LOGGER.warn(
+        LOGGER.debug(
             "On extracting httpScheme, received an invalid URL: {}, {}", url.get(), e.getMessage());
       }
     }
@@ -593,7 +593,7 @@ public class HttpSemanticConventionUtils {
             return Optional.of(scheme);
           }
         } catch (Exception e) {
-          LOGGER.warn(
+          LOGGER.debug(
               "On extracting scheme, received an invalid origin header: {}, {}",
               origin,
               e.getMessage());
@@ -671,7 +671,7 @@ public class HttpSemanticConventionUtils {
       try {
         return Optional.ofNullable(getNormalizedUrl(url.get()).getQuery());
       } catch (MalformedURLException | URISyntaxException e) {
-        LOGGER.warn(
+        LOGGER.debug(
             "On extracting httpQueryString, received an invalid URL: {}, {}",
             url.get(),
             e.getMessage());
@@ -855,7 +855,7 @@ public class HttpSemanticConventionUtils {
       URL url = getNormalizedUrl(urlPath);
       return Optional.of(url.getPath());
     } catch (MalformedURLException | URISyntaxException e) {
-      LOGGER.warn(
+      LOGGER.debug(
           "On extracting httpResponseStatusCode, received invalid URL path : {}, {}",
           urlPath,
           e.getMessage());
