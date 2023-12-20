@@ -40,4 +40,6 @@ data:
     {{- if .Values.logConfig.appender.rolling.enabled }}
     rootLogger.appenderRef.rolling.ref = ROLLING_FILE
     {{- end }}
+    logger.kstreams.name=org.apache.kafka
+    logger.kstreams.level=ERROR
 {{- end }}
