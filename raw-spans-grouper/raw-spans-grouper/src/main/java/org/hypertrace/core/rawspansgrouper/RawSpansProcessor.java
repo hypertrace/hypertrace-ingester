@@ -48,7 +48,6 @@ import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.HexUtils;
-import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
 import org.hypertrace.core.rawspansgrouper.utils.RawSpansGrouperUtils;
@@ -269,10 +268,19 @@ public class RawSpansProcessor
       if (IpIdentityValidator.isValid(ipIdentity)) {
         final SpanMetadata spanMetadata = ipsToSpanMetadataStateStore.get(ipIdentity);
         if (Objects.nonNull(spanMetadata)) {
-          event
-              .getAttributes()
-              .getAttributeMap()
-              .put(PEER_SERVICE_NAME, AttributeValueCreator.create(spanMetadata.getServiceName()));
+          // Instead of updating the span, adding a debug log to print the service correlation
+          logger.debug(
+              "Adding {} as: {} in spanId: {} with service name: {}",
+              PEER_SERVICE_NAME,
+              spanMetadata.getServiceName(),
+              HexUtils.getHex(event.getEventId()),
+              event.getServiceName());
+
+          //          event
+          //              .getAttributes()
+          //              .getAttributeMap()
+          //              .put(PEER_SERVICE_NAME,
+          // AttributeValueCreator.create(spanMetadata.getServiceName()));
         }
       }
     }
