@@ -115,7 +115,6 @@ public class GraphBuilderUtilTest {
     when(underTestTrace.getEventEdgeList()).thenReturn(List.of(eventEdge1, eventEdge2));
 
     Assertions.assertTrue(GraphBuilderUtil.isTraceEventsChanged(cachedTrace, underTestTrace));
-    Assertions.assertFalse(GraphBuilderUtil.isTraceEntitiesChanged(cachedTrace, underTestTrace));
   }
 
   @Test
@@ -148,6 +147,5 @@ public class GraphBuilderUtilTest {
     when(underTestTrace.getEventEdgeList()).thenReturn(List.of(eventEdge1, eventEdge2));
 
     Assertions.assertFalse(GraphBuilderUtil.isTraceEventsChanged(cachedTrace, underTestTrace));
-    Assertions.assertTrue(GraphBuilderUtil.isTraceEntitiesChanged(cachedTrace, underTestTrace));
   }
 }

@@ -38,6 +38,10 @@ echo "Calling the frontend to generate a trace..."
 echo ""
 curl -o /dev/null -s http://${FRONTEND_SERVICE_HOST}:8081  || { echo "Host $FRONTEND_SERVICE_HOST is down." ; exit 1; }
 
+# grouper depends on stream time advancement, hence we are sending another set of traces just to meet that condition
+sleep 35
+curl -o /dev/null -s http://${FRONTEND_SERVICE_HOST}:8081  || { echo "Host $FRONTEND_SERVICE_HOST is down." ; exit 1; }
+
 echo "Retrieving the list of traces."
 echo ""
 

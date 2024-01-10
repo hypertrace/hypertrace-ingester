@@ -36,11 +36,9 @@ class SpaceRuleEvaluator {
             span,
             attributeValueRuleData.getAttributeScope(),
             attributeValueRuleData.getAttributeKey())
-        .mapOptional(ValueCoercer::convertToString)
+        .flatMap(ValueCoercer::convertToString)
         .filter(string -> !string.isEmpty())
         .map(List::of)
-        .onErrorComplete()
-        .defaultIfEmpty(Collections.emptyList())
-        .blockingGet();
+        .orElse(Collections.emptyList());
   }
 }

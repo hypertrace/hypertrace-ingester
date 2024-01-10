@@ -2,25 +2,26 @@ package org.hypertrace.trace.reader.attributes;
 
 import static org.hypertrace.trace.reader.attributes.ValueSource.TRACE_SCOPE;
 
-import io.reactivex.rxjava3.core.Single;
-import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
+import java.util.Optional;
+import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.StructuredTrace;
+import org.hypertrace.core.grpcutils.context.RequestContext;
 
 class DefaultTraceAttributeReader implements TraceAttributeReader<StructuredTrace, Event> {
 
-  private final CachingAttributeClient attributeClient;
+  private final AttributeServiceCachedClient attributeClient;
   private final ValueResolver valueResolver;
 
-  DefaultTraceAttributeReader(CachingAttributeClient attributeClient) {
+  DefaultTraceAttributeReader(AttributeServiceCachedClient attributeClient) {
     this.attributeClient = attributeClient;
     this.valueResolver = ValueResolver.build(this.attributeClient);
   }
 
   @Override
-  public Single<LiteralValue> getSpanValue(
+  public Optional<LiteralValue> getSpanValue(
       StructuredTrace trace, Event span, String attributeScope, String attributeKey) {
     ValueSource valueSource = ValueSourceFactory.forSpan(trace, span);
     return this.getAttribute(valueSource, attributeScope, attributeKey)
@@ -28,7 +29,7 @@ class DefaultTraceAttributeReader implements TraceAttributeReader<StructuredTrac
   }
 
   @Override
-  public Single<LiteralValue> getTraceValue(StructuredTrace trace, String attributeKey) {
+  public Optional<LiteralValue> getTraceValue(StructuredTrace trace, String attributeKey) {
     ValueSource valueSource = ValueSourceFactory.forTrace(trace);
     return this.getAttribute(valueSource, TRACE_SCOPE, attributeKey)
         .flatMap(definition -> this.valueResolver.resolve(valueSource, definition));
@@ -39,10 +40,13 @@ class DefaultTraceAttributeReader implements TraceAttributeReader<StructuredTrac
     return span.getCustomerId();
   }
 
-  private Single<AttributeMetadata> getAttribute(
+  @Override
+  public RequestContext getRequestContext(Event span) {
+    return RequestContext.forTenantId(span.getCustomerId());
+  }
+
+  private Optional<AttributeMetadata> getAttribute(
       ValueSource valueSource, String attributeScope, String attributeKey) {
-    return valueSource
-        .executionContext()
-        .wrapSingle(() -> this.attributeClient.get(attributeScope, attributeKey));
+    return this.attributeClient.get(valueSource.requestContext(), attributeScope, attributeKey);
   }
 }

@@ -4,7 +4,7 @@ import java.util.Optional;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition.SourceField;
 import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
-import org.hypertrace.core.grpcutils.client.rx.GrpcRxExecutionContext;
+import org.hypertrace.core.grpcutils.context.RequestContext;
 
 public interface ValueSource {
   Optional<LiteralValue> getAttribute(String key, AttributeKind attributeKind);
@@ -15,7 +15,7 @@ public interface ValueSource {
 
   Optional<ValueSource> sourceForScope(String scope);
 
-  GrpcRxExecutionContext executionContext();
+  RequestContext requestContext();
 
   String TRACE_SCOPE = "TRACE";
 }

@@ -19,5 +19,9 @@ public class RawSpanGrouperConstants {
   public static final String DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT = "default.max.span.count";
   public static final String DROPPED_SPANS_COUNTER = "hypertrace.dropped.spans";
   public static final String TRUNCATED_TRACES_COUNTER = "hypertrace.truncated.traces";
+  static final String TRACE_EMIT_PUNCTUATOR = "trace-emit-punctuator";
+  static final String TRACE_EMIT_PUNCTUATOR_STORE_NAME = "emitter-store";
+  static final String TRACE_EMIT_PUNCTUATOR_FREQUENCY_CONFIG_KEY =
+      "trace.emit.punctuator.frequency";
   public static final String PEER_SERVICE_NAME = "peer.service.name";
 }

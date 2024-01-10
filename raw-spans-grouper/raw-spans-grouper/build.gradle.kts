@@ -37,6 +37,7 @@ dependencies {
   implementation(libs.hypertrace.data.model)
   implementation(libs.hypertrace.serviceFramework.framework)
   implementation(libs.hypertrace.serviceFramework.metrics)
+  implementation(libs.hypertrace.grpc.client.utils)
 
   implementation(libs.hypertrace.kafkaStreams.framework)
   implementation(libs.hypertrace.kafkaStreams.weightedGroupPartitioners)

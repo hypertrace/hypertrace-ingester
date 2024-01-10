@@ -1,15 +1,12 @@
 package org.hypertrace.trace.reader.attributes;
 
-import static io.reactivex.rxjava3.core.Single.zip;
-
 import com.google.common.util.concurrent.RateLimiter;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.hypertrace.core.attribute.service.cachingclient.CachingAttributeClient;
+import org.hypertrace.core.attribute.service.client.AttributeServiceCachedClient;
 import org.hypertrace.core.attribute.service.projection.AttributeProjection;
 import org.hypertrace.core.attribute.service.projection.AttributeProjectionRegistry;
 import org.hypertrace.core.attribute.service.v1.AttributeDefinition;
@@ -19,7 +16,6 @@ import org.hypertrace.core.attribute.service.v1.AttributeKind;
 import org.hypertrace.core.attribute.service.v1.AttributeMetadata;
 import org.hypertrace.core.attribute.service.v1.AttributeType;
 import org.hypertrace.core.attribute.service.v1.LiteralValue;
-import org.hypertrace.core.attribute.service.v1.LiteralValue.ValueCase;
 import org.hypertrace.core.attribute.service.v1.Projection;
 import org.hypertrace.core.attribute.service.v1.ProjectionExpression;
 
@@ -27,29 +23,29 @@ import org.hypertrace.core.attribute.service.v1.ProjectionExpression;
 class DefaultValueResolver implements ValueResolver {
   // One log a minute
   private static final RateLimiter LOGGING_LIMITER = RateLimiter.create(1 / 60d);
-  private final CachingAttributeClient attributeClient;
+  private final AttributeServiceCachedClient attributeClient;
   private final AttributeProjectionRegistry attributeProjectionRegistry;
 
   DefaultValueResolver(
-      CachingAttributeClient attributeClient,
+      AttributeServiceCachedClient attributeClient,
       AttributeProjectionRegistry attributeProjectionRegistry) {
     this.attributeClient = attributeClient;
     this.attributeProjectionRegistry = attributeProjectionRegistry;
   }
 
   @Override
-  public Single<LiteralValue> resolve(
+  public Optional<LiteralValue> resolve(
       ValueSource valueSource, AttributeMetadata attributeMetadata) {
     if (!attributeMetadata.hasDefinition()) {
-      return this.buildAndLogErrorLazily(
-          "Attribute definition not set for attribute: " + attributeMetadata.getId());
+      logError("Attribute definition not set for attribute: {}", attributeMetadata.getId());
+      return Optional.empty();
     }
 
     return this.resolveDefinition(
         valueSource, attributeMetadata, attributeMetadata.getDefinition());
   }
 
-  private Single<LiteralValue> resolveDefinition(
+  private Optional<LiteralValue> resolveDefinition(
       ValueSource valueSource,
       AttributeMetadata attributeMetadata,
       AttributeDefinition definition) {
@@ -72,108 +68,104 @@ class DefaultValueResolver implements ValueResolver {
             valueSource, attributeMetadata, definition.getFirstValuePresent());
       case VALUE_NOT_SET:
       default:
-        return this.buildAndLogErrorLazily("Unrecognized attribute definition");
+        return Optional.empty();
     }
   }
 
-  private Maybe<LiteralValue> maybeResolveDefinition(
-      ValueSource valueSource,
-      AttributeMetadata attributeMetadata,
-      AttributeDefinition definition) {
-    return this.resolveDefinition(valueSource, attributeMetadata, definition)
-        .filter(literalValue -> !literalValue.getValueCase().equals(ValueCase.VALUE_NOT_SET))
-        .onErrorComplete();
-  }
-
-  private Single<LiteralValue> resolveValue(
+  private Optional<LiteralValue> resolveValue(
       ValueSource contextValueSource,
       String attributeScope,
       AttributeType attributeType,
       AttributeKind attributeKind,
       String path) {
-    Single<ValueSource> matchingValueSource =
-        Maybe.fromOptional(contextValueSource.sourceForScope(attributeScope))
-            .switchIfEmpty(
-                this.buildAndLogErrorLazily(
-                    "No value source available supporting scope %s", attributeScope));
+    Optional<ValueSource> matchingValueSource = contextValueSource.sourceForScope(attributeScope);
+    if (matchingValueSource.isEmpty()) {
+      logError("No value source available supporting scope {}", attributeScope);
+      return Optional.empty();
+    }
     switch (attributeType) {
       case ATTRIBUTE:
-        return matchingValueSource
-            .mapOptional(valueSource -> valueSource.getAttribute(path, attributeKind))
-            .defaultIfEmpty(LiteralValue.getDefaultInstance());
+        return matchingValueSource.flatMap(
+            valueSource -> valueSource.getAttribute(path, attributeKind));
       case METRIC:
-        return matchingValueSource
-            .mapOptional(valueSource -> valueSource.getMetric(path, attributeKind))
-            .defaultIfEmpty(LiteralValue.getDefaultInstance());
+        return matchingValueSource.flatMap(
+            valueSource -> valueSource.getMetric(path, attributeKind));
       case UNRECOGNIZED:
       case TYPE_UNDEFINED:
       default:
-        return this.buildAndLogErrorLazily("Unrecognized projection type");
+        return Optional.empty();
     }
   }
 
-  private Single<LiteralValue> resolveProjection(ValueSource valueSource, Projection projection) {
+  private Optional<LiteralValue> resolveProjection(ValueSource valueSource, Projection projection) {
     switch (projection.getValueCase()) {
       case ATTRIBUTE_ID:
-        return valueSource
-            .executionContext()
-            .wrapSingle(() -> this.attributeClient.get(projection.getAttributeId()))
+        return this.attributeClient
+            .getById(valueSource.requestContext(), projection.getAttributeId())
             .flatMap(attributeMetadata -> this.resolve(valueSource, attributeMetadata));
       case LITERAL:
-        return Single.just(projection.getLiteral());
+        return Optional.of(projection.getLiteral());
       case EXPRESSION:
         return this.resolveExpression(valueSource, projection.getExpression());
       case VALUE_NOT_SET:
       default:
-        return this.buildAndLogErrorLazily("Unrecognized projection type");
+        logError("Unrecognized projection type {}", projection.getValueCase());
+        return Optional.empty();
     }
   }
 
-  private Single<LiteralValue> resolveField(
+  private Optional<LiteralValue> resolveField(
       ValueSource valueSource, SourceField sourceField, AttributeKind attributeKind) {
-    return Maybe.fromOptional(valueSource.getSourceField(sourceField, attributeKind))
-        .defaultIfEmpty(LiteralValue.getDefaultInstance());
+    return valueSource.getSourceField(sourceField, attributeKind);
   }
 
-  private Single<LiteralValue> resolveFirstValuePresent(
+  private Optional<LiteralValue> resolveFirstValuePresent(
       ValueSource valueSource,
       AttributeMetadata attributeMetadata,
       AttributeDefinitions definitions) {
 
-    return Observable.fromIterable(definitions.getDefinitionsList())
-        .concatMapMaybe(
-            definition -> this.maybeResolveDefinition(valueSource, attributeMetadata, definition))
-        .first(LiteralValue.getDefaultInstance());
+    return definitions.getDefinitionsList().stream()
+        .map(definition -> this.resolveDefinition(valueSource, attributeMetadata, definition))
+        .flatMap(Optional::stream)
+        .findFirst();
   }
 
-  private Single<LiteralValue> resolveExpression(
+  private Optional<LiteralValue> resolveExpression(
       ValueSource valueSource, ProjectionExpression expression) {
-
-    Single<AttributeProjection> projectionSingle =
-        Maybe.fromOptional(this.attributeProjectionRegistry.getProjection(expression.getOperator()))
-            .switchIfEmpty(
-                buildAndLogErrorLazily(
-                    "Unregistered projection operator: %s", expression.getOperator()));
-    Single<List<LiteralValue>> argumentsSingle =
+    Optional<AttributeProjection> maybeProjection =
+        this.attributeProjectionRegistry.getProjection(expression.getOperator());
+    if (maybeProjection.isEmpty()) {
+      logError("Unregistered projection operator: {}", expression.getOperator());
+      return Optional.empty();
+    }
+    List<LiteralValue> argumentList =
         this.resolveArgumentList(valueSource, expression.getArgumentsList());
 
-    return zip(projectionSingle, argumentsSingle, AttributeProjection::project);
+    if (argumentList.isEmpty()) {
+      logError("Failed to resolve argument list for expression with operator: {}", expression);
+      return Optional.empty();
+    }
+    return maybeProjection.map(projection -> projection.project(argumentList));
   }
 
-  private Single<List<LiteralValue>> resolveArgumentList(
+  private void logError(String format, Object... args) {
+    if (LOGGING_LIMITER.tryAcquire()) {
+      log.error(format, args);
+    }
+  }
+
+  private List<LiteralValue> resolveArgumentList(
       ValueSource valueSource, List<Projection> arguments) {
-    return Observable.fromIterable(arguments)
-        .flatMapSingle(argument -> this.resolveProjection(valueSource, argument))
-        .collect(Collectors.toList());
-  }
-
-  private <T> Single<T> buildAndLogErrorLazily(String message, Object... args) {
-    return Single.error(
-        () -> {
-          if (LOGGING_LIMITER.tryAcquire()) {
-            log.error(String.format(message, args));
-          }
-          return new UnsupportedOperationException(String.format(message, args));
-        });
+    List<LiteralValue> resolvedArguments =
+        arguments.stream()
+            .map(argument -> this.resolveProjection(valueSource, argument))
+            .flatMap(Optional::stream)
+            .collect(Collectors.toUnmodifiableList());
+    if (resolvedArguments.size() != arguments.size()) {
+      // if any of the arguments don't resolve, return empty list to don't support partial
+      // resolution
+      return Collections.emptyList();
+    }
+    return resolvedArguments;
   }
 }
