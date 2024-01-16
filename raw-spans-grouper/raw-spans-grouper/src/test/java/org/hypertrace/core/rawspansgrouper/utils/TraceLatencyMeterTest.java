@@ -9,16 +9,16 @@ import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class RawSpansGrouperUtilsTest {
+public class TraceLatencyMeterTest {
 
   @Test
   void testTrackEndToEndLatencyTimestamps() {
-    RawSpansGrouperUtils rawSpansGrouperUtils = new RawSpansGrouperUtils(100);
-    Timestamps timestamps = rawSpansGrouperUtils.trackEndToEndLatencyTimestamps(123L, 123L);
+    TraceLatencyMeter traceLatencyMeter = new TraceLatencyMeter(100);
+    Timestamps timestamps = traceLatencyMeter.trackEndToEndLatencyTimestamps(123L, 123L);
     Assertions.assertNull(timestamps);
 
-    rawSpansGrouperUtils = new RawSpansGrouperUtils(0);
-    timestamps = rawSpansGrouperUtils.trackEndToEndLatencyTimestamps(150L, 100L);
+    traceLatencyMeter = new TraceLatencyMeter(0);
+    timestamps = traceLatencyMeter.trackEndToEndLatencyTimestamps(150L, 100L);
     Assertions.assertEquals(
         new Timestamps(
             Map.of(

@@ -2,15 +2,14 @@ package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp.KAFKA_STREAMS_CONFIG_KEY;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.AGENT_ENABLED_ATTRIBUTE_NAME_CONFIG;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.AGENT_TYPE_ATTRIBUTE_NAME_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.IPS_TO_SPAN_METADATA_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_SERVICE_NAME;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_SERVICE_NAME_IN_SPANS_ENABLED_CUSTOMERS;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_CORRELATION_ENABLED_AGENTS;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_IDENTITY_TO_SPAN_METADATA_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SERVICE_CORRELATION_ENABLED_CUSTOMERS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
@@ -20,6 +19,7 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_PUNCTUATOR_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRUNCATED_TRACES_COUNTER;
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.PEER_SERVICE_NAME;
 
 import com.typesafe.config.Config;
 import io.micrometer.core.instrument.Counter;
@@ -54,9 +54,10 @@ import org.hypertrace.core.datamodel.shared.HexUtils;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
-import org.hypertrace.core.rawspansgrouper.utils.RawSpansGrouperUtils;
+import org.hypertrace.core.rawspansgrouper.utils.TraceLatencyMeter;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.IpIdentity;
+import org.hypertrace.core.spannormalizer.PeerIdentity;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.SpanMetadata;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -93,17 +94,17 @@ public class RawSpansProcessor
   private final Clock clock;
   private KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private KeyValueStore<TraceIdentity, TraceState> traceStateStore;
-  private KeyValueStore<IpIdentity, SpanMetadata> ipsToSpanMetadataStateStore;
+  private KeyValueStore<PeerIdentity, SpanMetadata> peerIdentityToSpanMetadataStateStore;
   private long groupingWindowTimeoutMs;
   private double dataflowSamplingPercent = -1;
   private static final Map<String, Long> maxSpanCountMap = new HashMap<>();
   private long defaultMaxSpanCountLimit = Long.MAX_VALUE;
   private TraceEmitPunctuator traceEmitPunctuator;
   private Cancellable traceEmitTasksPunctuatorCancellable;
-  private String agentEnabledAttributeName;
+  private String agentTypeAttributeName;
   private List<String> serviceCorrelationEnabledCustomers;
-  private List<String> peerServiceNameInSpansEnabledTenants;
-  private RawSpansGrouperUtils rawSpansGrouperUtils;
+  private List<String> peerCorrelationEnabledAgents;
+  private TraceLatencyMeter traceLatencyMeter;
 
   public RawSpansProcessor(Clock clock) {
     this.clock = clock;
@@ -114,19 +115,20 @@ public class RawSpansProcessor
     this.context = context;
     this.spanStore = context.getStateStore(SPAN_STATE_STORE_NAME);
     this.traceStateStore = context.getStateStore(TRACE_STATE_STORE);
-    this.ipsToSpanMetadataStateStore = context.getStateStore(IPS_TO_SPAN_METADATA_STATE_STORE);
+    this.peerIdentityToSpanMetadataStateStore =
+        context.getStateStore(PEER_IDENTITY_TO_SPAN_METADATA_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
-    this.agentEnabledAttributeName =
-        jobConfig.hasPath(AGENT_ENABLED_ATTRIBUTE_NAME_CONFIG)
-            ? jobConfig.getString(AGENT_ENABLED_ATTRIBUTE_NAME_CONFIG)
+    this.agentTypeAttributeName =
+        jobConfig.hasPath(AGENT_TYPE_ATTRIBUTE_NAME_CONFIG)
+            ? jobConfig.getString(AGENT_TYPE_ATTRIBUTE_NAME_CONFIG)
             : null;
     this.serviceCorrelationEnabledCustomers =
         jobConfig.hasPath(SERVICE_CORRELATION_ENABLED_CUSTOMERS)
             ? jobConfig.getStringList(SERVICE_CORRELATION_ENABLED_CUSTOMERS)
             : Collections.emptyList();
-    this.peerServiceNameInSpansEnabledTenants =
-        jobConfig.hasPath(PEER_SERVICE_NAME_IN_SPANS_ENABLED_CUSTOMERS)
-            ? jobConfig.getStringList(PEER_SERVICE_NAME_IN_SPANS_ENABLED_CUSTOMERS)
+    this.peerCorrelationEnabledAgents =
+        jobConfig.hasPath(PEER_CORRELATION_ENABLED_AGENTS)
+            ? jobConfig.getStringList(PEER_CORRELATION_ENABLED_AGENTS)
             : Collections.emptyList();
     this.groupingWindowTimeoutMs =
         jobConfig.getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
@@ -136,7 +138,7 @@ public class RawSpansProcessor
         && jobConfig.getDouble(DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY) <= 100) {
       this.dataflowSamplingPercent = jobConfig.getDouble(DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY);
     }
-    this.rawSpansGrouperUtils = new RawSpansGrouperUtils(dataflowSamplingPercent);
+    this.traceLatencyMeter = new TraceLatencyMeter(dataflowSamplingPercent);
 
     if (jobConfig.hasPath(INFLIGHT_TRACE_MAX_SPAN_COUNT)) {
       Config subConfig = jobConfig.getConfig(INFLIGHT_TRACE_MAX_SPAN_COUNT);
@@ -248,63 +250,16 @@ public class RawSpansProcessor
     String tenantId = key.getTenantId();
     ByteBuffer traceId = value.getTraceId();
     boolean firstEntry = (traceState == null);
-    final Optional<String> maybeEnvironment =
-        HttpSemanticConventionUtils.getEnvironmentForSpan(event);
+    Optional<String> maybeEnvironment = HttpSemanticConventionUtils.getEnvironmentForSpan(event);
     if (SpanSemanticConventionUtils.isClientSpanForOCFormat(
         event.getAttributes().getAttributeMap())) {
-      final Optional<String> maybeHostAddr = HttpSemanticConventionUtils.getHostIpAddress(event);
-      final Optional<String> maybePeerAddr = HttpSemanticConventionUtils.getPeerIpAddress(event);
-      final Optional<String> maybePeerPort = HttpSemanticConventionUtils.getPeerPort(event);
-      final String serviceName = event.getServiceName();
-      final IpIdentity ipIdentity =
-          IpIdentity.newBuilder()
-              .setTenantId(tenantId)
-              .setEnvironment(maybeEnvironment.orElse(null))
-              .setHostAddr(maybeHostAddr.orElse(null))
-              .setPeerAddr(maybePeerAddr.orElse(null))
-              .setPeerPort(maybePeerPort.orElse(null))
-              .build();
-      if (IpIdentityValidator.isValid(ipIdentity)) {
-        ipsToSpanMetadataStateStore.put(
-            ipIdentity, SpanMetadata.newBuilder().setServiceName(serviceName).build());
-      }
+      handleClientSpan(tenantId, event, maybeEnvironment.orElse(null));
     } else {
-      final Optional<String> maybePeerAddr = HttpSemanticConventionUtils.getPeerIpAddress(event);
-      final Optional<String> maybeHostAddr = HttpSemanticConventionUtils.getHostIpAddress(event);
-      final Optional<String> maybeHostPort = HttpSemanticConventionUtils.getHostPort(event);
-      final IpIdentity ipIdentity =
-          IpIdentity.newBuilder()
-              .setTenantId(tenantId)
-              .setEnvironment(maybeEnvironment.orElse(null))
-              .setHostAddr(maybePeerAddr.orElse(null))
-              .setPeerAddr(maybeHostAddr.orElse(null))
-              .setPeerPort(maybeHostPort.orElse(null))
-              .build();
-      if (IpIdentityValidator.isValid(ipIdentity)) {
-        final SpanMetadata spanMetadata = ipsToSpanMetadataStateStore.get(ipIdentity);
-        if (Objects.nonNull(spanMetadata)) {
-          // Instead of updating the span, adding a debug log to print the service correlation
-          logger.debug(
-              "Adding {} as: {} in spanId: {} with service name: {}",
-              PEER_SERVICE_NAME,
-              spanMetadata.getServiceName(),
-              HexUtils.getHex(event.getEventId()),
-              event.getServiceName());
-
-          if (peerServiceNameInSpansEnabledTenants.contains(tenantId)
-              || peerServiceNameInSpansEnabledTenants.contains(ALL)) {
-            event
-                .getAttributes()
-                .getAttributeMap()
-                .put(
-                    PEER_SERVICE_NAME, AttributeValueCreator.create(spanMetadata.getServiceName()));
-          }
-        }
-      }
+      handleServerSpan(tenantId, event, maybeEnvironment.orElse(null));
     }
 
     Timestamps timestamps =
-        rawSpansGrouperUtils.trackEndToEndLatencyTimestamps(
+        traceLatencyMeter.trackEndToEndLatencyTimestamps(
             currentTimeMs, firstEntry ? currentTimeMs : traceState.getTraceStartTimestamp());
     StructuredTrace trace =
         StructuredTraceBuilder.buildStructuredTraceFromRawSpans(
@@ -312,23 +267,81 @@ public class RawSpansProcessor
     context.forward(new Record<>(key, trace, currentTimeMs), OUTPUT_TOPIC_PRODUCER);
   }
 
+  // put the peer service identity and corresponding service name in state store
+  private void handleClientSpan(String tenantId, Event event, String environment) {
+    Optional<String> maybeHostAddr = HttpSemanticConventionUtils.getHostIpAddress(event);
+    Optional<String> maybePeerAddr = HttpSemanticConventionUtils.getPeerIpAddress(event);
+    Optional<String> maybePeerPort = HttpSemanticConventionUtils.getPeerPort(event);
+    String serviceName = event.getServiceName();
+    PeerIdentity peerIdentity =
+        PeerIdentity.newBuilder()
+            .setIpIdentity(
+                IpIdentity.newBuilder()
+                    .setTenantId(tenantId)
+                    .setEnvironment(environment)
+                    .setHostAddr(maybeHostAddr.orElse(null))
+                    .setPeerAddr(maybePeerAddr.orElse(null))
+                    .setPeerPort(maybePeerPort.orElse(null))
+                    .build())
+            .build();
+    if (PeerIdentityValidator.isValid(peerIdentity)) {
+      this.peerIdentityToSpanMetadataStateStore.put(
+          peerIdentity, SpanMetadata.newBuilder().setServiceName(serviceName).build());
+    }
+  }
+
+  // get the service name for that peer service identity and correlate the current span
+  private void handleServerSpan(String tenantId, Event event, String environment) {
+    Optional<String> maybePeerAddr = HttpSemanticConventionUtils.getPeerIpAddress(event);
+    Optional<String> maybeHostAddr = HttpSemanticConventionUtils.getHostIpAddress(event);
+    Optional<String> maybeHostPort = HttpSemanticConventionUtils.getHostPort(event);
+    PeerIdentity peerIdentity =
+        PeerIdentity.newBuilder()
+            .setIpIdentity(
+                IpIdentity.newBuilder()
+                    .setTenantId(tenantId)
+                    .setEnvironment(environment)
+                    .setHostAddr(maybePeerAddr.orElse(null))
+                    .setPeerAddr(maybeHostAddr.orElse(null))
+                    .setPeerPort(maybeHostPort.orElse(null))
+                    .build())
+            .build();
+    if (PeerIdentityValidator.isValid(peerIdentity)) {
+      SpanMetadata spanMetadata = this.peerIdentityToSpanMetadataStateStore.get(peerIdentity);
+      if (Objects.nonNull(spanMetadata)) {
+        // Instead of updating the span, adding a debug log to print the service correlation
+        logger.debug(
+            "Adding {} as: {} in spanId: {} with service name: {}",
+            PEER_SERVICE_NAME,
+            spanMetadata.getServiceName(),
+            HexUtils.getHex(event.getEventId()),
+            event.getServiceName());
+
+        event
+            .getAttributes()
+            .getAttributeMap()
+            .put(PEER_SERVICE_NAME, AttributeValueCreator.create(spanMetadata.getServiceName()));
+      }
+    }
+  }
+
   private boolean isPeerServiceNameIdentificationRequired(Event event) {
-    final Attributes attributes = event.getAttributes();
+    Attributes attributes = event.getAttributes();
     if (Objects.isNull(attributes)) {
       return false;
     }
 
-    final Map<String, AttributeValue> attributeMap = attributes.getAttributeMap();
+    Map<String, AttributeValue> attributeMap = attributes.getAttributeMap();
     if (Objects.isNull(attributeMap)) {
       return false;
     }
 
-    final String value =
+    String agentType =
         attributeMap
-            .getOrDefault(this.agentEnabledAttributeName, AttributeValue.newBuilder().build())
+            .getOrDefault(this.agentTypeAttributeName, AttributeValue.newBuilder().build())
             .getValue();
-    return Objects.nonNull(value)
-        && Boolean.parseBoolean(value)
+    return Objects.nonNull(agentType)
+        && this.peerCorrelationEnabledAgents.contains(agentType)
         && (this.serviceCorrelationEnabledCustomers.contains(event.getCustomerId())
             || this.serviceCorrelationEnabledCustomers.contains(ALL));
   }

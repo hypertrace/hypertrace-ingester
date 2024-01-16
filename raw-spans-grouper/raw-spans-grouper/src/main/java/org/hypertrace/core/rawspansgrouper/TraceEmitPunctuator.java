@@ -31,7 +31,7 @@ import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuato
 import org.hypertrace.core.kafkastreams.framework.punctuators.action.CompletedTaskResult;
 import org.hypertrace.core.kafkastreams.framework.punctuators.action.RescheduleTaskResult;
 import org.hypertrace.core.kafkastreams.framework.punctuators.action.TaskResult;
-import org.hypertrace.core.rawspansgrouper.utils.RawSpansGrouperUtils;
+import org.hypertrace.core.rawspansgrouper.utils.TraceLatencyMeter;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -71,7 +71,7 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
   private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private final String outputTopicProducer;
   private final long groupingWindowTimeoutMs;
-  private final RawSpansGrouperUtils rawSpansGrouperUtils;
+  private final TraceLatencyMeter traceLatencyMeter;
 
   TraceEmitPunctuator(
       ThrottledPunctuatorConfig throttledPunctuatorConfig,
@@ -88,7 +88,7 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
     this.traceStateStore = traceStateStore;
     this.outputTopicProducer = outputTopicProducer;
     this.groupingWindowTimeoutMs = groupingWindowTimeoutMs;
-    this.rawSpansGrouperUtils = new RawSpansGrouperUtils(dataflowSamplingPercent);
+    this.traceLatencyMeter = new TraceLatencyMeter(dataflowSamplingPercent);
   }
 
   protected TaskResult executeTask(long punctuateTimestamp, TraceIdentity key) {
@@ -151,7 +151,7 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
 
     recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
     Timestamps timestamps =
-        this.rawSpansGrouperUtils.trackEndToEndLatencyTimestamps(
+        this.traceLatencyMeter.trackEndToEndLatencyTimestamps(
             System.currentTimeMillis(), traceState.getTraceStartTimestamp());
     StructuredTrace trace =
         StructuredTraceBuilder.buildStructuredTraceFromRawSpans(

@@ -11,12 +11,12 @@ import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 
-public class RawSpansGrouperUtils {
+public class TraceLatencyMeter {
   private static final Timer spansGrouperArrivalLagTimer =
       PlatformMetricsRegistry.registerTimer(DataflowMetricUtils.ARRIVAL_LAG, new HashMap<>());
   private final double dataflowSamplingPercent;
 
-  public RawSpansGrouperUtils(double dataflowSamplingPercent) {
+  public TraceLatencyMeter(double dataflowSamplingPercent) {
     this.dataflowSamplingPercent = dataflowSamplingPercent;
   }
 

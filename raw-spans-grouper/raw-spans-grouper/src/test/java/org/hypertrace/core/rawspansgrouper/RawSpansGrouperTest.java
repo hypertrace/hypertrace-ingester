@@ -1,5 +1,6 @@
 package org.hypertrace.core.rawspansgrouper;
 
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.PEER_SERVICE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -410,7 +411,7 @@ public class RawSpansGrouperTest {
     Event event = span3.getEvent();
     Map<String, AttributeValue> attributeMap =
         new HashMap<>(event.getAttributes().getAttributeMap());
-    attributeMap.put(RawSpanGrouperConstants.PEER_SERVICE_NAME, createAttribute(service1));
+    attributeMap.put(PEER_SERVICE_NAME, createAttribute(service1));
     event.setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build());
     assertEquals(event, trace.getEventList().get(0));
 
@@ -424,7 +425,7 @@ public class RawSpansGrouperTest {
     assertEquals(1, trace.getEventList().size());
     event = span2.getEvent();
     attributeMap = new HashMap<>(event.getAttributes().getAttributeMap());
-    attributeMap.put(RawSpanGrouperConstants.PEER_SERVICE_NAME, createAttribute(service2));
+    attributeMap.put(PEER_SERVICE_NAME, createAttribute(service2));
     event.setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build());
     assertEquals(event, trace.getEventList().get(0));
   }
@@ -455,8 +456,8 @@ public class RawSpansGrouperTest {
             Attributes.newBuilder()
                 .setAttributeMap(
                     Map.of(
-                        "mirroring.enabled",
-                        createAttribute("true"),
+                        "agent.type",
+                        createAttribute("mirror"),
                         "deployment.environment",
                         createAttribute("environment"),
                         "span.kind",

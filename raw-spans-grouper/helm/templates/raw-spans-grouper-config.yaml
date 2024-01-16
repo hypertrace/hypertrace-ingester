@@ -90,6 +90,10 @@ data:
     service.correlation.enabled.customers = {{ .Values.rawSpansGrouperConfig.serviceCorrelationEnabledCustomers | toJson }}
     {{- end }}
     
-    {{- if hasKey .Values.rawSpansGrouperConfig "peerServiceNameSpansEnabledCustomers" }}
-    peer.service.name.spans.enabled.customers = {{ .Values.rawSpansGrouperConfig.peerServiceNameSpansEnabledCustomers | toJson }}
+    {{- if hasKey .Values.rawSpansGrouperConfig "peerCorrelationEnabledAgents" }}
+    peer.correlation.enabled.agents = {{ .Values.rawSpansGrouperConfig.peerCorrelationEnabledAgents | toJson }}
+    {{- end }}
+    
+    {{- if hasKey .Values.rawSpansGrouperConfig "agentTypeAttributeName" }}
+    agent.type.attribute.name = {{ .Values.rawSpansGrouperConfig.agentTypeAttributeName }}
     {{- end }}

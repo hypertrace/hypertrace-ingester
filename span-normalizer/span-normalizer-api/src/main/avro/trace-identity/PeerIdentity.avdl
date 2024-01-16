@@ -1,0 +1,15 @@
+@namespace("org.hypertrace.core.spannormalizer")
+protocol PeerIdentityProtocol {
+  record PeerIdentity {
+    union { null, IpIdentity } ip_identity = null;
+  }
+
+  record IpIdentity {
+    union { null, string } tenant_id = null;
+    union { null, string } environment = null;
+    union { null, string } host_addr = null;
+    union { null, string } peer_addr = null;
+    union { null, string } peer_port = null;
+  }
+}
+

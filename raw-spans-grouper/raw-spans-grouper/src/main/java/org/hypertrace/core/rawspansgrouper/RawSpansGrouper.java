@@ -1,9 +1,9 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INPUT_TOPIC_CONFIG_KEY;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.IPS_TO_SPAN_METADATA_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_IDENTITY_TO_SPAN_METADATA_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_PUNCTUATOR_STORE_NAME;
@@ -32,7 +32,7 @@ import org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp;
 import org.hypertrace.core.kafkastreams.framework.partitioner.GroupPartitionerBuilder;
 import org.hypertrace.core.kafkastreams.framework.partitioner.KeyHashPartitioner;
 import org.hypertrace.core.serviceframework.config.ConfigClient;
-import org.hypertrace.core.spannormalizer.IpIdentity;
+import org.hypertrace.core.spannormalizer.PeerIdentity;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.SpanMetadata;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -89,12 +89,13 @@ public class RawSpansGrouper extends KafkaStreamsApp {
                 Stores.persistentKeyValueStore(SPAN_STATE_STORE_NAME), keySerde, valueSerde)
             .withCachingEnabled();
 
-    StoreBuilder<KeyValueStore<IpIdentity, SpanMetadata>> ipsToSpanMetadataStateStoreBuilder =
-        Stores.keyValueStoreBuilder(
-                Stores.persistentKeyValueStore(IPS_TO_SPAN_METADATA_STATE_STORE),
-                keySerde,
-                valueSerde)
-            .withCachingEnabled();
+    StoreBuilder<KeyValueStore<PeerIdentity, SpanMetadata>>
+        peerIdentityToSpanMetadataStateStoreBuilder =
+            Stores.keyValueStoreBuilder(
+                    Stores.persistentKeyValueStore(PEER_IDENTITY_TO_SPAN_METADATA_STATE_STORE),
+                    keySerde,
+                    valueSerde)
+                .withCachingEnabled();
 
     StoreBuilder<KeyValueStore<Long, List<TraceIdentity>>> traceEmitPunctuatorStoreBuilder =
         Stores.keyValueStoreBuilder(
@@ -105,7 +106,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
 
     streamsBuilder.addStateStore(spanStoreBuilder);
     streamsBuilder.addStateStore(traceStateStoreBuilder);
-    streamsBuilder.addStateStore(ipsToSpanMetadataStateStoreBuilder);
+    streamsBuilder.addStateStore(peerIdentityToSpanMetadataStateStoreBuilder);
     streamsBuilder.addStateStore(traceEmitPunctuatorStoreBuilder);
 
     StreamPartitioner<TraceIdentity, StructuredTrace> groupPartitioner =
@@ -128,7 +129,7 @@ public class RawSpansGrouper extends KafkaStreamsApp {
             SPAN_STATE_STORE_NAME,
             TRACE_STATE_STORE,
             TRACE_EMIT_PUNCTUATOR_STORE_NAME,
-            IPS_TO_SPAN_METADATA_STATE_STORE)
+            PEER_IDENTITY_TO_SPAN_METADATA_STATE_STORE)
         .to(outputTopic, outputTopicProducer);
 
     return streamsBuilder;

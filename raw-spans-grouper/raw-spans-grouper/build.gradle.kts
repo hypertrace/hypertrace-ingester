@@ -34,6 +34,7 @@ dependencies {
   }
   implementation(project(":span-normalizer:span-normalizer-api"))
   implementation(project(":semantic-convention-utils"))
+  implementation(project(":hypertrace-trace-enricher:enriched-span-constants"))
   implementation(libs.hypertrace.data.model)
   implementation(libs.hypertrace.serviceFramework.framework)
   implementation(libs.hypertrace.serviceFramework.metrics)
