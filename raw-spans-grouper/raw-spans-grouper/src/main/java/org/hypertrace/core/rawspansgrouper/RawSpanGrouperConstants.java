@@ -15,6 +15,10 @@ public class RawSpanGrouperConstants {
   public static final String DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY =
       "dataflow.metriccollection.sampling.percent";
   public static final String AGENT_ENABLED_ATTRIBUTE_NAME_CONFIG = "agent.enabled.attribute.name";
+  public static final String SERVICE_CORRELATION_ENABLED_CUSTOMERS =
+      "service.correlation.enabled.customers";
+  public static final String PEER_SERVICE_NAME_IN_SPANS_ENABLED_CUSTOMERS =
+      "peer.service.name.spans.enabled.customers";
   public static final String INFLIGHT_TRACE_MAX_SPAN_COUNT = "max.span.count";
   public static final String DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT = "default.max.span.count";
   public static final String DROPPED_SPANS_COUNTER = "hypertrace.dropped.spans";

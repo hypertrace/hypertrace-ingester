@@ -85,3 +85,11 @@ data:
     {{- if hasKey .Values.rawSpansGrouperConfig "traceEmitPunctuatorFrequency" }}
     trace.emit.punctuator.frequency = {{ .Values.rawSpansGrouperConfig.traceEmitPunctuatorFrequency }}
     {{- end }}
+    
+    {{- if hasKey .Values.rawSpansGrouperConfig "serviceCorrelationEnabledCustomers" }}
+    service.correlation.enabled.customers = {{ .Values.rawSpansGrouperConfig.serviceCorrelationEnabledCustomers | toJson }}
+    {{- end }}
+    
+    {{- if hasKey .Values.rawSpansGrouperConfig "peerServiceNameSpansEnabledCustomers" }}
+    peer.service.name.spans.enabled.customers = {{ .Values.rawSpansGrouperConfig.peerServiceNameSpansEnabledCustomers | toJson }}
+    {{- end }}

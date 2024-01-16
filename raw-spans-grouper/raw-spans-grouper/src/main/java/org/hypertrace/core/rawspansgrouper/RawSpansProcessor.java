@@ -10,7 +10,9 @@ import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIG
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.IPS_TO_SPAN_METADATA_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_SERVICE_NAME;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_SERVICE_NAME_IN_SPANS_ENABLED_CUSTOMERS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SERVICE_CORRELATION_ENABLED_CUSTOMERS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_PUNCTUATOR;
@@ -26,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +51,7 @@ import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.HexUtils;
+import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
 import org.hypertrace.core.rawspansgrouper.utils.RawSpansGrouperUtils;
@@ -75,6 +79,7 @@ public class RawSpansProcessor
   private static final Logger logger = LoggerFactory.getLogger(RawSpansProcessor.class);
   private static final String PROCESSING_LATENCY_TIMER =
       "hypertrace.rawspansgrouper.processing.latency";
+  private static final String ALL = "*";
   private static final ConcurrentMap<String, Timer> tenantToSpansGroupingTimer =
       new ConcurrentHashMap<>();
   // counter for number of spans dropped per tenant
@@ -96,6 +101,8 @@ public class RawSpansProcessor
   private TraceEmitPunctuator traceEmitPunctuator;
   private Cancellable traceEmitTasksPunctuatorCancellable;
   private String agentEnabledAttributeName;
+  private List<String> serviceCorrelationEnabledCustomers;
+  private List<String> peerServiceNameInSpansEnabledTenants;
   private RawSpansGrouperUtils rawSpansGrouperUtils;
 
   public RawSpansProcessor(Clock clock) {
@@ -113,6 +120,14 @@ public class RawSpansProcessor
         jobConfig.hasPath(AGENT_ENABLED_ATTRIBUTE_NAME_CONFIG)
             ? jobConfig.getString(AGENT_ENABLED_ATTRIBUTE_NAME_CONFIG)
             : null;
+    this.serviceCorrelationEnabledCustomers =
+        jobConfig.hasPath(SERVICE_CORRELATION_ENABLED_CUSTOMERS)
+            ? jobConfig.getStringList(SERVICE_CORRELATION_ENABLED_CUSTOMERS)
+            : Collections.emptyList();
+    this.peerServiceNameInSpansEnabledTenants =
+        jobConfig.hasPath(PEER_SERVICE_NAME_IN_SPANS_ENABLED_CUSTOMERS)
+            ? jobConfig.getStringList(PEER_SERVICE_NAME_IN_SPANS_ENABLED_CUSTOMERS)
+            : Collections.emptyList();
     this.groupingWindowTimeoutMs =
         jobConfig.getLong(SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY) * 1000;
 
@@ -276,11 +291,14 @@ public class RawSpansProcessor
               HexUtils.getHex(event.getEventId()),
               event.getServiceName());
 
-          //          event
-          //              .getAttributes()
-          //              .getAttributeMap()
-          //              .put(PEER_SERVICE_NAME,
-          // AttributeValueCreator.create(spanMetadata.getServiceName()));
+          if (peerServiceNameInSpansEnabledTenants.contains(tenantId)
+              || peerServiceNameInSpansEnabledTenants.contains(ALL)) {
+            event
+                .getAttributes()
+                .getAttributeMap()
+                .put(
+                    PEER_SERVICE_NAME, AttributeValueCreator.create(spanMetadata.getServiceName()));
+          }
         }
       }
     }
@@ -309,7 +327,10 @@ public class RawSpansProcessor
         attributeMap
             .getOrDefault(this.agentEnabledAttributeName, AttributeValue.newBuilder().build())
             .getValue();
-    return Objects.nonNull(value) && Boolean.parseBoolean(value);
+    return Objects.nonNull(value)
+        && Boolean.parseBoolean(value)
+        && (this.serviceCorrelationEnabledCustomers.contains(event.getCustomerId())
+            || this.serviceCorrelationEnabledCustomers.contains(ALL));
   }
 
   private boolean shouldDropSpan(TraceIdentity key, TraceState traceState) {

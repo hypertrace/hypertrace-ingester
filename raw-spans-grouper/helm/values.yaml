@@ -133,6 +133,8 @@ rawSpansGrouperConfig:
   groupPartitionerConfigServiceHost: config-service
   groupPartitionerConfigServicePort: 50104
   traceEmitPunctuatorFrequency: 5s
+  serviceCorrelationEnabledCustomers: []
+  peerServiceNameSpansEnabledCustomers: []
 
   span:
     groupby:
