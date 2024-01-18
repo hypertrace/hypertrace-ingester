@@ -70,8 +70,8 @@ public class EnrichmentProcessor {
   }
 
   /**
-   * Enriches the Trace by Invoking various Enrichers registered in, returns boolean - to be
-   * forwarded
+   * Enriches the Trace by Invoking various Enrichers registered in returns a boolean - to be
+   * forward trace downstream or not
    */
   public boolean process(StructuredTrace trace) {
     DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(
