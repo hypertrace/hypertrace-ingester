@@ -69,12 +69,21 @@ public class EnrichmentProcessor {
     }
   }
 
-  /** Enriches the Trace by Invoking various Enrichers registered in */
-  public void process(StructuredTrace trace) {
+  /**
+   * Enriches the Trace by Invoking various Enrichers registered in, returns boolean - to be
+   * forwarded
+   */
+  public boolean process(StructuredTrace trace) {
     DataflowMetricUtils.reportArrivalLagAndInsertTimestamp(
         trace, enrichmentArrivalTimer, ENRICHMENT_ARRIVAL_TIME);
     AvroToJsonLogger.log(LOG, "Structured Trace before all the enrichment is: {}", trace);
     for (Entry<String, Enricher> entry : enrichers.entrySet()) {
+      Map<String, AttributeValue> attributeMap = trace.getAttributes().getAttributeMap();
+      AttributeValue dropTraceAttrValue = attributeMap.get(DROP_TRACE_ATTRIBUTE);
+      boolean shouldDropTrace = dropTraceAttrValue != null;
+      if (shouldDropTrace) {
+        return false;
+      }
       String enricherName = entry.getKey();
       Map<String, String> metricTags = Map.of("enricher", enricherName);
       try {
@@ -104,15 +113,10 @@ public class EnrichmentProcessor {
       }
     }
     AvroToJsonLogger.log(LOG, "Structured Trace after all the enrichment is: {}", trace);
+    return true;
   }
 
   private void applyEnricher(Enricher enricher, StructuredTrace trace) {
-    Map<String, AttributeValue> attributeMap = trace.getAttributes().getAttributeMap();
-    AttributeValue dropTraceAttrValue = attributeMap.get(DROP_TRACE_ATTRIBUTE);
-    boolean shouldDropTrace = dropTraceAttrValue != null;
-    if (shouldDropTrace) {
-      return;
-    }
     // Enrich entities
     List<Entity> entityList = trace.getEntityList();
     LOG.debug("Enriching Entities for {}", enricher.getClass().getName());
