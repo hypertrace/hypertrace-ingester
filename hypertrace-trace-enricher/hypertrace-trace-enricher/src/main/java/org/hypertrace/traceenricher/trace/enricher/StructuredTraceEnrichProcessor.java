@@ -62,10 +62,8 @@ public class StructuredTraceEnrichProcessor
 
   @Override
   public KeyValue<String, StructuredTrace> transform(TraceIdentity key, StructuredTrace value) {
-    if (processor.process(value)) {
-      return new KeyValue<>(null, value);
-    }
-    return null;
+    processor.process(value);
+    return new KeyValue<>(null, value);
   }
 
   @Override
