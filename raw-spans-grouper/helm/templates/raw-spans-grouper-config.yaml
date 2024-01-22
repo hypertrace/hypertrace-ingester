@@ -86,14 +86,16 @@ data:
     trace.emit.punctuator.frequency = {{ .Values.rawSpansGrouperConfig.traceEmitPunctuatorFrequency }}
     {{- end }}
     
-    {{- if hasKey .Values.rawSpansGrouperConfig "serviceCorrelationEnabledCustomers" }}
-    service.correlation.enabled.customers = {{ .Values.rawSpansGrouperConfig.serviceCorrelationEnabledCustomers | toJson }}
-    {{- end }}
-    
-    {{- if hasKey .Values.rawSpansGrouperConfig "peerCorrelationEnabledAgents" }}
-    peer.correlation.enabled.agents = {{ .Values.rawSpansGrouperConfig.peerCorrelationEnabledAgents | toJson }}
-    {{- end }}
-    
-    {{- if hasKey .Values.rawSpansGrouperConfig "agentTypeAttributeName" }}
-    agent.type.attribute.name = {{ .Values.rawSpansGrouperConfig.agentTypeAttributeName }}
+    {{- if hasKey .Values.rawSpansGrouperConfig "peerCorrelation" }}
+    peer.correlation = {
+      {{- if hasKey .Values.rawSpansGrouperConfig.peerCorrelation "enabledCustomers" }}
+      enabled.customers = {{ .Values.rawSpansGrouperConfig.peerCorrelation.enabledCustomers | toJson }}
+      {{- end }}
+      {{- if hasKey .Values.rawSpansGrouperConfig.peerCorrelation "enabledAgents" }}
+      enabled.agents = {{ .Values.rawSpansGrouperConfig.peerCorrelation.enabledAgents | toJson }}
+      {{- end }}
+      {{- if hasKey .Values.rawSpansGrouperConfig.peerCorrelation "agentTypeAttribute" }}
+      agent.type.attribute = {{ .Values.rawSpansGrouperConfig.peerCorrelation.agentTypeAttribute }}
+      {{- end }}
+    }
     {{- end }}

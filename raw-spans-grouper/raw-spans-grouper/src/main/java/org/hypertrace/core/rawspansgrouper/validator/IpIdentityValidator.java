@@ -1,4 +1,4 @@
-package org.hypertrace.core.rawspansgrouper;
+package org.hypertrace.core.rawspansgrouper.validator;
 
 import java.util.Objects;
 import org.hypertrace.core.spannormalizer.IpIdentity;
@@ -10,7 +10,6 @@ public class IpIdentityValidator {
     }
 
     return Objects.nonNull(ipIdentity.getHostAddr())
-        || Objects.nonNull(ipIdentity.getPeerAddr())
-        || Objects.nonNull(ipIdentity.getPeerPort());
+        || (Objects.nonNull(ipIdentity.getPeerAddr()) && Objects.nonNull(ipIdentity.getPeerPort()));
   }
 }

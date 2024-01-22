@@ -2,16 +2,16 @@ package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.datamodel.shared.AvroBuilderCache.fastNewBuilder;
 import static org.hypertrace.core.kafkastreams.framework.KafkaStreamsApp.KAFKA_STREAMS_CONFIG_KEY;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.AGENT_TYPE_ATTRIBUTE_NAME_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.DROPPED_SPANS_COUNTER;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.INFLIGHT_TRACE_MAX_SPAN_COUNT;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.OUTPUT_TOPIC_PRODUCER;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_CORRELATION_AGENT_TYPE_ATTRIBUTE_CONFIG;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_CORRELATION_ENABLED_AGENTS;
+import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_CORRELATION_ENABLED_CUSTOMERS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.PEER_IDENTITY_TO_SPAN_METADATA_STATE_STORE;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SERVICE_CORRELATION_ENABLED_CUSTOMERS;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_GROUPBY_SESSION_WINDOW_INTERVAL_CONFIG_KEY;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPAN_STATE_STORE_NAME;
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_EMIT_PUNCTUATOR;
@@ -45,7 +45,6 @@ import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.AttributeValue;
-import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -55,6 +54,7 @@ import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
 import org.hypertrace.core.rawspansgrouper.utils.TraceLatencyMeter;
+import org.hypertrace.core.rawspansgrouper.validator.PeerIdentityValidator;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.IpIdentity;
 import org.hypertrace.core.spannormalizer.PeerIdentity;
@@ -101,8 +101,8 @@ public class RawSpansProcessor
   private long defaultMaxSpanCountLimit = Long.MAX_VALUE;
   private TraceEmitPunctuator traceEmitPunctuator;
   private Cancellable traceEmitTasksPunctuatorCancellable;
-  private String agentTypeAttributeName;
-  private List<String> serviceCorrelationEnabledCustomers;
+  private String peerCorrelationAgentTypeAttribute;
+  private List<String> peerCorrelationEnabledCustomers;
   private List<String> peerCorrelationEnabledAgents;
   private TraceLatencyMeter traceLatencyMeter;
 
@@ -118,13 +118,13 @@ public class RawSpansProcessor
     this.peerIdentityToSpanMetadataStateStore =
         context.getStateStore(PEER_IDENTITY_TO_SPAN_METADATA_STATE_STORE);
     Config jobConfig = (Config) (context.appConfigs().get(RAW_SPANS_GROUPER_JOB_CONFIG));
-    this.agentTypeAttributeName =
-        jobConfig.hasPath(AGENT_TYPE_ATTRIBUTE_NAME_CONFIG)
-            ? jobConfig.getString(AGENT_TYPE_ATTRIBUTE_NAME_CONFIG)
+    this.peerCorrelationAgentTypeAttribute =
+        jobConfig.hasPath(PEER_CORRELATION_AGENT_TYPE_ATTRIBUTE_CONFIG)
+            ? jobConfig.getString(PEER_CORRELATION_AGENT_TYPE_ATTRIBUTE_CONFIG)
             : null;
-    this.serviceCorrelationEnabledCustomers =
-        jobConfig.hasPath(SERVICE_CORRELATION_ENABLED_CUSTOMERS)
-            ? jobConfig.getStringList(SERVICE_CORRELATION_ENABLED_CUSTOMERS)
+    this.peerCorrelationEnabledCustomers =
+        jobConfig.hasPath(PEER_CORRELATION_ENABLED_CUSTOMERS)
+            ? jobConfig.getStringList(PEER_CORRELATION_ENABLED_CUSTOMERS)
             : Collections.emptyList();
     this.peerCorrelationEnabledAgents =
         jobConfig.hasPath(PEER_CORRELATION_ENABLED_AGENTS)
@@ -286,7 +286,11 @@ public class RawSpansProcessor
             .build();
     if (PeerIdentityValidator.isValid(peerIdentity)) {
       this.peerIdentityToSpanMetadataStateStore.put(
-          peerIdentity, SpanMetadata.newBuilder().setServiceName(serviceName).build());
+          peerIdentity,
+          SpanMetadata.newBuilder()
+              .setServiceName(serviceName)
+              .setEventId(HexUtils.getHex(event.getEventId()))
+              .build());
     }
   }
 
@@ -309,11 +313,11 @@ public class RawSpansProcessor
     if (PeerIdentityValidator.isValid(peerIdentity)) {
       SpanMetadata spanMetadata = this.peerIdentityToSpanMetadataStateStore.get(peerIdentity);
       if (Objects.nonNull(spanMetadata)) {
-        // Instead of updating the span, adding a debug log to print the service correlation
         logger.debug(
-            "Adding {} as: {} in spanId: {} with service name: {}",
+            "Adding {} as: {} from spanId: {} in spanId: {} with service name: {}",
             PEER_SERVICE_NAME,
             spanMetadata.getServiceName(),
+            spanMetadata.getEventId(),
             HexUtils.getHex(event.getEventId()),
             event.getServiceName());
 
@@ -326,24 +330,17 @@ public class RawSpansProcessor
   }
 
   private boolean isPeerServiceNameIdentificationRequired(Event event) {
-    Attributes attributes = event.getAttributes();
-    if (Objects.isNull(attributes)) {
-      return false;
-    }
-
-    Map<String, AttributeValue> attributeMap = attributes.getAttributeMap();
-    if (Objects.isNull(attributeMap)) {
-      return false;
-    }
-
     String agentType =
-        attributeMap
-            .getOrDefault(this.agentTypeAttributeName, AttributeValue.newBuilder().build())
+        event
+            .getAttributes()
+            .getAttributeMap()
+            .getOrDefault(
+                this.peerCorrelationAgentTypeAttribute, AttributeValue.newBuilder().build())
             .getValue();
     return Objects.nonNull(agentType)
         && this.peerCorrelationEnabledAgents.contains(agentType)
-        && (this.serviceCorrelationEnabledCustomers.contains(event.getCustomerId())
-            || this.serviceCorrelationEnabledCustomers.contains(ALL));
+        && (this.peerCorrelationEnabledCustomers.contains(event.getCustomerId())
+            || this.peerCorrelationEnabledCustomers.contains(ALL));
   }
 
   private boolean shouldDropSpan(TraceIdentity key, TraceState traceState) {

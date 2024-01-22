@@ -15,9 +15,10 @@ public class RawSpanGrouperConstants {
   public static final String TRACE_CREATION_TIME = "trace.creation.time";
   public static final String DATAFLOW_SAMPLING_PERCENT_CONFIG_KEY =
       "dataflow.metriccollection.sampling.percent";
-  public static final String AGENT_TYPE_ATTRIBUTE_NAME_CONFIG = "agent.type.attribute.name";
-  public static final String SERVICE_CORRELATION_ENABLED_CUSTOMERS =
-      "service.correlation.enabled.customers";
+  public static final String PEER_CORRELATION_AGENT_TYPE_ATTRIBUTE_CONFIG =
+      "peer.correlation.agent.type.attribute";
+  public static final String PEER_CORRELATION_ENABLED_CUSTOMERS =
+      "peer.correlation.enabled.customers";
   public static final String PEER_CORRELATION_ENABLED_AGENTS = "peer.correlation.enabled.agents";
   public static final String INFLIGHT_TRACE_MAX_SPAN_COUNT = "max.span.count";
   public static final String DEFAULT_INFLIGHT_TRACE_MAX_SPAN_COUNT = "default.max.span.count";

@@ -13,6 +13,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -434,6 +435,7 @@ public class RawSpansGrouperTest {
     return Event.newBuilder()
         .setCustomerId(tenantId)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
+        .setAttributes(Attributes.newBuilder().setAttributeMap(Collections.emptyMap()).build())
         .setStartTimeMillis(System.currentTimeMillis())
         .build();
   }
