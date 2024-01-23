@@ -44,12 +44,12 @@ import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.HexUtils;
+import org.hypertrace.core.datamodel.shared.SpanAttributeUtils;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.datamodel.shared.trace.StructuredTraceBuilder;
 import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuatorConfig;
@@ -322,7 +322,7 @@ public class RawSpansProcessor
             event.getServiceName());
 
         event
-            .getAttributes()
+            .getEnrichedAttributes()
             .getAttributeMap()
             .put(PEER_SERVICE_NAME, AttributeValueCreator.create(spanMetadata.getServiceName()));
       }
@@ -331,11 +331,8 @@ public class RawSpansProcessor
 
   private boolean isPeerServiceNameIdentificationRequired(Event event) {
     String agentType =
-        event
-            .getAttributes()
-            .getAttributeMap()
-            .getOrDefault(
-                this.peerCorrelationAgentTypeAttribute, AttributeValue.newBuilder().build())
+        SpanAttributeUtils.getAttributeValueWithDefault(
+                event, this.peerCorrelationAgentTypeAttribute, null)
             .getValue();
     return Objects.nonNull(agentType)
         && this.peerCorrelationEnabledAgents.contains(agentType)

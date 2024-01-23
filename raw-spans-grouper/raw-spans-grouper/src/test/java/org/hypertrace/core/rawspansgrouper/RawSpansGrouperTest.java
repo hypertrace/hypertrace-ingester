@@ -410,10 +410,10 @@ public class RawSpansGrouperTest {
     trace = outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
     Event event = span3.getEvent();
-    Map<String, AttributeValue> attributeMap =
-        new HashMap<>(event.getAttributes().getAttributeMap());
-    attributeMap.put(PEER_SERVICE_NAME, createAttribute(service1));
-    event.setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build());
+    event.setEnrichedAttributes(
+        Attributes.newBuilder()
+            .setAttributeMap(Map.of(PEER_SERVICE_NAME, createAttribute(service1)))
+            .build());
     assertEquals(event, trace.getEventList().get(0));
 
     inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-4"), span4);
@@ -425,9 +425,10 @@ public class RawSpansGrouperTest {
     trace = outputTopic.readValue();
     assertEquals(1, trace.getEventList().size());
     event = span2.getEvent();
-    attributeMap = new HashMap<>(event.getAttributes().getAttributeMap());
-    attributeMap.put(PEER_SERVICE_NAME, createAttribute(service2));
-    event.setAttributes(Attributes.newBuilder().setAttributeMap(attributeMap).build());
+    event.setEnrichedAttributes(
+        Attributes.newBuilder()
+            .setAttributeMap(Map.of(PEER_SERVICE_NAME, createAttribute(service2)))
+            .build());
     assertEquals(event, trace.getEventList().get(0));
   }
 
@@ -436,6 +437,8 @@ public class RawSpansGrouperTest {
         .setCustomerId(tenantId)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
         .setAttributes(Attributes.newBuilder().setAttributeMap(Collections.emptyMap()).build())
+        .setEnrichedAttributes(
+            Attributes.newBuilder().setAttributeMap(Collections.emptyMap()).build())
         .setStartTimeMillis(System.currentTimeMillis())
         .build();
   }
@@ -454,6 +457,8 @@ public class RawSpansGrouperTest {
         .setServiceName(service)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
         .setStartTimeMillis(System.currentTimeMillis())
+        .setEnrichedAttributes(
+            Attributes.newBuilder().setAttributeMap(Collections.emptyMap()).build())
         .setAttributes(
             Attributes.newBuilder()
                 .setAttributeMap(
