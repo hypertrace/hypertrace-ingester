@@ -331,9 +331,8 @@ public class RawSpansProcessor
 
   private boolean isPeerServiceNameIdentificationRequired(Event event) {
     String agentType =
-        SpanAttributeUtils.getAttributeValueWithDefault(
-                event, this.peerCorrelationAgentTypeAttribute, null)
-            .getValue();
+        SpanAttributeUtils.getStringAttributeWithDefault(
+            event, this.peerCorrelationAgentTypeAttribute, null);
     return Objects.nonNull(agentType)
         && this.peerCorrelationEnabledAgents.contains(agentType)
         && (this.peerCorrelationEnabledCustomers.contains(event.getCustomerId())
