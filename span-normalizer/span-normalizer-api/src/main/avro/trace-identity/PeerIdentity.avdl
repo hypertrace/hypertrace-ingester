@@ -12,4 +12,3 @@ protocol PeerIdentityProtocol {
     union { null, string } peer_port = null;
   }
 }
-
