@@ -197,6 +197,8 @@ public class RawSpansProcessor
     }
 
     Event event = value.getEvent();
+    // spans whose trace is not created by ByPass flow, their trace will be created in below
+    // function call. Those spans' trace will not be created by TraceEmitPunctuator
     if (isPeerServiceNameIdentificationRequired(event)) {
       processSpanForPeerServiceNameIdentification(key, value, traceState, currentTimeMs);
       return;
@@ -258,6 +260,7 @@ public class RawSpansProcessor
       handleServerSpan(tenantId, event, maybeEnvironment.orElse(null));
     }
 
+    // create structured trace and forward
     Timestamps timestamps =
         traceLatencyMeter.trackEndToEndLatencyTimestamps(
             currentTimeMs, firstEntry ? currentTimeMs : traceState.getTraceStartTimestamp());
@@ -289,7 +292,7 @@ public class RawSpansProcessor
           peerIdentity,
           SpanMetadata.newBuilder()
               .setServiceName(serviceName)
-              .setEventId(HexUtils.getHex(event.getEventId()))
+              .setEventId(event.getEventId())
               .build());
     }
   }
@@ -317,7 +320,7 @@ public class RawSpansProcessor
             "Adding {} as: {} from spanId: {} in spanId: {} with service name: {}",
             PEER_SERVICE_NAME,
             spanMetadata.getServiceName(),
-            spanMetadata.getEventId(),
+            HexUtils.getHex(spanMetadata.getEventId()),
             HexUtils.getHex(event.getEventId()),
             event.getServiceName());
 

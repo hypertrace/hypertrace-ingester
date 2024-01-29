@@ -2,6 +2,6 @@
 protocol SpanMetadataProtocol {
   record SpanMetadata {
     string service_name;
-    string event_id;
+    bytes event_id;
   }
 }
