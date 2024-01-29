@@ -333,13 +333,15 @@ public class RawSpansProcessor
   }
 
   private boolean isPeerServiceNameIdentificationRequired(Event event) {
+    if (!this.peerCorrelationEnabledCustomers.contains(event.getCustomerId())
+        && !this.peerCorrelationEnabledCustomers.contains(ALL)) {
+      return false;
+    }
+
     String agentType =
         SpanAttributeUtils.getStringAttributeWithDefault(
             event, this.peerCorrelationAgentTypeAttribute, null);
-    return Objects.nonNull(agentType)
-        && this.peerCorrelationEnabledAgents.contains(agentType)
-        && (this.peerCorrelationEnabledCustomers.contains(event.getCustomerId())
-            || this.peerCorrelationEnabledCustomers.contains(ALL));
+    return Objects.nonNull(agentType) && this.peerCorrelationEnabledAgents.contains(agentType);
   }
 
   private boolean shouldDropSpan(TraceIdentity key, TraceState traceState) {
