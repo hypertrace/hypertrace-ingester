@@ -74,7 +74,7 @@
     <packageUrl regex="true">^pkg:maven/org\.quartz\-scheduler/quartz@.*$</packageUrl>
     <cve>CVE-2023-39017</cve>
   </suppress>
-  <suppress until="2024-01-30Z">
+  <suppress until="2024-02-29Z">
     <notes><![CDATA[
    file name: json-20230618.jar
    ]]></notes>
