@@ -1,5 +1,6 @@
 package org.hypertrace.core.rawspansgrouper;
 
+import static org.hypertrace.traceenricher.enrichedspan.constants.EnrichedSpanConstants.PEER_SERVICE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -24,6 +26,8 @@ import org.apache.kafka.streams.TestInputTopic;
 import org.apache.kafka.streams.TestOutputTopic;
 import org.apache.kafka.streams.TopologyTestDriver;
 import org.apache.kafka.streams.test.TestRecord;
+import org.hypertrace.core.datamodel.AttributeValue;
+import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
@@ -303,12 +307,182 @@ public class RawSpansGrouperTest {
     return finalMessageTime;
   }
 
+  @Test
+  @SetEnvironmentVariable(key = "SERVICE_NAME", value = "raw-spans-grouper")
+  void testMirroringSpansGrouping(@TempDir Path tempDir) {
+    File file = tempDir.resolve("state").toFile();
+
+    RawSpansGrouper underTest = new RawSpansGrouper(ConfigClientFactory.getClient());
+    Config config =
+        ConfigFactory.parseURL(
+            getClass().getClassLoader().getResource("configs/raw-spans-grouper/application.conf"));
+
+    Map<String, Object> baseProps = underTest.getBaseStreamsConfig();
+    Map<String, Object> streamsProps = underTest.getStreamsConfig(config);
+    baseProps.forEach(streamsProps::put);
+    Map<String, Object> mergedProps = streamsProps;
+
+    mergedProps.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, SpecificAvroSerde.class);
+    mergedProps.put(RawSpanGrouperConstants.RAW_SPANS_GROUPER_JOB_CONFIG, config);
+    mergedProps.put(StreamsConfig.STATE_DIR_CONFIG, file.getAbsolutePath());
+
+    StreamsBuilder streamsBuilder =
+        underTest.buildTopology(mergedProps, new StreamsBuilder(), new HashMap<>());
+
+    Properties props = new Properties();
+    mergedProps.forEach(props::put);
+
+    Serde defaultValueSerde = new StreamsConfig(mergedProps).defaultValueSerde();
+
+    Serde<TraceIdentity> traceIdentitySerde = new StreamsConfig(mergedProps).defaultKeySerde();
+
+    TopologyTestDriver td = new TopologyTestDriver(streamsBuilder.build(), props);
+    TestInputTopic<TraceIdentity, RawSpan> inputTopic =
+        td.createInputTopic(
+            config.getString(RawSpanGrouperConstants.INPUT_TOPIC_CONFIG_KEY),
+            traceIdentitySerde.serializer(),
+            defaultValueSerde.serializer());
+
+    TestOutputTopic<TraceIdentity, StructuredTrace> outputTopic =
+        td.createOutputTopic(
+            config.getString(RawSpanGrouperConstants.OUTPUT_TOPIC_CONFIG_KEY),
+            traceIdentitySerde.deserializer(),
+            defaultValueSerde.deserializer());
+
+    String hostAddr1 = "1.2.3.4";
+    String hostAddr2 = "1.2.3.5";
+    String hostAddr3 = "1.2.3.6";
+    String hostPort2 = "5000";
+    String hostPort3 = "6000";
+    String service1 = "service1";
+    String service2 = "service2";
+    String service3 = "service3";
+
+    String tenantId = "tenant1";
+    RawSpan span1 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-1".getBytes()))
+            .setCustomerId(tenantId)
+            .setEvent(
+                createMirroringEvent(
+                    "event-1", tenantId, service1, "client", hostAddr1, "1234", hostAddr2,
+                    hostPort2))
+            .build();
+    RawSpan span2 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-2".getBytes()))
+            .setCustomerId(tenantId)
+            .setEvent(
+                createMirroringEvent(
+                    "event-2", tenantId, service3, "server", hostAddr3, hostPort3, hostAddr2,
+                    "5678"))
+            .build();
+    RawSpan span3 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-3".getBytes()))
+            .setCustomerId(tenantId)
+            .setEvent(
+                createMirroringEvent(
+                    "event-3", tenantId, service2, "server", hostAddr2, hostPort2, hostAddr1,
+                    "1234"))
+            .build();
+    RawSpan span4 =
+        RawSpan.newBuilder()
+            .setTraceId(ByteBuffer.wrap("trace-4".getBytes()))
+            .setCustomerId(tenantId)
+            .setEvent(
+                createMirroringEvent(
+                    "event-4", tenantId, service2, "client", hostAddr2, "5678", hostAddr3,
+                    hostPort3))
+            .build();
+
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-1"), span1);
+    StructuredTrace trace = outputTopic.readValue();
+    assertEquals(1, trace.getEventList().size());
+    assertEquals(span1.getEvent(), trace.getEventList().get(0));
+
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span2);
+    trace = outputTopic.readValue();
+    assertEquals(1, trace.getEventList().size());
+    assertEquals(span2.getEvent(), trace.getEventList().get(0));
+
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-3"), span3);
+    trace = outputTopic.readValue();
+    assertEquals(1, trace.getEventList().size());
+    Event event = span3.getEvent();
+    event.setEnrichedAttributes(
+        Attributes.newBuilder()
+            .setAttributeMap(Map.of(PEER_SERVICE_NAME, createAttribute(service1)))
+            .build());
+    assertEquals(event, trace.getEventList().get(0));
+
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-4"), span4);
+    trace = outputTopic.readValue();
+    assertEquals(1, trace.getEventList().size());
+    assertEquals(span4.getEvent(), trace.getEventList().get(0));
+
+    inputTopic.pipeInput(createTraceIdentity(tenantId, "trace-2"), span2);
+    trace = outputTopic.readValue();
+    assertEquals(1, trace.getEventList().size());
+    event = span2.getEvent();
+    event.setEnrichedAttributes(
+        Attributes.newBuilder()
+            .setAttributeMap(Map.of(PEER_SERVICE_NAME, createAttribute(service2)))
+            .build());
+    assertEquals(event, trace.getEventList().get(0));
+  }
+
   private Event createEvent(String eventId, String tenantId) {
     return Event.newBuilder()
         .setCustomerId(tenantId)
         .setEventId(ByteBuffer.wrap(eventId.getBytes()))
+        .setAttributes(Attributes.newBuilder().setAttributeMap(Collections.emptyMap()).build())
+        .setEnrichedAttributes(
+            Attributes.newBuilder().setAttributeMap(Collections.emptyMap()).build())
         .setStartTimeMillis(System.currentTimeMillis())
         .build();
+  }
+
+  private Event createMirroringEvent(
+      String eventId,
+      String tenantId,
+      String service,
+      String spanKind,
+      String hostAddr,
+      String hostPort,
+      String peerAddr,
+      String peerPort) {
+    return Event.newBuilder()
+        .setCustomerId(tenantId)
+        .setServiceName(service)
+        .setEventId(ByteBuffer.wrap(eventId.getBytes()))
+        .setStartTimeMillis(System.currentTimeMillis())
+        .setEnrichedAttributes(
+            Attributes.newBuilder().setAttributeMap(Collections.emptyMap()).build())
+        .setAttributes(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        "agent.type",
+                        createAttribute("mirror"),
+                        "deployment.environment",
+                        createAttribute("environment"),
+                        "span.kind",
+                        createAttribute(spanKind),
+                        "net.sock.host.addr",
+                        createAttribute(hostAddr),
+                        "net.sock.host.port",
+                        createAttribute(hostPort),
+                        "net.sock.peer.addr",
+                        createAttribute(peerAddr),
+                        "net.sock.peer.port",
+                        createAttribute(peerPort)))
+                .build())
+        .build();
+  }
+
+  private AttributeValue createAttribute(String value) {
+    return AttributeValue.newBuilder().setValue(value).build();
   }
 
   private TraceIdentity createTraceIdentity(String tenantId, String traceId) {

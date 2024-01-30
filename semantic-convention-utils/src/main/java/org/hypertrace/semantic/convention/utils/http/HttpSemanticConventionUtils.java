@@ -223,6 +223,40 @@ public class HttpSemanticConventionUtils {
                         event, OTelSpanSemanticConventions.NET_PEER_IP.getValue())));
   }
 
+  public static Optional<String> getPeerIpAddress(Event event) {
+    return Optional.ofNullable(
+            SpanAttributeUtils.getStringAttribute(
+                event, OTelSpanSemanticConventions.NET_SOCK_PEER_ADDR.getValue()))
+        .or(
+            () ->
+                Optional.ofNullable(
+                    SpanAttributeUtils.getStringAttribute(
+                        event, OTelSpanSemanticConventions.NET_PEER_IP.getValue())));
+  }
+
+  public static Optional<String> getPeerPort(Event event) {
+    return Optional.ofNullable(
+            SpanAttributeUtils.getStringAttribute(
+                event, OTelSpanSemanticConventions.NET_SOCK_PEER_PORT.getValue()))
+        .or(
+            () ->
+                Optional.ofNullable(
+                    SpanAttributeUtils.getStringAttribute(
+                        event, OTelSpanSemanticConventions.NET_PEER_PORT.getValue())));
+  }
+
+  public static Optional<String> getHostIpAddress(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getStringAttribute(
+            event, OTelSpanSemanticConventions.NET_SOCK_HOST_ADDR.getValue()));
+  }
+
+  public static Optional<String> getHostPort(Event event) {
+    return Optional.ofNullable(
+        SpanAttributeUtils.getStringAttribute(
+            event, OTelSpanSemanticConventions.NET_SOCK_HOST_PORT.getValue()));
+  }
+
   public static Optional<String> getEnvironmentForSpan(Event event) {
     return Optional.ofNullable(
         SpanAttributeUtils.getStringAttribute(

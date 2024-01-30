@@ -1,0 +1,7 @@
+@namespace("org.hypertrace.core.spannormalizer")
+protocol SpanMetadataProtocol {
+  record SpanMetadata {
+    string service_name;
+    bytes event_id;
+  }
+}

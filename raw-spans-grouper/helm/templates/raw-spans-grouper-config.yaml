@@ -85,3 +85,17 @@ data:
     {{- if hasKey .Values.rawSpansGrouperConfig "traceEmitPunctuatorFrequency" }}
     trace.emit.punctuator.frequency = {{ .Values.rawSpansGrouperConfig.traceEmitPunctuatorFrequency }}
     {{- end }}
+    
+    {{- if hasKey .Values.rawSpansGrouperConfig "peerCorrelation" }}
+    peer.correlation = {
+      {{- if hasKey .Values.rawSpansGrouperConfig.peerCorrelation "enabledCustomers" }}
+      enabled.customers = {{ .Values.rawSpansGrouperConfig.peerCorrelation.enabledCustomers | toJson }}
+      {{- end }}
+      {{- if hasKey .Values.rawSpansGrouperConfig.peerCorrelation "enabledAgents" }}
+      enabled.agents = {{ .Values.rawSpansGrouperConfig.peerCorrelation.enabledAgents | toJson }}
+      {{- end }}
+      {{- if hasKey .Values.rawSpansGrouperConfig.peerCorrelation "agentTypeAttribute" }}
+      agent.type.attribute = {{ .Values.rawSpansGrouperConfig.peerCorrelation.agentTypeAttribute }}
+      {{- end }}
+    }
+    {{- end }}

@@ -33,6 +33,8 @@ dependencies {
     because("https://snyk.io/vuln/SNYK-JAVA-ORGGLASSFISHJERSEYCORE-1255637")
   }
   implementation(project(":span-normalizer:span-normalizer-api"))
+  implementation(project(":semantic-convention-utils"))
+  implementation(project(":hypertrace-trace-enricher:enriched-span-constants"))
   implementation(libs.hypertrace.data.model)
   implementation(libs.hypertrace.serviceFramework.framework)
   implementation(libs.hypertrace.serviceFramework.metrics)

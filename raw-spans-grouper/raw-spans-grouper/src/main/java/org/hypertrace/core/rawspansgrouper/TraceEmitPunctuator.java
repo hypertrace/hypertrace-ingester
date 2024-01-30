@@ -1,7 +1,6 @@
 package org.hypertrace.core.rawspansgrouper;
 
 import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.SPANS_PER_TRACE_METRIC;
-import static org.hypertrace.core.rawspansgrouper.RawSpanGrouperConstants.TRACE_CREATION_TIME;
 
 import com.google.common.util.concurrent.RateLimiter;
 import io.micrometer.core.instrument.Counter;
@@ -18,13 +17,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.hypertrace.core.datamodel.RawSpan;
 import org.hypertrace.core.datamodel.StructuredTrace;
-import org.hypertrace.core.datamodel.TimestampRecord;
 import org.hypertrace.core.datamodel.Timestamps;
 import org.hypertrace.core.datamodel.shared.DataflowMetricUtils;
 import org.hypertrace.core.datamodel.shared.HexUtils;
@@ -34,6 +31,7 @@ import org.hypertrace.core.kafkastreams.framework.punctuators.ThrottledPunctuato
 import org.hypertrace.core.kafkastreams.framework.punctuators.action.CompletedTaskResult;
 import org.hypertrace.core.kafkastreams.framework.punctuators.action.RescheduleTaskResult;
 import org.hypertrace.core.kafkastreams.framework.punctuators.action.TaskResult;
+import org.hypertrace.core.rawspansgrouper.utils.TraceLatencyMeter;
 import org.hypertrace.core.serviceframework.metrics.PlatformMetricsRegistry;
 import org.hypertrace.core.spannormalizer.SpanIdentity;
 import org.hypertrace.core.spannormalizer.TraceIdentity;
@@ -68,12 +66,12 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
       new ConcurrentHashMap<>();
 
   private static final CompletedTaskResult COMPLETED_TASK_RESULT = new CompletedTaskResult();
-  private final double dataflowSamplingPercent;
   private final ProcessorContext<TraceIdentity, StructuredTrace> context;
   private final KeyValueStore<SpanIdentity, RawSpan> spanStore;
   private final KeyValueStore<TraceIdentity, TraceState> traceStateStore;
   private final String outputTopicProducer;
   private final long groupingWindowTimeoutMs;
+  private final TraceLatencyMeter traceLatencyMeter;
 
   TraceEmitPunctuator(
       ThrottledPunctuatorConfig throttledPunctuatorConfig,
@@ -90,7 +88,7 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
     this.traceStateStore = traceStateStore;
     this.outputTopicProducer = outputTopicProducer;
     this.groupingWindowTimeoutMs = groupingWindowTimeoutMs;
-    this.dataflowSamplingPercent = dataflowSamplingPercent;
+    this.traceLatencyMeter = new TraceLatencyMeter(dataflowSamplingPercent);
   }
 
   protected TaskResult executeTask(long punctuateTimestamp, TraceIdentity key) {
@@ -153,7 +151,7 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
 
     recordSpansPerTrace(rawSpanList.size(), List.of(Tag.of("tenant_id", tenantId)));
     Timestamps timestamps =
-        trackEndToEndLatencyTimestamps(
+        this.traceLatencyMeter.trackEndToEndLatencyTimestamps(
             System.currentTimeMillis(), traceState.getTraceStartTimestamp());
     StructuredTrace trace =
         StructuredTraceBuilder.buildStructuredTraceFromRawSpans(
@@ -195,22 +193,6 @@ class TraceEmitPunctuator extends AbstractThrottledPunctuator<TraceIdentity> {
     context.forward(
         new Record<TraceIdentity, StructuredTrace>(key, trace, System.currentTimeMillis()),
         outputTopicProducer);
-  }
-
-  private Timestamps trackEndToEndLatencyTimestamps(
-      long currentTimestamp, long firstSpanTimestamp) {
-    Timestamps timestamps = null;
-    if (!(Math.random() * 100 <= dataflowSamplingPercent)) {
-      spansGrouperArrivalLagTimer.record(
-          currentTimestamp - firstSpanTimestamp, TimeUnit.MILLISECONDS);
-      Map<String, TimestampRecord> records = new HashMap<>();
-      records.put(
-          DataflowMetricUtils.SPAN_ARRIVAL_TIME,
-          new TimestampRecord(DataflowMetricUtils.SPAN_ARRIVAL_TIME, firstSpanTimestamp));
-      records.put(TRACE_CREATION_TIME, new TimestampRecord(TRACE_CREATION_TIME, currentTimestamp));
-      timestamps = new Timestamps(records);
-    }
-    return timestamps;
   }
 
   private void recordSpansPerTrace(double count, Iterable<Tag> tags) {
