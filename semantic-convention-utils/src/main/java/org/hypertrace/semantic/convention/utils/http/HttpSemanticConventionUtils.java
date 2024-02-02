@@ -438,7 +438,7 @@ public class HttpSemanticConventionUtils {
   }
 
   public static URL getNormalizedUrl(String url) throws MalformedURLException, URISyntaxException {
-    String sanitizedUrl = StringUtils.stripStart(url, SLASH);
+    String sanitizedUrl = removeInitialSlashes(url);
     URL absoluteUrl = new URL(new URL(RELATIVE_URL_CONTEXT), sanitizedUrl);
     return absoluteUrl.toURI().normalize().toURL();
   }
@@ -510,7 +510,7 @@ public class HttpSemanticConventionUtils {
         if (StringUtils.isBlank(pathVal)) {
           pathVal = SLASH;
         }
-        return Optional.of(removeTrailingSlash(pathVal));
+        return Optional.of(removeTrailingSlashes(pathVal));
       } catch (MalformedURLException | URISyntaxException e) {
         LOGGER.debug(
             "On extracting httpPath, received an invalid URL: {}, {}", url.get(), e.getMessage());
@@ -530,7 +530,7 @@ public class HttpSemanticConventionUtils {
       if (attributeValueMap.get(path) != null) {
         String s = attributeValueMap.get(path).getValue();
         if (StringUtils.isNotBlank(s) && s.startsWith(SLASH)) {
-          return getPathFromUrlObject(s).map(HttpSemanticConventionUtils::removeTrailingSlash);
+          return getPathFromUrlObject(s).map(HttpSemanticConventionUtils::removeTrailingSlashes);
         }
       }
     }
@@ -897,9 +897,22 @@ public class HttpSemanticConventionUtils {
     return Optional.empty();
   }
 
-  private static String removeTrailingSlash(String s) {
-    // Ends with "/" and it's not home page path
-    return s.endsWith(SLASH) && s.length() > 1 ? s.substring(0, s.length() - 1) : s;
+  private static String removeTrailingSlashes(String url) {
+    // if it's home page path, then return /
+    String updatedUrl = StringUtils.stripEnd(url, SLASH);
+    if (updatedUrl.isEmpty()) {
+      return SLASH;
+    }
+    return updatedUrl;
+  }
+
+  private static String removeInitialSlashes(String url) {
+    // if it's home page path, then return /
+    String updatedUrl = StringUtils.stripStart(url, SLASH);
+    if (updatedUrl.isEmpty()) {
+      return SLASH;
+    }
+    return updatedUrl;
   }
 
   @Nullable

@@ -665,4 +665,20 @@ public class HttpSemanticConventionUtilsTest {
 
     Assertions.assertEquals(HttpSemanticConventionUtils.getPrimaryDomain("10.0.0.0"), "10.0.0.0");
   }
+
+  @Test
+  void testGetPathFromUrlObject() {
+    Optional<String> path =
+        HttpSemanticConventionUtils.getPathFromUrlObject("http://app.test.com:9191/");
+    Assertions.assertTrue(path.isPresent());
+    Assertions.assertEquals("/", path.get());
+
+    path = HttpSemanticConventionUtils.getPathFromUrlObject("http://app.test.com:9191//");
+    Assertions.assertTrue(path.isPresent());
+    Assertions.assertEquals("/", path.get());
+
+    path = HttpSemanticConventionUtils.getPathFromUrlObject("http://app.test.com:9191//abc/def");
+    Assertions.assertTrue(path.isPresent());
+    Assertions.assertEquals("/abc/def", path.get());
+  }
 }
