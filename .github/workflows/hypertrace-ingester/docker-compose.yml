@@ -80,7 +80,7 @@ services:
     container_name: mongo
 
   pinot:
-    image: hypertrace/pinot-servicemanager:main
+    image: hypertrace/pinot-servicemanager:0.6.10
     container_name: pinot
     environment:
       - LOG_LEVEL=error

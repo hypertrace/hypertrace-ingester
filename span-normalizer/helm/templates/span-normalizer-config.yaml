@@ -72,7 +72,7 @@ data:
       {{- end }}
       
       {{- if hasKey .Values.spanNormalizerConfig.processor "bypassOverrideTenants" }}
-      bypass.override.tenants = "{{ .Values.spanNormalizerConfig.processor.bypassOverrideTenants | toJson }}"
+      bypass.override.tenants = {{ .Values.spanNormalizerConfig.processor.bypassOverrideTenants | toJson }}
       {{- end }}
 
       {{- if hasKey .Values.spanNormalizerConfig.processor "lateArrivalThresholdDuration" }}
