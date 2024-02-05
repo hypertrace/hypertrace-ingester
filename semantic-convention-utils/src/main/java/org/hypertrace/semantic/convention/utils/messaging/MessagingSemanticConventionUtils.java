@@ -50,7 +50,8 @@ public class MessagingSemanticConventionUtils {
       new ArrayList<>(
           Arrays.asList(
               RawSpanConstants.getValue(RabbitMq.RABBIT_MQ_ROUTING_KEY),
-              OtelMessagingSemanticConventions.RABBITMQ_ROUTING_KEY.getValue()));
+              OtelMessagingSemanticConventions.RABBITMQ_ROUTING_KEY.getValue(),
+              OtelMessagingSemanticConventions.RABBITMQ_DESTINATION_ROUTING_KEY.getValue()));
 
   /**
    * @param event Object encapsulating span data
