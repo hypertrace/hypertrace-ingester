@@ -95,7 +95,7 @@ services:
 
   # Stores spans and traces and provides aggregation functions
   pinot:
-    image: hypertrace/pinot-servicemanager:main
+    image: hypertrace/pinot-servicemanager:0.6.10
     container_name: pinot
     environment:
       - LOG_LEVEL=error
