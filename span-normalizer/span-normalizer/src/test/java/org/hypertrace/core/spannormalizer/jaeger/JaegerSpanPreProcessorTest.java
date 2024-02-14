@@ -819,19 +819,302 @@ class JaegerSpanPreProcessorTest {
   }
 
   @Test
+  public void testExcludeSpanRules_urlPath() throws ExecutionException {
+    String tenantId = "tenant-" + random.nextLong();
+    Map<String, Object> configs = new HashMap<>(getCommonConfig());
+    configs.put(
+        "processor",
+        Map.of(
+            "tenantIdTagKey",
+            "tenant-key",
+            "spanDropFilters",
+            Collections.emptyList(),
+            "late.arrival.threshold.duration",
+            "1d"));
+
+    JaegerSpanPreProcessor jaegerSpanPreProcessor =
+        new JaegerSpanPreProcessor(
+            ConfigFactory.parseMap(configs), excludeSpanRulesCache, new GrpcChannelRegistry());
+
+    // case 1: {spanTags: [http.request.path],  processTags:tenant_id, rule: urlPath contains
+    // health } matches -> drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildRelationalFilter(
+                                    Field.FIELD_URL_PATH,
+                                    null,
+                                    RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                    "health"))
+                            .build())
+                    .build()));
+
+    Process process =
+        Process.newBuilder()
+            .setServiceName("testService")
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .build();
+
+    Span span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey("http.request.path")
+                    .setVStr("/api/v1/health/check")
+                    .build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .build();
+    PreProcessedSpan preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    // case 2: {spanTags: [http.request.path],  processTags:tenant_id, urlPath not contains health }
+    // should not drop span
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(
+                KeyValue.newBuilder().setKey("http.request.path").setVStr("/api/v1/check").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+
+    // case 3: {spanTags: [http.path],  processTags:tenant_id, rule: urlPath contains
+    // health } matches -> drop span
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(
+                KeyValue.newBuilder().setKey("http.path").setVStr("/api/v1/health/check").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    // case 4: {spanTags: [http.target],  processTags:tenant_id, rule: urlPath contains
+    // health } matches -> drop span
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(
+                KeyValue.newBuilder().setKey("http.target").setVStr("/api/v1/health/check").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    // case 5: {spanTags: [http.request.path & tenant_id],  processTags:tenant_id, rule - service
+    // name is
+    // testService } drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildRelationalFilter(
+                                    Field.FIELD_SERVICE_NAME,
+                                    null,
+                                    RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
+                                    "testService"))
+                            .build())
+                    .build()));
+    process =
+        Process.newBuilder()
+            .setServiceName("testService")
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .build();
+
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(
+                KeyValue.newBuilder().setKey("http.request.path").setVStr("/api/v1/check").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    // case 6: {spanTags: [http.request.path],  processTags:tenant_id, url:
+    // service name is testService and url contains health } drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            Field.FIELD_SERVICE_NAME,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
+                                            "testService"),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL_PATH,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(
+                KeyValue.newBuilder().setKey("http.target").setVStr("/api/v1/health/check").build())
+            .addTags(KeyValue.newBuilder().setKey("extra.tag").setVStr("extra-test-value").build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    // same as above but filter fails - should not drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            Field.FIELD_SERVICE_NAME,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
+                                            "testServiceAttribute"),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL_PATH,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
+
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+
+    // case7 : {[http.request.path, deployment.environment], rule -> env equals env1 and url
+    // contains health}
+    // drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            Field.FIELD_ENVIRONMENT_NAME,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_EQUALS,
+                                            "env1"),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL_PATH,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
+    span =
+        Span.newBuilder()
+            .setProcess(process)
+            .addTags(KeyValue.newBuilder().setKey("tenant-key").setVStr(tenantId).build())
+            .addTags(KeyValue.newBuilder().setKey("deployment.environment").setVStr("env1").build())
+            .addTags(
+                KeyValue.newBuilder()
+                    .setKey("http.request.path")
+                    .setVStr("/api/v1/health/check")
+                    .build())
+            .build();
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    // case8 : {[http.request.path, deployment.environment], rule -> env in [env,env1] and url
+    // contains
+    // health}
+    // drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            null,
+                                            "deployment.environment",
+                                            RelationalOperator.RELATIONAL_OPERATOR_IN,
+                                            List.of("env", "env1")),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL_PATH,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNull(preProcessedSpan);
+
+    // case9 : {[http.request.path, deployment.environment], rule -> env in [env,env2] and url
+    // contains
+    // health}
+    // should not drop span
+    when(excludeSpanRulesCache.get(any()))
+        .thenReturn(
+            List.of(
+                ExcludeSpanRule.newBuilder()
+                    .setRuleInfo(
+                        ExcludeSpanRuleInfo.newBuilder()
+                            .setFilter(
+                                buildLogicalFilterSpanProcessing(
+                                    LogicalOperator.LOGICAL_OPERATOR_AND,
+                                    List.of(
+                                        buildRelationalFilter(
+                                            null,
+                                            "deployment.environment",
+                                            RelationalOperator.RELATIONAL_OPERATOR_IN,
+                                            List.of("env", "env2")),
+                                        buildRelationalFilter(
+                                            Field.FIELD_URL_PATH,
+                                            null,
+                                            RelationalOperator.RELATIONAL_OPERATOR_CONTAINS,
+                                            "health"))))
+                            .build())
+                    .build()));
+    preProcessedSpan = jaegerSpanPreProcessor.preProcessSpan(span);
+    Assertions.assertNotNull(preProcessedSpan);
+  }
+
+  @Test
   public void testExcludeSpanRules() throws ExecutionException {
     String tenantId = "tenant-" + random.nextLong();
     Map<String, Object> configs = new HashMap<>(getCommonConfig());
-    configs.putAll(
+    configs.put(
+        "processor",
         Map.of(
-            "processor",
-            Map.of(
-                "tenantIdTagKey",
-                "tenant-key",
-                "spanDropFilters",
-                Collections.emptyList(),
-                "late.arrival.threshold.duration",
-                "1d")));
+            "tenantIdTagKey",
+            "tenant-key",
+            "spanDropFilters",
+            Collections.emptyList(),
+            "late.arrival.threshold.duration",
+            "1d"));
 
     JaegerSpanPreProcessor jaegerSpanPreProcessor =
         new JaegerSpanPreProcessor(

@@ -130,6 +130,16 @@ public class ExcludeSpanRuleEvaluator {
                           relationalSpanFilterExpression.getRightOperand(),
                           relationalSpanFilterExpression.getOperator()))
               .isPresent();
+        case FIELD_URL_PATH:
+          Optional<String> maybeUrlPath = getUrlPath(event);
+          return maybeUrlPath
+              .filter(
+                  urlPath ->
+                      spanFilterMatcher.matches(
+                          urlPath,
+                          relationalSpanFilterExpression.getRightOperand(),
+                          relationalSpanFilterExpression.getOperator()))
+              .isPresent();
         default:
           log.error("Unknown filter field: {}", field);
           return false;
@@ -146,6 +156,10 @@ public class ExcludeSpanRuleEvaluator {
   private Optional<String> getUrl(final Event event) {
     return HttpSemanticConventionUtils.getFullHttpUrl(event)
         .or(() -> HttpSemanticConventionUtils.getHttpPath(event));
+  }
+
+  private Optional<String> getUrlPath(final Event event) {
+    return HttpSemanticConventionUtils.getHttpPath(event);
   }
 
   private boolean matches(
