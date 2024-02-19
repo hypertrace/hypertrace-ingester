@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.util;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -37,11 +38,14 @@ public class UserAgentParser {
             .expireAfterAccess(cacheConfig.getDuration(CACHE_CONFIG_ACCESS_EXPIRATION_DURATION))
             .recordStats()
             .build(CacheLoader.from(userAgentStringParser::parse));
+    registerCacheMetrics("userAgentCache", userAgentCache, cacheMaxSize);
+  }
 
-    String cacheName = this.getClass().getName() + ".userAgentCache";
-    PlatformMetricsRegistry.registerCache(cacheName, userAgentCache, Collections.emptyMap());
+  private void registerCacheMetrics(String cacheNameSuffix, Cache cache, int cacheMaxSize) {
+    String cacheName = this.getClass().getName() + "." + cacheNameSuffix;
+    PlatformMetricsRegistry.registerCache(cacheName, cache, Collections.emptyMap());
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        cacheName, userAgentCache, Collections.emptyMap(), cacheMaxSize);
+        cacheName, cache, Collections.emptyMap(), cacheMaxSize);
   }
 
   public Optional<ReadableUserAgent> getUserAgent(Event event) {
