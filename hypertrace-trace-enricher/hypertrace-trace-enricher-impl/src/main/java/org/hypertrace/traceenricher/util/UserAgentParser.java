@@ -30,15 +30,18 @@ public class UserAgentParser {
   public UserAgentParser(Config config) {
     Config cacheConfig = config.getConfig(CACHE_CONFIG_KEY);
     this.userAgentMaxLength = config.getInt(USER_AGENT_MAX_LENGTH_KEY);
+    int cacheMaxSize = cacheConfig.getInt(CACHE_CONFIG_MAX_SIZE);
     this.userAgentCache =
         CacheBuilder.newBuilder()
-            .maximumSize(cacheConfig.getInt(CACHE_CONFIG_MAX_SIZE))
+            .maximumSize(cacheMaxSize)
             .expireAfterAccess(cacheConfig.getDuration(CACHE_CONFIG_ACCESS_EXPIRATION_DURATION))
             .recordStats()
             .build(CacheLoader.from(userAgentStringParser::parse));
 
-    PlatformMetricsRegistry.registerCache(
-        this.getClass().getName() + ".userAgentCache", userAgentCache, Collections.emptyMap());
+    String cacheName = this.getClass().getName() + ".userAgentCache";
+    PlatformMetricsRegistry.registerCache(cacheName, userAgentCache, Collections.emptyMap());
+    PlatformMetricsRegistry.registerCacheTrackingOccupancy(
+        cacheName, userAgentCache, Collections.emptyMap(), cacheMaxSize);
   }
 
   public Optional<ReadableUserAgent> getUserAgent(Event event) {

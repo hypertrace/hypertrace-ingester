@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.space;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 class SpaceRulesCachingClient {
   private static final Logger LOG = LoggerFactory.getLogger(SpaceRulesCachingClient.class);
   private static final String DOT = ".";
+  private static final int DEFAULT_CACHE_MAX_SIZE = 10000;
   private final SpacesConfigServiceBlockingStub configServiceStub;
 
   public SpaceRulesCachingClient(Channel spacesConfigChannel) {
@@ -28,16 +30,20 @@ class SpaceRulesCachingClient {
         SpacesConfigServiceGrpc.newBlockingStub(spacesConfigChannel)
             .withCallCredentials(
                 RequestContextClientCallCredsProviderFactory.getClientCallCredsProvider().get());
-    PlatformMetricsRegistry.registerCache(
-        this.getClass().getName() + DOT + "spaceRulesCache",
-        spaceRulesCache,
-        Collections.emptyMap());
+    registerCacheMetrics("spaceRulesCache", spaceRulesCache, DEFAULT_CACHE_MAX_SIZE);
+  }
+
+  private void registerCacheMetrics(String cacheNameSuffix, Cache cache, int cacheMaxSize) {
+    String cacheName = this.getClass().getName() + DOT + cacheNameSuffix;
+    PlatformMetricsRegistry.registerCache(cacheName, cache, Collections.emptyMap());
+    PlatformMetricsRegistry.registerCacheTrackingOccupancy(
+        cacheName, cache, Collections.emptyMap(), cacheMaxSize);
   }
 
   private final LoadingCache<String, List<SpaceConfigRule>> spaceRulesCache =
       CacheBuilder.newBuilder()
           .expireAfterWrite(3, TimeUnit.MINUTES)
-          .maximumWeight(10_000)
+          .maximumWeight(DEFAULT_CACHE_MAX_SIZE)
           .weigher((Weigher<String, List<SpaceConfigRule>>) (key, value) -> value.size())
           .recordStats()
           .build(CacheLoader.from(this::loadRulesForTenant));
