@@ -1,6 +1,5 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.space;
 
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -30,14 +29,8 @@ class SpaceRulesCachingClient {
         SpacesConfigServiceGrpc.newBlockingStub(spacesConfigChannel)
             .withCallCredentials(
                 RequestContextClientCallCredsProviderFactory.getClientCallCredsProvider().get());
-    registerCacheMetrics("spaceRulesCache", spaceRulesCache, DEFAULT_CACHE_MAX_SIZE);
-  }
-
-  private void registerCacheMetrics(String cacheNameSuffix, Cache cache, int cacheMaxSize) {
-    String cacheName = this.getClass().getName() + DOT + cacheNameSuffix;
-    PlatformMetricsRegistry.registerCache(cacheName, cache, Collections.emptyMap());
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        cacheName, cache, Collections.emptyMap(), cacheMaxSize);
+        "spaceRulesCache", spaceRulesCache, Collections.emptyMap(), DEFAULT_CACHE_MAX_SIZE);
   }
 
   private final LoadingCache<String, List<SpaceConfigRule>> spaceRulesCache =

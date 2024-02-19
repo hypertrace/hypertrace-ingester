@@ -1,6 +1,5 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.cache;
 
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -102,21 +101,26 @@ public class EntityCache {
                     CacheLoader.from(this::loadBackendFromIdentifyingAttributes),
                     asyncCacheLoaderExecutor));
 
-    registerCacheMetrics(
-        "fqnToServiceEntityCache", fqnToServiceEntityCache, DEFAULT_CACHE_MAX_SIZE);
-    registerCacheMetrics(
-        "nameToServiceEntitiesCache", nameToServiceEntitiesCache, DEFAULT_CACHE_MAX_SIZE);
-    registerCacheMetrics(
-        "nameToNamespaceEntitiesCache", nameToNamespaceEntitiesCache, DEFAULT_CACHE_MAX_SIZE);
-    registerCacheMetrics(
-        "backendIdAttrsToEntityCache", backendIdAttrsToEntityCache, DEFAULT_CACHE_MAX_SIZE);
-  }
-
-  private void registerCacheMetrics(String cacheNameSuffix, Cache cache, int cacheMaxSize) {
-    String cacheName = this.getClass().getName() + DOT + cacheNameSuffix;
-    PlatformMetricsRegistry.registerCache(cacheName, cache, Collections.emptyMap());
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        cacheName, cache, Collections.emptyMap(), cacheMaxSize);
+        "fqnToServiceEntityCache",
+        fqnToServiceEntityCache,
+        Collections.emptyMap(),
+        DEFAULT_CACHE_MAX_SIZE);
+    PlatformMetricsRegistry.registerCacheTrackingOccupancy(
+        "nameToServiceEntitiesCache",
+        nameToServiceEntitiesCache,
+        Collections.emptyMap(),
+        DEFAULT_CACHE_MAX_SIZE);
+    PlatformMetricsRegistry.registerCacheTrackingOccupancy(
+        "nameToNamespaceEntitiesCache",
+        nameToNamespaceEntitiesCache,
+        Collections.emptyMap(),
+        DEFAULT_CACHE_MAX_SIZE);
+    PlatformMetricsRegistry.registerCacheTrackingOccupancy(
+        "backendIdAttrsToEntityCache",
+        backendIdAttrsToEntityCache,
+        Collections.emptyMap(),
+        DEFAULT_CACHE_MAX_SIZE);
   }
 
   public LoadingCache<Pair<String, String>, Optional<Entity>> getFqnToServiceEntityCache() {
