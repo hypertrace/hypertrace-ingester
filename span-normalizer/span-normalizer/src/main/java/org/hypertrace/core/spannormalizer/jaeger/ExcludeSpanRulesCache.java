@@ -1,5 +1,6 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -31,6 +32,7 @@ public class ExcludeSpanRulesCache {
   private static final String CACHE_NAME = "excludeSpanRuleCache";
   private static final Duration CACHE_REFRESH_DURATION_DEFAULT = Duration.ofMillis(180000);
   private static final Duration CACHE_EXPIRY_DURATION_DEFAULT = Duration.ofMillis(300000);
+  private static final int DEFAULT_CACHE_MAX_SIZE = 10000;
   private static ExcludeSpanRulesCache INSTANCE;
 
   private final LoadingCache<ContextualKey<Void>, List<ExcludeSpanRule>> excludeSpanRulesCache;
@@ -50,6 +52,7 @@ public class ExcludeSpanRulesCache {
         new ConfigServiceClient(configServiceConfig, grpcChannelRegistry);
     this.excludeSpanRulesCache =
         CacheBuilder.newBuilder()
+            .maximumSize(DEFAULT_CACHE_MAX_SIZE)
             .refreshAfterWrite(cacheRefreshDuration.toMillis(), TimeUnit.MILLISECONDS)
             .expireAfterWrite(cacheExpiryDuration.toMillis(), TimeUnit.MILLISECONDS)
             .recordStats()
@@ -77,8 +80,13 @@ public class ExcludeSpanRulesCache {
                       }
                     },
                     Executors.newSingleThreadExecutor()));
-    PlatformMetricsRegistry.registerCache(
-        CACHE_NAME, excludeSpanRulesCache, Collections.emptyMap());
+    registerCacheMetrics(CACHE_NAME, excludeSpanRulesCache, DEFAULT_CACHE_MAX_SIZE);
+  }
+
+  private void registerCacheMetrics(String cacheName, Cache cache, int cacheMaxSize) {
+    PlatformMetricsRegistry.registerCache(cacheName, cache, Collections.emptyMap());
+    PlatformMetricsRegistry.registerCacheTrackingOccupancy(
+        cacheName, cache, Collections.emptyMap(), cacheMaxSize);
   }
 
   // TODO: Find an alternative approach to avoid use of singleton instance

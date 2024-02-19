@@ -1,5 +1,6 @@
 package org.hypertrace.traceenricher.enrichment.enrichers.cache;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -24,6 +25,7 @@ import org.hypertrace.entity.v1.entitytype.EntityType;
 /** Class that holds all the entity related caches used by the enrichers */
 public class EntityCache {
   private static final String DOT = ".";
+  private static final int DEFAULT_CACHE_MAX_SIZE = 10000;
   private final EdsClient edsClient;
 
   /**
@@ -54,7 +56,7 @@ public class EntityCache {
     this.edsClient = edsClient;
     fqnToServiceEntityCache =
         CacheBuilder.newBuilder()
-            .maximumSize(10000)
+            .maximumSize(DEFAULT_CACHE_MAX_SIZE)
             .refreshAfterWrite(4, TimeUnit.MINUTES)
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .recordStats()
@@ -64,7 +66,7 @@ public class EntityCache {
 
     nameToServiceEntitiesCache =
         CacheBuilder.newBuilder()
-            .maximumSize(10000)
+            .maximumSize(DEFAULT_CACHE_MAX_SIZE)
             .refreshAfterWrite(4, TimeUnit.MINUTES)
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build(
@@ -79,7 +81,7 @@ public class EntityCache {
 
     nameToNamespaceEntitiesCache =
         CacheBuilder.newBuilder()
-            .maximumSize(10000)
+            .maximumSize(DEFAULT_CACHE_MAX_SIZE)
             .refreshAfterWrite(4, TimeUnit.MINUTES)
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build(
@@ -92,7 +94,7 @@ public class EntityCache {
 
     backendIdAttrsToEntityCache =
         CacheBuilder.newBuilder()
-            .maximumSize(10000)
+            .maximumSize(DEFAULT_CACHE_MAX_SIZE)
             .refreshAfterWrite(4, TimeUnit.MINUTES)
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build(
@@ -100,22 +102,21 @@ public class EntityCache {
                     CacheLoader.from(this::loadBackendFromIdentifyingAttributes),
                     asyncCacheLoaderExecutor));
 
-    PlatformMetricsRegistry.registerCache(
-        this.getClass().getName() + DOT + "fqnToServiceEntityCache",
-        fqnToServiceEntityCache,
-        Collections.emptyMap());
-    PlatformMetricsRegistry.registerCache(
-        this.getClass().getName() + DOT + "nameToServiceEntitiesCache",
-        nameToServiceEntitiesCache,
-        Collections.emptyMap());
-    PlatformMetricsRegistry.registerCache(
-        this.getClass().getName() + DOT + "nameToNamespaceEntitiesCache",
-        nameToNamespaceEntitiesCache,
-        Collections.emptyMap());
-    PlatformMetricsRegistry.registerCache(
-        this.getClass().getName() + DOT + "backendIdAttrsToEntityCache",
-        backendIdAttrsToEntityCache,
-        Collections.emptyMap());
+    registerCacheMetrics(
+        "fqnToServiceEntityCache", fqnToServiceEntityCache, DEFAULT_CACHE_MAX_SIZE);
+    registerCacheMetrics(
+        "nameToServiceEntitiesCache", nameToServiceEntitiesCache, DEFAULT_CACHE_MAX_SIZE);
+    registerCacheMetrics(
+        "nameToNamespaceEntitiesCache", nameToNamespaceEntitiesCache, DEFAULT_CACHE_MAX_SIZE);
+    registerCacheMetrics(
+        "backendIdAttrsToEntityCache", backendIdAttrsToEntityCache, DEFAULT_CACHE_MAX_SIZE);
+  }
+
+  private void registerCacheMetrics(String cacheNameSuffix, Cache cache, int cacheMaxSize) {
+    String cacheName = this.getClass().getName() + DOT + cacheNameSuffix;
+    PlatformMetricsRegistry.registerCache(cacheName, cache, Collections.emptyMap());
+    PlatformMetricsRegistry.registerCacheTrackingOccupancy(
+        cacheName, cache, Collections.emptyMap(), cacheMaxSize);
   }
 
   public LoadingCache<Pair<String, String>, Optional<Entity>> getFqnToServiceEntityCache() {
