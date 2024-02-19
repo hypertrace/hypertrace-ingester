@@ -1,6 +1,5 @@
 package org.hypertrace.core.spannormalizer.jaeger;
 
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -80,13 +79,8 @@ public class ExcludeSpanRulesCache {
                       }
                     },
                     Executors.newSingleThreadExecutor()));
-    registerCacheMetrics(CACHE_NAME, excludeSpanRulesCache, DEFAULT_CACHE_MAX_SIZE);
-  }
-
-  private void registerCacheMetrics(String cacheName, Cache cache, int cacheMaxSize) {
-    PlatformMetricsRegistry.registerCache(cacheName, cache, Collections.emptyMap());
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        cacheName, cache, Collections.emptyMap(), cacheMaxSize);
+        CACHE_NAME, excludeSpanRulesCache, Collections.emptyMap(), DEFAULT_CACHE_MAX_SIZE);
   }
 
   // TODO: Find an alternative approach to avoid use of singleton instance
