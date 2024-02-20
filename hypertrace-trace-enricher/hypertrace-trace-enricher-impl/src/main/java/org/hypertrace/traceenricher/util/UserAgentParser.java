@@ -38,7 +38,10 @@ public class UserAgentParser {
             .recordStats()
             .build(CacheLoader.from(userAgentStringParser::parse));
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        "userAgentCache", userAgentCache, Collections.emptyMap(), cacheMaxSize);
+        this.getClass().getName() + ".userAgentCache",
+        userAgentCache,
+        Collections.emptyMap(),
+        cacheMaxSize);
   }
 
   public Optional<ReadableUserAgent> getUserAgent(Event event) {

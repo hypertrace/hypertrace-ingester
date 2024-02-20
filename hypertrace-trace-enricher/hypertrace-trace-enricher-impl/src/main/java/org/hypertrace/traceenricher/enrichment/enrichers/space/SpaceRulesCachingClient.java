@@ -30,7 +30,10 @@ class SpaceRulesCachingClient {
             .withCallCredentials(
                 RequestContextClientCallCredsProviderFactory.getClientCallCredsProvider().get());
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        "spaceRulesCache", spaceRulesCache, Collections.emptyMap(), DEFAULT_CACHE_MAX_SIZE);
+        this.getClass().getName() + DOT + "spaceRulesCache",
+        spaceRulesCache,
+        Collections.emptyMap(),
+        DEFAULT_CACHE_MAX_SIZE);
   }
 
   private final LoadingCache<String, List<SpaceConfigRule>> spaceRulesCache =
