@@ -102,22 +102,22 @@ public class EntityCache {
                     asyncCacheLoaderExecutor));
 
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        "fqnToServiceEntityCache",
+        this.getClass().getName() + DOT + "fqnToServiceEntityCache",
         fqnToServiceEntityCache,
         Collections.emptyMap(),
         DEFAULT_CACHE_MAX_SIZE);
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        "nameToServiceEntitiesCache",
+        this.getClass().getName() + DOT + "nameToServiceEntitiesCache",
         nameToServiceEntitiesCache,
         Collections.emptyMap(),
         DEFAULT_CACHE_MAX_SIZE);
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        "nameToNamespaceEntitiesCache",
+        this.getClass().getName() + DOT + "nameToNamespaceEntitiesCache",
         nameToNamespaceEntitiesCache,
         Collections.emptyMap(),
         DEFAULT_CACHE_MAX_SIZE);
     PlatformMetricsRegistry.registerCacheTrackingOccupancy(
-        "backendIdAttrsToEntityCache",
+        this.getClass().getName() + DOT + "backendIdAttrsToEntityCache",
         backendIdAttrsToEntityCache,
         Collections.emptyMap(),
         DEFAULT_CACHE_MAX_SIZE);
