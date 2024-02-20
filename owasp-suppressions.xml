@@ -115,4 +115,13 @@
     <packageUrl regex="true">^pkg:maven/io\.grpc/grpc\-.*@.*$</packageUrl>
     <cve>CVE-2023-44487</cve>
   </suppress>
+  <suppress until="2024-03-30Z">
+    <notes><![CDATA[
+   The fix might be available in 1.26.0, we will upgrade to it when its available
+   file name: commons-compress-1.24.0.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.commons/commons\-compress@.*$</packageUrl>
+    <cve>CVE-2024-25710</cve>
+    <cve>CVE-2024-26308</cve>
+  </suppress>
 </suppressions>
