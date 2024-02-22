@@ -21,6 +21,7 @@ import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.grpcutils.client.GrpcChannelConfig;
 import org.hypertrace.core.grpcutils.client.GrpcChannelRegistry;
 import org.hypertrace.core.grpcutils.client.RequestContextClientCallCredsProviderFactory;
+import org.hypertrace.core.kafka.event.listener.KafkaConsumerUtils;
 import org.hypertrace.core.kafka.event.listener.KafkaLiveEventListener;
 import org.hypertrace.entity.change.event.v1.EntityChangeEventKey;
 import org.hypertrace.entity.change.event.v1.EntityChangeEventValue;
@@ -99,7 +100,7 @@ public class DefaultClientRegistry implements ClientRegistry {
             EntityServiceClientConfig.from(config).getCacheConfig(),
             cacheLoaderExecutor);
     this.entityChangeEventListener =
-        getEntityChangeEventConsumer(config, edsCacheClient::updateBasedOnChangeEvent);
+        getEntityChangeEventListener(config, edsCacheClient::updateBasedOnChangeEvent);
     this.entityDataClient = EntityDataClient.builder(this.entityServiceChannel).build();
     this.entityCache = new EntityCache(this.edsCacheClient, cacheLoaderExecutor);
     this.entityAccessor =
@@ -197,7 +198,7 @@ public class DefaultClientRegistry implements ClientRegistry {
   }
 
   private static Optional<KafkaLiveEventListener<EntityChangeEventKey, EntityChangeEventValue>>
-      getEntityChangeEventConsumer(
+      getEntityChangeEventListener(
           Config clientsConfig, BiConsumer<EntityChangeEventKey, EntityChangeEventValue> callback) {
     if (clientsConfig.hasPath(ENTITY_CHANGE_EVENTS_CONSUMER_ENABLED_KEY)
         && clientsConfig.getBoolean(ENTITY_CHANGE_EVENTS_CONSUMER_ENABLED_KEY)) {
@@ -206,14 +207,17 @@ public class DefaultClientRegistry implements ClientRegistry {
           Collections.singletonMap(
               "schema.registry.url",
               clientsConfig.getString(ENTITY_CHANGE_EVENTS_SCHEMA_REGISTRY_URL_KEY));
+      Config kafkaConfig = clientsConfig.getConfig(ENTITY_CHANGE_EVENTS_CONFIG_KEY);
       return Optional.of(
           new KafkaLiveEventListener.Builder<EntityChangeEventKey, EntityChangeEventValue>()
               .registerCallback(callback)
               .build(
                   consumerName,
-                  clientsConfig.getConfig(ENTITY_CHANGE_EVENTS_CONFIG_KEY),
-                  getEntityChangeEventKeyDeser(deserConfig),
-                  getEntityChangeEventValueDeser(deserConfig)));
+                  kafkaConfig,
+                  KafkaConsumerUtils.getKafkaConsumer(
+                      kafkaConfig,
+                      getEntityChangeEventKeyDeser(deserConfig),
+                      getEntityChangeEventValueDeser(deserConfig))));
     }
     return Optional.empty();
   }
