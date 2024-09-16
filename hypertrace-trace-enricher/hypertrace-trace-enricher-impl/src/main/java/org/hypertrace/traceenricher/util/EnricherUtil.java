@@ -1,11 +1,11 @@
 package org.hypertrace.traceenricher.util;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.apache.commons.lang3.StringUtils;
+import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
+import org.hypertrace.core.datamodel.Resource;
+import org.hypertrace.core.datamodel.StructuredTrace;
 import org.hypertrace.core.datamodel.shared.trace.AttributeValueCreator;
 import org.hypertrace.core.span.constants.RawSpanConstants;
 import org.hypertrace.core.span.constants.v1.SpanNamePrefix;
@@ -37,6 +37,24 @@ public class EnricherUtil {
     }
 
     return Collections.unmodifiableMap(attributes);
+  }
+
+  public static Optional<org.hypertrace.core.datamodel.AttributeValue> getAttribute(
+      Attributes attributes, String key) {
+    return Optional.ofNullable(attributes)
+        .map(Attributes::getAttributeMap)
+        .map(attributeMap -> attributeMap.get(key));
+  }
+
+  public static Optional<org.hypertrace.core.datamodel.AttributeValue> getResourceAttribute(
+      StructuredTrace trace, Event span, String key) {
+    if (span.getResourceIndex() < 0 || span.getResourceIndex() >= trace.getResourceList().size()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(trace.getResourceList().get(span.getResourceIndex()))
+        .map(Resource::getAttributes)
+        .flatMap(attributes -> getAttribute(attributes, key));
   }
 
   public static void setAttributeForFirstExistingKey(

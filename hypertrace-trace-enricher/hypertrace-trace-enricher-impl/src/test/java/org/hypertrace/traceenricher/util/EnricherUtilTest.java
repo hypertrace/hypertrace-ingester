@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
+import org.hypertrace.core.datamodel.AttributeValue;
 import org.hypertrace.core.datamodel.Attributes;
 import org.hypertrace.core.datamodel.Event;
 import org.hypertrace.entity.data.service.v1.Entity;
@@ -50,5 +52,26 @@ public class EnricherUtilTest {
     Builder entityBuilder = Entity.newBuilder();
     EnricherUtil.setAttributeForFirstExistingKey(e, entityBuilder, Arrays.asList("a", "b", "c"));
     Assertions.assertTrue(entityBuilder.getAttributesMap().containsKey("a"));
+  }
+
+  @Test
+  public void testGetAttribute() {
+    Attributes attributes =
+        Attributes.newBuilder()
+            .setAttributeMap(
+                Map.of(
+                    "a",
+                    TestUtil.buildAttributeValue("a-value"),
+                    "b",
+                    TestUtil.buildAttributeValue("b-value")))
+            .build();
+    Optional<AttributeValue> val = EnricherUtil.getAttribute(attributes, "a");
+    Assertions.assertEquals("a-value", val.get().getValue());
+    val = EnricherUtil.getAttribute(attributes, "c");
+    Assertions.assertTrue(val.isEmpty());
+
+    attributes = null;
+    val = EnricherUtil.getAttribute(attributes, "a");
+    Assertions.assertTrue(val.isEmpty());
   }
 }
