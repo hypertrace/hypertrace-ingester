@@ -49,7 +49,6 @@ import com.google.common.collect.Sets;
 import com.google.common.net.InternetDomainName;
 import java.net.HttpCookie;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -119,8 +118,6 @@ public class HttpSemanticConventionUtils {
   private static final String SLASH = "/";
 
   private static final String HTTP_REQUEST_FORWARDED_ATTRIBUTE = HTTP_REQUEST_FORWARDED.getValue();
-  private static final String HTTP_REQUEST_ORIGIN =
-      HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue();
   private static final String HTTP_RESPONSE_HEADER_PREFIX =
       RawSpanConstants.getValue(HTTP_RESPONSE_HEADER) + DOT;
   public static final String RESPONSE_COOKIE_HEADER_PREFIX =
@@ -186,6 +183,7 @@ public class HttpSemanticConventionUtils {
           RawSpanConstants.getValue(OT_SPAN_TAG_HTTP_STATUS_CODE),
           RawSpanConstants.getValue(HTTP_RESPONSE_STATUS_CODE),
           OTelHttpSemanticConventions.HTTP_STATUS_CODE.getValue());
+  public static final String HTTPS = "https";
 
   /**
    * @return attribute keys for http method
@@ -553,6 +551,24 @@ public class HttpSemanticConventionUtils {
     return Optional.empty();
   }
 
+  /**
+   * Returns the HTTP scheme associated with the given {@link Event}. The scheme is determined as
+   * follows:
+   * <ol>
+   *   <li>If the event has an attribute like {@code http.url} that contains a full URL, the scheme
+   *       from that URL is returned if it is https.
+   *   <li>If the scheme from the full URL is not 'https', then other attributes like
+   *       {@code x-forwarded-proto}, {@code forwarded}, {@code http.scheme} are checked. If any of
+   *       these has the value 'https', then that is returned.
+   *   <li>If none of the above steps yield a scheme of 'https', then the scheme from the full URL
+   *       (which should be 'http') is returned.
+   *   <li>If the event does not have a full URL attribute, then the other attributes are checked for
+   *       the scheme.
+   * </ol>
+   *
+   * @param event the event to extract the scheme from
+   * @return an {@link Optional} containing the scheme if it could be determined, empty otherwise
+   */
   public static Optional<String> getHttpScheme(Event event) {
 
     Optional<String> scheme = Optional.empty();
@@ -573,10 +589,11 @@ public class HttpSemanticConventionUtils {
       if (scheme.get().equalsIgnoreCase("https")) {
         return scheme;
       }
-      // 3. else check if there are other attributes that like 'origin', 'x-forwarded-proto' etc
+      // 3. else check if there are other attributes that like 'x-forwarded-proto', forwarded,
+      // http.scheme etc.
       // that have the actual scheme
-      //    this is for scenarios where a LB fronts the service and terminates SSL.
-      //    If this scheme is 'https' then return this instead
+      // this is for scenarios where a LB fronts the service and terminates SSL.
+      // If this scheme is 'https' then return this instead
       else {
         schemeFromOtherRawAttributes = getHttpSchemeFromRawAttributes(event);
         if (schemeFromOtherRawAttributes.isPresent()
@@ -602,46 +619,37 @@ public class HttpSemanticConventionUtils {
 
   private static Optional<String> getHttpSchemeFromRawAttributes(
       Map<String, AttributeValue> attributeValueMap) {
+    String scheme = null;
     // dealing with the Forwarded header separately as it may have
     // more info than just the protocol
+    // 1. Check 'forwarded' header
     AttributeValue httpRequestForwardedAttributeValue =
         attributeValueMap.get(HTTP_REQUEST_FORWARDED_ATTRIBUTE);
     if (httpRequestForwardedAttributeValue != null
-        && !StringUtils.isEmpty(httpRequestForwardedAttributeValue.getValue())) {
-      String schemeValue = httpRequestForwardedAttributeValue.getValue();
-      Optional<String> optionalExtractedProtoValue = getProtocolFromForwarded(schemeValue);
+        && StringUtils.isNotEmpty(httpRequestForwardedAttributeValue.getValue())) {
+      Optional<String> optionalExtractedProtoValue =
+          getProtocolFromForwarded(httpRequestForwardedAttributeValue.getValue());
       if (optionalExtractedProtoValue.isPresent()) {
-        return optionalExtractedProtoValue;
-      }
-    }
-
-    AttributeValue httpRequestOriginValue = attributeValueMap.get(HTTP_REQUEST_ORIGIN);
-    if (httpRequestOriginValue != null && !StringUtils.isEmpty(httpRequestOriginValue.getValue())) {
-      String origin = httpRequestOriginValue.getValue();
-      /** Syntax: Origin: null Origin: <scheme>://<hostname> Origin: <scheme>://<hostname>:<port> */
-      if (StringUtils.isNotEmpty(origin)) {
-        try {
-          String scheme = new URI(origin).getScheme();
-          // handle the case where the value of origin is the "null" string
-          if (StringUtils.isNotEmpty(scheme)) {
-            return Optional.of(scheme);
-          }
-        } catch (Exception e) {
-          LOGGER.debug(
-              "On extracting scheme, received an invalid origin header: {}, {}",
-              origin,
-              e.getMessage());
+        scheme = optionalExtractedProtoValue.get();
+        if (HTTPS.equalsIgnoreCase(scheme)) {
+          return Optional.of(HTTPS);
         }
       }
     }
 
-    for (String scheme : SCHEME_ATTRIBUTES) {
-      if (attributeValueMap.get(scheme) != null
-          && !StringUtils.isEmpty(attributeValueMap.get(scheme).getValue())) {
-        return Optional.of(attributeValueMap.get(scheme).getValue());
+    // 2. Check other scheme-related attributes like x-forwarded-proto, http.scheme, etc.
+    for (String schemeAttr : SCHEME_ATTRIBUTES) {
+      AttributeValue attrValue = attributeValueMap.get(schemeAttr);
+      if (attrValue != null && StringUtils.isNotEmpty(attrValue.getValue())) {
+        scheme = attrValue.getValue();
+        if (HTTPS.equalsIgnoreCase(scheme)) {
+          return Optional.of(HTTPS);
+        }
       }
     }
-    return Optional.empty();
+
+    // 3. Return scheme if found
+    return Optional.ofNullable(scheme);
   }
 
   private static Optional<String> getProtocolFromForwarded(String value) {

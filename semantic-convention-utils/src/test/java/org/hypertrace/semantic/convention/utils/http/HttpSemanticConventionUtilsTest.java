@@ -368,8 +368,8 @@ public class HttpSemanticConventionUtilsTest {
     event =
         createMockEventWithAttribute(
             HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(),
-            "by= random ; proto = https; for=modnar");
-    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+            "by= random ; proto=http; for=modnar");
+    assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
 
     event =
         createMockEventWithAttribute(
@@ -394,28 +394,15 @@ public class HttpSemanticConventionUtilsTest {
     when(e.getEnrichedAttributes()).thenReturn(null);
     assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(e));
 
-    // when only origin header exists expect whatever is the scheme of the origin header
-    // when origin header has 'https'
-    event =
-        createMockEventWithAttribute(
-            HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(), "https://abc.xyz");
-    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
-
-    // when origin header has 'http'
-    event =
-        createMockEventWithAttribute(
-            HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(), "http://abc.xyz");
-    assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
-
-    // when http url and origin header exists with scheme https then expect https
+    // when http url and X-forwarded proto header exists with scheme https then expect https
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
             Attributes.newBuilder()
                 .setAttributeMap(
                     Map.of(
-                        HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(),
-                        AttributeValue.newBuilder().setValue("https://abc.xyz.ai").build(),
+                        HttpSemanticConventions.HTTP_REQUEST_X_FORWARDED_PROTO.getValue(),
+                        AttributeValue.newBuilder().setValue("https").build(),
                         RawSpanConstants.getValue(Http.HTTP_URL),
                         AttributeValue.newBuilder()
                             .setValue("http://abc.xyz.ai/apis/5673/events?a1=v1&a2=v2")
@@ -423,15 +410,29 @@ public class HttpSemanticConventionUtilsTest {
                 .build());
     assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
 
-    // when http url and origin header exists with scheme http then expect http
+    // when http url and forwarded header exists with scheme https then expect https
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
             Attributes.newBuilder()
                 .setAttributeMap(
                     Map.of(
-                        HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(),
-                        AttributeValue.newBuilder().setValue("http://abc.xyz.ai").build(),
+                        HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(),
+                        AttributeValue.newBuilder().setValue("proto=https").build(),
+                        RawSpanConstants.getValue(Http.HTTP_URL),
+                        AttributeValue.newBuilder()
+                            .setValue("http://abc.xyz.ai/apis/5673/events?a1=v1&a2=v2")
+                            .build()))
+                .build());
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    // when http url exists with scheme http then expect http
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
                         RawSpanConstants.getValue(Http.HTTP_URL),
                         AttributeValue.newBuilder()
                             .setValue("http://abc.xyz.ai/apis/5673/events?a1=v1&a2=v2")
@@ -439,21 +440,60 @@ public class HttpSemanticConventionUtilsTest {
                 .build());
     assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
 
-    // when http url and origin header is null string then expect scheme of the url
+    // when http url exists with scheme https but other attributes http only.
     event = mock(Event.class);
     when(event.getAttributes())
         .thenReturn(
             Attributes.newBuilder()
                 .setAttributeMap(
                     Map.of(
-                        HttpSemanticConventions.HTTP_REQUEST_ORIGIN.getValue(),
-                        AttributeValue.newBuilder().setValue("null").build(),
                         RawSpanConstants.getValue(Http.HTTP_URL),
                         AttributeValue.newBuilder()
                             .setValue("http://abc.xyz.ai/apis/5673/events?a1=v1&a2=v2")
+                            .build(),
+                        HTTP_SCHEME.getValue(),
+                        AttributeValue.newBuilder().setValue("https").build(),
+                        HttpSemanticConventions.HTTP_REQUEST_X_FORWARDED_PROTO.getValue(),
+                        AttributeValue.newBuilder().setValue("http").build(),
+                        HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(),
+                        AttributeValue.newBuilder()
+                            .setValue("by= random ;proto = ; for=modnar")
                             .build()))
                 .build());
-    assertEquals(Optional.of("http"), HttpSemanticConventionUtils.getHttpScheme(event));
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    // when http url not present and forwarded header is https and others are http then scheme
+    // should be https.
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        HTTP_SCHEME.getValue(),
+                        AttributeValue.newBuilder().setValue("http").build(),
+                        HttpSemanticConventions.HTTP_REQUEST_X_FORWARDED_PROTO.getValue(),
+                        AttributeValue.newBuilder().setValue("http").build(),
+                        HttpSemanticConventions.HTTP_REQUEST_FORWARDED.getValue(),
+                        AttributeValue.newBuilder()
+                            .setValue("by= random ;proto = https; for=modnar")
+                            .build()))
+                .build());
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
+
+    // when http url is present with scheme https
+    event = mock(Event.class);
+    when(event.getAttributes())
+        .thenReturn(
+            Attributes.newBuilder()
+                .setAttributeMap(
+                    Map.of(
+                        RawSpanConstants.getValue(Http.HTTP_URL),
+                        AttributeValue.newBuilder()
+                            .setValue("https://abc.xyz.ai/apis/5673/events?a1=v1&a2=v2")
+                            .build()))
+                .build());
+    assertEquals(Optional.of("https"), HttpSemanticConventionUtils.getHttpScheme(event));
   }
 
   @Test
