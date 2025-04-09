@@ -551,6 +551,24 @@ public class HttpSemanticConventionUtils {
     return Optional.empty();
   }
 
+  /**
+   * Returns the HTTP scheme associated with the given {@link Event}. The scheme is determined as
+   * follows:
+   * <ol>
+   *   <li>If the event has an attribute like {@code http.url} that contains a full URL, the scheme
+   *       from that URL is returned if it is https.
+   *   <li>If the scheme from the full URL is not 'https', then other attributes like
+   *       {@code x-forwarded-proto}, {@code forwarded}, {@code http.scheme} are checked. If any of
+   *       these has the value 'https', then that is returned.
+   *   <li>If none of the above steps yield a scheme of 'https', then the scheme from the full URL
+   *       (which should be 'http') is returned.
+   *   <li>If the event does not have a full URL attribute, then the other attributes are checked for
+   *       the scheme.
+   * </ol>
+   *
+   * @param event the event to extract the scheme from
+   * @return an {@link Optional} containing the scheme if it could be determined, empty otherwise
+   */
   public static Optional<String> getHttpScheme(Event event) {
 
     Optional<String> scheme = Optional.empty();
